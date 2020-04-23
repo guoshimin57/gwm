@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=gwm
+GenericName=gsm's Window Manager
+Comment=window manager for X11
+Exec=startgwm
+Terminal=false
+TryExec=startgwm
+
+[Window Manager]
+SessionManaged=true
