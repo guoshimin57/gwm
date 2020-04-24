@@ -17,4 +17,4 @@
        請用make install-strip；你可能需要root權限來執行這一步；
     4. make clean，刪除編譯生成的目標文件、此程序的二進制文件以及一些備份文件
        ，但這一步不是必須的；
-    5. make uninstall，卸載此程序，這一步僅用于卸載。
+    5. make uninstall，卸載此程序，這一步僅用于卸載；你可能需要root權限來執行這一步。

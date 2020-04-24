@@ -17,8 +17,8 @@ KEYBINDS keybinds_list[]=
     {CMD_KEY,    XK_w,      exec,          SH_CMD("xwininfo -wm > log")},
     {CMD_KEY,    XK_p,      exec,          SH_CMD("dmenu_run")},
     {WM_KEY,     XK_Tab,    next_win,      {0}},
-    {WM_KEY,     XK_q,      quit_wm,       {0}},
-    {WM_KEY,     XK_k,      close_client,  {0}},
+    {WM_KEY,     XK_Delete, quit_wm,       {0}},
+    {WM_KEY,     XK_c,      close_win,     {0}},
     {WM_KEY,     XK_f,      change_layout, {.layout=full}},
 };
 
@@ -358,7 +358,7 @@ void quit_wm(WM *wm, KB_FUNC_ARG unused)
     exit(EXIT_SUCCESS);
 }
 
-void close_client(WM *wm, KB_FUNC_ARG unused)
+void close_win(WM *wm, KB_FUNC_ARG unused)
 {
     if(wm->focus_client->win != wm->root_win)
     {

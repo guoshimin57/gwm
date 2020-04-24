@@ -93,5 +93,5 @@ void handle_unmap_notify(WM *wm, XEvent *e);
 void exec(WM *wm, KB_FUNC_ARG arg);
 void next_win(WM *wm, KB_FUNC_ARG unused);
 void quit_wm(WM *wm, KB_FUNC_ARG unused);
-void close_client(WM *wm, KB_FUNC_ARG unused);
+void close_win(WM *wm, KB_FUNC_ARG unused);
 void change_layout(WM *wm, KB_FUNC_ARG arg);

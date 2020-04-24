@@ -12,3 +12,9 @@
 2020年 04月 24日 星期五 00:11:53 CST	gsm <406643764@qq.com>
 	* 第0.1版。
 	* 所有文件和目錄均爲新建。
+
+2020年 04月 24日 星期五 14:30:16 CST	gsm <406643764@qq.com>
+	* 發布第0.1.1版。
+	* src/gwm.c：修改quit_wm和close_client的鍵綁定，並將close_client更名爲close_win。
+	* src/gwm.h：將close_client更名爲close_win。
+	* man/zh_HK/man1/gwm.1：爲手冊頁增加用法章節。

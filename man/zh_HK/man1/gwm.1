@@ -8,22 +8,57 @@
 ./"     你應該已經收到一份附隨此程序的GNU通用公共許可證副本。否則，請參閱
 ./" <http://www.gnu.org/licenses/>。
 ./" ************************************************************************/
-.TH gwm 1 2020年4月 "gwm 0.1" gwm
+.TH gwm 1 2020年4月 "gwm 0.1.1" gwm
 .
 .SH 名稱
 gwm \- gsm的窗口管理。
 .
 .SH 摘要
-.
 .B gwm
 .
 .SH 描述
-.
 gwm是一個X11窗口管理器。目前只支持全屏模式。
 .
 .SH 選項
-.
 無。
+.
+.SH 用法
+.
+.SS 通用說明
+.
+.TP
+可以通過xmodmap(1)查看功能轉換鍵的映射，通常Mod1對應Alt、Mod4對應Super。
+.
+.SS 鍵盤命令
+.
+.TP
+.B Mod4+Tab
+切換到下一個窗口。
+.
+.TP
+.B Mod4+Delete
+退出gwm。如果通過startgwm啓動gwm的話，應當使用pkill -9 startgwm退出。
+.
+.TP
+.B Mod4+c
+關閉窗口。
+.
+.TP
+.B Mod1+Mod4+t
+打開lxterminal(1)模擬終端。
+.
+.TP
+.B Mod1+Mod4+w
+通過執行"xwininfo -wm > log"命令來取得窗口管理器提示信息。
+.
+.TP
+.B Mod1+Mod4+p
+打開dmenu_run。可用它來運行其他程序。
+.
+.SS 配置
+.
+.TP
+目前只能通過修改源代碼來修改配置。
 .
 .SH 漏洞報告
 .
