@@ -20,6 +20,7 @@ KEYBINDS keybinds_list[]=
     {WM_KEY,     XK_Delete, quit_wm,       {0}},
     {WM_KEY,     XK_c,      close_win,     {0}},
     {WM_KEY,     XK_f,      change_layout, {.layout=full}},
+    {WM_KEY,     XK_g,      change_layout, {.layout=grid}},
 };
 
 int main(int argc, char *argv[])
@@ -83,7 +84,7 @@ void init_wm_struct(WM *wm)
 	wm->mod_map=XGetModifierMapping(wm->display);
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->root_gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
-    wm->layout=full;
+    wm->layout=grid;
 }
 
 void create_clients(WM *wm)
@@ -94,6 +95,7 @@ void create_clients(WM *wm)
     /* 頭插法生成帶表頭結點的雙向循環鏈表 */
     wm->focus_client=wm->clients=Malloc(sizeof(CLIENT));
     wm->clients->win=wm->root_win;
+    wm->n=0;
     wm->clients->prev=wm->clients->next=wm->clients;
     if(XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
     {
@@ -142,6 +144,19 @@ void add_client(WM *wm, Window win)
     wm->clients->next=c;
     c->next->prev=c;
     wm->focus_client=c;
+    wm->n++;
+}
+
+void update_layout(WM *wm)
+{
+    switch(wm->layout)
+    {
+        case full: set_full_layout(wm); break;
+        case grid: set_grid_layout(wm); break;
+        default: break;
+    }
+    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
+        XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
 }
 
 void set_full_layout(WM *wm)
@@ -154,15 +169,26 @@ void set_full_layout(WM *wm)
     }
 }
 
-void update_layout(WM *wm)
+void set_grid_layout(WM *wm)
 {
-    switch(wm->layout)
+    int i=0, rows, cols, w, h;
+    /* 行、列数量尽量相近，以保证窗口比例基本不变 */
+    for(cols=1; cols<=wm->n; cols++)
+        if(cols*cols >= wm->n)
+            break;
+    rows=(cols-1)*cols>=wm->n? cols-1 : cols;
+    w=wm->screen_width/cols;
+    h=wm->screen_height/rows;
+    i=wm->n-1;
+    for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        case full: set_full_layout(wm); break;
-        default: break;
+        c->x=(i%cols)*w;
+        c->y=(i/cols)*h;
+        /* 下邊和右邊的窗口佔用剩餘空間 */
+        c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
+        c->h=i<cols*(rows-1) ? h : h+(wm->screen_height-h*rows);
+        i--;
     }
-    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
-        XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
 }
 
 void grab_keys(WM *wm)
@@ -256,6 +282,7 @@ void del_client(WM *wm, Window win)
     CLIENT *c=win_to_client(wm, win);
     if(c)
     {
+        wm->n--;
         c->prev->next=c->next;
         c->next->prev=c->prev;
         if(c == wm->focus_client)
