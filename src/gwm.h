@@ -28,7 +28,7 @@ typedef struct client_tag CLIENT;
 
 enum layout_tag
 {
-    full,
+    full, grid,
 };
 typedef enum layout_tag LAYOUT;
 
@@ -42,6 +42,7 @@ struct wm_tag
     Window root_win;
     GC root_gc;
     CLIENT *clients, *focus_client;
+    unsigned int n;
     LAYOUT layout;
 };
 typedef struct wm_tag WM;
@@ -75,8 +76,9 @@ void create_clients(WM *wm);
 void *Malloc(size_t size);
 int get_state_hint(WM *wm, Window w);
 void add_client(WM *wm, Window win);
-void set_full_layout(WM *wm);
 void update_layout(WM *wm);
+void set_full_layout(WM *wm);
+void set_grid_layout(WM *wm);
 void grab_keys(WM *wm);
 void handle_events(WM *wm);
 void handle_config_request(WM *wm, XEvent *e);
