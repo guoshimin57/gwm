@@ -18,3 +18,9 @@
 	* src/gwm.c：修改quit_wm和close_client的鍵綁定，並將close_client更名爲close_win。
 	* src/gwm.h：將close_client更名爲close_win。
 	* man/zh_HK/man1/gwm.1：爲手冊頁增加用法章節。
+
+2020年 05月 01日 星期五 17:12:46 CSTT	gsm <406643764@qq.com>
+	* 發布第0.2版。
+	* src/gwm.c：增加格子模式並將其設置爲默模式，具體是：修改keybinds_list變量和init_wm_struct、create_clients、add_client、update_layout、del_client函數，增加set_grid_layout函數。
+	* src/gwm.h：增加格子模式，具體是：增加layout_tag和wm_tag的成員。
+	* man/zh_HK/man1/gwm.1：爲手冊頁增加切換窗口布局模式的幫助信息。
