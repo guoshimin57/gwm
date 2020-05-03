@@ -17,23 +17,23 @@ package := gwm
 
 .PHONY : all install install-strip uninstall clean
 all :
-	@set -e ; \
-	for dir in $(subdirs) ; \
+	@set -e ;
+	@for dir in $(subdirs) ; \
 	do \
 		$(MAKE) -C $$dir all ; \
 	done ;
 	@echo "編譯成功！"
 install :
-	@set -e ; \
+	@set -e ;
 	@for dir in $(subdirs) ; \
-	do \
+  	do \
 		$(MAKE) -C $$dir install ; \
 	done ;
 	install -d $(prefix)/share/doc/$(package) ;
 	install -m 644 $(doc) $(prefix)/share/doc/$(package) ;
 	@echo "安裝成功！" ;
 install-strip :
-	@set -e ; \
+	@set -e ;
 	@for dir in $(subdirs) ; \
 	do \
 		$(MAKE) -C $$dir install-strip ; \
