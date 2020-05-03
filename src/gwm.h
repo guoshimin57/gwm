@@ -96,4 +96,5 @@ void exec(WM *wm, KB_FUNC_ARG arg);
 void next_win(WM *wm, KB_FUNC_ARG unused);
 void quit_wm(WM *wm, KB_FUNC_ARG unused);
 void close_win(WM *wm, KB_FUNC_ARG unused);
+int send_event(WM *wm, Atom protocol);
 void change_layout(WM *wm, KB_FUNC_ARG arg);
