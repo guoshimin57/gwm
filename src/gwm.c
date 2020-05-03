@@ -389,13 +389,44 @@ void close_win(WM *wm, KB_FUNC_ARG unused)
 {
     if(wm->focus_client->win != wm->root_win)
     {
-        XGrabServer(wm->display);
-        XKillClient(wm->display, wm->focus_client->win);
-        XUngrabServer(wm->display);
+        if(!send_event(wm, XInternAtom(wm->display, "WM_DELETE_WINDOW", False)))
+        {
+            XGrabServer(wm->display);
+            XKillClient(wm->display, wm->focus_client->win);
+            XUngrabServer(wm->display);
+        }
         del_client(wm, wm->focus_client->win);
         update_layout(wm);
         XSetInputFocus(wm->display, wm->focus_client->win, RevertToParent, CurrentTime);
     }
+}
+
+int send_event(WM *wm, Atom protocol)
+{
+	int i, n;
+	Atom *protocols;
+	XEvent event;
+
+	if(XGetWMProtocols(wm->display, wm->focus_client->win, &protocols, &n))
+    {
+        for(i=0; i<n; i++)
+        {
+            if(protocols[i] == protocol)
+                break;
+        }
+		XFree(protocols);
+	}
+	if(i < n)
+    {
+		event.type=ClientMessage;
+		event.xclient.window=wm->focus_client->win;
+		event.xclient.message_type=XInternAtom(wm->display, "WM_PROTOCOLS", False);
+		event.xclient.format=32;
+		event.xclient.data.l[0]=protocol;
+		event.xclient.data.l[1]=CurrentTime;
+		XSendEvent(wm->display, wm->focus_client->win, False, NoEventMask, &event);
+	}
+	return i<n ;
 }
 
 void change_layout(WM *wm, KB_FUNC_ARG arg)
