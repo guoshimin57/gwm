@@ -27,3 +27,6 @@
 
 第0.2.2版：
     * 解決Makefile語法錯誤的問題。
+
+第0.2.3版：
+    * 修正tools/startdwm的筆誤：把xrdb放到後臺執行；將dwm改爲gwm。
