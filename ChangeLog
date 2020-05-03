@@ -30,3 +30,9 @@
 	* src/gwm.c：增加send_event函數，修改close_win函數，用以修復關於關閉某些退出時本應該彈出確認對話框但實際上不彈出的缺陷。
 	* src/gwm.h：增加send_event函數聲明。
 	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
+
+2020年 05月 04日 星期一 01:07:35 CST	gsm <406643764@qq.com>
+	* 發布第0.2.2版。
+	* Makefile：刪除"@set -e ; \"中的"\"，解決由此造成的語法錯誤。
+	* man/zh_HK/man1/Makefile：刪除"cd -"，因爲沒有這個必要，而且"-"在這裏是沒有定義的。
+	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
