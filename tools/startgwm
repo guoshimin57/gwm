@@ -1,9 +1,9 @@
 #!/bin/sh
 
-xrdb -merge ~/.Xresources
+xrdb -merge ~/.Xresources &
 xsetroot -solid black &
 
 while true
 do
-    dwm
+    gwm
 done
