@@ -23,6 +23,5 @@ install-strip:
 uninstall :
 	cd $(prefix)/share/man/zh_HK/man1 ;
 	rm -f $(objs) ;
-	cd - ;
 clean:
 	rm -f $(objs) *~
