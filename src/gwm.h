@@ -28,7 +28,7 @@ typedef struct client_tag CLIENT;
 
 enum layout_tag
 {
-    full, grid,
+    full, grid, stack,
 };
 typedef enum layout_tag LAYOUT;
 
@@ -47,10 +47,19 @@ struct wm_tag
 };
 typedef struct wm_tag WM;
 
+enum direction_tag /* 窗口、區域操作方向 */
+{
+    up, down, left, right, /* 窗口移動方向 */
+    left_left, left_right, right_left, right_right, /* 左右邊界方位_移動方向 */
+    up_up, up_down, down_up, down_down, /* 上下邊界方位_移動方向 */
+};
+typedef enum direction_tag DIRECTION;
+
 union keybinds_func_arg_tag
 {
-    LAYOUT layout;
     char *const *cmd;
+    DIRECTION direction;
+    LAYOUT layout;
 };
 typedef union keybinds_func_arg_tag KB_FUNC_ARG;
 
@@ -67,6 +76,9 @@ typedef struct keybinds_tag KEYBINDS;
 #define CMD_KEY (Mod4Mask|Mod1Mask)
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
+#define STACK_INDENT 32
+#define MOVE_INC 32
+#define RESIZE_INC 32
 
 void init_wm(WM *wm);
 int my_x_error_handler(Display *display, XErrorEvent *e);
@@ -79,6 +91,7 @@ void add_client(WM *wm, Window win);
 void update_layout(WM *wm);
 void set_full_layout(WM *wm);
 void set_grid_layout(WM *wm);
+void set_stack_layout(WM *wm);
 void grab_keys(WM *wm);
 void handle_events(WM *wm);
 void handle_config_request(WM *wm, XEvent *e);
@@ -94,6 +107,8 @@ void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
 void exec(WM *wm, KB_FUNC_ARG arg);
 void next_win(WM *wm, KB_FUNC_ARG unused);
+void key_move_win(WM *wm, KB_FUNC_ARG arg);
+void key_resize_win(WM *wm, KB_FUNC_ARG arg);
 void quit_wm(WM *wm, KB_FUNC_ARG unused);
 void close_win(WM *wm, KB_FUNC_ARG unused);
 int send_event(WM *wm, Atom protocol);
