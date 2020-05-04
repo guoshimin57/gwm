@@ -13,14 +13,23 @@
 
 KEYBINDS keybinds_list[]=
 {
-    {CMD_KEY,    XK_t,      exec,          SH_CMD("lxterminal")},
-    {CMD_KEY,    XK_w,      exec,          SH_CMD("xwininfo -wm > log")},
-    {CMD_KEY,    XK_p,      exec,          SH_CMD("dmenu_run")},
-    {WM_KEY,     XK_Tab,    next_win,      {0}},
-    {WM_KEY,     XK_Delete, quit_wm,       {0}},
-    {WM_KEY,     XK_c,      close_win,     {0}},
-    {WM_KEY,     XK_f,      change_layout, {.layout=full}},
-    {WM_KEY,     XK_g,      change_layout, {.layout=grid}},
+    {CMD_KEY,    XK_t,          exec,              SH_CMD("lxterminal")},
+    {CMD_KEY,    XK_w,          exec,              SH_CMD("xwininfo -wm >log")},
+    {CMD_KEY,    XK_p,          exec,              SH_CMD("dmenu_run")},
+    {WM_KEY,     XK_Tab,        next_win,          {0}},
+    {WM_KEY,     XK_Up,         key_move_win,      {.direction=up}},
+    {WM_KEY,     XK_Down,       key_move_win,      {.direction=down}},
+    {WM_KEY,     XK_Left,       key_move_win,      {.direction=left}},
+    {WM_KEY,     XK_Right,      key_move_win,      {.direction=right}},
+    {WM_KEY,     XK_minus,      key_resize_win,    {.direction=right_left}},
+    {WM_KEY,     XK_equal,      key_resize_win,    {.direction=right_right}},
+    {WM_KEY,     XK_semicolon,  key_resize_win,    {.direction=down_up}},
+    {WM_KEY,     XK_quoteright, key_resize_win,    {.direction=down_down}},
+    {WM_KEY,     XK_Delete,     quit_wm,           {0}},
+    {WM_KEY,     XK_c,          close_win,         {0}},
+    {WM_KEY,     XK_f,          change_layout,     {.layout=full}},
+    {WM_KEY,     XK_g,          change_layout,     {.layout=grid}},
+    {WM_KEY,     XK_s,          change_layout,     {.layout=stack}},
 };
 
 int main(int argc, char *argv[])
@@ -153,6 +162,7 @@ void update_layout(WM *wm)
     {
         case full: set_full_layout(wm); break;
         case grid: set_grid_layout(wm); break;
+        case stack: set_stack_layout(wm); break;
         default: break;
     }
     for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -188,6 +198,17 @@ void set_grid_layout(WM *wm)
         c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
         c->h=i<cols*(rows-1) ? h : h+(wm->screen_height-h*rows);
         i--;
+    }
+}
+
+void set_stack_layout(WM *wm)
+{
+    unsigned int i=0;
+    for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+    {
+        c->w=wm->screen_width-(wm->n-1)*STACK_INDENT;
+        c->h=wm->screen_height-(wm->n-1)*STACK_INDENT;
+        c->x=c->y=i++*STACK_INDENT;
     }
 }
 
@@ -375,7 +396,41 @@ void next_win(WM *wm, KB_FUNC_ARG unused)
     XSetInputFocus(wm->display, f->win, RevertToParent, CurrentTime);
     XRaiseWindow(wm->display, f->win);
 }
-    
+
+void key_move_win(WM *wm, KB_FUNC_ARG arg)
+{
+    if(wm->layout == stack)
+    {
+        CLIENT *c=wm->focus_client;
+        DIRECTION d=arg.direction;
+        if(d==up && c->y+c->h>MOVE_INC)
+            XMoveWindow(wm->display, c->win, c->x, c->y-=MOVE_INC);
+        else if(d==down && wm->screen_height-c->y>MOVE_INC)
+            XMoveWindow(wm->display, c->win, c->x, c->y+=MOVE_INC);
+        else if(d==left && c->x+c->w>MOVE_INC)
+            XMoveWindow(wm->display, c->win, c->x-=MOVE_INC, c->y);
+        else if(d==right && wm->screen_width-c->x>MOVE_INC)
+            XMoveWindow(wm->display, c->win, c->x+=MOVE_INC, c->y);
+    }
+}
+
+void key_resize_win(WM *wm, KB_FUNC_ARG arg)
+{
+    if(wm->layout == stack)
+    {
+        CLIENT *c=wm->focus_client;
+        DIRECTION d=arg.direction;
+        if(d==down_up && c->h>RESIZE_INC)
+            XResizeWindow(wm->display, c->win, c->w, c->h-=RESIZE_INC);
+        else if(d==down_down && wm->screen_height-c->y-c->h>RESIZE_INC)
+            XResizeWindow(wm->display, c->win, c->w, c->h+=RESIZE_INC);
+        else if(d==right_left && c->w>RESIZE_INC)
+            XResizeWindow(wm->display, c->win, c->w-=RESIZE_INC, c->h);
+        else if(d==right_right && wm->screen_width-c->x-c->w>RESIZE_INC)
+            XResizeWindow(wm->display, c->win, c->w+=RESIZE_INC, c->h);
+    }
+}
+
 void quit_wm(WM *wm, KB_FUNC_ARG unused)
 {
     XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
