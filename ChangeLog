@@ -41,3 +41,10 @@
 	* 發布第0.2.3版。
 	* tools/startgwm：把xrdb放到後臺執行；將dwm改爲gwm，這是筆誤。
 	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
+
+2020年 05月 04日 星期一 21:44:57 CST	gsm <406643764@qq.com>
+	* 發布第0.3版，主要實現了堆疊模式。
+	* src/gwm.c：增加set_stack_layout、key_move_win、key_resize_win函數，修改update_layout函數和keybinds_list變量。
+	* src/gwm.h：增加DIRECTION聯合的定義，KB_FUNC_ARG增加DIRECTION成員，增加STACK_INDENT、MOVE_INC、RESIZE_INC宏定義，增加set_stack_layout、key_move_win、key_resize_win函數聲明。
+	* man/zh_HK/man1/gwm.1：爲手冊頁增加堆疊模式的相關幫助信息。
+	* tools/startgwm：修改xrdb命令行，即在執行xrdb命令之前先判斷~/.Xresources是否存在，以免出現錯誤提示。
