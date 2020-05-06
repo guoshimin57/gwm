@@ -9,37 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-2020年 04月 24日 星期五 00:11:53 CST	gsm <406643764@qq.com>
-	* 第0.1版。
-	* 所有文件和目錄均爲新建。
-
-2020年 04月 24日 星期五 14:30:16 CST	gsm <406643764@qq.com>
-	* 發布第0.1.1版。
-	* src/gwm.c：修改quit_wm和close_client的鍵綁定，並將close_client更名爲close_win。
-	* src/gwm.h：將close_client更名爲close_win。
-	* man/zh_HK/man1/gwm.1：爲手冊頁增加用法章節。
-
-2020年 05月 01日 星期五 17:12:46 CSTT	gsm <406643764@qq.com>
-	* 發布第0.2版。
-	* src/gwm.c：增加格子模式並將其設置爲默模式，具體是：修改keybinds_list變量和init_wm_struct、create_clients、add_client、update_layout、del_client函數，增加set_grid_layout函數。
-	* src/gwm.h：增加格子模式，具體是：增加layout_tag和wm_tag的成員。
-	* man/zh_HK/man1/gwm.1：爲手冊頁增加切換窗口布局模式的幫助信息。
-
-2020年 05月 03日 星期日 10:53:32 CST	gsm <406643764@qq.com>
-	* 發布第0.2.1版。
-	* src/gwm.c：增加send_event函數，修改close_win函數，用以修復關於關閉某些退出時本應該彈出確認對話框但實際上不彈出的缺陷。
-	* src/gwm.h：增加send_event函數聲明。
-	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
-
-2020年 05月 04日 星期一 01:07:35 CST	gsm <406643764@qq.com>
-	* 發布第0.2.2版。
-	* Makefile：刪除"@set -e ; \"中的"\"，解決由此造成的語法錯誤。
-	* man/zh_HK/man1/Makefile：刪除"cd -"，因爲沒有這個必要，而且"-"在這裏是沒有定義的。
-	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
-
-2020年 05月 04日 星期一 01:51:14 CST	gsm <406643764@qq.com>
-	* 發布第0.2.3版。
-	* tools/startgwm：把xrdb放到後臺執行；將dwm改爲gwm，這是筆誤。
+2020年 05月 06日 星期三 17:59:31 CST	gsm <406643764@qq.com>
+	* 發布第0.3.1版。
+	* src/gwm.c：修改next_win函數，解決窗口切換不正確的問題。
 	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
 
 2020年 05月 04日 星期一 21:44:57 CST	gsm <406643764@qq.com>
@@ -48,3 +20,36 @@
 	* src/gwm.h：增加DIRECTION聯合的定義，KB_FUNC_ARG增加DIRECTION成員，增加STACK_INDENT、MOVE_INC、RESIZE_INC宏定義，增加set_stack_layout、key_move_win、key_resize_win函數聲明。
 	* man/zh_HK/man1/gwm.1：爲手冊頁增加堆疊模式的相關幫助信息。
 	* tools/startgwm：修改xrdb命令行，即在執行xrdb命令之前先判斷~/.Xresources是否存在，以免出現錯誤提示。
+
+2020年 05月 04日 星期一 01:51:14 CST	gsm <406643764@qq.com>
+	* 發布第0.2.3版。
+	* tools/startgwm：把xrdb放到後臺執行；將dwm改爲gwm，這是筆誤。
+	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
+
+2020年 05月 04日 星期一 01:07:35 CST	gsm <406643764@qq.com>
+	* 發布第0.2.2版。
+	* Makefile：刪除"@set -e ; \"中的"\"，解決由此造成的語法錯誤。
+	* man/zh_HK/man1/Makefile：刪除"cd -"，因爲沒有這個必要，而且"-"在這裏是沒有定義的。
+	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
+
+2020年 05月 03日 星期日 10:53:32 CST	gsm <406643764@qq.com>
+	* 發布第0.2.1版。
+	* src/gwm.c：增加send_event函數，修改close_win函數，用以修復關於關閉某些退出時本應該彈出確認對話框但實際上不彈出的缺陷。
+	* src/gwm.h：增加send_event函數聲明。
+	* man/zh_HK/man1/gwm.1：爲手冊頁修改版本號。
+
+2020年 05月 01日 星期五 17:12:46 CSTT	gsm <406643764@qq.com>
+	* 發布第0.2版。
+	* src/gwm.c：增加格子模式並將其設置爲默模式，具體是：修改keybinds_list變量和init_wm_struct、create_clients、add_client、update_layout、del_client函數，增加set_grid_layout函數。
+	* src/gwm.h：增加格子模式，具體是：增加layout_tag和wm_tag的成員。
+	* man/zh_HK/man1/gwm.1：爲手冊頁增加切換窗口布局模式的幫助信息。
+
+2020年 04月 24日 星期五 14:30:16 CST	gsm <406643764@qq.com>
+	* 發布第0.1.1版。
+	* src/gwm.c：修改quit_wm和close_client的鍵綁定，並將close_client更名爲close_win。
+	* src/gwm.h：將close_client更名爲close_win。
+	* man/zh_HK/man1/gwm.1：爲手冊頁增加用法章節。
+
+2020年 04月 24日 星期五 00:11:53 CST	gsm <406643764@qq.com>
+	* 第0.1版。
+	* 所有文件和目錄均爲新建。
