@@ -391,10 +391,13 @@ void exec(WM *wm, KB_FUNC_ARG arg)
 
 void next_win(WM *wm, KB_FUNC_ARG unused)
 {
-    CLIENT *f=wm->focus_client;
-    wm->focus_client=f->next==wm->clients ? wm->clients->next :f->next;
-    XSetInputFocus(wm->display, f->win, RevertToParent, CurrentTime);
-    XRaiseWindow(wm->display, f->win);
+    if(wm->n > 1)
+    {
+        CLIENT *c=wm->focus_client;
+        c=wm->focus_client=(c->next == wm->clients) ? wm->clients->next : c->next;
+        XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
+        XRaiseWindow(wm->display, c->win);
+    }
 }
 
 void key_move_win(WM *wm, KB_FUNC_ARG arg)
