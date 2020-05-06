@@ -13,23 +13,27 @@
 
 KEYBINDS keybinds_list[]=
 {
-    {CMD_KEY,    XK_t,          exec,              SH_CMD("lxterminal")},
-    {CMD_KEY,    XK_w,          exec,              SH_CMD("xwininfo -wm >log")},
-    {CMD_KEY,    XK_p,          exec,              SH_CMD("dmenu_run")},
-    {WM_KEY,     XK_Tab,        next_win,          {0}},
-    {WM_KEY,     XK_Up,         key_move_win,      {.direction=up}},
-    {WM_KEY,     XK_Down,       key_move_win,      {.direction=down}},
-    {WM_KEY,     XK_Left,       key_move_win,      {.direction=left}},
-    {WM_KEY,     XK_Right,      key_move_win,      {.direction=right}},
-    {WM_KEY,     XK_minus,      key_resize_win,    {.direction=right_left}},
-    {WM_KEY,     XK_equal,      key_resize_win,    {.direction=right_right}},
-    {WM_KEY,     XK_semicolon,  key_resize_win,    {.direction=down_up}},
-    {WM_KEY,     XK_quoteright, key_resize_win,    {.direction=down_down}},
-    {WM_KEY,     XK_Delete,     quit_wm,           {0}},
-    {WM_KEY,     XK_c,          close_win,         {0}},
-    {WM_KEY,     XK_f,          change_layout,     {.layout=full}},
-    {WM_KEY,     XK_g,          change_layout,     {.layout=grid}},
-    {WM_KEY,     XK_s,          change_layout,     {.layout=stack}},
+    {CMD_KEY,    XK_t,            exec,            SH_CMD("lxterminal")},
+    {CMD_KEY,    XK_w,            exec,            SH_CMD("xwininfo -wm >log")},
+    {CMD_KEY,    XK_p,            exec,            SH_CMD("dmenu_run")},
+    {WM_KEY,     XK_Tab,          next_win,        {0}},
+    {WM_KEY,     XK_Up,           key_move_win,    {.direction=up}},
+    {WM_KEY,     XK_Down,         key_move_win,    {.direction=down}},
+    {WM_KEY,     XK_Left,         key_move_win,    {.direction=left}},
+    {WM_KEY,     XK_Right,        key_move_win,    {.direction=right}},
+    {WM_KEY,     XK_bracketleft,  key_resize_win,  {.direction=up2up}},
+    {WM_KEY,     XK_bracketright, key_resize_win,  {.direction=up2down}},
+    {WM_KEY,     XK_semicolon,    key_resize_win,  {.direction=down2up}},
+    {WM_KEY,     XK_quoteright,   key_resize_win,  {.direction=down2down}},
+    {WM_KEY,     XK_9,            key_resize_win,  {.direction=left2left}},
+    {WM_KEY,     XK_0,            key_resize_win,  {.direction=left2right}},
+    {WM_KEY,     XK_minus,        key_resize_win,  {.direction=right2left}},
+    {WM_KEY,     XK_equal,        key_resize_win,  {.direction=right2right}},
+    {WM_KEY,     XK_Delete,       quit_wm,         {0}},
+    {WM_KEY,     XK_c,            close_win,       {0}},
+    {WM_KEY,     XK_f,            change_layout,   {.layout=full}},
+    {WM_KEY,     XK_g,            change_layout,   {.layout=grid}},
+    {WM_KEY,     XK_s,            change_layout,   {.layout=stack}},
 };
 
 int main(int argc, char *argv[])
@@ -421,16 +425,27 @@ void key_resize_win(WM *wm, KB_FUNC_ARG arg)
 {
     if(wm->layout == stack)
     {
+        Display *disp=wm->display;
         CLIENT *c=wm->focus_client;
         DIRECTION d=arg.direction;
-        if(d==down_up && c->h>RESIZE_INC)
-            XResizeWindow(wm->display, c->win, c->w, c->h-=RESIZE_INC);
-        else if(d==down_down && wm->screen_height-c->y-c->h>RESIZE_INC)
-            XResizeWindow(wm->display, c->win, c->w, c->h+=RESIZE_INC);
-        else if(d==right_left && c->w>RESIZE_INC)
-            XResizeWindow(wm->display, c->win, c->w-=RESIZE_INC, c->h);
-        else if(d==right_right && wm->screen_width-c->x-c->w>RESIZE_INC)
-            XResizeWindow(wm->display, c->win, c->w+=RESIZE_INC, c->h);
+        unsigned int s=RESIZE_INC;
+
+        if(d==up2up && c->y>s)
+            XMoveResizeWindow(disp, c->win, c->x, c->y-=s, c->w, c->h+=s);
+        else if(d==up2down && c->h>s)
+            XMoveResizeWindow(disp, c->win, c->x, c->y+=s, c->w, c->h-=s);
+        else if(d==down2up && c->h>s)
+            XResizeWindow(disp, c->win, c->w, c->h-=s);
+        else if(d==down2down && wm->screen_height-c->y-c->h>s)
+            XResizeWindow(disp, c->win, c->w, c->h+=s);
+        else if(d==left2left && c->x>s)
+            XMoveResizeWindow(disp, c->win, c->x-=s, c->y, c->w+=s, c->h);
+        else if(d==left2right && c->w>s)
+            XMoveResizeWindow(disp, c->win, c->x+=s, c->y, c->w-=s, c->h);
+        else if(d==right2left && c->w>s)
+            XResizeWindow(disp, c->win, c->w-=s, c->h);
+        else if(d==right2right && wm->screen_width-c->x-c->w>s)
+            XResizeWindow(disp, c->win, c->w+=s, c->h);
     }
 }
 
