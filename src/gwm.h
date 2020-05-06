@@ -50,8 +50,8 @@ typedef struct wm_tag WM;
 enum direction_tag /* 窗口、區域操作方向 */
 {
     up, down, left, right, /* 窗口移動方向 */
-    left_left, left_right, right_left, right_right, /* 左右邊界方位_移動方向 */
-    up_up, up_down, down_up, down_down, /* 上下邊界方位_移動方向 */
+    left2left, left2right, right2left, right2right, /* 左右邊界移動方向 */
+    up2up, up2down, down2up, down2down, /* 上下邊界移動方向 */
 };
 typedef enum direction_tag DIRECTION;
 
