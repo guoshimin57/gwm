@@ -9,6 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2020年 05月 07日 星期四 21:34:30 CST	gsm <406643764@qq.com>
+	* 發布第0.4版，主要實現了動態管理窗口功能。
+	* src/gwm.c：修改create_clients、add_client、del_client、set_grid_layout、set_stack_layout、next_win、key_move_win、key_resize_win函數以及keybinds_list變量，增加prepare_for_move_resize、toggle_float函數，實現了動態管理窗口功能。調整keybinds_list變量賦值次序，並調整相關函數的次序。
+	* src/gwm.h：CLIENT增加is_float成員，WM增加n_nonfloat成員，增加prepare_for_move_resize、toggle_float函數聲明。
+	* man/zh_HK/man1/gwm.1：增加懸浮模式的幫助信息，以及修正與此相關幫助信息，調整幫助信息的次序。
+
 2020年 05月 06日 星期三 22:12:59 CST	gsm <406643764@qq.com>
 	* 發布第0.3.2版。
 	* src/gwm.c：修改key_resize_win函數，增加窗口上、左邊界調整功能；修改DIRECTION成員的命名規則，使之更顧名思義。
