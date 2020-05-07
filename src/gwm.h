@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <locale.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
@@ -22,6 +23,7 @@ struct client_tag
     Window win;
     int x, y;
     unsigned int w, h;
+    bool is_float;
     struct client_tag *prev, *next;
 };
 typedef struct client_tag CLIENT;
@@ -42,7 +44,7 @@ struct wm_tag
     Window root_win;
     GC root_gc;
     CLIENT *clients, *focus_client;
-    unsigned int n;
+    unsigned int n, n_nonfloat; /* 依次爲clients總數量、非懸浮的clients的數量 */
     LAYOUT layout;
 };
 typedef struct wm_tag WM;
@@ -106,10 +108,12 @@ unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
 void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
 void exec(WM *wm, KB_FUNC_ARG arg);
-void next_win(WM *wm, KB_FUNC_ARG unused);
 void key_move_win(WM *wm, KB_FUNC_ARG arg);
+void prepare_for_move_resize(WM *wm);
 void key_resize_win(WM *wm, KB_FUNC_ARG arg);
 void quit_wm(WM *wm, KB_FUNC_ARG unused);
 void close_win(WM *wm, KB_FUNC_ARG unused);
 int send_event(WM *wm, Atom protocol);
+void next_win(WM *wm, KB_FUNC_ARG unused);
+void toggle_float(WM *wm, KB_FUNC_ARG unused);
 void change_layout(WM *wm, KB_FUNC_ARG arg);
