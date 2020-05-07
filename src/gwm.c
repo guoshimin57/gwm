@@ -16,7 +16,6 @@ KEYBINDS keybinds_list[]=
     {CMD_KEY,    XK_t,            exec,            SH_CMD("lxterminal")},
     {CMD_KEY,    XK_w,            exec,            SH_CMD("xwininfo -wm >log")},
     {CMD_KEY,    XK_p,            exec,            SH_CMD("dmenu_run")},
-    {WM_KEY,     XK_Tab,          next_win,        {0}},
     {WM_KEY,     XK_Up,           key_move_win,    {.direction=up}},
     {WM_KEY,     XK_Down,         key_move_win,    {.direction=down}},
     {WM_KEY,     XK_Left,         key_move_win,    {.direction=left}},
@@ -31,6 +30,8 @@ KEYBINDS keybinds_list[]=
     {WM_KEY,     XK_equal,        key_resize_win,  {.direction=right2right}},
     {WM_KEY,     XK_Delete,       quit_wm,         {0}},
     {WM_KEY,     XK_c,            close_win,       {0}},
+    {WM_KEY,     XK_Tab,          next_win,        {0}},
+    {WM_KEY,     XK_backslash,    toggle_float,    {0}},
     {WM_KEY,     XK_f,            change_layout,   {.layout=full}},
     {WM_KEY,     XK_g,            change_layout,   {.layout=grid}},
     {WM_KEY,     XK_s,            change_layout,   {.layout=stack}},
@@ -50,7 +51,7 @@ void init_wm(WM *wm)
 		fprintf(stderr, "warning: no locale support\n");
 	if(!(wm->display=XOpenDisplay(NULL)))
     {
-		fprintf(stderr, "ewm: cannot open display\n");
+		fprintf(stderr, "gwm: cannot open display\n");
         exit(EXIT_FAILURE);
     }
     XSetErrorHandler(my_x_error_handler);
@@ -108,7 +109,7 @@ void create_clients(WM *wm)
     /* 頭插法生成帶表頭結點的雙向循環鏈表 */
     wm->focus_client=wm->clients=Malloc(sizeof(CLIENT));
     wm->clients->win=wm->root_win;
-    wm->n=0;
+    wm->n=wm->n_nonfloat=0;
     wm->clients->prev=wm->clients->next=wm->clients;
     if(XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
     {
@@ -157,7 +158,8 @@ void add_client(WM *wm, Window win)
     wm->clients->next=c;
     c->next->prev=c;
     wm->focus_client=c;
-    wm->n++;
+    wm->n++, wm->n_nonfloat++;
+    c->is_float=false;
 }
 
 void update_layout(WM *wm)
@@ -177,9 +179,12 @@ void set_full_layout(WM *wm)
 {
     for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        c->w=wm->screen_width;
-        c->h=wm->screen_height;
-        c->x=c->y=0;
+        if(!c->is_float)
+        {
+            c->w=wm->screen_width;
+            c->h=wm->screen_height;
+            c->x=c->y=0;
+        }
     }
 }
 
@@ -187,21 +192,24 @@ void set_grid_layout(WM *wm)
 {
     int i=0, rows, cols, w, h;
     /* 行、列数量尽量相近，以保证窗口比例基本不变 */
-    for(cols=1; cols<=wm->n; cols++)
-        if(cols*cols >= wm->n)
+    for(cols=1; cols<=wm->n_nonfloat; cols++)
+        if(cols*cols >= wm->n_nonfloat)
             break;
-    rows=(cols-1)*cols>=wm->n? cols-1 : cols;
+    rows=(cols-1)*cols>=wm->n_nonfloat? cols-1 : cols;
     w=wm->screen_width/cols;
     h=wm->screen_height/rows;
-    i=wm->n-1;
+    i=wm->n_nonfloat-1;
     for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        c->x=(i%cols)*w;
-        c->y=(i/cols)*h;
-        /* 下邊和右邊的窗口佔用剩餘空間 */
-        c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
-        c->h=i<cols*(rows-1) ? h : h+(wm->screen_height-h*rows);
-        i--;
+        if(!c->is_float)
+        {
+            c->x=(i%cols)*w;
+            c->y=(i/cols)*h;
+            /* 下邊和右邊的窗口佔用剩餘空間 */
+            c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
+            c->h=i<cols*(rows-1) ? h : h+(wm->screen_height-h*rows);
+            i--;
+        }
     }
 }
 
@@ -210,9 +218,12 @@ void set_stack_layout(WM *wm)
     unsigned int i=0;
     for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        c->w=wm->screen_width-(wm->n-1)*STACK_INDENT;
-        c->h=wm->screen_height-(wm->n-1)*STACK_INDENT;
-        c->x=c->y=i++*STACK_INDENT;
+        if(!c->is_float)
+        {
+            c->w=wm->screen_width-(wm->n_nonfloat-1)*STACK_INDENT;
+            c->h=wm->screen_height-(wm->n_nonfloat-1)*STACK_INDENT;
+            c->x=c->y=i++*STACK_INDENT;
+        }
     }
 }
 
@@ -308,6 +319,8 @@ void del_client(WM *wm, Window win)
     if(c)
     {
         wm->n--;
+        if(!c->is_float)
+            wm->n_nonfloat--;
         c->prev->next=c->next;
         c->next->prev=c->prev;
         if(c == wm->focus_client)
@@ -393,60 +406,58 @@ void exec(WM *wm, KB_FUNC_ARG arg)
     }
 }
 
-void next_win(WM *wm, KB_FUNC_ARG unused)
-{
-    if(wm->n > 1)
-    {
-        CLIENT *c=wm->focus_client;
-        c=wm->focus_client=(c->next == wm->clients) ? wm->clients->next : c->next;
-        XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
-        XRaiseWindow(wm->display, c->win);
-    }
-}
-
 void key_move_win(WM *wm, KB_FUNC_ARG arg)
 {
-    if(wm->layout == stack)
+    CLIENT *c=wm->focus_client;
+    DIRECTION d=arg.direction;
+
+    prepare_for_move_resize(wm);
+    XRaiseWindow(wm->display, c->win);
+    if(d==up && c->y+c->h>MOVE_INC)
+        XMoveWindow(wm->display, c->win, c->x, c->y-=MOVE_INC);
+    else if(d==down && wm->screen_height-c->y>MOVE_INC)
+        XMoveWindow(wm->display, c->win, c->x, c->y+=MOVE_INC);
+    else if(d==left && c->x+c->w>MOVE_INC)
+        XMoveWindow(wm->display, c->win, c->x-=MOVE_INC, c->y);
+    else if(d==right && wm->screen_width-c->x>MOVE_INC)
+        XMoveWindow(wm->display, c->win, c->x+=MOVE_INC, c->y);
+}
+
+void prepare_for_move_resize(WM *wm)
+{
+    CLIENT *c=wm->focus_client;
+    if(!c->is_float && (wm->layout==full || wm->layout==grid)) 
     {
-        CLIENT *c=wm->focus_client;
-        DIRECTION d=arg.direction;
-        if(d==up && c->y+c->h>MOVE_INC)
-            XMoveWindow(wm->display, c->win, c->x, c->y-=MOVE_INC);
-        else if(d==down && wm->screen_height-c->y>MOVE_INC)
-            XMoveWindow(wm->display, c->win, c->x, c->y+=MOVE_INC);
-        else if(d==left && c->x+c->w>MOVE_INC)
-            XMoveWindow(wm->display, c->win, c->x-=MOVE_INC, c->y);
-        else if(d==right && wm->screen_width-c->x>MOVE_INC)
-            XMoveWindow(wm->display, c->win, c->x+=MOVE_INC, c->y);
+        c->is_float=true;
+        wm->n_nonfloat--;
+        update_layout(wm);
     }
 }
 
 void key_resize_win(WM *wm, KB_FUNC_ARG arg)
 {
-    if(wm->layout == stack)
-    {
-        Display *disp=wm->display;
-        CLIENT *c=wm->focus_client;
-        DIRECTION d=arg.direction;
-        unsigned int s=RESIZE_INC;
+    Display *disp=wm->display;
+    CLIENT *c=wm->focus_client;
+    DIRECTION d=arg.direction;
+    unsigned int s=RESIZE_INC;
 
-        if(d==up2up && c->y>s)
-            XMoveResizeWindow(disp, c->win, c->x, c->y-=s, c->w, c->h+=s);
-        else if(d==up2down && c->h>s)
-            XMoveResizeWindow(disp, c->win, c->x, c->y+=s, c->w, c->h-=s);
-        else if(d==down2up && c->h>s)
-            XResizeWindow(disp, c->win, c->w, c->h-=s);
-        else if(d==down2down && wm->screen_height-c->y-c->h>s)
-            XResizeWindow(disp, c->win, c->w, c->h+=s);
-        else if(d==left2left && c->x>s)
-            XMoveResizeWindow(disp, c->win, c->x-=s, c->y, c->w+=s, c->h);
-        else if(d==left2right && c->w>s)
-            XMoveResizeWindow(disp, c->win, c->x+=s, c->y, c->w-=s, c->h);
-        else if(d==right2left && c->w>s)
-            XResizeWindow(disp, c->win, c->w-=s, c->h);
-        else if(d==right2right && wm->screen_width-c->x-c->w>s)
-            XResizeWindow(disp, c->win, c->w+=s, c->h);
-    }
+    prepare_for_move_resize(wm);
+    if(d==up2up && c->y>s)
+        XMoveResizeWindow(disp, c->win, c->x, c->y-=s, c->w, c->h+=s);
+    else if(d==up2down && c->h>s)
+        XMoveResizeWindow(disp, c->win, c->x, c->y+=s, c->w, c->h-=s);
+    else if(d==down2up && c->h>s)
+        XResizeWindow(disp, c->win, c->w, c->h-=s);
+    else if(d==down2down && wm->screen_height-c->y-c->h>s)
+        XResizeWindow(disp, c->win, c->w, c->h+=s);
+    else if(d==left2left && c->x>s)
+        XMoveResizeWindow(disp, c->win, c->x-=s, c->y, c->w+=s, c->h);
+    else if(d==left2right && c->w>s)
+        XMoveResizeWindow(disp, c->win, c->x+=s, c->y, c->w-=s, c->h);
+    else if(d==right2left && c->w>s)
+        XResizeWindow(disp, c->win, c->w-=s, c->h);
+    else if(d==right2right && wm->screen_width-c->x-c->w>s)
+        XResizeWindow(disp, c->win, c->w+=s, c->h);
 }
 
 void quit_wm(WM *wm, KB_FUNC_ARG unused)
@@ -500,6 +511,41 @@ int send_event(WM *wm, Atom protocol)
 		XSendEvent(wm->display, wm->focus_client->win, False, NoEventMask, &event);
 	}
 	return i<n ;
+}
+
+void next_win(WM *wm, KB_FUNC_ARG unused)
+{
+    if(wm->n > 1)
+    {
+        CLIENT *c=wm->focus_client;
+        c=wm->focus_client=(c->next == wm->clients) ? wm->clients->next : c->next;
+        XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
+        XRaiseWindow(wm->display, c->win);
+        /* 僅提升被遮擋的懸浮窗口似乎是一個好主意，但實際上計算遮擋關系相當
+         * 復雜，而且一般情況下懸浮窗口數量較少，還不如將所有懸浮窗口提升 */
+        for(c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(c->is_float)
+                XRaiseWindow(wm->display, c->win);
+    }
+}
+
+void toggle_float(WM *wm, KB_FUNC_ARG unused)
+{
+    CLIENT *c=wm->focus_client;
+    XRaiseWindow(wm->display, c->win);
+    c->is_float=!c->is_float;
+    if(c->is_float)
+    {
+        wm->n_nonfloat--;
+        c->w=wm->screen_width/2;
+        c->h=wm->screen_height/2;
+        c->x=wm->screen_width/4;
+        c->y=wm->screen_height/4;
+        XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+    }
+    else
+        wm->n_nonfloat++;
+    update_layout(wm);
 }
 
 void change_layout(WM *wm, KB_FUNC_ARG arg)
