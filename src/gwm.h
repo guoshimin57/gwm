@@ -10,12 +10,14 @@
  * ************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <locale.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 #include <X11/Xproto.h>
 
 struct client_tag
@@ -34,6 +36,14 @@ enum layout_tag
 };
 typedef enum layout_tag LAYOUT;
 
+struct status_bar_tag
+{
+    Window win;
+    int x, y;
+    unsigned int w, h;
+};
+typedef struct status_bar_tag STATUS_BAR;
+
 struct wm_tag
 {
     Display *display;
@@ -42,10 +52,13 @@ struct wm_tag
     unsigned long black, white;
 	XModifierKeymap *mod_map;
     Window root_win;
-    GC root_gc;
+    GC gc, wm_gc;
     CLIENT *clients, *focus_client;
-    unsigned int n, n_nonfloat; /* 依次爲clients總數量、非懸浮的clients的數量 */
+    unsigned int n, /* 不含頭結點的clients總數量 */
+        n_nonfloat; /* 非懸浮的clients的數量 */
     LAYOUT layout;
+    XFontSet font_set;
+    STATUS_BAR status_bar;
 };
 typedef struct wm_tag WM;
 
@@ -81,11 +94,14 @@ typedef struct keybinds_tag KEYBINDS;
 #define STACK_INDENT 32
 #define MOVE_INC 32
 #define RESIZE_INC 32
+#define STATUS_BAR_HEIGHT 32
 
 void init_wm(WM *wm);
+void set_wm(WM *wm);
 int my_x_error_handler(Display *display, XErrorEvent *e);
+void create_font_set(WM *wm);
+void create_status_bar(WM *wm);
 void print_error_msg(Display *display, XErrorEvent *e);
-void init_wm_struct(WM *wm);
 void create_clients(WM *wm);
 void *Malloc(size_t size);
 int get_state_hint(WM *wm, Window w);
@@ -102,11 +118,14 @@ void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 CLIENT *win_to_client(WM *wm, Window win);
 void handle_destroy_notify(WM *wm, XEvent *e);
 void del_client(WM *wm, Window win);
+void handle_expose(WM *wm, XEvent *event);
 void handle_key_press(WM *wm, XEvent *e);
 unsigned int get_valid_mask(WM *wm, unsigned int mask);
 unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
 void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
+void handle_property_notify(WM *wm, XEvent *e);
+void draw_string_in_center(WM *wm, Drawable drawable, XFontSet font_set, GC gc, int x, int y, unsigned int w, unsigned h, const char *str);
 void exec(WM *wm, KB_FUNC_ARG arg);
 void key_move_win(WM *wm, KB_FUNC_ARG arg);
 void prepare_for_move_resize(WM *wm);
