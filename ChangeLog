@@ -9,6 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2020年 05月 12日 星期二 00:44:40 CST	gsm <406643764@qq.com>
+	* 發布第0.5版，主要實現了狀態欄功能。
+	* src/gwm.c：增加set_wm函數，刪除init_wm_struct函數，修改init_wm函數，實施代碼重構；增加create_font_set、create_status_bar、handle_expose、handle_property_notify函數，實現狀態欄功能；修改next_win、handle_map_request函數，把狀態欄提升到窗口堆棧頂部。
+	* src/gwm.h：增加STATUS_BAR結構體定義，WM增加STATUS_BAR成員，增加STATUS_BAR_HEIGHT宏定義；增加set_wm、create_font_set、create_status_bar、handle_expose、handle_property_notify函數聲明。
+	* man/zh_HK/man1/gwm.1：增加關於狀態欄的幫助信息。
+	* tools/startgwm：增加關於狀態欄的設置。
+
 2020年 05月 07日 星期四 21:34:30 CST	gsm <406643764@qq.com>
 	* 發布第0.4版，主要實現了動態管理窗口功能。
 	* src/gwm.c：修改create_clients、add_client、del_client、set_grid_layout、set_stack_layout、next_win、key_move_win、key_resize_win函數以及keybinds_list變量，增加prepare_for_move_resize、toggle_float函數，實現了動態管理窗口功能。調整keybinds_list變量賦值次序，並調整相關函數的次序。
