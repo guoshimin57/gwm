@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 {
     WM wm;
     init_wm(&wm);
+    set_wm(&wm);
     handle_events(&wm);
     return EXIT_SUCCESS;
 }
@@ -54,12 +55,24 @@ void init_wm(WM *wm)
 		fprintf(stderr, "gwm: cannot open display\n");
         exit(EXIT_FAILURE);
     }
+    wm->screen=DefaultScreen(wm->display);
+    wm->screen_width=DisplayWidth(wm->display, wm->screen);
+    wm->screen_height=DisplayHeight(wm->display, wm->screen);
+    wm->black=BlackPixel(wm->display, wm->screen);
+    wm->white=WhitePixel(wm->display, wm->screen);
+	wm->mod_map=XGetModifierMapping(wm->display);
+    wm->root_win=RootWindow(wm->display, wm->screen);
+    wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
+    wm->layout=grid;
+}
+
+void set_wm(WM *wm)
+{
     XSetErrorHandler(my_x_error_handler);
-    init_wm_struct(wm);
     XSelectInput(wm->display, wm->root_win, SubstructureRedirectMask
-        |SubstructureNotifyMask);
-    XSetBackground(wm->display, wm->root_gc, wm->black);
-    XSetForeground(wm->display, wm->root_gc, wm->white);
+        |SubstructureNotifyMask|PropertyChangeMask);
+    create_font_set(wm);
+    create_status_bar(wm);
     create_clients(wm);
     update_layout(wm);
     grab_keys(wm);
@@ -81,24 +94,33 @@ int my_x_error_handler(Display *display, XErrorEvent *e)
     return 0;
 }
 
+void create_font_set(WM *wm)
+{
+    char **missing_charset_list;
+    int missing_charset_count;
+    char *missing_charset_def_str;
+    wm->font_set=XCreateFontSet(wm->display, "*-24-*", &missing_charset_list,
+        &missing_charset_count, &missing_charset_def_str);
+}
+
+void create_status_bar(WM *wm)
+{
+    STATUS_BAR *b=&wm->status_bar;
+    b->x=0;
+    b->y=wm->screen_height-STATUS_BAR_HEIGHT;
+    b->w=wm->screen_width;
+    b->h=STATUS_BAR_HEIGHT;
+    b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
+        b->w, b->h, 0, 0, wm->white);
+    XSelectInput(wm->display, wm->status_bar.win, ExposureMask);
+    XMapRaised(wm->display, wm->status_bar.win);
+}
+
 void print_error_msg(Display *display, XErrorEvent *e)
 {
     fprintf(stderr, "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, "
         "主請求碼=%d, 次請求碼=%d\n", e->resourceid, e->serial,
         e->error_code, e->request_code, e->minor_code);
-}
-
-void init_wm_struct(WM *wm)
-{
-    wm->screen=DefaultScreen(wm->display);
-    wm->screen_width=DisplayWidth(wm->display, wm->screen);
-    wm->screen_height=DisplayHeight(wm->display, wm->screen);
-    wm->black=BlackPixel(wm->display, wm->screen);
-    wm->white=WhitePixel(wm->display, wm->screen);
-	wm->mod_map=XGetModifierMapping(wm->display);
-    wm->root_win=RootWindow(wm->display, wm->screen);
-    wm->root_gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
-    wm->layout=grid;
 }
 
 void create_clients(WM *wm)
@@ -116,7 +138,8 @@ void create_clients(WM *wm)
         for(size_t i=0; i<n; i++)
         {
             XWindowAttributes attr;
-            if( XGetWindowAttributes(wm->display, child[i], &attr)
+            if( child[i] != wm->status_bar.win
+                && XGetWindowAttributes(wm->display, child[i], &attr)
                 && attr.map_state != IsUnmapped
                 && get_state_hint(wm, child[i]) == NormalState
                 && !attr.override_redirect)
@@ -182,7 +205,7 @@ void set_full_layout(WM *wm)
         if(!c->is_float)
         {
             c->w=wm->screen_width;
-            c->h=wm->screen_height;
+            c->h=wm->screen_height-wm->status_bar.h;
             c->x=c->y=0;
         }
     }
@@ -190,25 +213,28 @@ void set_full_layout(WM *wm)
 
 void set_grid_layout(WM *wm)
 {
-    int i=0, rows, cols, w, h;
-    /* 行、列数量尽量相近，以保证窗口比例基本不变 */
-    for(cols=1; cols<=wm->n_nonfloat; cols++)
-        if(cols*cols >= wm->n_nonfloat)
-            break;
-    rows=(cols-1)*cols>=wm->n_nonfloat? cols-1 : cols;
-    w=wm->screen_width/cols;
-    h=wm->screen_height/rows;
-    i=wm->n_nonfloat-1;
-    for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+    if(wm->n_nonfloat > 0)
     {
-        if(!c->is_float)
+        int i=0, rows, cols, w, h;
+        /* 行、列数量尽量相近，以保证窗口比例基本不变 */
+        for(cols=1; cols<=wm->n_nonfloat; cols++)
+            if(cols*cols >= wm->n_nonfloat)
+                break;
+        rows=(cols-1)*cols>=wm->n_nonfloat? cols-1 : cols;
+        w=wm->screen_width/cols;
+        h=(wm->screen_height-wm->status_bar.h)/rows;
+        i=wm->n_nonfloat-1;
+        for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
         {
-            c->x=(i%cols)*w;
-            c->y=(i/cols)*h;
-            /* 下邊和右邊的窗口佔用剩餘空間 */
-            c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
-            c->h=i<cols*(rows-1) ? h : h+(wm->screen_height-h*rows);
-            i--;
+            if(!c->is_float)
+            {
+                c->x=(i%cols)*w;
+                c->y=(i/cols)*h;
+                /* 下邊和右邊的窗口佔用剩餘空間 */
+                c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
+                c->h=i<cols*(rows-1) ? h : h+(wm->screen_height-wm->status_bar.h-h*rows);
+                i--;
+            }
         }
     }
 }
@@ -221,7 +247,7 @@ void set_stack_layout(WM *wm)
         if(!c->is_float)
         {
             c->w=wm->screen_width-(wm->n_nonfloat-1)*STACK_INDENT;
-            c->h=wm->screen_height-(wm->n_nonfloat-1)*STACK_INDENT;
+            c->h=wm->screen_height-wm->status_bar.h-(wm->n_nonfloat-1)*STACK_INDENT;
             c->x=c->y=i++*STACK_INDENT;
         }
     }
@@ -247,9 +273,11 @@ void handle_events(WM *wm)
         {
             case ConfigureRequest : handle_config_request(wm, &e); break;
             case DestroyNotify : handle_destroy_notify(wm, &e); break;
+            case Expose : handle_expose(wm, &e); break;
             case KeyPress : handle_key_press(wm, &e); break;
             case MapRequest : handle_map_request(wm, &e); break;
             case UnmapNotify : handle_unmap_notify(wm, &e); break;
+            case PropertyNotify : handle_property_notify(wm , &e); break;
         }
     }
 }
@@ -329,6 +357,14 @@ void del_client(WM *wm, Window win)
     }
 }
 
+void handle_expose(WM *wm, XEvent *event)
+{
+    XSetForeground(wm->display, wm->gc, wm->black);
+    STATUS_BAR *b=&wm->status_bar;
+    XClearWindow(wm->display, b->win);
+    draw_string_in_center(wm, b->win, wm->font_set, wm->gc, 0, 0, b->w, b->h, "gwm");
+}
+
 void handle_key_press(WM *wm, XEvent *e)
 {
     int n;
@@ -371,7 +407,8 @@ void handle_map_request(WM *wm, XEvent *e)
 {
     XMapWindow(wm->display, e->xmaprequest.window);
     XWindowAttributes attr;
-    if( XGetWindowAttributes(wm->display, e->xmaprequest.window, &attr)
+    if( e->xmaprequest.window != wm->status_bar.win
+        && XGetWindowAttributes(wm->display, e->xmaprequest.window, &attr)
         && get_state_hint(wm, e->xmaprequest.window) == NormalState
         && !attr.override_redirect
         && !win_to_client(wm, e->xmaprequest.window))
@@ -380,6 +417,7 @@ void handle_map_request(WM *wm, XEvent *e)
         update_layout(wm);
         XSetInputFocus(wm->display, wm->focus_client->win, RevertToParent, CurrentTime);
     }
+    XRaiseWindow(wm->display, wm->status_bar.win);
 }
 
 void handle_unmap_notify(WM *wm, XEvent *e)
@@ -389,6 +427,29 @@ void handle_unmap_notify(WM *wm, XEvent *e)
         del_client(wm, e->xunmap.window);
         update_layout(wm);
         XSetInputFocus(wm->display, wm->focus_client->win, RevertToParent, CurrentTime);
+    }
+}
+
+void handle_property_notify(WM *wm, XEvent *e)
+{
+    STATUS_BAR *b=&wm->status_bar;
+    if(e->xproperty.window==wm->root_win && e->xproperty.atom==XA_WM_NAME)
+    {
+        XTextProperty name;
+        XGetTextProperty(wm->display, wm->root_win, &name, XA_WM_NAME);
+        XSetForeground(wm->display, wm->gc, wm->black);
+        XClearWindow(wm->display, b->win);
+        draw_string_in_center(wm, b->win, wm->font_set, wm->gc, 0, 0, b->w, b->h, (char *)name.value);
+    }
+}
+
+void draw_string_in_center(WM *wm, Drawable drawable, XFontSet font_set, GC gc, int x, int y, unsigned int w, unsigned h, const char *str)
+{
+    if(str && str[0]!='\0')
+    {
+        XRectangle ink, logical;
+        XmbTextExtents(wm->font_set, str, strlen(str), &ink, &logical);
+        XmbDrawString(wm->display, drawable, wm->font_set, wm->gc, x+w/2-logical.width/2, y+h/2+logical.height/2, str, strlen(str));
     }
 }
 
@@ -412,10 +473,9 @@ void key_move_win(WM *wm, KB_FUNC_ARG arg)
     DIRECTION d=arg.direction;
 
     prepare_for_move_resize(wm);
-    XRaiseWindow(wm->display, c->win);
     if(d==up && c->y+c->h>MOVE_INC)
         XMoveWindow(wm->display, c->win, c->x, c->y-=MOVE_INC);
-    else if(d==down && wm->screen_height-c->y>MOVE_INC)
+    else if(d==down && wm->screen_height-wm->status_bar.h-c->y>MOVE_INC)
         XMoveWindow(wm->display, c->win, c->x, c->y+=MOVE_INC);
     else if(d==left && c->x+c->w>MOVE_INC)
         XMoveWindow(wm->display, c->win, c->x-=MOVE_INC, c->y);
@@ -448,7 +508,7 @@ void key_resize_win(WM *wm, KB_FUNC_ARG arg)
         XMoveResizeWindow(disp, c->win, c->x, c->y+=s, c->w, c->h-=s);
     else if(d==down2up && c->h>s)
         XResizeWindow(disp, c->win, c->w, c->h-=s);
-    else if(d==down2down && wm->screen_height-c->y-c->h>s)
+    else if(d==down2down && wm->screen_height-wm->status_bar.h-c->y-c->h>s)
         XResizeWindow(disp, c->win, c->w, c->h+=s);
     else if(d==left2left && c->x>s)
         XMoveResizeWindow(disp, c->win, c->x-=s, c->y, c->w+=s, c->h);
@@ -526,13 +586,13 @@ void next_win(WM *wm, KB_FUNC_ARG unused)
         for(c=wm->clients->next; c!=wm->clients; c=c->next)
             if(c->is_float)
                 XRaiseWindow(wm->display, c->win);
+        XRaiseWindow(wm->display, wm->status_bar.win);
     }
 }
 
 void toggle_float(WM *wm, KB_FUNC_ARG unused)
 {
     CLIENT *c=wm->focus_client;
-    XRaiseWindow(wm->display, c->win);
     c->is_float=!c->is_float;
     if(c->is_float)
     {
