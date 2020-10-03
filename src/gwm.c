@@ -37,6 +37,12 @@ KEYBINDS keybinds_list[]=
     {WM_KEY,     XK_s,            change_layout,   {.layout=stack}},
 };
 
+BUTTONBINDS buttonbinds_list[]=
+{
+    {WM_KEY, Button1, pointer_move_resize_win, {.resize_flag=false}},
+    {WM_KEY, Button3, pointer_move_resize_win, {.resize_flag=true}},
+};
+
 int main(int argc, char *argv[])
 {
     WM wm;
@@ -70,7 +76,7 @@ void set_wm(WM *wm)
 {
     XSetErrorHandler(my_x_error_handler);
     XSelectInput(wm->display, wm->root_win, SubstructureRedirectMask
-        |SubstructureNotifyMask|PropertyChangeMask);
+        |SubstructureNotifyMask|PropertyChangeMask|ButtonPressMask);
     create_font_set(wm);
     create_status_bar(wm);
     create_clients(wm);
@@ -183,6 +189,7 @@ void add_client(WM *wm, Window win)
     wm->focus_client=c;
     wm->n++, wm->n_nonfloat++;
     c->is_float=false;
+    grab_buttons(wm);
 }
 
 void update_layout(WM *wm)
@@ -263,6 +270,17 @@ void grab_keys(WM *wm)
                 wm->root_win, True, GrabModeAsync, GrabModeAsync);
 }
 
+void grab_buttons(WM *wm)
+{
+    Window win=wm->focus_client->win;
+    XUngrabButton(wm->display, AnyButton, AnyModifier, win);
+    for(size_t i=0; i<ARRAY_NUM(buttonbinds_list); i++)
+        XGrabButton(wm->display, buttonbinds_list[i].button,
+            buttonbinds_list[i].modifier, win, False,
+            ButtonPressMask|ButtonReleaseMask,
+            GrabModeAsync, GrabModeAsync, None, None);
+}
+
 void handle_events(WM *wm)
 {
 	XEvent e;
@@ -271,6 +289,7 @@ void handle_events(WM *wm)
         XNextEvent(wm->display, &e);
         switch(e.type)
         {
+            case ButtonPress : handle_button_press(wm, &e); break;
             case ConfigureRequest : handle_config_request(wm, &e); break;
             case DestroyNotify : handle_destroy_notify(wm, &e); break;
             case Expose : handle_expose(wm, &e); break;
@@ -282,6 +301,20 @@ void handle_events(WM *wm)
     }
 }
 
+void handle_button_press(WM *wm, XEvent *e)
+{
+    BUTTONBINDS bb;
+	for(size_t i=0; i<ARRAY_NUM(buttonbinds_list); i++)
+    {
+        bb=buttonbinds_list[i];
+		if( bb.button == e->xbutton.button
+            && (get_valid_mask(wm, bb.modifier)
+                == get_valid_mask(wm, e->xbutton.state))
+            && bb.func)
+            bb.func(wm, e, bb.arg);
+    }
+}
+ 
 void handle_config_request(WM *wm, XEvent *e)
 {
     XConfigureRequestEvent cr=e->xconfigurerequest;
@@ -357,7 +390,7 @@ void del_client(WM *wm, Window win)
     }
 }
 
-void handle_expose(WM *wm, XEvent *event)
+void handle_expose(WM *wm, XEvent *eent)
 {
     XSetForeground(wm->display, wm->gc, wm->black);
     STATUS_BAR *b=&wm->status_bar;
@@ -374,10 +407,10 @@ void handle_key_press(WM *wm, XEvent *e)
 	for(size_t i=0; i<ARRAY_NUM(keybinds_list); i++)
     {
         kb=keybinds_list[i];
-		if(*keysym == kb.keysym
-            && get_valid_mask(wm,kb.modifier)==get_valid_mask(wm,e->xkey.state)
+		if( *keysym == kb.keysym
+            && get_valid_mask(wm, kb.modifier) == get_valid_mask(wm, e->xkey.state)
             && kb.func)
-                kb.func(wm, kb.arg);
+            kb.func(wm, e, kb.arg);
     }
     XFree(keysym);
 }
@@ -453,7 +486,7 @@ void draw_string_in_center(WM *wm, Drawable drawable, XFontSet font_set, GC gc, 
     }
 }
 
-void exec(WM *wm, KB_FUNC_ARG arg)
+void exec(WM *wm, XEvent *e, FUNC_ARG arg)
 {
 	if(fork() == 0)
     {
@@ -467,7 +500,7 @@ void exec(WM *wm, KB_FUNC_ARG arg)
     }
 }
 
-void key_move_win(WM *wm, KB_FUNC_ARG arg)
+void key_move_win(WM *wm, XEvent *e, FUNC_ARG arg)
 {
     CLIENT *c=wm->focus_client;
     DIRECTION d=arg.direction;
@@ -494,7 +527,7 @@ void prepare_for_move_resize(WM *wm)
     }
 }
 
-void key_resize_win(WM *wm, KB_FUNC_ARG arg)
+void key_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
 {
     Display *disp=wm->display;
     CLIENT *c=wm->focus_client;
@@ -520,7 +553,7 @@ void key_resize_win(WM *wm, KB_FUNC_ARG arg)
         XResizeWindow(disp, c->win, c->w+=s, c->h);
 }
 
-void quit_wm(WM *wm, KB_FUNC_ARG unused)
+void quit_wm(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
     XClearWindow(wm->display, wm->root_win);
@@ -529,7 +562,7 @@ void quit_wm(WM *wm, KB_FUNC_ARG unused)
     exit(EXIT_SUCCESS);
 }
 
-void close_win(WM *wm, KB_FUNC_ARG unused)
+void close_win(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     if(wm->focus_client->win != wm->root_win)
     {
@@ -573,24 +606,33 @@ int send_event(WM *wm, Atom protocol)
 	return i<n ;
 }
 
-void next_win(WM *wm, KB_FUNC_ARG unused)
+void next_win(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     if(wm->n > 1)
     {
         CLIENT *c=wm->focus_client;
-        c=wm->focus_client=(c->next == wm->clients) ? wm->clients->next : c->next;
-        XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
-        XRaiseWindow(wm->display, c->win);
-        /* 僅提升被遮擋的懸浮窗口似乎是一個好主意，但實際上計算遮擋關系相當
-         * 復雜，而且一般情況下懸浮窗口數量較少，還不如將所有懸浮窗口提升 */
-        for(c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(c->is_float)
-                XRaiseWindow(wm->display, c->win);
-        XRaiseWindow(wm->display, wm->status_bar.win);
+        c=(c->next==wm->clients) ? wm->clients->next : c->next;
+        focus_client(wm, c);
     }
 }
 
-void toggle_float(WM *wm, KB_FUNC_ARG unused)
+void focus_client(WM *wm, CLIENT *c)
+{
+    wm->focus_client=c;
+    if(c != wm->clients)
+    {
+        XRaiseWindow(wm->display, c->win);
+        /* 僅提升被遮擋的懸浮窗口似乎是一個好主意，但實際上計算遮擋關系相當
+         * 復雜，而且一般情況下懸浮窗口數量較少，還不如將所有懸浮窗口提升 */
+        for(CLIENT *f=wm->clients->next; f!=wm->clients; f=f->next)
+            if(f->is_float)
+                XRaiseWindow(wm->display, f->win);
+        XRaiseWindow(wm->display, wm->status_bar.win);
+    }
+    XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
+}
+
+void toggle_float(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     CLIENT *c=wm->focus_client;
     c->is_float=!c->is_float;
@@ -608,8 +650,130 @@ void toggle_float(WM *wm, KB_FUNC_ARG unused)
     update_layout(wm);
 }
 
-void change_layout(WM *wm, KB_FUNC_ARG arg)
+void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
 {
     wm->layout=arg.layout;
     update_layout(wm);
+}
+
+void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
+{
+    CLIENT *c;
+    XEvent ev;
+    Window focus_win;
+    int old_x, old_y, new_x, new_y, x_sign, y_sign, w_sign, h_sign;
+
+    if(!grab_pointer_for_move_resize(wm)) return;
+    if(!query_pointer_for_move_resize(wm, &old_x, &old_y, &focus_win)) return;
+    c=win_to_client(wm, focus_win);
+    c=c?c:wm->clients;
+    focus_client(wm, c);
+    get_rect_sign(wm, old_x, old_y, arg.resize_flag, 
+        &x_sign, &y_sign, &w_sign, &h_sign);
+
+    do
+    {
+        XMaskEvent(wm->display, POINTER_MASK, &ev);
+        if(ev.type == MotionNotify)
+        {
+            if(c == wm->clients)
+            {
+                fprintf(stderr, "錯誤：不能移動根窗口或改變根窗口的尺寸！\n");
+                XUngrabPointer(wm->display, CurrentTime);
+                return ;
+            }
+            new_x=ev.xmotion.x, new_y=ev.xmotion.y;
+            c->x+=x_sign*(new_x-old_x), c->y+=y_sign*(new_y-old_y);
+            c->w+=w_sign*(new_x-old_x), c->h+=h_sign*(new_y-old_y);
+            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+            old_x=new_x, old_y=new_y;
+        }
+    }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
+    XUngrabPointer(wm->display, CurrentTime);
+}
+
+bool grab_pointer_for_move_resize(WM *wm)
+{
+    switch (XGrabPointer(wm->display, wm->root_win, False, POINTER_MASK,
+                GrabModeAsync, GrabModeAsync, None, None, CurrentTime))
+    {
+        case GrabSuccess : return true;
+        case GrabNotViewable :
+            fprintf(stderr, "錯誤：定位器限定窗口不可顯！"); return false;
+        case AlreadyGrabbed :
+            fprintf(stderr, "錯誤：別的程序主動獨享了定位器！"); return false;
+        case GrabFrozen :
+            fprintf(stderr, "錯誤：獨享請求發生的時間不合理！"); return false;
+        default : return false;
+    }
+}
+
+bool query_pointer_for_move_resize(WM *wm, int *x, int *y, Window *win)
+{
+    Window root_win;
+    int root_x, root_y;
+    unsigned int mask;
+    if(XQueryPointer(wm->display, wm->root_win, &root_win, win,
+            &root_x, &root_y, x, y, &mask) == False)
+    {
+        fprintf(stderr, "錯誤：定位指針不在當前屏幕！");
+        return false;
+    }
+    else
+        return true;
+}
+
+/* 功能：根據定位器坐標（px和py），獲取窗口坐標和尺寸的變化量的符號
+ * 說明：
+ *     把聚焦窗口等分爲四行四列的矩形區域。若定位器初始位置在對角線區域，則可
+ * 雙向調節窗口尺寸。否則單向調節。具體規定如下圖所示：
+ *     ---------------------------------
+ *     | dx dy |  0 dy |  0 dy |  0 dy |
+ *     | -w -h |  0 -h |  0 -h | +w -h |
+ *     ---------------------------------
+ *     | dx  0 | dx dy |  0 dy |  0  0 |
+ *     | -w  0 | -w -h | +w -h | +w  0 |
+ *     ---------------------------------
+ *     | dx  0 | dx  0 |  0  0 |  0  0 |
+ *     | -w  0 | -w +h | +w +h | +w  0 |
+ *     ---------------------------------             ---------
+ *     | dx  0 |  0  0 |  0  0 |  0  0 |             | xs ys |
+ *     | -w +h |  0 +h |  0 +h | +w +h |             | ws hs |
+ *     ---------------------------------             ---------
+ *                區域行爲規定                      區域標注說明
+ *               ==============                    ==============
+ *     注：
+ *         1、表中dx、dy分別表示聚焦窗口左上角坐標變化量不爲0。如爲0，則
+ *            直接在相應位置標明。對於X而言，不爲0意味着聚焦窗口要移動。
+ *         2、表中+w、+h分別表示聚焦窗口寬度、高度的變化量不爲0，且與相應
+ *            的dx、dy正負號相同。如爲0，則直接在相應位置標明。
+ *         3、表中-w、-h分別表示聚焦窗口寬度、高度的變化量不爲0，且與相應
+ *            的dx、dy正負號相反。如爲0，則直接在相應位置標明。
+ */
+void get_rect_sign(WM *wm, int px, int py, bool resize_flag, int *xs, int *ys, int *ws, int *hs)
+{
+    CLIENT *c=wm->focus_client;
+
+    if(resize_flag)
+        *xs=*ys=*ws=*hs=0;
+    else
+    {   *xs=*ys=1, *ws=*hs=0; return; }
+
+    if(px < c->x+c->w/4)
+        *xs=1, *ws=-1;
+    else if(px < c->x+c->w/2)
+    {   if(py >= c->y+c->h/4 && py < c->y+c->h*3/4) *xs=1, *ws=-1; }
+    else if(px < c->x+c->w*3/4)
+    {   if(py >= c->y+c->h/4 && py < c->y+c->h*3/4) *ws=1; }
+    else
+        *ws=1;
+
+    if(py < c->y+c->h/4)
+        *ys=1, *hs=-1;
+    else if(py < c->y+c->h/2)
+    {   if(px >= c->x+c->w/4 && px < c->x+c->w*3/4) *ys=1, *hs=-1; }
+    else if(py < c->y+c->h*3/4)
+    {   if(px >= c->x+c->w/4 && px < c->x+c->w*3/4) *hs=1; }
+    else
+        *hs=1;
 }
