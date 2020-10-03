@@ -70,20 +70,30 @@ enum direction_tag /* 窗口、區域操作方向 */
 };
 typedef enum direction_tag DIRECTION;
 
-union keybinds_func_arg_tag
+union func_arg_tag
 {
     char *const *cmd;
     DIRECTION direction;
     LAYOUT layout;
+    bool resize_flag;
 };
-typedef union keybinds_func_arg_tag KB_FUNC_ARG;
+typedef union func_arg_tag FUNC_ARG;
+
+struct buttonbinds_tag
+{
+	unsigned int modifier;
+    unsigned int button;
+	void (*func)(WM *wm, XEvent *e, FUNC_ARG arg);
+    FUNC_ARG arg;
+};
+typedef struct buttonbinds_tag BUTTONBINDS;
 
 struct keybinds_tag
 {
 	unsigned int modifier;
 	KeySym keysym;
-	void (*func)(WM *wm, KB_FUNC_ARG arg);
-    KB_FUNC_ARG arg;
+	void (*func)(WM *wm, XEvent *e, FUNC_ARG arg);
+    FUNC_ARG arg;
 };
 typedef struct keybinds_tag KEYBINDS;
 
@@ -95,6 +105,7 @@ typedef struct keybinds_tag KEYBINDS;
 #define MOVE_INC 32
 #define RESIZE_INC 32
 #define STATUS_BAR_HEIGHT 32
+#define POINTER_MASK (ButtonPressMask|ButtonReleaseMask|ButtonMotionMask)
 
 void init_wm(WM *wm);
 void set_wm(WM *wm);
@@ -111,14 +122,16 @@ void set_full_layout(WM *wm);
 void set_grid_layout(WM *wm);
 void set_stack_layout(WM *wm);
 void grab_keys(WM *wm);
+void grab_buttons(WM *wm);
 void handle_events(WM *wm);
+void handle_button_press(WM *wm, XEvent *e);
 void handle_config_request(WM *wm, XEvent *e);
 void config_managed_win(WM *wm, CLIENT *c);
 void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 CLIENT *win_to_client(WM *wm, Window win);
 void handle_destroy_notify(WM *wm, XEvent *e);
 void del_client(WM *wm, Window win);
-void handle_expose(WM *wm, XEvent *event);
+void handle_expose(WM *wm, XEvent *eent);
 void handle_key_press(WM *wm, XEvent *e);
 unsigned int get_valid_mask(WM *wm, unsigned int mask);
 unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
@@ -126,13 +139,18 @@ void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
 void handle_property_notify(WM *wm, XEvent *e);
 void draw_string_in_center(WM *wm, Drawable drawable, XFontSet font_set, GC gc, int x, int y, unsigned int w, unsigned h, const char *str);
-void exec(WM *wm, KB_FUNC_ARG arg);
-void key_move_win(WM *wm, KB_FUNC_ARG arg);
+void exec(WM *wm, XEvent *e, FUNC_ARG arg);
+void key_move_win(WM *wm, XEvent *e, FUNC_ARG arg);
 void prepare_for_move_resize(WM *wm);
-void key_resize_win(WM *wm, KB_FUNC_ARG arg);
-void quit_wm(WM *wm, KB_FUNC_ARG unused);
-void close_win(WM *wm, KB_FUNC_ARG unused);
+void key_resize_win(WM *wm, XEvent *e, FUNC_ARG arg);
+void quit_wm(WM *wm, XEvent *e, FUNC_ARG unused);
+void close_win(WM *wm, XEvent *e, FUNC_ARG unused);
 int send_event(WM *wm, Atom protocol);
-void next_win(WM *wm, KB_FUNC_ARG unused);
-void toggle_float(WM *wm, KB_FUNC_ARG unused);
-void change_layout(WM *wm, KB_FUNC_ARG arg);
+void next_win(WM *wm, XEvent *e, FUNC_ARG unused);
+void focus_client(WM *wm, CLIENT *c);
+void toggle_float(WM *wm, XEvent *e, FUNC_ARG unused);
+void change_layout(WM *wm, XEvent *e, FUNC_ARG arg);
+void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg);
+bool grab_pointer_for_move_resize(WM *wm);
+bool query_pointer_for_move_resize(WM *wm, int *x, int *y, Window *win);
+void get_rect_sign(WM *wm, int px, int py, bool resize_flag, int *xs, int *ys, int *ws, int *hs);
