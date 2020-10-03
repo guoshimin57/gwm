@@ -9,6 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2020年 10月 03日 星期六 23:44:38 CST	gsm <406643764@qq.com>
+	* 發布第0.6版，主要實現了定位器命令功能。
+	* src/gwm.c：增加buttonbinds_list變量的定義；增加grab_buttons、handle_button_press、focus_client、pointer_move_resize_win、grab_pointer_for_move_resize、query_pointer_for_move_resize、get_rect_sign函數定義；將next_win中的實現聚焦窗口的代碼段替換爲focus_client函數；爲與KEYBINDS結構體的func成員相對應的函數增加XEvent類型的形參、實參。
+	* src/gwm.h：增加BUTTONBINDS結構體定義；FUNC_ARG結構體增加resize_flag成員；爲KEYBINDS結構體的func成員增加XEvent類型的形參，以及修改與此成員相應的函數聲明；增加POINTER_MASK宏；增加grab_buttons、handle_button_press、focus_client、pointer_move_resize_win、grab_pointer_for_move_resize、query_pointer_for_move_resize、get_rect_sign函數聲明。
+	* man/zh_HK/man1/gwm.1：修正筆誤（部分gwm誤寫爲gsm，定位器命令誤寫爲鍵盤命令），增加關於定位器命令的幫助信息。
+	* tools/startgwm：取消設置LC_ALL；不顯示acpi的錯誤輸出。
+
 2020年 05月 12日 星期二 00:44:40 CST	gsm <406643764@qq.com>
 	* 發布第0.5版，主要實現了狀態欄功能。
 	* src/gwm.c：增加set_wm函數，刪除init_wm_struct函數，修改init_wm函數，實施代碼重構；增加create_font_set、create_status_bar、handle_expose、handle_property_notify函數，實現狀態欄功能；修改next_win、handle_map_request函數，把狀態欄提升到窗口堆棧頂部。
