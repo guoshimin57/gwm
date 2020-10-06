@@ -20,19 +20,25 @@
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 
+enum place_type_tag
+{
+    normal, floating, fixed,
+};
+typedef enum place_type_tag PLACE_TYPE;
+
 struct client_tag
 {
     Window win;
     int x, y;
     unsigned int w, h;
-    bool is_float;
+    PLACE_TYPE place_type;
     struct client_tag *prev, *next;
 };
 typedef struct client_tag CLIENT;
 
 enum layout_tag
 {
-    full, grid, stack,
+    full, preview, stack, tile,
 };
 typedef enum layout_tag LAYOUT;
 
@@ -54,11 +60,14 @@ struct wm_tag
     Window root_win;
     GC gc, wm_gc;
     CLIENT *clients, *focus_client;
-    unsigned int n, /* 不含頭結點的clients總數量 */
-        n_nonfloat; /* 非懸浮的clients的數量 */
+    unsigned int n, /* 除頭結點以外的clients總數 */
+        n_float,    /* 懸浮的clients數量 */
+        n_fixed,    /* 固定區域的clients數量 */
+        n_normal;   /* 除頭結點和以上兩種結點的clients數量 */
     LAYOUT layout;
     XFontSet font_set;
     STATUS_BAR status_bar;
+    float main_area_ratio, fixed_area_ratio;
 };
 typedef struct wm_tag WM;
 
@@ -97,11 +106,17 @@ struct keybinds_tag
 };
 typedef struct keybinds_tag KEYBINDS;
 
+struct wm_rule_tag
+{
+    const char *app_class, *app_name;
+    PLACE_TYPE place_type;
+};
+typedef struct wm_rule_tag WM_RULE;
+
 #define WM_KEY Mod4Mask
 #define CMD_KEY (Mod4Mask|Mod1Mask)
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
-#define STACK_INDENT 32
 #define MOVE_INC 32
 #define RESIZE_INC 32
 #define STATUS_BAR_HEIGHT 32
@@ -119,8 +134,9 @@ int get_state_hint(WM *wm, Window w);
 void add_client(WM *wm, Window win);
 void update_layout(WM *wm);
 void set_full_layout(WM *wm);
-void set_grid_layout(WM *wm);
+void set_preview_layout(WM *wm);
 void set_stack_layout(WM *wm);
+void set_tile_layout(WM *wm);
 void grab_keys(WM *wm);
 void grab_buttons(WM *wm);
 void handle_events(WM *wm);
@@ -148,9 +164,12 @@ void close_win(WM *wm, XEvent *e, FUNC_ARG unused);
 int send_event(WM *wm, Atom protocol);
 void next_win(WM *wm, XEvent *e, FUNC_ARG unused);
 void focus_client(WM *wm, CLIENT *c);
+void raise_float_wins(WM *wm);
 void toggle_float(WM *wm, XEvent *e, FUNC_ARG unused);
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg);
 void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg);
 bool grab_pointer_for_move_resize(WM *wm);
 bool query_pointer_for_move_resize(WM *wm, int *x, int *y, Window *win);
 void get_rect_sign(WM *wm, int px, int py, bool resize_flag, int *xs, int *ys, int *ws, int *hs);
+void apply_rules(WM *wm, CLIENT *c);
+void set_default_rect(WM *wm, CLIENT *c);
