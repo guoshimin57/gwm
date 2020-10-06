@@ -14,8 +14,11 @@
 KEYBINDS keybinds_list[]=
 {
     {CMD_KEY,    XK_t,            exec,            SH_CMD("lxterminal")},
+    {CMD_KEY,    XK_f,            exec,            SH_CMD("xdg-open ~")},
     {CMD_KEY,    XK_w,            exec,            SH_CMD("xwininfo -wm >log")},
     {CMD_KEY,    XK_p,            exec,            SH_CMD("dmenu_run")},
+    {CMD_KEY,    XK_q,            exec,            SH_CMD("qq")},
+    {CMD_KEY,    XK_s,            exec,            SH_CMD("stardict")},
     {WM_KEY,     XK_Up,           key_move_win,    {.direction=up}},
     {WM_KEY,     XK_Down,         key_move_win,    {.direction=down}},
     {WM_KEY,     XK_Left,         key_move_win,    {.direction=left}},
@@ -33,14 +36,21 @@ KEYBINDS keybinds_list[]=
     {WM_KEY,     XK_Tab,          next_win,        {0}},
     {WM_KEY,     XK_backslash,    toggle_float,    {0}},
     {WM_KEY,     XK_f,            change_layout,   {.layout=full}},
-    {WM_KEY,     XK_g,            change_layout,   {.layout=grid}},
+    {WM_KEY,     XK_p,            change_layout,   {.layout=preview}},
     {WM_KEY,     XK_s,            change_layout,   {.layout=stack}},
+    {WM_KEY,     XK_t,            change_layout,   {.layout=tile}},
 };
 
 BUTTONBINDS buttonbinds_list[]=
 {
     {WM_KEY, Button1, pointer_move_resize_win, {.resize_flag=false}},
     {WM_KEY, Button3, pointer_move_resize_win, {.resize_flag=true}},
+};
+
+WM_RULE rules[]=
+{
+    {"Stardict", "stardict", floating},
+    {"Qq", "qq", fixed},
 };
 
 int main(int argc, char *argv[])
@@ -69,7 +79,9 @@ void init_wm(WM *wm)
 	wm->mod_map=XGetModifierMapping(wm->display);
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
-    wm->layout=grid;
+    wm->layout=tile;
+    wm->main_area_ratio=0.5;
+    wm->fixed_area_ratio=0.25;
 }
 
 void set_wm(WM *wm)
@@ -137,7 +149,7 @@ void create_clients(WM *wm)
     /* 頭插法生成帶表頭結點的雙向循環鏈表 */
     wm->focus_client=wm->clients=Malloc(sizeof(CLIENT));
     wm->clients->win=wm->root_win;
-    wm->n=wm->n_nonfloat=0;
+    wm->n=wm->n_normal=wm->n_float=wm->n_fixed=0;
     wm->clients->prev=wm->clients->next=wm->clients;
     if(XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
     {
@@ -187,18 +199,21 @@ void add_client(WM *wm, Window win)
     wm->clients->next=c;
     c->next->prev=c;
     wm->focus_client=c;
-    wm->n++, wm->n_nonfloat++;
-    c->is_float=false;
+    c->place_type=normal;
     grab_buttons(wm);
+    apply_rules(wm, c);
 }
 
 void update_layout(WM *wm)
 {
+    if(wm->n == 0)
+        return ;
     switch(wm->layout)
     {
         case full: set_full_layout(wm); break;
-        case grid: set_grid_layout(wm); break;
+        case preview: set_preview_layout(wm); break;
         case stack: set_stack_layout(wm); break;
+        case tile: set_tile_layout(wm); break;
         default: break;
     }
     for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -207,57 +222,75 @@ void update_layout(WM *wm)
 
 void set_full_layout(WM *wm)
 {
-    for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-    {
-        if(!c->is_float)
-        {
-            c->w=wm->screen_width;
-            c->h=wm->screen_height-wm->status_bar.h;
-            c->x=c->y=0;
-        }
-    }
+    CLIENT *c=wm->focus_client;
+    c->w=wm->screen_width;
+    c->h=wm->screen_height;
+    c->x=c->y=0;
+    XRaiseWindow(wm->display, c->win);
 }
 
-void set_grid_layout(WM *wm)
+void set_preview_layout(WM *wm)
 {
-    if(wm->n_nonfloat > 0)
+    int i=0, rows, cols, w, h;
+    /* 行、列数量尽量相近，以保证窗口比例基本不变 */
+    for(cols=1; cols<=wm->n; cols++)
+        if(cols*cols >= wm->n)
+            break;
+    rows=(cols-1)*cols>=wm->n ? cols-1 : cols;
+    w=wm->screen_width/cols;
+    h=(wm->screen_height-wm->status_bar.h)/rows;
+    i=wm->n-1;
+    for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        int i=0, rows, cols, w, h;
-        /* 行、列数量尽量相近，以保证窗口比例基本不变 */
-        for(cols=1; cols<=wm->n_nonfloat; cols++)
-            if(cols*cols >= wm->n_nonfloat)
-                break;
-        rows=(cols-1)*cols>=wm->n_nonfloat? cols-1 : cols;
-        w=wm->screen_width/cols;
-        h=(wm->screen_height-wm->status_bar.h)/rows;
-        i=wm->n_nonfloat-1;
-        for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        {
-            if(!c->is_float)
-            {
-                c->x=(i%cols)*w;
-                c->y=(i/cols)*h;
-                /* 下邊和右邊的窗口佔用剩餘空間 */
-                c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
-                c->h=i<cols*(rows-1) ? h : h+(wm->screen_height-wm->status_bar.h-h*rows);
-                i--;
-            }
-        }
+        c->x=(i%cols)*w;
+        c->y=(i/cols)*h;
+        /* 下邊和右邊的窗口佔用剩餘空間 */
+        c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
+        c->h=i<cols*(rows-1) ? h : h+(wm->screen_height-wm->status_bar.h-h*rows);
+        i--;
     }
 }
 
 void set_stack_layout(WM *wm)
 {
-    unsigned int i=0;
     for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        if(!c->is_float)
+        if(c->w >= 2*RESIZE_INC)
+            c->w-=RESIZE_INC;
+        if(c->h >= 2*RESIZE_INC)
+            c->h-=RESIZE_INC;
+    }
+}
+
+void set_tile_layout(WM *wm)
+{
+    CLIENT *c, *mc=NULL;
+    unsigned int i, j, mw, sw, fw, mh, sh, fh;
+
+    mw=wm->main_area_ratio*wm->screen_width;
+    fw=wm->screen_width*wm->fixed_area_ratio;
+    sw=wm->screen_width-fw-mw;
+    mh=wm->screen_height-wm->status_bar.h;
+    fh=wm->n_fixed ? mh/wm->n_fixed : mh;
+    sh=wm->n_normal>1 ? mh/(wm->n_normal-1) : mh;
+    if(wm->n_fixed == 0) mw+=fw;
+
+    for(i=0, j=0, c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        if(c->place_type == fixed)
+            c->x=mw+sw, c->y=i++*fh, c->w=fw, c->h=fh;
+        else if(c->place_type == normal)
         {
-            c->w=wm->screen_width-(wm->n_nonfloat-1)*STACK_INDENT;
-            c->h=wm->screen_height-wm->status_bar.h-(wm->n_nonfloat-1)*STACK_INDENT;
-            c->x=c->y=i++*STACK_INDENT;
+            if(j)
+                c->x=0, c->y=(j-1)*sh, c->w=sw, c->h=sh;
+            else
+                c->x=sw, c->y=0, c->w=mw, c->h=mh, mc=c;
+            j++;
         }
     }
+    if(j == 1 && mc)
+        mc->x=0, mc->y=0, mc->w=mw+sw, mc->h=mh;
+    raise_float_wins(wm);
 }
 
 void grab_keys(WM *wm)
@@ -380,8 +413,12 @@ void del_client(WM *wm, Window win)
     if(c)
     {
         wm->n--;
-        if(!c->is_float)
-            wm->n_nonfloat--;
+        if(c->place_type == fixed)
+            wm->n_fixed--;
+        else if(c->place_type == floating)
+            wm->n_float--;
+        else
+            wm->n_normal--;
         c->prev->next=c->next;
         c->next->prev=c->prev;
         if(c == wm->focus_client)
@@ -502,6 +539,8 @@ void exec(WM *wm, XEvent *e, FUNC_ARG arg)
 
 void key_move_win(WM *wm, XEvent *e, FUNC_ARG arg)
 {
+    if(wm->layout==full || wm->layout==preview) return;
+
     CLIENT *c=wm->focus_client;
     DIRECTION d=arg.direction;
 
@@ -519,16 +558,19 @@ void key_move_win(WM *wm, XEvent *e, FUNC_ARG arg)
 void prepare_for_move_resize(WM *wm)
 {
     CLIENT *c=wm->focus_client;
-    if(!c->is_float && (wm->layout==full || wm->layout==grid)) 
+    if(c->place_type==normal && wm->layout!=stack) 
     {
-        c->is_float=true;
-        wm->n_nonfloat--;
+        c->place_type=floating;
+        wm->n_normal--;
+        wm->n_float++;
         update_layout(wm);
     }
 }
 
 void key_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
 {
+    if(wm->layout==full || wm->layout==preview) return;
+
     Display *disp=wm->display;
     CLIENT *c=wm->focus_client;
     DIRECTION d=arg.direction;
@@ -619,41 +661,50 @@ void next_win(WM *wm, XEvent *e, FUNC_ARG unused)
 void focus_client(WM *wm, CLIENT *c)
 {
     wm->focus_client=c;
-    if(c != wm->clients)
-    {
-        XRaiseWindow(wm->display, c->win);
-        /* 僅提升被遮擋的懸浮窗口似乎是一個好主意，但實際上計算遮擋關系相當
-         * 復雜，而且一般情況下懸浮窗口數量較少，還不如將所有懸浮窗口提升 */
-        for(CLIENT *f=wm->clients->next; f!=wm->clients; f=f->next)
-            if(f->is_float)
-                XRaiseWindow(wm->display, f->win);
-        XRaiseWindow(wm->display, wm->status_bar.win);
-    }
+    if(wm->focus_client != wm->clients)
+        XRaiseWindow(wm->display, wm->focus_client->win);
+    XRaiseWindow(wm->display, wm->status_bar.win);
     XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
+}
+
+/* 僅提升被遮擋的懸浮窗口似乎是一個好主意，但實際上計算遮擋關系相當
+ * 復雜，而且一般情況下懸浮窗口數量較少，還不如將所有懸浮窗口提升 */
+void raise_float_wins(WM *wm)
+{
+    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
+        if(c->place_type == floating)
+            XRaiseWindow(wm->display, c->win);
+    if(wm->focus_client != wm->clients)
+        XRaiseWindow(wm->display, wm->focus_client->win);
+    XRaiseWindow(wm->display, wm->status_bar.win);
 }
 
 void toggle_float(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     CLIENT *c=wm->focus_client;
-    c->is_float=!c->is_float;
-    if(c->is_float)
+    c->place_type=(c->place_type==floating) ? normal : floating;
+    if(c->place_type == floating)
     {
-        wm->n_nonfloat--;
-        c->w=wm->screen_width/2;
-        c->h=wm->screen_height/2;
-        c->x=wm->screen_width/4;
-        c->y=wm->screen_height/4;
+        wm->n_normal--;
+        wm->n_float++;
+        set_default_rect(wm, c);
         XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
     }
     else
-        wm->n_nonfloat++;
+    {
+        wm->n_normal++;
+        wm->n_float--;
+    }
     update_layout(wm);
 }
 
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
 {
-    wm->layout=arg.layout;
-    update_layout(wm);
+    if(wm->layout != arg.layout)
+    {
+        wm->layout=arg.layout;
+        update_layout(wm);
+    }
 }
 
 void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
@@ -662,31 +713,41 @@ void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
     XEvent ev;
     Window focus_win;
     int old_x, old_y, new_x, new_y, x_sign, y_sign, w_sign, h_sign;
+    bool first=true;
 
     if(!grab_pointer_for_move_resize(wm)) return;
     if(!query_pointer_for_move_resize(wm, &old_x, &old_y, &focus_win)) return;
     c=win_to_client(wm, focus_win);
     c=c?c:wm->clients;
     focus_client(wm, c);
+    if(wm->layout==full || wm->layout==preview) return;
     get_rect_sign(wm, old_x, old_y, arg.resize_flag, 
         &x_sign, &y_sign, &w_sign, &h_sign);
 
     do
     {
-        XMaskEvent(wm->display, POINTER_MASK, &ev);
-        if(ev.type == MotionNotify)
+        XMaskEvent(wm->display, POINTER_MASK|SubstructureRedirectMask, &ev);
+        switch(ev.type)
         {
-            if(c == wm->clients)
-            {
-                fprintf(stderr, "錯誤：不能移動根窗口或改變根窗口的尺寸！\n");
-                XUngrabPointer(wm->display, CurrentTime);
-                return ;
-            }
-            new_x=ev.xmotion.x, new_y=ev.xmotion.y;
-            c->x+=x_sign*(new_x-old_x), c->y+=y_sign*(new_y-old_y);
-            c->w+=w_sign*(new_x-old_x), c->h+=h_sign*(new_y-old_y);
-            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
-            old_x=new_x, old_y=new_y;
+            case ConfigureRequest : handle_config_request(wm, &ev); break;
+            case MotionNotify:
+                if(c == wm->clients)
+                {
+                    fprintf(stderr, "錯誤：不能移動根窗口或改變根窗口的尺寸！\n");
+                    XUngrabPointer(wm->display, CurrentTime);
+                    return ;
+                }
+                if(first)
+                {
+                    prepare_for_move_resize(wm);
+                    first=false;
+                }
+
+                new_x=ev.xmotion.x, new_y=ev.xmotion.y;
+                c->x+=x_sign*(new_x-old_x), c->y+=y_sign*(new_y-old_y);
+                c->w+=w_sign*(new_x-old_x), c->h+=h_sign*(new_y-old_y);
+                XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+                old_x=new_x, old_y=new_y;
         }
     }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
     XUngrabPointer(wm->display, CurrentTime);
@@ -776,4 +837,41 @@ void get_rect_sign(WM *wm, int px, int py, bool resize_flag, int *xs, int *ys, i
     {   if(px >= c->x+c->w/4 && px < c->x+c->w*3/4) *hs=1; }
     else
         *hs=1;
+}
+
+void apply_rules(WM *wm, CLIENT *c)
+{
+    XClassHint ch={NULL, NULL};
+    WM_RULE *r;
+
+    if(!XGetClassHint(wm->display, c->win, &ch))
+        return ;
+    for(size_t i=0; i<ARRAY_NUM(rules); i++)
+    {
+        r=rules+i;
+        if( (!r->app_class || strstr(ch.res_class, r->app_class))
+            && (!r->app_name || strstr(ch.res_name, r->app_name)))
+            c->place_type=r->place_type;
+    }
+    wm->n++;
+    if(c->place_type == fixed)
+        wm->n_fixed++;
+    else if(c->place_type == floating)
+    {
+        wm->n_float++;
+        set_default_rect(wm, c);
+    }
+    else
+        wm->n_normal++;
+
+    if(ch.res_class) XFree(ch.res_class);
+    if(ch.res_name) XFree(ch.res_name);
+}
+
+void set_default_rect(WM *wm, CLIENT *c)
+{
+    c->x=wm->screen_width/4;
+    c->y=wm->screen_height/4;
+    c->w=wm->screen_width/2;
+    c->h=wm->screen_height/2;
 }
