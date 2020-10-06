@@ -9,6 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2020年 10月 06日 星期二 23:42:21 CST	gsm <406643764@qq.com>
+	* 發布第0.7版，主要實現了平鋪模式，以及修改了原有的布局模式的規則。
+	* src/gwm.c：創建並初始化rules數組；keybinds_list數組增加切換平鋪模式、打开文件浏览器、打开QQ、打开stardict的按键绑定，修改切換預覽模式的按鍵綁定；修改init_wm函數，把默認布局模式改爲平鋪，初始化main_area_ratio和fixed_area_ratio；創建set_tile_layout函數；update_layout函數增加設置平鋪模式的功能，增加client數量判斷；修改set_full_layout函數，實現傳統意義上的全屏，即只全屏顯示聚焦窗口，懸浮窗口和狀態欄也不顯示；grid修改爲preview；修改set_grid_layout函數，函数名改为set_preview_layout，刪除client數量判斷，因爲已經移到update_layout函數了，忽略懸浮判斷，即所有窗口都一樣參與排列；修改set_stack_layout函數，不改變窗口位置，僅僅略微縮小尺寸；修改prepare_for_move_resize函數，更新client數量和類型的設定；修改toggle_float函數，更新client數量和類型的設定，把位置和尺寸設置的代碼更換爲set_default_rect函數調用；修改pointer_move_resize_win函數，響應ConfigureRequest以解決更新布局延遲的問題，引入prepare_for_move_resize以解決調整窗口後布置沒更新的問題；把狀態欄提升的代碼從focus_client函數移動到raise_float_wins函數，修改raise_float_wins的窗口提升次序，以解決窗口疊次序不正確的問題；add_client函數增加apply_rules函數調用，刪除is_float設置；del_client函數增加n_fixed和n_float設置；create_clients函數增加n_normal、n_float、n_fixed設置，刪除n、n_nonfloat設置；創建apply_rules和set_default_rect函數；修改所有移動窗口和調整窗口大小的函數，禁止在全屏模式和預覽模式移動窗口和調整窗口大小；修改focus_client函數，將提升所有懸浮窗口替換爲只提升聚焦窗口。
+	* src/gwm.h：創建PLACE_TYPE枚舉類型；CLIENT結構體增加place_type成員，刪除is_float成員；LAYOUT結構體增加tile成員；WM結構體增加n_float、n_fixed、n_normal、main_area_ratio和fixed_area_ratio成員，刪除n_nonfloat成員；創建WM_RULE結構體；刪除STACK_INDENT宏；創建set_tile_layout、apply_rules、set_default_rect函數聲明；把set_grid_layout函数名修改为set_preview_layout。
+	* man/zh_HK/man1/gwm.1：修改描述章節，使其適配新的布局模式，並增加每種模式的定義和說明；修改用法，使其適配修改過的布局模式；增加按鍵綁定的用法說明，使其適配新的布局模式；將xset修正爲xsetroot。
+
 2020年 10月 03日 星期六 23:44:38 CST	gsm <406643764@qq.com>
 	* 發布第0.6版，主要實現了定位器命令功能。
 	* src/gwm.c：增加buttonbinds_list變量的定義；增加grab_buttons、handle_button_press、focus_client、pointer_move_resize_win、grab_pointer_for_move_resize、query_pointer_for_move_resize、get_rect_sign函數定義；將next_win中的實現聚焦窗口的代碼段替換爲focus_client函數；爲與KEYBINDS結構體的func成員相對應的函數增加XEvent類型的形參、實參。
