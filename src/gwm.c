@@ -80,8 +80,8 @@ void init_wm(WM *wm)
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
     wm->layout=tile;
-    wm->main_area_ratio=0.5;
-    wm->fixed_area_ratio=0.25;
+    wm->main_area_ratio=DEFAULT_MAIN_AREA_RATIO;
+    wm->fixed_area_ratio=DEFAULT_FIXED_AREA_RATIO;
 }
 
 void set_wm(WM *wm)
@@ -117,7 +117,7 @@ void create_font_set(WM *wm)
     char **missing_charset_list;
     int missing_charset_count;
     char *missing_charset_def_str;
-    wm->font_set=XCreateFontSet(wm->display, "*-24-*", &missing_charset_list,
+    wm->font_set=XCreateFontSet(wm->display, FONT_SET, &missing_charset_list,
         &missing_charset_count, &missing_charset_def_str);
 }
 
@@ -222,11 +222,13 @@ void update_layout(WM *wm)
 
 void set_full_layout(WM *wm)
 {
-    CLIENT *c=wm->focus_client;
-    c->w=wm->screen_width;
-    c->h=wm->screen_height;
-    c->x=c->y=0;
-    XRaiseWindow(wm->display, c->win);
+    for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+    {
+        c->w=wm->screen_width;
+        c->h=wm->screen_height;
+        c->x=c->y=0;
+    }
+    XRaiseWindow(wm->display, wm->focus_client->win);
 }
 
 void set_preview_layout(WM *wm)
@@ -558,12 +560,22 @@ void key_move_win(WM *wm, XEvent *e, FUNC_ARG arg)
 void prepare_for_move_resize(WM *wm)
 {
     CLIENT *c=wm->focus_client;
-    if(c->place_type==normal && wm->layout!=stack) 
+    if(wm->layout == tile)
     {
-        c->place_type=floating;
-        wm->n_normal--;
-        wm->n_float++;
-        update_layout(wm);
+        if(c->place_type == normal) 
+        {
+            c->place_type=floating;
+            wm->n_normal--;
+            wm->n_float++;
+            update_layout(wm);
+        }
+        else if(c->place_type == fixed)
+        {
+            c->place_type=floating;
+            wm->n_fixed--;
+            wm->n_float++;
+            update_layout(wm);
+        }
     }
 }
 
@@ -663,19 +675,19 @@ void focus_client(WM *wm, CLIENT *c)
     wm->focus_client=c;
     if(wm->focus_client != wm->clients)
         XRaiseWindow(wm->display, wm->focus_client->win);
-    XRaiseWindow(wm->display, wm->status_bar.win);
+    if(wm->layout != full)
+        raise_float_wins(wm);
     XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
 }
 
 /* 僅提升被遮擋的懸浮窗口似乎是一個好主意，但實際上計算遮擋關系相當
- * 復雜，而且一般情況下懸浮窗口數量較少，還不如將所有懸浮窗口提升 */
+ * 復雜，而且一般情況下懸浮窗口數量較少，還不如將所有懸浮窗口提升。
+ * 而且懸浮窗口顧名思義應當是懸浮在其他類型的窗口之上。 */
 void raise_float_wins(WM *wm)
 {
     for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(c->place_type == floating)
             XRaiseWindow(wm->display, c->win);
-    if(wm->focus_client != wm->clients)
-        XRaiseWindow(wm->display, wm->focus_client->win);
     XRaiseWindow(wm->display, wm->status_bar.win);
 }
 
