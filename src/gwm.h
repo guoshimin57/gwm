@@ -120,7 +120,10 @@ typedef struct wm_rule_tag WM_RULE;
 #define MOVE_INC 32
 #define RESIZE_INC 32
 #define STATUS_BAR_HEIGHT 32
+#define DEFAULT_MAIN_AREA_RATIO 0.6
+#define DEFAULT_FIXED_AREA_RATIO 0.15
 #define POINTER_MASK (ButtonPressMask|ButtonReleaseMask|ButtonMotionMask)
+#define FONT_SET "*-24-*"
 
 void init_wm(WM *wm);
 void set_wm(WM *wm);
