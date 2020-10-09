@@ -312,16 +312,17 @@ unsigned int get_num_lock_mask(WM *wm)
 {
 	XModifierKeymap *m=XGetModifierMapping(wm->display);
     KeyCode code=XKeysymToKeycode(wm->display, XK_Num_Lock);
-    if(code == 0)
-        return 0;
-	for(size_t i=0; i<8; i++)
+    if(code)
     {
-		for(size_t j=0; j<m->max_keypermod; j++)
+        for(size_t i=0; i<8; i++)
         {
-			if(m->modifiermap[i*m->max_keypermod+j] == code)
+            for(size_t j=0; j<m->max_keypermod; j++)
             {
-                XFreeModifiermap(m);
-				return (1<<i);
+                if(m->modifiermap[i*m->max_keypermod+j] == code)
+                {
+                    XFreeModifiermap(m);
+                    return (1<<i);
+                }
             }
         }
     }
@@ -424,11 +425,14 @@ CLIENT *win_to_client(WM *wm, Window win)
 
 void handle_destroy_notify(WM *wm, XEvent *e)
 {
-    if(win_to_client(wm, e->xdestroywindow.window))
+    CLIENT *c;
+    if((c=win_to_client(wm, e->xdestroywindow.window)))
     {
+        bool flag=(c->place_type!=floating);
         del_client(wm, e->xdestroywindow.window);
-        update_layout(wm);
-        XSetInputFocus(wm->display, wm->focus_client->win, RevertToParent, CurrentTime);
+        if(wm->layout!=stack && (wm->layout!=tile || flag))
+            update_layout(wm);
+        focus_client(wm, wm->focus_client);
     }
 }
  
@@ -500,28 +504,37 @@ unsigned int get_modifier_mask(WM *wm, KeySym key_sym)
 
 void handle_map_request(WM *wm, XEvent *e)
 {
-    XMapWindow(wm->display, e->xmaprequest.window);
     XWindowAttributes attr;
-    if( e->xmaprequest.window != wm->status_bar.win
-        && XGetWindowAttributes(wm->display, e->xmaprequest.window, &attr)
-        && get_state_hint(wm, e->xmaprequest.window) == NormalState
+    Window win=e->xmaprequest.window;
+
+    XMapWindow(wm->display, win);
+    if( win != wm->status_bar.win
+        && XGetWindowAttributes(wm->display, win, &attr)
+        && get_state_hint(wm, win) == NormalState
         && !attr.override_redirect
-        && !win_to_client(wm, e->xmaprequest.window))
+        && !win_to_client(wm, win))
     {
-        add_client(wm, e->xmaprequest.window);
-        update_layout(wm);
-        XSetInputFocus(wm->display, wm->focus_client->win, RevertToParent, CurrentTime);
+        add_client(wm, win);
+        CLIENT *c=win_to_client(wm, win);
+        if(wm->layout==stack || (wm->layout==tile && c->place_type==floating))
+            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+        else
+            update_layout(wm);
+        focus_client(wm, c);
     }
     XRaiseWindow(wm->display, wm->status_bar.win);
 }
 
 void handle_unmap_notify(WM *wm, XEvent *e)
 {
-    if(win_to_client(wm, e->xunmap.window))
+    CLIENT *c;
+    if((c=win_to_client(wm, e->xunmap.window)))
     {
+        bool flag=(c->place_type!=floating);
         del_client(wm, e->xunmap.window);
-        update_layout(wm);
-        XSetInputFocus(wm->display, wm->focus_client->win, RevertToParent, CurrentTime);
+        if(wm->layout!=stack && (wm->layout!=tile || flag))
+            update_layout(wm);
+        focus_client(wm, wm->focus_client);
     }
 }
 
@@ -696,20 +709,21 @@ void next_win(WM *wm, XEvent *e, FUNC_ARG unused)
 void focus_client(WM *wm, CLIENT *c)
 {
     wm->focus_client=c;
+    if(wm->layout==tile && c->place_type!=floating)
+        raise_float_wins(wm);
     if(wm->focus_client != wm->clients)
         XRaiseWindow(wm->display, wm->focus_client->win);
-    if(wm->layout != full)
-        raise_float_wins(wm);
     XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
 }
 
 /* 僅提升被遮擋的懸浮窗口似乎是一個好主意，但實際上計算遮擋關系相當
- * 復雜，而且一般情況下懸浮窗口數量較少，還不如將所有懸浮窗口提升。
- * 而且懸浮窗口顧名思義應當是懸浮在其他類型的窗口之上。 */
+ * 復雜，而且一般情況下懸浮窗口數量較少，還不如將除聚焦窗口之外的所
+ * 有懸浮窗口提升。而且懸浮窗口顧名思義應當是懸浮在其他類型的窗口之
+ * 上。 */
 void raise_float_wins(WM *wm)
 {
     for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(c->place_type == floating)
+        if(c->place_type==floating && c!=wm->focus_client)
             XRaiseWindow(wm->display, c->win);
     XRaiseWindow(wm->display, wm->status_bar.win);
 }
