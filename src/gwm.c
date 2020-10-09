@@ -297,14 +297,37 @@ void set_tile_layout(WM *wm)
 
 void grab_keys(WM *wm)
 {
+    unsigned int num_lock_mask=get_num_lock_mask(wm);
+    unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     KeyCode code;
     XUngrabKey(wm->display, AnyKey, AnyModifier, wm->root_win);
     for(size_t i=0; i<ARRAY_NUM(keybinds_list); i++)
-        if ((code=XKeysymToKeycode(wm->display, keybinds_list[i].keysym)))
-            XGrabKey(wm->display, code, keybinds_list[i].modifier,
-                wm->root_win, True, GrabModeAsync, GrabModeAsync);
+        if((code=XKeysymToKeycode(wm->display, keybinds_list[i].keysym)))
+            for(size_t j=0; j<ARRAY_NUM(masks); j++)
+                XGrabKey(wm->display, code, keybinds_list[i].modifier|masks[j],
+                    wm->root_win, True, GrabModeAsync, GrabModeAsync);
 }
 
+unsigned int get_num_lock_mask(WM *wm)
+{
+	XModifierKeymap *m=XGetModifierMapping(wm->display);
+    KeyCode code=XKeysymToKeycode(wm->display, XK_Num_Lock);
+    if(code == 0)
+        return 0;
+	for(size_t i=0; i<8; i++)
+    {
+		for(size_t j=0; j<m->max_keypermod; j++)
+        {
+			if(m->modifiermap[i*m->max_keypermod+j] == code)
+            {
+                XFreeModifiermap(m);
+				return (1<<i);
+            }
+        }
+    }
+    return 0;
+}
+    
 void grab_buttons(WM *wm)
 {
     Window win=wm->focus_client->win;
