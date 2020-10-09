@@ -141,6 +141,7 @@ void set_preview_layout(WM *wm);
 void set_stack_layout(WM *wm);
 void set_tile_layout(WM *wm);
 void grab_keys(WM *wm);
+unsigned int get_num_lock_mask(WM *wm);
 void grab_buttons(WM *wm);
 void handle_events(WM *wm);
 void handle_button_press(WM *wm, XEvent *e);
