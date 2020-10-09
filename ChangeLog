@@ -9,6 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2020年 10月 09日 星期五 23:22:46 CST	gsm <406643764@qq.com>
+	* 發布第0.7.3版，主要修改了原有的布局模式的規則以及修復缺陷。
+	* src/gwm.c：修改get_num_lock_mask函數，調整代碼寫法來避免編譯器警告；修改focus_client函數，把聚焦窗口提升至窗口疊次序的頂部,僅在平鋪模式下且聚焦窗口不是懸浮窗口的情況下才提升其他懸浮窗口；修改raise_float_wins函數，聚焦窗口不必提升，因爲其他地方總會把它提升至窗口疊次序的頂部；修改handle_map_request、handle_destroy_notify和handle_unmap_notify函數，有條件地更新布局，用focus_client函數代替XSetInputFocus調用。
+	* man/zh_HK/man1/gwm.1：修改描述章節中有關懸浮模式的內容。
+
 2020年 10月 09日 星期五 13:42:14 CST	gsm <406643764@qq.com>
 	* 發布第0.7.2版，修復按鍵綁定未忽略數字、大寫鎖定的缺陷。
 	* src/gwm.c：創建get_num_lock_mask函數；修改grab_keys函數，忽略數字、大寫鎖定。
