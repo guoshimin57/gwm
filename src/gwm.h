@@ -22,7 +22,7 @@
 
 enum place_type_tag
 {
-    normal, floating, fixed,
+    NORMAL, FLOATING, FIXED,
 };
 typedef enum place_type_tag PLACE_TYPE;
 
@@ -38,7 +38,7 @@ typedef struct client_tag CLIENT;
 
 enum layout_tag
 {
-    full, preview, stack, tile,
+    FULL, PREVIEW, STACK, TILE,
 };
 typedef enum layout_tag LAYOUT;
 
@@ -73,9 +73,9 @@ typedef struct wm_tag WM;
 
 enum direction_tag /* 窗口、區域操作方向 */
 {
-    up, down, left, right, /* 窗口移動方向 */
-    left2left, left2right, right2left, right2right, /* 左右邊界移動方向 */
-    up2up, up2down, down2up, down2down, /* 上下邊界移動方向 */
+    UP, DOWN, LEFT, RIGHT, /* 窗口移動方向 */
+    LEFT2LEFT, LEFT2RIGHT, RIGHT2LEFT, RIGHT2RIGHT, /* 左右邊界移動方向 */
+    UP2UP, UP2DOWN, DOWN2UP, DOWN2DOWN, /* 上下邊界移動方向 */
 };
 typedef enum direction_tag DIRECTION;
 
@@ -122,7 +122,9 @@ typedef struct wm_rule_tag WM_RULE;
 #define STATUS_BAR_HEIGHT 32
 #define DEFAULT_MAIN_AREA_RATIO 0.6
 #define DEFAULT_FIXED_AREA_RATIO 0.15
-#define POINTER_MASK (ButtonPressMask|ButtonReleaseMask|ButtonMotionMask)
+#define ROOT_EVENT_MASK (SubstructureRedirectMask |SubstructureNotifyMask|PropertyChangeMask|ButtonPressMask)
+#define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
+#define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
 #define FONT_SET "*-24-*"
 
 void init_wm(WM *wm);
@@ -132,7 +134,8 @@ void create_font_set(WM *wm);
 void create_status_bar(WM *wm);
 void print_error_msg(Display *display, XErrorEvent *e);
 void create_clients(WM *wm);
-void *Malloc(size_t size);
+void *malloc_s(size_t size);
+bool is_wm_win(WM *wm, Window win);
 int get_state_hint(WM *wm, Window w);
 void add_client(WM *wm, Window win);
 void update_layout(WM *wm);
@@ -145,6 +148,7 @@ unsigned int get_num_lock_mask(WM *wm);
 void grab_buttons(WM *wm);
 void handle_events(WM *wm);
 void handle_button_press(WM *wm, XEvent *e);
+bool is_equal_modifier_mask(WM *wm, unsigned int m1, unsigned int m2);
 void handle_config_request(WM *wm, XEvent *e);
 void config_managed_win(WM *wm, CLIENT *c);
 void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
@@ -167,7 +171,7 @@ void quit_wm(WM *wm, XEvent *e, FUNC_ARG unused);
 void close_win(WM *wm, XEvent *e, FUNC_ARG unused);
 int send_event(WM *wm, Atom protocol);
 void next_win(WM *wm, XEvent *e, FUNC_ARG unused);
-void focus_client(WM *wm, CLIENT *c);
+void focus_client(WM *wm);
 void raise_float_wins(WM *wm);
 void toggle_float(WM *wm, XEvent *e, FUNC_ARG unused);
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg);
