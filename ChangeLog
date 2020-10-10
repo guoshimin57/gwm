@@ -9,6 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2020年 10月 10日 星期六 20:23:21 CST	gsm <406643764@qq.com>
+	* 發布第0.7.4版，主要修復了布局模式和窗口聚焦方面的缺陷，對編碼風格進行調整。
+	* src/gwm.c：修改枚舉常量爲大寫；修改set_wm函數，用ROOT_EVENT_MASK宏代替XSelectInput的表徵碼；修改set_wm函數，在更新布局之後馬上調用update_layout函數；修改close_win函數，有條件地更新布局，當試圖關閉根窗口時報錯；修改toggle_float函數，刪除XMoveResizeWindow調用，因爲update_layout函數已經包含此調用；修改raise_float_wins函數，刪除提升狀態欄的代碼，因爲狀態欄不應被視作懸浮窗口，如果聚焦窗口是懸浮窗口，則提升它；修改focus_client函數，增加提升狀態欄代碼，刪除CLIENT形參，用wm->focus_client代替；修改調用focus_client函數的函數，在調用focus_client函數前，先設置好wm->focus_client；修改set_tile_layout函數，增加提升狀態欄代碼；修改prepare_for_move_resize函數，增加調整根窗口報錯的代碼；修改pointer_move_resize_win函數，刪除調整根窗口報錯的代碼，修改移動根窗口的善後工作的代碼以及判斷是否第一次執行prepare_for_move_resize調用的代碼但運行效果不變；創建is_wm_win函數；修改create_clients和handle_map_request函數，把判斷窗口是否應由窗口管理器管理的代碼替換爲is_wm_win調用；修改報錯表述；修改Malloc函數名爲malloc_s；修改set_preview_layout函數，設置中間變量ch；修改grab_buttons函數，僅僅是用宏替代原代碼片段；創建is_equal_modifier_mask函數；修改handle_button_press和handle_key_press函數，用is_equal_modifier_mask調用代替判斷功能鍵表徵碼是否等效的代碼段。
+	* src/gwm.h：修改枚舉常量爲大寫；創建ROOT_EVENT_MASK宏；修改focus_client函數聲明，刪除CLIENT形參；創建is_wm_win函數聲明；修改Malloc函數名爲malloc_s；創建BUTTON_MASK宏；修改POINTER_MASK宏，含義不變；創建is_equal_modifier_mask函數聲明。
+
 2020年 10月 09日 星期五 23:22:46 CST	gsm <406643764@qq.com>
 	* 發布第0.7.3版，主要修改了原有的布局模式的規則以及修復缺陷。
 	* src/gwm.c：修改get_num_lock_mask函數，調整代碼寫法來避免編譯器警告；修改focus_client函數，把聚焦窗口提升至窗口疊次序的頂部,僅在平鋪模式下且聚焦窗口不是懸浮窗口的情況下才提升其他懸浮窗口；修改raise_float_wins函數，聚焦窗口不必提升，因爲其他地方總會把它提升至窗口疊次序的頂部；修改handle_map_request、handle_destroy_notify和handle_unmap_notify函數，有條件地更新布局，用focus_client函數代替XSetInputFocus調用。
