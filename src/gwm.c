@@ -13,44 +13,55 @@
 
 KEYBINDS keybinds_list[]=
 {
-    {CMD_KEY,    XK_t,            exec,            SH_CMD("lxterminal")},
-    {CMD_KEY,    XK_f,            exec,            SH_CMD("xdg-open ~")},
-    {CMD_KEY,    XK_w,            exec,            SH_CMD("xwininfo -wm >log")},
-    {CMD_KEY,    XK_p,            exec,            SH_CMD("dmenu_run")},
-    {CMD_KEY,    XK_q,            exec,            SH_CMD("qq")},
-    {CMD_KEY,    XK_s,            exec,            SH_CMD("stardict")},
-    {WM_KEY,     XK_Up,           key_move_win,    {.direction=UP}},
-    {WM_KEY,     XK_Down,         key_move_win,    {.direction=DOWN}},
-    {WM_KEY,     XK_Left,         key_move_win,    {.direction=LEFT}},
-    {WM_KEY,     XK_Right,        key_move_win,    {.direction=RIGHT}},
-    {WM_KEY,     XK_bracketleft,  key_resize_win,  {.direction=UP2UP}},
-    {WM_KEY,     XK_bracketright, key_resize_win,  {.direction=UP2DOWN}},
-    {WM_KEY,     XK_semicolon,    key_resize_win,  {.direction=DOWN2UP}},
-    {WM_KEY,     XK_quoteright,   key_resize_win,  {.direction=DOWN2DOWN}},
-    {WM_KEY,     XK_9,            key_resize_win,  {.direction=LEFT2LEFT}},
-    {WM_KEY,     XK_0,            key_resize_win,  {.direction=LEFT2RIGHT}},
-    {WM_KEY,     XK_minus,        key_resize_win,  {.direction=RIGHT2LEFT}},
-    {WM_KEY,     XK_equal,        key_resize_win,  {.direction=RIGHT2RIGHT}},
-    {WM_KEY,     XK_Delete,       quit_wm,         {0}},
-    {WM_KEY,     XK_c,            close_win,       {0}},
-    {WM_KEY,     XK_Tab,          next_win,        {0}},
-    {WM_KEY,     XK_backslash,    toggle_float,    {0}},
-    {WM_KEY,     XK_f,            change_layout,   {.layout=FULL}},
-    {WM_KEY,     XK_p,            change_layout,   {.layout=PREVIEW}},
-    {WM_KEY,     XK_s,            change_layout,   {.layout=STACK}},
-    {WM_KEY,     XK_t,            change_layout,   {.layout=TILE}},
+    {CMD_KEY,    XK_t,            exec,                       SH_CMD("lxterminal")},
+    {CMD_KEY,    XK_f,            exec,                       SH_CMD("xdg-open ~")},
+    {CMD_KEY,    XK_w,            exec,                       SH_CMD("xwininfo -wm >log")},
+    {CMD_KEY,    XK_p,            exec,                       SH_CMD("dmenu_run")},
+    {CMD_KEY,    XK_q,            exec,                       SH_CMD("qq")},
+    {CMD_KEY,    XK_s,            exec,                       SH_CMD("stardict")},
+    {WM_KEY,     XK_Up,           key_move_win,               {.direction=UP}},
+    {WM_KEY,     XK_Down,         key_move_win,               {.direction=DOWN}},
+    {WM_KEY,     XK_Left,         key_move_win,               {.direction=LEFT}},
+    {WM_KEY,     XK_Right,        key_move_win,               {.direction=RIGHT}},
+    {WM_KEY,     XK_bracketleft,  key_resize_win,             {.direction=UP2UP}},
+    {WM_KEY,     XK_bracketright, key_resize_win,             {.direction=UP2DOWN}},
+    {WM_KEY,     XK_semicolon,    key_resize_win,             {.direction=DOWN2UP}},
+    {WM_KEY,     XK_quoteright,   key_resize_win,             {.direction=DOWN2DOWN}},
+    {WM_KEY,     XK_9,            key_resize_win,             {.direction=LEFT2LEFT}},
+    {WM_KEY,     XK_0,            key_resize_win,             {.direction=LEFT2RIGHT}},
+    {WM_KEY,     XK_minus,        key_resize_win,             {.direction=RIGHT2LEFT}},
+    {WM_KEY,     XK_equal,        key_resize_win,             {.direction=RIGHT2RIGHT}},
+    {WM_KEY,     XK_Delete,       quit_wm,                    {0}},
+    {WM_KEY,     XK_c,            close_win,                  {0}},
+    {WM_KEY,     XK_Tab,          next_win,                   {0}},
+    {WM_KEY,     XK_f,            change_layout,              {.layout=FULL}},
+    {WM_KEY,     XK_p,            change_layout,              {.layout=PREVIEW}},
+    {WM_KEY,     XK_s,            change_layout,              {.layout=STACK}},
+    {WM_KEY,     XK_t,            change_layout,              {.layout=TILE}},
+    {WM_KEY,     XK_i,            adjust_n_main_max,          {.n=1}},
+    {WM_SKEY,    XK_i,            adjust_n_main_max,          {.n=-1}},
+    {WM_KEY,     XK_m,            adjust_main_area_ratio,     {.change_ratio=0.01}},
+    {WM_SKEY,    XK_m,            adjust_main_area_ratio,     {.change_ratio=-0.01}},
+    {WM_KEY,     XK_x,            adjust_fixed_area_ratio,    {.change_ratio=0.01}},
+    {WM_SKEY,    XK_x,            adjust_fixed_area_ratio,    {.change_ratio=-0.01}},
+    {WM_KEY,     XK_F1,           key_change_area,            {.area_type=MAIN_AREA}},
+    {WM_KEY,     XK_F2,           key_change_area,            {.area_type=SECOND_AREA}},
+    {WM_KEY,     XK_F3,           key_change_area,            {.area_type=FIXED_AREA}},
+    {WM_KEY,     XK_F4,           key_change_area,            {.area_type=FLOATING_AREA}},
 };
 
 BUTTONBINDS buttonbinds_list[]=
 {
     {WM_KEY, Button1, pointer_move_resize_win, {.resize_flag=false}},
     {WM_KEY, Button3, pointer_move_resize_win, {.resize_flag=true}},
+    {WM_SKEY, Button1, pointer_change_area, {0}},
 };
 
 WM_RULE rules[]=
 {
     {"Stardict", "stardict", FLOATING},
     {"Qq", "qq", FIXED},
+    {"Peek", "peek", FLOATING},
 };
 
 int main(int argc, char *argv[])
@@ -82,6 +93,7 @@ void init_wm(WM *wm)
     wm->layout=TILE;
     wm->main_area_ratio=DEFAULT_MAIN_AREA_RATIO;
     wm->fixed_area_ratio=DEFAULT_FIXED_AREA_RATIO;
+    wm->n_main_max=2;
 }
 
 void set_wm(WM *wm)
@@ -141,7 +153,7 @@ void print_error_msg(Display *display, XErrorEvent *e)
         e->error_code, e->request_code, e->minor_code);
 }
 
-/* 頭插法生成帶表頭結點的雙向循環鏈表 */
+/* 生成帶表頭結點的雙向循環鏈表 */
 void create_clients(WM *wm)
 {
     Window root, parent, *child=NULL;
@@ -197,14 +209,28 @@ void add_client(WM *wm, Window win)
     CLIENT *c;
     c=malloc_s(sizeof(CLIENT));
     c->win=win;
-    c->prev=wm->clients;
-    c->next=wm->clients->next;
-    wm->clients->next=c;
-    c->next->prev=c;
     wm->focus_client=c;
-    c->place_type=NORMAL;
     grab_buttons(wm);
     apply_rules(wm, c);
+    add_client_node(get_area_head(wm, c->place_type), c);
+    update_n_for_add(wm, c);
+    if(c->place_type == FLOATING)
+        set_default_rect(wm, c);
+}
+
+CLIENT *get_area_head(WM *wm, PLACE_TYPE type)
+{
+    int i, n;
+    CLIENT *head=wm->clients;
+    switch(type)
+    {
+        case NORMAL: n=0; break;
+        case FIXED: n=wm->n_normal; break;
+        case FLOATING: n=wm->n_normal+wm->n_fixed; break;
+    }
+    for(i=0; i<n; i++)
+        head=head->next;
+    return head;
 }
 
 void update_layout(WM *wm)
@@ -269,16 +295,18 @@ void set_stack_layout(WM *wm)
 
 void set_tile_layout(WM *wm)
 {
-    CLIENT *c, *mc=NULL;
-    unsigned int i, j, mw, sw, fw, mh, sh, fh; /* m=main, s=sec, f=fixed */
+    CLIENT *c;
+    unsigned int i, j, mw, sw, fw, mh, sh, fh, h; /* m=main, s=sec, f=fixed */
 
     mw=wm->main_area_ratio*wm->screen_width;
     fw=wm->screen_width*wm->fixed_area_ratio;
     sw=wm->screen_width-fw-mw;
-    mh=wm->screen_height-wm->status_bar.h;
-    fh=wm->n_fixed ? mh/wm->n_fixed : mh;
-    sh=wm->n_normal>1 ? mh/(wm->n_normal-1) : mh;
-    if(wm->n_fixed == 0) mw+=fw;
+    h=wm->screen_height-wm->status_bar.h;
+    mh=wm->n_normal>=wm->n_main_max ? h/wm->n_main_max : (wm->n_normal ? h/wm->n_normal : h);
+    fh=wm->n_fixed ? h/wm->n_fixed : h;
+    sh=wm->n_normal>wm->n_main_max ? h/(wm->n_normal-wm->n_main_max) : h;
+    if(wm->n_fixed == 0) mw+=fw, fw=0;
+    if(wm->n_normal <= wm->n_main_max) mw+=sw, sw=0;
 
     for(i=0, j=0, c=wm->clients->next; c!=wm->clients; c=c->next)
     {
@@ -286,15 +314,13 @@ void set_tile_layout(WM *wm)
             c->x=mw+sw, c->y=i++*fh, c->w=fw, c->h=fh;
         else if(c->place_type == NORMAL)
         {
-            if(j)
-                c->x=0, c->y=(j-1)*sh, c->w=sw, c->h=sh;
+            if(j < wm->n_main_max)
+                c->x=sw, c->y=j*mh, c->w=mw, c->h=mh;
             else
-                c->x=sw, c->y=0, c->w=mw, c->h=mh, mc=c;
+                c->x=0, c->y=(j-wm->n_main_max)*sh, c->w=sw, c->h=sh;
             j++;
         }
     }
-    if(j == 1 && mc)
-        mc->x=0, mc->y=0, mc->w=mw+sw, mc->h=mh;
     raise_float_wins(wm);
     XRaiseWindow(wm->display, wm->status_bar.win);
 }
@@ -448,15 +474,8 @@ void del_client(WM *wm, Window win)
     CLIENT *c=win_to_client(wm, win);
     if(c)
     {
-        wm->n--;
-        if(c->place_type == FIXED)
-            wm->n_fixed--;
-        else if(c->place_type == FLOATING)
-            wm->n_float--;
-        else
-            wm->n_normal--;
-        c->prev->next=c->next;
-        c->next->prev=c->prev;
+        del_client_node(c);
+        update_n_for_del(wm, c);
         if(c == wm->focus_client)
             wm->focus_client=wm->focus_client->next;
         free(c);
@@ -607,22 +626,12 @@ void prepare_for_move_resize(WM *wm)
         fprintf(stderr, "錯誤：不能移動根窗口或改變根窗口的尺寸！\n");
         return;;
     }
-    if(wm->layout == TILE)
+    if(wm->layout==TILE && c->place_type!=FLOATING)
     {
-        if(c->place_type == NORMAL) 
-        {
-            c->place_type=FLOATING;
-            wm->n_normal--;
-            wm->n_float++;
-            update_layout(wm);
-        }
-        else if(c->place_type == FIXED)
-        {
-            c->place_type=FLOATING;
-            wm->n_fixed--;
-            wm->n_float++;
-            update_layout(wm);
-        }
+        update_n_for_del(wm, c);
+        c->place_type=FLOATING;
+        update_n_for_add(wm, c);
+        update_layout(wm);
     }
 }
 
@@ -741,24 +750,6 @@ void raise_float_wins(WM *wm)
             XRaiseWindow(wm->display, c->win);
     if(wm->focus_client->place_type == FLOATING)
         XRaiseWindow(wm->display, wm->focus_client->win);
-}
-
-void toggle_float(WM *wm, XEvent *e, FUNC_ARG unused)
-{
-    CLIENT *c=wm->focus_client;
-    c->place_type=(c->place_type==FLOATING) ? NORMAL : FLOATING;
-    if(c->place_type == FLOATING)
-    {
-        wm->n_normal--;
-        wm->n_float++;
-        set_default_rect(wm, c);
-    }
-    else
-    {
-        wm->n_normal++;
-        wm->n_float--;
-    }
-    update_layout(wm);
 }
 
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
@@ -898,6 +889,7 @@ void apply_rules(WM *wm, CLIENT *c)
     XClassHint ch={NULL, NULL};
     WM_RULE *r;
 
+    c->place_type=NORMAL;
     if(!XGetClassHint(wm->display, c->win, &ch))
         return ;
     for(size_t i=0; i<ARRAY_NUM(rules); i++)
@@ -907,16 +899,6 @@ void apply_rules(WM *wm, CLIENT *c)
             && (!r->app_name || strstr(ch.res_name, r->app_name)))
             c->place_type=r->place_type;
     }
-    wm->n++;
-    if(c->place_type == FIXED)
-        wm->n_fixed++;
-    else if(c->place_type == FLOATING)
-    {
-        wm->n_float++;
-        set_default_rect(wm, c);
-    }
-    else
-        wm->n_normal++;
 
     if(ch.res_class) XFree(ch.res_class);
     if(ch.res_name) XFree(ch.res_name);
@@ -928,4 +910,222 @@ void set_default_rect(WM *wm, CLIENT *c)
     c->y=wm->screen_height/4;
     c->w=wm->screen_width/2;
     c->h=wm->screen_height/2;
+}
+
+void adjust_n_main_max(WM *wm, XEvent *e, FUNC_ARG arg)
+{
+    wm->n_main_max+=arg.n;
+    if(wm->n_main_max < 1)
+        wm->n_main_max=1;
+    update_layout(wm);
+}
+
+/* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
+void adjust_main_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg)
+{
+    if(wm->n_normal > wm->n_main_max)
+    {
+        float ratio=wm->main_area_ratio+arg.change_ratio;
+        int mw=ratio*wm->screen_width,
+            sw=wm->screen_width*(1-wm->fixed_area_ratio)-mw;
+        if(sw>=RESIZE_INC && mw>=RESIZE_INC)
+        {
+            wm->main_area_ratio=ratio;
+            update_layout(wm);
+        }
+    }
+}
+
+/* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
+void adjust_fixed_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg)
+{
+    if(wm->n_fixed)
+    {
+        float ratio=wm->fixed_area_ratio+arg.change_ratio;
+        int mw=wm->screen_width*(wm->main_area_ratio-arg.change_ratio),
+            fw=wm->screen_width*ratio;
+        if(mw>=RESIZE_INC && fw>=RESIZE_INC)
+        {
+            wm->main_area_ratio-=arg.change_ratio;
+            wm->fixed_area_ratio=ratio;
+            update_layout(wm);
+        }
+    }
+}
+
+void key_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
+{
+    if(wm->focus_client != wm->clients)
+    {
+        AREA_TYPE type=arg.area_type;
+        switch(type)
+        {
+            case MAIN_AREA: to_main_area(wm); break;
+            case SECOND_AREA: to_second_area(wm); break;
+            case FIXED_AREA: to_fixed_area(wm); break;
+            case FLOATING_AREA: to_floating_area(wm); break;
+        }
+    }
+}
+
+void to_main_area(WM *wm)
+{
+    if(wm->layout == TILE)
+    {
+        move_client(wm, wm->focus_client, wm->clients, NORMAL);
+        update_layout(wm);
+    }
+}
+
+bool is_in_main_area(WM *wm, CLIENT *c)
+{
+    CLIENT *p=wm->clients->next;
+    for(int i=0; i<wm->n_main_max; i++, p=p->next)
+        if(p == c)
+            return true;
+    return false;
+}
+
+void del_client_node(CLIENT *c)
+{
+    c->prev->next=c->next;
+    c->next->prev=c->prev;
+}
+
+void update_n_for_del(WM *wm, CLIENT *c)
+{
+    wm->n--;
+    switch(c->place_type)
+    {
+        case NORMAL: wm->n_normal--; break;
+        case FIXED: wm->n_fixed--; break;
+        case FLOATING: wm->n_float--; break;
+    }
+}
+
+void add_client_node(CLIENT *head, CLIENT *c)
+{
+    c->prev=head;
+    c->next=head->next;
+    head->next=c;
+    c->next->prev=c;
+}
+
+void update_n_for_add(WM *wm, CLIENT *c)
+{
+    wm->n++;
+    switch(c->place_type)
+    {
+        case NORMAL: wm->n_normal++; break;
+        case FIXED: wm->n_fixed++; break;
+        case FLOATING: wm->n_float++; break;
+    }
+}
+
+void to_second_area(WM *wm)
+{
+    CLIENT *to, *from=wm->focus_client;
+
+    if( wm->layout == TILE
+        && (wm->n_normal > wm->n_main_max
+        || (wm->n_normal==wm->n_main_max && !is_in_main_area(wm, from)))
+        && (to=get_second_area_head(wm)))
+    {
+        move_client(wm, from, to, NORMAL);
+        update_layout(wm);
+    }
+}
+
+CLIENT *get_second_area_head(WM *wm)
+{
+    if(wm->n_normal >= wm->n_main_max)
+    {
+        CLIENT *head=wm->clients->next;
+        for(int i=0; i<wm->n_main_max; i++)
+            head=head->next;
+        return head;
+    }
+    return NULL;
+}
+
+void to_fixed_area(WM *wm)
+{
+    CLIENT *to, *from=wm->focus_client;
+    if(wm->layout == TILE || from->place_type==FIXED)
+    {
+        to=get_area_head(wm, FIXED);
+        if(from->place_type == FLOATING)
+            to=to->next;
+        move_client(wm, from, to, FIXED);
+        update_layout(wm);
+    }
+}
+
+void to_floating_area(WM *wm)
+{
+    CLIENT *from=wm->focus_client;
+    if(from->place_type == FLOATING)
+        return;
+    set_floating_size(from);
+    move_client(wm, from, from, FLOATING);
+    update_layout(wm);
+}
+
+void set_floating_size(CLIENT *c)
+{
+    if(c->w >= 2*RESIZE_INC)
+        c->w-=RESIZE_INC;
+    if(c->h >= 2*RESIZE_INC)
+        c->h-=RESIZE_INC;
+}
+
+void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
+{
+    if(wm->layout==TILE && grab_pointer_for_move_resize(wm))
+    {
+        CLIENT *from=win_to_client(wm, e->xbutton.window), *to;
+        wm->focus_client=from=(from?from:wm->clients);
+        focus_client(wm);
+        if(from != wm->clients)
+        {
+            XEvent be;
+            do
+            {
+                while(XCheckTypedEvent(wm->display, ButtonPress, &be));
+                XMaskEvent(wm->display, ButtonReleaseMask, &be);
+            }while((be.xbutton.button != e->xbutton.button));
+            to=win_to_client(wm, be.xbutton.subwindow);
+            if(to && to!=from)
+            {
+                move_client(wm, from, to, to->place_type);
+                update_layout(wm);
+            }
+        }
+        XUngrabPointer(wm->display, CurrentTime);
+    }
+}
+
+int compare_client_order(WM *wm, CLIENT *c1, CLIENT *c2)
+{
+    if(c1 == c2)
+        return 0;
+    for(CLIENT *c=c1; c!=wm->clients; c=c->next)
+        if(c == c2)
+            return -1;
+    return 1;
+}
+
+void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type)
+{
+    if(from != to)
+    {
+        del_client_node(from);
+        if(compare_client_order(wm, from, to)==1 && to!=wm->clients)
+            add_client_node(to->prev, from);
+        else
+            add_client_node(to, from);
+    }
+    update_n_for_del(wm, from);
+    from->place_type=type;
+    update_n_for_add(wm, from);
 }
