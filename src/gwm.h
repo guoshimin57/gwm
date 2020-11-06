@@ -22,9 +22,15 @@
 
 enum place_type_tag
 {
-    NORMAL, FLOATING, FIXED,
+     NORMAL, FIXED, FLOATING,
 };
 typedef enum place_type_tag PLACE_TYPE;
+
+enum area_type_tag
+{
+     MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA,
+};
+typedef enum area_type_tag AREA_TYPE;
 
 struct client_tag
 {
@@ -63,7 +69,8 @@ struct wm_tag
     unsigned int n, /* 除頭結點以外的clients總數 */
         n_float,    /* 懸浮的clients數量 */
         n_fixed,    /* 固定區域的clients數量 */
-        n_normal;   /* 除頭結點和以上兩種結點的clients數量 */
+        n_normal,   /* 除頭結點和以上兩種結點的clients數量 */
+        n_main_max; /* 主區域可容納的clients數量 */
     LAYOUT layout;
     XFontSet font_set;
     STATUS_BAR status_bar;
@@ -85,6 +92,9 @@ union func_arg_tag
     DIRECTION direction;
     LAYOUT layout;
     bool resize_flag;
+    int n;
+    AREA_TYPE area_type;
+    float change_ratio;
 };
 typedef union func_arg_tag FUNC_ARG;
 
@@ -114,6 +124,7 @@ struct wm_rule_tag
 typedef struct wm_rule_tag WM_RULE;
 
 #define WM_KEY Mod4Mask
+#define WM_SKEY (Mod4Mask|ShiftMask)
 #define CMD_KEY (Mod4Mask|Mod1Mask)
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
@@ -138,6 +149,7 @@ void *malloc_s(size_t size);
 bool is_wm_win(WM *wm, Window win);
 int get_state_hint(WM *wm, Window w);
 void add_client(WM *wm, Window win);
+CLIENT *get_area_head(WM *wm, PLACE_TYPE type);
 void update_layout(WM *wm);
 void set_full_layout(WM *wm);
 void set_preview_layout(WM *wm);
@@ -173,7 +185,6 @@ int send_event(WM *wm, Atom protocol);
 void next_win(WM *wm, XEvent *e, FUNC_ARG unused);
 void focus_client(WM *wm);
 void raise_float_wins(WM *wm);
-void toggle_float(WM *wm, XEvent *e, FUNC_ARG unused);
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg);
 void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg);
 bool grab_pointer_for_move_resize(WM *wm);
@@ -181,3 +192,21 @@ bool query_pointer_for_move_resize(WM *wm, int *x, int *y, Window *win);
 void get_rect_sign(WM *wm, int px, int py, bool resize_flag, int *xs, int *ys, int *ws, int *hs);
 void apply_rules(WM *wm, CLIENT *c);
 void set_default_rect(WM *wm, CLIENT *c);
+void adjust_n_main_max(WM *wm, XEvent *e, FUNC_ARG arg);
+void adjust_main_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg);
+void adjust_fixed_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg);
+void key_change_area(WM *wm, XEvent *e, FUNC_ARG arg);
+void to_main_area(WM *wm);
+bool is_in_main_area(WM *wm, CLIENT *c);
+void del_client_node(CLIENT *c);
+void update_n_for_del(WM *wm, CLIENT *c);
+void add_client_node(CLIENT *head, CLIENT *c);
+void update_n_for_add(WM *wm, CLIENT *c);
+void to_second_area(WM *wm);
+CLIENT *get_second_area_head(WM *wm);
+void to_fixed_area(WM *wm);
+void to_floating_area(WM *wm);
+void set_floating_size(CLIENT *c);
+void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg);
+int compare_client_order(WM *wm, CLIENT *c1, CLIENT *c2);
+void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type);
