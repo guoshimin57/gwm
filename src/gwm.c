@@ -1,3 +1,4 @@
+
 /* *************************************************************************
  *     gwm.c：實現窗口管理器的主要部分。
  *     版權 (C) 2020 gsm <406643764@qq.com>
@@ -257,7 +258,6 @@ void set_full_layout(WM *wm)
         c->h=wm->screen_height;
         c->x=c->y=0;
     }
-    XRaiseWindow(wm->display, wm->focus_client->win);
 }
 
 void set_preview_layout(WM *wm)
@@ -321,8 +321,6 @@ void set_tile_layout(WM *wm)
             j++;
         }
     }
-    raise_float_wins(wm);
-    XRaiseWindow(wm->display, wm->status_bar.win);
 }
 
 void grab_keys(WM *wm)
@@ -545,7 +543,6 @@ void handle_map_request(WM *wm, XEvent *e)
             update_layout(wm);
         focus_client(wm);
     }
-    XRaiseWindow(wm->display, wm->status_bar.win);
 }
 
 void handle_unmap_notify(WM *wm, XEvent *e)
@@ -632,6 +629,7 @@ void prepare_for_move_resize(WM *wm)
         c->place_type=FLOATING;
         update_n_for_add(wm, c);
         update_layout(wm);
+        raise_client(wm);
     }
 }
 
@@ -734,22 +732,9 @@ void next_win(WM *wm, XEvent *e, FUNC_ARG unused)
 void focus_client(WM *wm)
 {
     CLIENT *c=wm->focus_client;
-    if(wm->layout==TILE && c->place_type!=FLOATING)
-        raise_float_wins(wm);
-    if(c != wm->clients)
-        XRaiseWindow(wm->display, c->win);
-    if(wm->layout != FULL)
-        XRaiseWindow(wm->display, wm->status_bar.win);
+    if(wm->n > 0)
+        raise_client(wm);
     XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
-}
-
-void raise_float_wins(WM *wm)
-{
-    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(c->place_type==FLOATING && c!=wm->focus_client)
-            XRaiseWindow(wm->display, c->win);
-    if(wm->focus_client->place_type == FLOATING)
-        XRaiseWindow(wm->display, wm->focus_client->win);
 }
 
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
@@ -1117,6 +1102,7 @@ int compare_client_order(WM *wm, CLIENT *c1, CLIENT *c2)
 
 void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type)
 {
+    PLACE_TYPE ftype=from->place_type;
     if(from != to)
     {
         del_client_node(from);
@@ -1128,4 +1114,17 @@ void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type)
     update_n_for_del(wm, from);
     from->place_type=type;
     update_n_for_add(wm, from);
+    if(ftype != type)
+        raise_client(wm);
+}
+
+/* 僅在移動窗口、聚焦窗口時才有可能需要提升 */
+void raise_client(WM *wm)
+{
+    CLIENT *c=wm->focus_client;
+    Window wins[]={wm->status_bar.win, c->win};
+    if(c->place_type == FLOATING)
+        XRaiseWindow(wm->display, c->win);
+    else
+        XRestackWindows(wm->display, wins, ARRAY_NUM(wins));
 }
