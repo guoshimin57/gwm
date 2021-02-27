@@ -142,7 +142,8 @@ void create_status_bar(WM *wm)
     b->w=wm->screen_width;
     b->h=STATUS_BAR_HEIGHT;
     b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
-        b->w, b->h, 0, 0, wm->white);
+        b->w, b->h, 0, 0, GREY21);
+    b->text="gwm";
     XSelectInput(wm->display, wm->status_bar.win, ExposureMask);
     XMapRaised(wm->display, wm->status_bar.win);
 }
@@ -480,13 +481,13 @@ void del_client(WM *wm, Window win)
     }
 }
 
-void handle_expose(WM *wm, XEvent *eent)
+void handle_expose(WM *wm, XEvent *e)
 {
-    XSetForeground(wm->display, wm->gc, wm->black);
+    Window win=e->xexpose.window;
     STATUS_BAR *b=&wm->status_bar;
-    XClearWindow(wm->display, b->win);
-    draw_string_in_center(wm, b->win, wm->font_set, wm->gc,
-        0, 0, b->w, b->h, "gwm");
+
+    if(win == b->win)
+        draw_string(wm, b->win, wm->white, CENTER, 0, 0, b->w, b->h, b->text);
 }
 
 void handle_key_press(WM *wm, XEvent *e)
@@ -561,25 +562,29 @@ void handle_unmap_notify(WM *wm, XEvent *e)
 void handle_property_notify(WM *wm, XEvent *e)
 {
     STATUS_BAR *b=&wm->status_bar;
-    if(e->xproperty.window==wm->root_win && e->xproperty.atom==XA_WM_NAME)
-    {
-        XTextProperty name;
-        XGetTextProperty(wm->display, wm->root_win, &name, XA_WM_NAME);
-        XSetForeground(wm->display, wm->gc, wm->black);
-        XClearWindow(wm->display, b->win);
-        draw_string_in_center(wm, b->win, wm->font_set, wm->gc,
-            0, 0, b->w, b->h, (char *)name.value);
-    }
+    XTextProperty name;
+    if( e->xproperty.window==wm->root_win && e->xproperty.atom==XA_WM_NAME
+        && XGetTextProperty(wm->display, wm->root_win, &name, XA_WM_NAME))
+            draw_string(wm, b->win, wm->white, CENTER,
+                0, 0, b->w, b->h, b->text=(char *)name.value);
 }
 
-void draw_string_in_center(WM *wm, Drawable drawable, XFontSet font_set, GC gc, int x, int y, unsigned int w, unsigned h, const char *str)
+void draw_string(WM *wm, Drawable drawable, unsigned long color, DIRECTION d, int x, int y, unsigned int w, unsigned h, const char *str)
 {
     if(str && str[0]!='\0')
     {
+        int x_start;
         XRectangle ink, logical;
+        XSetForeground(wm->display, wm->gc, color);
         XmbTextExtents(wm->font_set, str, strlen(str), &ink, &logical);
+        if(d == RIGHT)
+            x_start=x+w-logical.width;
+        else if(d == CENTER)
+            x_start=x+w/2-logical.width/2;
+        else x_start=0;
+        XClearArea(wm->display, drawable, 0, 0, w, h, False); 
         XmbDrawString(wm->display, drawable, wm->font_set, wm->gc,
-            x+w/2-logical.width/2, y+h/2+logical.height/2, str, strlen(str));
+            x_start, y+h/2+logical.height/2, str, strlen(str));
     }
 }
 
