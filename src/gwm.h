@@ -53,6 +53,7 @@ struct status_bar_tag
     Window win;
     int x, y;
     unsigned int w, h;
+    const char *text;
 };
 typedef struct status_bar_tag STATUS_BAR;
 
@@ -78,11 +79,11 @@ struct wm_tag
 };
 typedef struct wm_tag WM;
 
-enum direction_tag /* 窗口、區域操作方向 */
+enum direction_tag
 {
-    UP, DOWN, LEFT, RIGHT, /* 窗口移動方向 */
-    LEFT2LEFT, LEFT2RIGHT, RIGHT2LEFT, RIGHT2RIGHT, /* 左右邊界移動方向 */
-    UP2UP, UP2DOWN, DOWN2UP, DOWN2DOWN, /* 上下邊界移動方向 */
+    UP, DOWN, LEFT, RIGHT, CENTER,
+    LEFT2LEFT, LEFT2RIGHT, RIGHT2LEFT, RIGHT2RIGHT,
+    UP2UP, UP2DOWN, DOWN2UP, DOWN2DOWN,
 };
 typedef enum direction_tag DIRECTION;
 
@@ -137,6 +138,7 @@ typedef struct wm_rule_tag WM_RULE;
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
 #define FONT_SET "*-24-*"
+#define GREY21 0x363636
 
 void init_wm(WM *wm);
 void set_wm(WM *wm);
@@ -167,14 +169,14 @@ void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 CLIENT *win_to_client(WM *wm, Window win);
 void handle_destroy_notify(WM *wm, XEvent *e);
 void del_client(WM *wm, Window win);
-void handle_expose(WM *wm, XEvent *eent);
+void handle_expose(WM *wm, XEvent *e);
 void handle_key_press(WM *wm, XEvent *e);
 unsigned int get_valid_mask(WM *wm, unsigned int mask);
 unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
 void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
 void handle_property_notify(WM *wm, XEvent *e);
-void draw_string_in_center(WM *wm, Drawable drawable, XFontSet font_set, GC gc, int x, int y, unsigned int w, unsigned h, const char *str);
+void draw_string(WM *wm, Drawable drawable, unsigned long color, DIRECTION d, int x, int y, unsigned int w, unsigned h, const char *str);
 void exec(WM *wm, XEvent *e, FUNC_ARG arg);
 void key_move_win(WM *wm, XEvent *e, FUNC_ARG arg);
 void prepare_for_move_resize(WM *wm);
