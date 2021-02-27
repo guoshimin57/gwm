@@ -9,6 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 02月 27日 星期六 18:37:24 CST gsm <406643764@qq.com>
+	* 發布第0.8.2版，修復了狀態欄文字更新不及時的缺陷；修改了狀態欄顏色。
+	* src/gwm.c：刪除draw_string_in_center函數，創建draw_string函數取而代之，後者可指定顏色和文字對方方式；修改create_status_bar、handle_expose、handle_property_notify函數；修改狀態欄的顏色。
+	* src/gwm.h：刪除draw_string_in_center函數聲明，創建draw_string函數聲明，爲DIRECTION增加CENTER成員，爲STATUS_BAR增加text成員，創建GREY21宏。
+
 2021年 02月 27日 星期六 16:30:40 CST gsm <406643764@qq.com>
 	* 發布第0.8.1版，主要修復了窗口疊次序的缺陷。
 	* src/gwm.c：爲了修復窗口疊次序的缺陷，以狀態欄爲參考點，把懸浮窗口都放在其上，其他窗口都放在其下；具體的操作爲：刪除set_full_layout、set_tile_layout、handle_map_request、focus_client函數裏的設置窗口疊次序的函數，刪除raise_float_wins函數，創建raise_client函數，在prepare_for_move_resize、focus_client、move_client函數裏調用raise_client函數。
