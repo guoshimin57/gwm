@@ -9,6 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 03月 01日 星期一 00:47:26 CST gsm <406643764@qq.com>
+	* 發布第0.8.4版，主要修復了鍵盤調整窗口尺寸不夠精準的缺陷。
+	* src/gwm.c：刪除key_move_win、key_resize_win函數，創建key_move_resize_client函數取而代之，後者算法再爲簡單；將RESIZE_INC重命名爲MOVE_RESIZE_INC；精簡move_client代碼。
+	* src/gwm.h：刪除key_move_win、key_resize_win函數聲明，創建key_move_resize_client函數聲明；將RESIZE_INC重命名爲MOVE_RESIZE_INC，刪除MOVE_INC宏定義。
+
 2021年 02月 28日 星期日 22:10:14 CST gsm <406643764@qq.com>
 	* 發布第0.8.3版，修復了某些情況下窗口聚焦不正確的缺陷。
 	* src/gwm.c：wm->focus_client變量改由focuse_client函數更新，爲此而修改了focus_client、set_wm、add_client、grab_buttons、handle_destroy_notify、del_client、handle_map_request、handle_unmap_notify、close_win、next_win、pointer_move_resize_win、pointer_change_area函數。
