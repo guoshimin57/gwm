@@ -129,8 +129,7 @@ typedef struct wm_rule_tag WM_RULE;
 #define CMD_KEY (Mod4Mask|Mod1Mask)
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
-#define MOVE_INC 32
-#define RESIZE_INC 32
+#define MOVE_RESIZE_INC 32
 #define STATUS_BAR_HEIGHT 32
 #define DEFAULT_MAIN_AREA_RATIO 0.6
 #define DEFAULT_FIXED_AREA_RATIO 0.15
@@ -178,9 +177,9 @@ void handle_unmap_notify(WM *wm, XEvent *e);
 void handle_property_notify(WM *wm, XEvent *e);
 void draw_string(WM *wm, Drawable drawable, unsigned long color, DIRECTION d, int x, int y, unsigned int w, unsigned h, const char *str);
 void exec(WM *wm, XEvent *e, FUNC_ARG arg);
-void key_move_win(WM *wm, XEvent *e, FUNC_ARG arg);
+void key_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg);
 void prepare_for_move_resize(WM *wm);
-void key_resize_win(WM *wm, XEvent *e, FUNC_ARG arg);
+bool is_valid_move_resize(WM *wm, CLIENT *c, int dx, int dy, int dw, int dh);
 void quit_wm(WM *wm, XEvent *e, FUNC_ARG unused);
 void close_win(WM *wm, XEvent *e, FUNC_ARG unused);
 int send_event(WM *wm, Atom protocol);
