@@ -105,7 +105,6 @@ void set_wm(WM *wm)
     create_status_bar(wm);
     create_clients(wm);
     update_layout(wm);
-    focus_client(wm);
     grab_keys(wm);
 }
 
@@ -211,13 +210,14 @@ void add_client(WM *wm, Window win)
     CLIENT *c;
     c=malloc_s(sizeof(CLIENT));
     c->win=win;
-    wm->focus_client=c;
-    grab_buttons(wm);
+//    wm->focus_client=c;
     apply_rules(wm, c);
     add_client_node(get_area_head(wm, c->place_type), c);
     update_n_for_add(wm, c);
     if(c->place_type == FLOATING)
         set_default_rect(wm, c);
+    focus_client(wm, c);
+    grab_buttons(wm, c);
 }
 
 CLIENT *get_area_head(WM *wm, PLACE_TYPE type)
@@ -358,13 +358,12 @@ unsigned int get_num_lock_mask(WM *wm)
     return 0;
 }
     
-void grab_buttons(WM *wm)
+void grab_buttons(WM *wm, CLIENT *c)
 {
-    Window win=wm->focus_client->win;
-    XUngrabButton(wm->display, AnyButton, AnyModifier, win);
+    XUngrabButton(wm->display, AnyButton, AnyModifier, c->win);
     for(size_t i=0; i<ARRAY_NUM(buttonbinds_list); i++)
         XGrabButton(wm->display, buttonbinds_list[i].button,
-            buttonbinds_list[i].modifier, win, False, BUTTON_MASK,
+            buttonbinds_list[i].modifier, c->win, False, BUTTON_MASK,
             GrabModeAsync, GrabModeAsync, None, None);
 }
 
@@ -464,7 +463,6 @@ void handle_destroy_notify(WM *wm, XEvent *e)
         del_client(wm, e->xdestroywindow.window);
         if(wm->layout!=STACK && (wm->layout!=TILE || flag))
             update_layout(wm);
-        focus_client(wm);
     }
 }
  
@@ -475,9 +473,8 @@ void del_client(WM *wm, Window win)
     {
         del_client_node(c);
         update_n_for_del(wm, c);
-        if(c == wm->focus_client)
-            wm->focus_client=wm->focus_client->next;
         free(c);
+        focus_client(wm, wm->clients);
     }
 }
 
@@ -542,7 +539,6 @@ void handle_map_request(WM *wm, XEvent *e)
             XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
         else
             update_layout(wm);
-        focus_client(wm);
     }
 }
 
@@ -555,7 +551,6 @@ void handle_unmap_notify(WM *wm, XEvent *e)
         del_client(wm, e->xunmap.window);
         if(wm->layout!=STACK && (wm->layout!=TILE || flag))
             update_layout(wm);
-        focus_client(wm);
     }
 }
 
@@ -689,7 +684,6 @@ void close_win(WM *wm, XEvent *e, FUNC_ARG unused)
         del_client(wm, wm->focus_client->win);
         if(wm->layout!=STACK && (wm->layout!=TILE || flag))
             update_layout(wm);
-        focus_client(wm);
     }
     else
         fprintf(stderr, "錯誤：不能關閉根窗口！\n");
@@ -726,18 +720,15 @@ int send_event(WM *wm, Atom protocol)
 void next_win(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     if(wm->n > 1)
-    {
-        CLIENT *c=wm->focus_client;
-        c=(c->next==wm->clients) ? wm->clients->next : c->next;
-        wm->focus_client=c;
-        focus_client(wm);
-    }
+        focus_client(wm, wm->focus_client->prev);
 }
 
-void focus_client(WM *wm)
+void focus_client(WM *wm, CLIENT *c)
 {
-    CLIENT *c=wm->focus_client;
-    if(wm->n > 0)
+    if(!c)
+        c=wm->clients;
+    wm->focus_client=c;
+    if(c != wm->clients)
         raise_client(wm);
     XSetInputFocus(wm->display, c->win, RevertToParent, CurrentTime);
 }
@@ -761,8 +752,8 @@ void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
     if(!grab_pointer_for_move_resize(wm)) return;
     if(!query_pointer_for_move_resize(wm, &old_x, &old_y, &focus_win)) return;
     c=win_to_client(wm, focus_win);
-    wm->focus_client=c=(c?c:wm->clients);
-    focus_client(wm);
+    focus_client(wm, c);
+    c=wm->focus_client;
     if(wm->layout==FULL || wm->layout==PREVIEW) return;
     get_rect_sign(wm, old_x, old_y, arg.resize_flag, 
         &x_sign, &y_sign, &w_sign, &h_sign);
@@ -1074,8 +1065,8 @@ void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
     if(wm->layout==TILE && grab_pointer_for_move_resize(wm))
     {
         CLIENT *from=win_to_client(wm, e->xbutton.window), *to;
-        wm->focus_client=from=(from?from:wm->clients);
-        focus_client(wm);
+        focus_client(wm, from);
+        from=wm->focus_client;
         if(from != wm->clients)
         {
             XEvent be;
