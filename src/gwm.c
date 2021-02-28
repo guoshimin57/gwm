@@ -1,4 +1,3 @@
-
 /* *************************************************************************
  *     gwm.c：實現窗口管理器的主要部分。
  *     版權 (C) 2020 gsm <406643764@qq.com>
@@ -20,18 +19,18 @@ KEYBINDS keybinds_list[]=
     {CMD_KEY,    XK_p,            exec,                       SH_CMD("dmenu_run")},
     {CMD_KEY,    XK_q,            exec,                       SH_CMD("qq")},
     {CMD_KEY,    XK_s,            exec,                       SH_CMD("stardict")},
-    {WM_KEY,     XK_Up,           key_move_win,               {.direction=UP}},
-    {WM_KEY,     XK_Down,         key_move_win,               {.direction=DOWN}},
-    {WM_KEY,     XK_Left,         key_move_win,               {.direction=LEFT}},
-    {WM_KEY,     XK_Right,        key_move_win,               {.direction=RIGHT}},
-    {WM_KEY,     XK_bracketleft,  key_resize_win,             {.direction=UP2UP}},
-    {WM_KEY,     XK_bracketright, key_resize_win,             {.direction=UP2DOWN}},
-    {WM_KEY,     XK_semicolon,    key_resize_win,             {.direction=DOWN2UP}},
-    {WM_KEY,     XK_quoteright,   key_resize_win,             {.direction=DOWN2DOWN}},
-    {WM_KEY,     XK_9,            key_resize_win,             {.direction=LEFT2LEFT}},
-    {WM_KEY,     XK_0,            key_resize_win,             {.direction=LEFT2RIGHT}},
-    {WM_KEY,     XK_minus,        key_resize_win,             {.direction=RIGHT2LEFT}},
-    {WM_KEY,     XK_equal,        key_resize_win,             {.direction=RIGHT2RIGHT}},
+    {WM_KEY,     XK_Up,           key_move_resize_client,     {.direction=UP}},
+    {WM_KEY,     XK_Down,         key_move_resize_client,     {.direction=DOWN}},
+    {WM_KEY,     XK_Left,         key_move_resize_client,     {.direction=LEFT}},
+    {WM_KEY,     XK_Right,        key_move_resize_client,     {.direction=RIGHT}},
+    {WM_KEY,     XK_bracketleft,  key_move_resize_client,     {.direction=UP2UP}},
+    {WM_KEY,     XK_bracketright, key_move_resize_client,     {.direction=UP2DOWN}},
+    {WM_KEY,     XK_semicolon,    key_move_resize_client,     {.direction=DOWN2UP}},
+    {WM_KEY,     XK_quoteright,   key_move_resize_client,     {.direction=DOWN2DOWN}},
+    {WM_KEY,     XK_9,            key_move_resize_client,     {.direction=LEFT2LEFT}},
+    {WM_KEY,     XK_0,            key_move_resize_client,     {.direction=LEFT2RIGHT}},
+    {WM_KEY,     XK_minus,        key_move_resize_client,     {.direction=RIGHT2LEFT}},
+    {WM_KEY,     XK_equal,        key_move_resize_client,     {.direction=RIGHT2RIGHT}},
     {WM_KEY,     XK_Delete,       quit_wm,                    {0}},
     {WM_KEY,     XK_c,            close_win,                  {0}},
     {WM_KEY,     XK_Tab,          next_win,                   {0}},
@@ -210,7 +209,6 @@ void add_client(WM *wm, Window win)
     CLIENT *c;
     c=malloc_s(sizeof(CLIENT));
     c->win=win;
-//    wm->focus_client=c;
     apply_rules(wm, c);
     add_client_node(get_area_head(wm, c->place_type), c);
     update_n_for_add(wm, c);
@@ -287,10 +285,10 @@ void set_stack_layout(WM *wm)
 {
     for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        if(c->w >= 2*RESIZE_INC)
-            c->w-=RESIZE_INC;
-        if(c->h >= 2*RESIZE_INC)
-            c->h-=RESIZE_INC;
+        if(c->w >= 2*MOVE_RESIZE_INC)
+            c->w-=MOVE_RESIZE_INC;
+        if(c->h >= 2*MOVE_RESIZE_INC)
+            c->h-=MOVE_RESIZE_INC;
     }
 }
 
@@ -597,22 +595,32 @@ void exec(WM *wm, XEvent *e, FUNC_ARG arg)
     }
 }
 
-void key_move_win(WM *wm, XEvent *e, FUNC_ARG arg)
+void key_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
 {
-    if(wm->layout==FULL || wm->layout==PREVIEW) return;
-
-    CLIENT *c=wm->focus_client;
-    DIRECTION d=arg.direction;
-
-    prepare_for_move_resize(wm);
-    if(d==UP && c->y+c->h>MOVE_INC)
-        XMoveWindow(wm->display, c->win, c->x, c->y-=MOVE_INC);
-    else if(d==DOWN && wm->screen_height-wm->status_bar.h-c->y>MOVE_INC)
-        XMoveWindow(wm->display, c->win, c->x, c->y+=MOVE_INC);
-    else if(d==LEFT && c->x+c->w>MOVE_INC)
-        XMoveWindow(wm->display, c->win, c->x-=MOVE_INC, c->y);
-    else if(d==RIGHT && wm->screen_width-c->x>MOVE_INC)
-        XMoveWindow(wm->display, c->win, c->x+=MOVE_INC, c->y);
+    if(wm->layout==TILE || wm->layout==STACK)
+    {
+        int s=MOVE_RESIZE_INC;
+        int d[][4]={      /* dx, dy, dw, dh */
+            [UP]          = { 0, -s,  0,  0},
+            [DOWN]        = { 0,  s,  0,  0},
+            [LEFT]        = {-s,  0,  0,  0},
+            [RIGHT]       = { s,  0,  0,  0},
+            [LEFT2LEFT]   = {-s,  0,  s,  0},
+            [LEFT2RIGHT]  = { s,  0, -s,  0},
+            [RIGHT2LEFT]  = { 0,  0, -s,  0},
+            [RIGHT2RIGHT] = { 0,  0,  s,  0},
+            [UP2UP]       = { 0, -s,  0,  s},
+            [UP2DOWN]     = { 0,  s,  0, -s},
+            [DOWN2UP]     = { 0,  0,  0, -s},
+            [DOWN2DOWN]   = { 0,  0,  0,  s},
+        };
+        int *p=d[arg.direction];
+        CLIENT *c=wm->focus_client;
+        prepare_for_move_resize(wm);
+        if(is_valid_move_resize(wm, c, p[0], p[1], p[2], p[3]))
+            XMoveResizeWindow(wm->display, c->win,
+                c->x+=p[0], c->y+=p[1], c->w+=p[2], c->h+=p[3]);
+    }
 }
 
 void prepare_for_move_resize(WM *wm)
@@ -621,7 +629,7 @@ void prepare_for_move_resize(WM *wm)
     if(c == wm->clients)
     {
         fprintf(stderr, "錯誤：不能移動根窗口或改變根窗口的尺寸！\n");
-        return;;
+        return;
     }
     if(wm->layout==TILE && c->place_type!=FLOATING)
     {
@@ -633,32 +641,16 @@ void prepare_for_move_resize(WM *wm)
     }
 }
 
-void key_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
+bool is_valid_move_resize(WM *wm, CLIENT *c, int dx, int dy, int dw, int dh)
 {
-    if(wm->layout==FULL || wm->layout==PREVIEW) return;
-
-    Display *disp=wm->display;
-    CLIENT *c=wm->focus_client;
-    DIRECTION d=arg.direction;
-    unsigned int s=RESIZE_INC;
-
-    prepare_for_move_resize(wm);
-    if(d==UP2UP && c->y>s)
-        XMoveResizeWindow(disp, c->win, c->x, c->y-=s, c->w, c->h+=s);
-    else if(d==UP2DOWN && c->h>s)
-        XMoveResizeWindow(disp, c->win, c->x, c->y+=s, c->w, c->h-=s);
-    else if(d==DOWN2UP && c->h>s)
-        XResizeWindow(disp, c->win, c->w, c->h-=s);
-    else if(d==DOWN2DOWN && wm->screen_height-wm->status_bar.h-c->y-c->h>s)
-        XResizeWindow(disp, c->win, c->w, c->h+=s);
-    else if(d==LEFT2LEFT && c->x>s)
-        XMoveResizeWindow(disp, c->win, c->x-=s, c->y, c->w+=s, c->h);
-    else if(d==LEFT2RIGHT && c->w>s)
-        XMoveResizeWindow(disp, c->win, c->x+=s, c->y, c->w-=s, c->h);
-    else if(d==RIGHT2LEFT && c->w>s)
-        XResizeWindow(disp, c->win, c->w-=s, c->h);
-    else if(d==RIGHT2RIGHT && wm->screen_width-c->x-c->w>s)
-        XResizeWindow(disp, c->win, c->w+=s, c->h);
+    int x=c->x+dx, y=c->y+dy, w=c->w+dw, h=c->h+dh,
+        sw=wm->screen_width, sh=wm->screen_height;
+    /* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外，即是否合法。
+     * 若滿足以下條件，則有交集：窗口與屏幕中心距≤窗口半邊長+屏幕半邊長。
+     * 即：|x+w/2-0-sw/2|＜|w/2+sw/2| 且 |y+h/2-0-sh/2|＜|h/2+sh/2|。
+     * 兩邊同乘以2，得：|2*x+w-sw|＜|w+sw| 且 |2*y+h-sh|＜|h+sh|。
+     */
+    return w>0 && h>0 && abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
 }
 
 void quit_wm(WM *wm, XEvent *e, FUNC_ARG unused)
@@ -909,7 +901,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg)
         float ratio=wm->main_area_ratio+arg.change_ratio;
         int mw=ratio*wm->screen_width,
             sw=wm->screen_width*(1-wm->fixed_area_ratio)-mw;
-        if(sw>=RESIZE_INC && mw>=RESIZE_INC)
+        if(sw>=MOVE_RESIZE_INC && mw>=MOVE_RESIZE_INC)
         {
             wm->main_area_ratio=ratio;
             update_layout(wm);
@@ -925,7 +917,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg)
         float ratio=wm->fixed_area_ratio+arg.change_ratio;
         int mw=wm->screen_width*(wm->main_area_ratio-arg.change_ratio),
             fw=wm->screen_width*ratio;
-        if(mw>=RESIZE_INC && fw>=RESIZE_INC)
+        if(mw>=MOVE_RESIZE_INC && fw>=MOVE_RESIZE_INC)
         {
             wm->main_area_ratio-=arg.change_ratio;
             wm->fixed_area_ratio=ratio;
@@ -1054,10 +1046,10 @@ void to_floating_area(WM *wm)
 
 void set_floating_size(CLIENT *c)
 {
-    if(c->w >= 2*RESIZE_INC)
-        c->w-=RESIZE_INC;
-    if(c->h >= 2*RESIZE_INC)
-        c->h-=RESIZE_INC;
+    if(c->w >= 2*MOVE_RESIZE_INC)
+        c->w-=MOVE_RESIZE_INC;
+    if(c->h >= 2*MOVE_RESIZE_INC)
+        c->h-=MOVE_RESIZE_INC;
 }
 
 void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
@@ -1098,7 +1090,6 @@ int compare_client_order(WM *wm, CLIENT *c1, CLIENT *c2)
 
 void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type)
 {
-    PLACE_TYPE ftype=from->place_type;
     if(from != to)
     {
         del_client_node(from);
@@ -1108,10 +1099,10 @@ void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type)
             add_client_node(to, from);
     }
     update_n_for_del(wm, from);
+    if(from->place_type != type)
+        raise_client(wm);
     from->place_type=type;
     update_n_for_add(wm, from);
-    if(ftype != type)
-        raise_client(wm);
 }
 
 /* 僅在移動窗口、聚焦窗口時才有可能需要提升 */
