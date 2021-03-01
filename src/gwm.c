@@ -64,6 +64,18 @@ WM_RULE rules[]=
     {"Peek", "peek", FLOATING},
 };
 
+void (*event_handlers[])(WM *, XEvent *)=
+{
+    [ButtonPress]       = handle_button_press,
+    [ConfigureRequest]  = handle_config_request,
+    [DestroyNotify]     = handle_destroy_notify,
+    [Expose]            = handle_expose,
+    [KeyPress]          = handle_key_press,
+    [MapRequest]        = handle_map_request,
+    [UnmapNotify]       = handle_unmap_notify,
+    [PropertyNotify]    = handle_property_notify,
+};
+
 int main(int argc, char *argv[])
 {
     WM wm;
@@ -368,21 +380,10 @@ void grab_buttons(WM *wm, CLIENT *c)
 void handle_events(WM *wm)
 {
 	XEvent e;
-	while(1)
-    {
-        XNextEvent(wm->display, &e);
-        switch(e.type)
-        {
-            case ButtonPress : handle_button_press(wm, &e); break;
-            case ConfigureRequest : handle_config_request(wm, &e); break;
-            case DestroyNotify : handle_destroy_notify(wm, &e); break;
-            case Expose : handle_expose(wm, &e); break;
-            case KeyPress : handle_key_press(wm, &e); break;
-            case MapRequest : handle_map_request(wm, &e); break;
-            case UnmapNotify : handle_unmap_notify(wm, &e); break;
-            case PropertyNotify : handle_property_notify(wm , &e); break;
-        }
-    }
+    XSync(wm->display, False);
+	while(!XNextEvent(wm->display, &e))
+        if(event_handlers[e.type])
+            event_handlers[e.type](wm, &e);
 }
 
 void handle_button_press(WM *wm, XEvent *e)
@@ -752,21 +753,20 @@ void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
 
     do
     {
-        XMaskEvent(wm->display, POINTER_MASK|SubstructureRedirectMask, &ev);
-        switch(ev.type)
+        XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
+        if(ev.type == MotionNotify)
         {
-            case ConfigureRequest : handle_config_request(wm, &ev); break;
-            case MotionNotify:
-                if(!i++)
-                    prepare_for_move_resize(wm);
-
-                new_x=ev.xmotion.x, new_y=ev.xmotion.y;
-                c->x+=x_sign*(new_x-old_x), c->y+=y_sign*(new_y-old_y);
-                c->w+=w_sign*(new_x-old_x), c->h+=h_sign*(new_y-old_y);
-                XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
-                old_x=new_x, old_y=new_y;
-
+            if(!i++)
+                prepare_for_move_resize(wm);
+            new_x=ev.xmotion.x, new_y=ev.xmotion.y;
+            c->x+=x_sign*(new_x-old_x), c->y+=y_sign*(new_y-old_y);
+            c->w+=w_sign*(new_x-old_x), c->h+=h_sign*(new_y-old_y);
+            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+            old_x=new_x, old_y=new_y;
         }
+        /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
+        else if(event_handlers[ev.type])
+            event_handlers[ev.type](wm, &ev);
     }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
     XUngrabPointer(wm->display, CurrentTime);
 }
@@ -1061,20 +1061,24 @@ void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
         from=wm->focus_client;
         if(from != wm->clients)
         {
-            XEvent be;
+            XEvent ev;
             do
             {
-                while(XCheckTypedEvent(wm->display, ButtonPress, &be));
-                XMaskEvent(wm->display, ButtonReleaseMask, &be);
-            }while((be.xbutton.button != e->xbutton.button));
-            to=win_to_client(wm, be.xbutton.subwindow);
+                XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
+                if(event_handlers[ev.type])
+                    event_handlers[ev.type](wm, &ev);
+            }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
+            XUngrabPointer(wm->display, CurrentTime);
+
+            /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在的按下按鈕時
+             * 定位器所有的窗口的外邊。因此，接收事件的是根窗口 */
+            to=win_to_client(wm, ev.xbutton.subwindow);
             if(to && to!=from)
             {
                 move_client(wm, from, to, to->place_type);
                 update_layout(wm);
             }
         }
-        XUngrabPointer(wm->display, CurrentTime);
     }
 }
 
