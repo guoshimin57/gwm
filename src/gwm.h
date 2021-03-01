@@ -133,9 +133,9 @@ typedef struct wm_rule_tag WM_RULE;
 #define STATUS_BAR_HEIGHT 32
 #define DEFAULT_MAIN_AREA_RATIO 0.6
 #define DEFAULT_FIXED_AREA_RATIO 0.15
-#define ROOT_EVENT_MASK (SubstructureRedirectMask |SubstructureNotifyMask|PropertyChangeMask|ButtonPressMask)
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
+#define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask|PropertyChangeMask|POINTER_MASK|ExposureMask)
 #define FONT_SET "*-24-*"
 #define GREY21 0x363636
 
