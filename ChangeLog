@@ -9,6 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 03月 01日 星期一 22:51:28 CST gsm <406643764@qq.com>
+	* 發布第0.8.5版，修復了未及時響按下和釋放定位器按鈕之間的事件的缺陷。
+	* src/gwm.c：創建event_handlers數組，修改handle_events、pointer_move_resize_win、pointer_change_area函數。
+	* src/gwm.h：修改ROOT_EVENT_MASK宏定義。
+
 2021年 03月 01日 星期一 00:47:26 CST gsm <406643764@qq.com>
 	* 發布第0.8.4版，主要修復了鍵盤調整窗口尺寸不夠精準的缺陷。
 	* src/gwm.c：刪除key_move_win、key_resize_win函數，創建key_move_resize_client函數取而代之，後者算法再爲簡單；將RESIZE_INC重命名爲MOVE_RESIZE_INC；精簡move_client代碼。
