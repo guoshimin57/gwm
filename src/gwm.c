@@ -224,8 +224,7 @@ void add_client(WM *wm, Window win)
     apply_rules(wm, c);
     add_client_node(get_area_head(wm, c->place_type), c);
     update_n_for_add(wm, c);
-    if(c->place_type == FLOATING)
-        set_default_rect(wm, c);
+    set_default_rect(wm, c);
     focus_client(wm, c);
     grab_buttons(wm, c);
 }
@@ -253,9 +252,8 @@ void update_layout(WM *wm)
     {
         case FULL: set_full_layout(wm); break;
         case PREVIEW: set_preview_layout(wm); break;
-        case STACK: set_stack_layout(wm); break;
         case TILE: set_tile_layout(wm); break;
-        default: break;
+        default: return;
     }
     for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
         XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
@@ -263,12 +261,8 @@ void update_layout(WM *wm)
 
 void set_full_layout(WM *wm)
 {
-    for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-    {
-        c->w=wm->screen_width;
-        c->h=wm->screen_height;
-        c->x=c->y=0;
-    }
+    CLIENT *c=wm->focus_client;
+    c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 }
 
 void set_preview_layout(WM *wm)
@@ -293,15 +287,12 @@ void set_preview_layout(WM *wm)
     }
 }
 
-void set_stack_layout(WM *wm)
+void to_stack_layout(WM *wm)
 {
-    for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-    {
-        if(c->w >= 2*MOVE_RESIZE_INC)
-            c->w-=MOVE_RESIZE_INC;
-        if(c->h >= 2*MOVE_RESIZE_INC)
-            c->h-=MOVE_RESIZE_INC;
-    }
+    if(wm->n > 0)
+        for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+            set_floating_size(c),
+            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
 }
 
 void set_tile_layout(WM *wm)
@@ -455,13 +446,10 @@ CLIENT *win_to_client(WM *wm, Window win)
 
 void handle_destroy_notify(WM *wm, XEvent *e)
 {
-    CLIENT *c;
-    if((c=win_to_client(wm, e->xdestroywindow.window)))
+    if(win_to_client(wm, e->xdestroywindow.window))
     {
-        bool flag=(c->place_type!=FLOATING);
         del_client(wm, e->xdestroywindow.window);
-        if(wm->layout!=STACK && (wm->layout!=TILE || flag))
-            update_layout(wm);
+        update_layout(wm);
     }
 }
  
@@ -531,25 +519,17 @@ void handle_map_request(WM *wm, XEvent *e)
     XMapWindow(wm->display, win);
     if(is_wm_win(wm, win))
     {
-        CLIENT *c;
         add_client(wm, win);
-        c=win_to_client(wm, win);
-        if(wm->layout==STACK || (wm->layout==TILE && c->place_type==FLOATING))
-            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
-        else
-            update_layout(wm);
+        update_layout(wm);
     }
 }
 
 void handle_unmap_notify(WM *wm, XEvent *e)
 {
-    CLIENT *c;
-    if((c=win_to_client(wm, e->xunmap.window)))
+    if(win_to_client(wm, e->xunmap.window))
     {
-        bool flag=(c->place_type!=FLOATING);
         del_client(wm, e->xunmap.window);
-        if(wm->layout!=STACK && (wm->layout!=TILE || flag))
-            update_layout(wm);
+        update_layout(wm);
     }
 }
 
@@ -667,7 +647,6 @@ void close_win(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     if(wm->focus_client->win != wm->root_win)
     {
-        bool flag=(wm->focus_client->place_type!=FLOATING);
         if(!send_event(wm, XInternAtom(wm->display, "WM_DELETE_WINDOW", False)))
         {
             XGrabServer(wm->display);
@@ -675,8 +654,7 @@ void close_win(WM *wm, XEvent *e, FUNC_ARG unused)
             XUngrabServer(wm->display);
         }
         del_client(wm, wm->focus_client->win);
-        if(wm->layout!=STACK && (wm->layout!=TILE || flag))
-            update_layout(wm);
+        update_layout(wm);
     }
     else
         fprintf(stderr, "錯誤：不能關閉根窗口！\n");
@@ -731,7 +709,10 @@ void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
     if(wm->layout != arg.layout)
     {
         wm->layout=arg.layout;
-        update_layout(wm);
+        if(wm->layout == STACK)
+            to_stack_layout(wm);
+        else
+            update_layout(wm);
     }
 }
 
@@ -741,12 +722,12 @@ void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
     XEvent ev;
     Window focus_win;
     int i=0, old_x, old_y, new_x, new_y, x_sign, y_sign, w_sign, h_sign;
-
     if(!grab_pointer_for_move_resize(wm)) return;
     if(!query_pointer_for_move_resize(wm, &old_x, &old_y, &focus_win)) return;
     c=win_to_client(wm, focus_win);
     focus_client(wm, c);
     c=wm->focus_client;
+    if(c == wm->clients) return;
     if(wm->layout==FULL || wm->layout==PREVIEW) return;
     get_rect_sign(wm, old_x, old_y, arg.resize_flag, 
         &x_sign, &y_sign, &w_sign, &h_sign);
@@ -1103,10 +1084,9 @@ void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type)
             add_client_node(to, from);
     }
     update_n_for_del(wm, from);
-    if(from->place_type != type)
-        raise_client(wm);
     from->place_type=type;
     update_n_for_add(wm, from);
+    raise_client(wm);
 }
 
 /* 僅在移動窗口、聚焦窗口時才有可能需要提升 */
