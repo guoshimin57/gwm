@@ -19,6 +19,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
+#include <X11/cursorfont.h>
 
 enum place_type_tag
 {
@@ -143,6 +144,7 @@ void init_wm(WM *wm);
 void set_wm(WM *wm);
 int my_x_error_handler(Display *display, XErrorEvent *e);
 void create_font_set(WM *wm);
+void create_cursors(WM *wm);
 void create_status_bar(WM *wm);
 void print_error_msg(Display *display, XErrorEvent *e);
 void create_clients(WM *wm);
@@ -154,7 +156,7 @@ CLIENT *get_area_head(WM *wm, PLACE_TYPE type);
 void update_layout(WM *wm);
 void set_full_layout(WM *wm);
 void set_preview_layout(WM *wm);
-void set_stack_layout(WM *wm);
+void to_stack_layout(WM *wm);
 void set_tile_layout(WM *wm);
 void grab_keys(WM *wm);
 unsigned int get_num_lock_mask(WM *wm);
