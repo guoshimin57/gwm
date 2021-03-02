@@ -9,33 +9,38 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-2021年 03月 01日 星期一 22:51:28 CST gsm <406643764@qq.com>
-	* 發布第0.8.5版，修復了未及時響按下和釋放定位器按鈕之間的事件的缺陷。
+2021年 03月 02日 星期二 18:07:13 CST	gsm <406643764@qq.com>
+	* 發布第0.8.6版，修復了布局有時不正確、定位器可能調整根窗口、定位器調整窗口時疊次序有時不正確的缺陷。
+	* src/gwm.c：爲修復布局有時不正確的缺陷而修改了add_client、update_layout、set_full_layout、handle_destroy_notify、handle_map_request、handle_unmap_notify、close_win、change_layout函數，刪除set_stack_layout函數，創建to_stack_layout函數；爲修復定位器可能調整根窗口的缺陷而修改了pointer_move_resize_win函數；爲解決定位器調整窗口時疊次序有時不正確的缺陷而修改了move_client函數。
+	* src/gwm.h：刪除set_stack_layout函數聲明，創建to_stack_layout函數聲明。
+
+2021年 03月 01日 星期一 22:51:28 CST	gsm <406643764@qq.com>
+	* 發布第0.8.5版，修復了未及時響應按下和釋放定位器按鈕之間的事件的缺陷。
 	* src/gwm.c：創建event_handlers數組，修改handle_events、pointer_move_resize_win、pointer_change_area函數。
 	* src/gwm.h：修改ROOT_EVENT_MASK宏定義。
 
-2021年 03月 01日 星期一 00:47:26 CST gsm <406643764@qq.com>
+2021年 03月 01日 星期一 00:47:26 CST	gsm <406643764@qq.com>
 	* 發布第0.8.4版，主要修復了鍵盤調整窗口尺寸不夠精準的缺陷。
 	* src/gwm.c：刪除key_move_win、key_resize_win函數，創建key_move_resize_client函數取而代之，後者算法再爲簡單；將RESIZE_INC重命名爲MOVE_RESIZE_INC；精簡move_client代碼。
 	* src/gwm.h：刪除key_move_win、key_resize_win函數聲明，創建key_move_resize_client函數聲明；將RESIZE_INC重命名爲MOVE_RESIZE_INC，刪除MOVE_INC宏定義。
 
-2021年 02月 28日 星期日 22:10:14 CST gsm <406643764@qq.com>
+2021年 02月 28日 星期日 22:10:14 CST	gsm <406643764@qq.com>
 	* 發布第0.8.3版，修復了某些情況下窗口聚焦不正確的缺陷。
 	* src/gwm.c：wm->focus_client變量改由focuse_client函數更新，爲此而修改了focus_client、set_wm、add_client、grab_buttons、handle_destroy_notify、del_client、handle_map_request、handle_unmap_notify、close_win、next_win、pointer_move_resize_win、pointer_change_area函數。
 	* src/gwm.h：修改了focus_client、grab_buttons函數聲明。
 
-2021年 02月 27日 星期六 18:37:24 CST gsm <406643764@qq.com>
+2021年 02月 27日 星期六 18:37:24 CST	gsm <406643764@qq.com>
 	* 發布第0.8.2版，修復了狀態欄文字更新不及時的缺陷；修改了狀態欄顏色。
 	* src/gwm.c：刪除draw_string_in_center函數，創建draw_string函數取而代之，後者可指定顏色和文字對方方式；修改create_status_bar、handle_expose、handle_property_notify函數；修改狀態欄的顏色。
 	* src/gwm.h：刪除draw_string_in_center函數聲明，創建draw_string函數聲明，爲DIRECTION增加CENTER成員，爲STATUS_BAR增加text成員，創建GREY21宏。
 
-2021年 02月 27日 星期六 16:30:40 CST gsm <406643764@qq.com>
+2021年 02月 27日 星期六 16:30:40 CST	gsm <406643764@qq.com>
 	* 發布第0.8.1版，主要修復了窗口疊次序的缺陷。
 	* src/gwm.c：爲了修復窗口疊次序的缺陷，以狀態欄爲參考點，把懸浮窗口都放在其上，其他窗口都放在其下；具體的操作爲：刪除set_full_layout、set_tile_layout、handle_map_request、focus_client函數裏的設置窗口疊次序的函數，刪除raise_float_wins函數，創建raise_client函數，在prepare_for_move_resize、focus_client、move_client函數裏調用raise_client函數。
 	* src/gwm.h：刪除raise_float_wins函數聲明，創建raise_client函數聲明。
 	* man/zh_HK/man1/gwm.1：修改描述和通用說明中有關窗口疊次序的說明。
 
-2020年 11月 06日 星期五 20:07:36 CST gsm <406643764@qq.com>
+2020年 11月 06日 星期五 20:07:36 CST	gsm <406643764@qq.com>
 	* 發布第0.8版，主要實現了調整主區域可容納窗口數、調整各區域比例、改變窗口所在區域的功能。
 	* src/gwm.c：keybinds_list結構體增加調整主區域可容納client數量的鍵綁定，增加切換窗口到不同區域的綁定，增加調整區域比例的綁定，刪除切換懸浮模式的綁定；buttonbinds_list結構體修改移動窗口和調整窗口尺寸的綁定，增加定位器改變窗口所在區域的綁定；rules結構體增加關於peek的規則；修改set_tile_layout函數，以適應新創建的n_main_max變量；創建adjust_n_main_max、key_change_area、to_main_area、is_in_main_area、del_client_node、add_client_node、get_area_head、update_n_for_del、update_n_for_add、to_second_area、get_second_area_head、to_fixed_area、to_floating_area、set_floating_size、pointer_change_area、compare_client_order、move_client、adjust_main_area_ratio、adjust_fixed_area_ratio函數；刪除toggle_float函數；修改add_client函數，把增加節點的代碼用add_client_node函數代替，調用update_n_for_add函數，把place_type初始化放到apply_rules函數裏，把apply_rules函數裏的設置浮窗代碼移動本函數裏，調整語句順序；修改apply_rules函數，增加初始化place_type代碼，把更新數量和設置浮窗的代碼刪除；修改del_client函數，把刪除節點的代碼用del_client_node函數代替，把更新數量的代碼用update_n_for_del函數代替；修改prepare_for_move_resize函數，把更新數量的代碼用update_n_for_del、update_n_for_add函數代替。
 	* src/gwm.h：WM結構體增加n_main_max成員；創建AREA_TYPE枚舉類型；FUNC_ARG聯合體增加area_type成員；創建adjust_n_main_max、key_change_area、to_main_area、is_in_main_area、del_client_node、add_client_node、get_area_head、update_n_for_del、update_n_for_add、to_second_area、get_second_area_head、to_fixed_area、to_floating_area、set_floating_size、pointer_change_area、compare_client_order、move_client、adjust_main_area_ratio、adjust_fixed_area_ratio函數聲明；刪除toggle_float函數聲明；創建WM_SKEY宏。
