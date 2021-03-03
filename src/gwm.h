@@ -188,6 +188,7 @@ int send_event(WM *wm, Atom protocol);
 void next_win(WM *wm, XEvent *e, FUNC_ARG unused);
 void focus_client(WM *wm, CLIENT *c);
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg);
+void pointer_focus_client(WM *wm, XEvent *e, FUNC_ARG arg);
 void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg);
 bool grab_pointer_for_move_resize(WM *wm);
 bool query_pointer_for_move_resize(WM *wm, int *x, int *y, Window *win);
