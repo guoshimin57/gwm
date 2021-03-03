@@ -9,6 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 03月 03日 星期三 20:16:21 CST	gsm <406643764@qq.com>
+	* 發布第0.8.8版，增加通過單擊定位器來聚焦窗口的功能。
+	* src/gwm.c：爲了增加單擊聚焦窗口的功能，修改buttonbinds_list數組、grab_buttons和handle_button_press函數，創建pointer_focus_client函數。
+	* src/gwm.h：創建pointer_focus_client函數聲明。
+	* man/zh_HK/man1/gwm.1：通用說明章節增加獨享定位器時忽略大寫鎖定鍵和數字鎖定鍵的信息；定位器章節增加單擊命令的幫助信息。
+
 2021年 03月 03日 星期三 13:04:04 CST	gsm <406643764@qq.com>
 	* 發布第0.8.7版，獨享定位器時忽略大寫鎖定和數字鎖定鍵，修復定位器可能響應非窗口管理器管理的窗口的缺陷，修改部分函數名及參數。
 	* src/gwm.c：爲了在獨享定位器時忽略大寫鎖定和數字鎖定鍵，修改了grab_buttons函數；爲了修復定位器可能響應非窗口管理器管理的窗口的缺陷，修改了handle_button_press函數；爲了命名更統一，config_managed_win重命名爲config_managed_client並修改參數，pointer_move_resize_win重命名爲pointer_move_resize_client，修改了del_client、handle_destroy_notify、handle_unmap_notify、close_win函數以及buttonbinds_list數組。
