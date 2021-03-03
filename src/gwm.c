@@ -52,6 +52,8 @@ KEYBINDS keybinds_list[]=
 
 BUTTONBINDS buttonbinds_list[]=
 {
+    {0, Button1, pointer_focus_client, {0}},
+    {0, Button3, pointer_focus_client, {0}},
     {WM_KEY, Button1, pointer_move_resize_client, {.resize_flag=false}},
     {WM_KEY, Button3, pointer_move_resize_client, {.resize_flag=true}},
     {WM_SKEY, Button1, pointer_change_area, {0}},
@@ -365,10 +367,16 @@ void grab_buttons(WM *wm, CLIENT *c)
     unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     XUngrabButton(wm->display, AnyButton, AnyModifier, c->win);
     for(size_t i=0; i<ARRAY_NUM(buttonbinds_list); i++)
+    {
         for(size_t j=0; j<ARRAY_NUM(masks); j++)
-            XGrabButton(wm->display, buttonbinds_list[i].button,
-                buttonbinds_list[i].modifier|masks[j], c->win, False, BUTTON_MASK,
-                GrabModeAsync, GrabModeAsync, None, None);
+        {
+            BUTTONBINDS *b=buttonbinds_list+i;
+            XGrabButton(wm->display, b->button, b->modifier|masks[j], c->win,
+                False, BUTTON_MASK, GrabModeAsync, GrabModeAsync, None, None);
+            XGrabButton(wm->display, b->button, masks[j], c->win,
+                False, BUTTON_MASK, GrabModeSync, GrabModeSync, None, None);
+        }
+    }
 }
 
 void handle_events(WM *wm)
@@ -389,9 +397,13 @@ void handle_button_press(WM *wm, XEvent *e)
     {
         bb=buttonbinds_list[i];
 		if( bb.button == e->xbutton.button
-            && is_equal_modifier_mask(wm, bb.modifier, e->xbutton.state)
-            && bb.func)
-            bb.func(wm, e, bb.arg);
+            && is_equal_modifier_mask(wm, bb.modifier, e->xbutton.state))
+        {
+            if(bb.func)
+                bb.func(wm, e, bb.arg);
+            if(is_equal_modifier_mask(wm, 0, e->xbutton.state))
+                XAllowEvents(wm->display, ReplayPointer, CurrentTime);
+        }
     }
 }
  
@@ -720,6 +732,11 @@ void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
         else
             update_layout(wm);
     }
+}
+
+void pointer_focus_client(WM *wm, XEvent *e, FUNC_ARG arg)
+{
+    focus_client(wm, win_to_client(wm, e->xbutton.window));
 }
 
 void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
