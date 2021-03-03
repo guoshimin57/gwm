@@ -9,6 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#ifndef GWM_H
+#define GWM_H
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -125,15 +128,8 @@ struct wm_rule_tag
 };
 typedef struct wm_rule_tag WM_RULE;
 
-#define WM_KEY Mod4Mask
-#define WM_SKEY (Mod4Mask|ShiftMask)
-#define CMD_KEY (Mod4Mask|Mod1Mask)
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
-#define MOVE_RESIZE_INC 32
-#define STATUS_BAR_HEIGHT 32
-#define DEFAULT_MAIN_AREA_RATIO 0.6
-#define DEFAULT_FIXED_AREA_RATIO 0.15
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask|PropertyChangeMask|POINTER_MASK|ExposureMask)
@@ -214,3 +210,5 @@ void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg);
 int compare_client_order(WM *wm, CLIENT *c1, CLIENT *c2);
 void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type);
 void raise_client(WM *wm);
+
+#endif
