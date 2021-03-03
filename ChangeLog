@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     ChangeLog：面向開發者的變更日志。
- *     版權 (C) 2020 gsm <406643764@qq.com>
+ *     版權 (C) 2021 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -8,6 +8,13 @@
  *     你應該已經收到一份附隨此程序的GNU通用公共許可證副本。否則，請參閱
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
+
+2021年 03月 04日 星期四 00:07:18 CST	gsm <406643764@qq.com>
+	* 發布第0.8.9版，把gwm配置代碼移至單獨的文件以便配置。
+	* src/gwm.c：把keybinds_list、buttonbinds_list、rules數組定義移至config.h文件；修改init_wm、create_status_bar、handle_expose函數。
+	* src/gwm.h：增加防重復包含頭文件的代碼；把WM_KEY、WM_SKEY、CMD_KEY、MOVE_RESIZE_INC、STATUS_BAR_HEIGHT、DEFAULT_MAIN_AREA_RATIO、DEFAULT_FIXED_AREA_RATIO宏定義移至config.h文件。
+	* src/config.h：新建的用於配置gwm的文件。
+	* man/zh_HK/man1/gwm.1：修改配置章節。
 
 2021年 03月 03日 星期三 20:16:21 CST	gsm <406643764@qq.com>
 	* 發布第0.8.8版，增加通過單擊定位器來聚焦窗口的功能。
