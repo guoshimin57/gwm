@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     gwm.c：實現窗口管理器的主要部分。
- *     版權 (C) 2020 gsm <406643764@qq.com>
+ *     版權 (C) 2021 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -10,61 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
-
-KEYBINDS keybinds_list[]=
-{
-    {CMD_KEY,    XK_t,            exec,                       SH_CMD("lxterminal")},
-    {CMD_KEY,    XK_f,            exec,                       SH_CMD("xdg-open ~")},
-    {CMD_KEY,    XK_w,            exec,                       SH_CMD("xwininfo -wm >log")},
-    {CMD_KEY,    XK_p,            exec,                       SH_CMD("dmenu_run")},
-    {CMD_KEY,    XK_q,            exec,                       SH_CMD("qq")},
-    {CMD_KEY,    XK_s,            exec,                       SH_CMD("stardict")},
-    {WM_KEY,     XK_Up,           key_move_resize_client,     {.direction=UP}},
-    {WM_KEY,     XK_Down,         key_move_resize_client,     {.direction=DOWN}},
-    {WM_KEY,     XK_Left,         key_move_resize_client,     {.direction=LEFT}},
-    {WM_KEY,     XK_Right,        key_move_resize_client,     {.direction=RIGHT}},
-    {WM_KEY,     XK_bracketleft,  key_move_resize_client,     {.direction=UP2UP}},
-    {WM_KEY,     XK_bracketright, key_move_resize_client,     {.direction=UP2DOWN}},
-    {WM_KEY,     XK_semicolon,    key_move_resize_client,     {.direction=DOWN2UP}},
-    {WM_KEY,     XK_quoteright,   key_move_resize_client,     {.direction=DOWN2DOWN}},
-    {WM_KEY,     XK_9,            key_move_resize_client,     {.direction=LEFT2LEFT}},
-    {WM_KEY,     XK_0,            key_move_resize_client,     {.direction=LEFT2RIGHT}},
-    {WM_KEY,     XK_minus,        key_move_resize_client,     {.direction=RIGHT2LEFT}},
-    {WM_KEY,     XK_equal,        key_move_resize_client,     {.direction=RIGHT2RIGHT}},
-    {WM_KEY,     XK_Delete,       quit_wm,                    {0}},
-    {WM_KEY,     XK_c,            close_win,                  {0}},
-    {WM_KEY,     XK_Tab,          next_win,                   {0}},
-    {WM_KEY,     XK_f,            change_layout,              {.layout=FULL}},
-    {WM_KEY,     XK_p,            change_layout,              {.layout=PREVIEW}},
-    {WM_KEY,     XK_s,            change_layout,              {.layout=STACK}},
-    {WM_KEY,     XK_t,            change_layout,              {.layout=TILE}},
-    {WM_KEY,     XK_i,            adjust_n_main_max,          {.n=1}},
-    {WM_SKEY,    XK_i,            adjust_n_main_max,          {.n=-1}},
-    {WM_KEY,     XK_m,            adjust_main_area_ratio,     {.change_ratio=0.01}},
-    {WM_SKEY,    XK_m,            adjust_main_area_ratio,     {.change_ratio=-0.01}},
-    {WM_KEY,     XK_x,            adjust_fixed_area_ratio,    {.change_ratio=0.01}},
-    {WM_SKEY,    XK_x,            adjust_fixed_area_ratio,    {.change_ratio=-0.01}},
-    {WM_KEY,     XK_F1,           key_change_area,            {.area_type=MAIN_AREA}},
-    {WM_KEY,     XK_F2,           key_change_area,            {.area_type=SECOND_AREA}},
-    {WM_KEY,     XK_F3,           key_change_area,            {.area_type=FIXED_AREA}},
-    {WM_KEY,     XK_F4,           key_change_area,            {.area_type=FLOATING_AREA}},
-};
-
-BUTTONBINDS buttonbinds_list[]=
-{
-    {0, Button1, pointer_focus_client, {0}},
-    {0, Button3, pointer_focus_client, {0}},
-    {WM_KEY, Button1, pointer_move_resize_client, {.resize_flag=false}},
-    {WM_KEY, Button3, pointer_move_resize_client, {.resize_flag=true}},
-    {WM_SKEY, Button1, pointer_change_area, {0}},
-};
-
-WM_RULE rules[]=
-{
-    {"Stardict", "stardict", FLOATING},
-    {"Qq", "qq", FIXED},
-    {"Peek", "peek", FLOATING},
-};
+#include "config.h"
 
 void (*event_handlers[])(WM *, XEvent *)=
 {
@@ -104,10 +50,10 @@ void init_wm(WM *wm)
 	wm->mod_map=XGetModifierMapping(wm->display);
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
-    wm->layout=TILE;
+    wm->layout=DEFAULT_LAYOUT;
     wm->main_area_ratio=DEFAULT_MAIN_AREA_RATIO;
     wm->fixed_area_ratio=DEFAULT_FIXED_AREA_RATIO;
-    wm->n_main_max=2;
+    wm->n_main_max=DEFAULT_N_MAIN_MAX;
 }
 
 void set_wm(WM *wm)
@@ -154,7 +100,7 @@ void create_status_bar(WM *wm)
     b->w=wm->screen_width;
     b->h=STATUS_BAR_HEIGHT;
     b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
-        b->w, b->h, 0, 0, GREY21);
+        b->w, b->h, 0, 0, STATUS_BAR_BACKGROUND_COLOR);
     b->text="gwm";
     XSelectInput(wm->display, wm->status_bar.win, ExposureMask);
     XMapRaised(wm->display, wm->status_bar.win);
@@ -488,7 +434,8 @@ void handle_expose(WM *wm, XEvent *e)
     STATUS_BAR *b=&wm->status_bar;
 
     if(win == b->win)
-        draw_string(wm, b->win, wm->white, CENTER, 0, 0, b->w, b->h, b->text);
+        draw_string(wm, b->win, STATUS_BAR_FOREGROUND_COLOR, CENTER,
+            0, 0, b->w, b->h, b->text);
 }
 
 void handle_key_press(WM *wm, XEvent *e)
