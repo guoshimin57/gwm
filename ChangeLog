@@ -9,6 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 03月 03日 星期三 13:04:04 CST	gsm <406643764@qq.com>
+	* 發布第0.8.7版，獨享定位器時忽略大寫鎖定和數字鎖定鍵，修復定位器可能響應非窗口管理器管理的窗口的缺陷，修改部分函數名及參數。
+	* src/gwm.c：爲了在獨享定位器時忽略大寫鎖定和數字鎖定鍵，修改了grab_buttons函數；爲了修復定位器可能響應非窗口管理器管理的窗口的缺陷，修改了handle_button_press函數；爲了命名更統一，config_managed_win重命名爲config_managed_client並修改參數，pointer_move_resize_win重命名爲pointer_move_resize_client，修改了del_client、handle_destroy_notify、handle_unmap_notify、close_win函數以及buttonbinds_list數組。
+	*src/gwm.h：config_managed_win重命名爲config_managed_client並修改參數，pointer_move_resize_win重命名爲pointer_move_resize_client，修改了del_client函數聲明。
+
 2021年 03月 02日 星期二 18:07:13 CST	gsm <406643764@qq.com>
 	* 發布第0.8.6版，修復了布局有時不正確、定位器可能調整根窗口、定位器調整窗口時疊次序有時不正確的缺陷。
 	* src/gwm.c：爲修復布局有時不正確的缺陷而修改了add_client、update_layout、set_full_layout、handle_destroy_notify、handle_map_request、handle_unmap_notify、close_win、change_layout函數，刪除set_stack_layout函數，創建to_stack_layout函數；爲修復定位器可能調整根窗口的缺陷而修改了pointer_move_resize_win函數；爲解決定位器調整窗口時疊次序有時不正確的缺陷而修改了move_client函數。
