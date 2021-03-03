@@ -52,8 +52,8 @@ KEYBINDS keybinds_list[]=
 
 BUTTONBINDS buttonbinds_list[]=
 {
-    {WM_KEY, Button1, pointer_move_resize_win, {.resize_flag=false}},
-    {WM_KEY, Button3, pointer_move_resize_win, {.resize_flag=true}},
+    {WM_KEY, Button1, pointer_move_resize_client, {.resize_flag=false}},
+    {WM_KEY, Button3, pointer_move_resize_client, {.resize_flag=true}},
     {WM_SKEY, Button1, pointer_change_area, {0}},
 };
 
@@ -361,11 +361,14 @@ unsigned int get_num_lock_mask(WM *wm)
     
 void grab_buttons(WM *wm, CLIENT *c)
 {
+    unsigned int num_lock_mask=get_num_lock_mask(wm);
+    unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     XUngrabButton(wm->display, AnyButton, AnyModifier, c->win);
     for(size_t i=0; i<ARRAY_NUM(buttonbinds_list); i++)
-        XGrabButton(wm->display, buttonbinds_list[i].button,
-            buttonbinds_list[i].modifier, c->win, False, BUTTON_MASK,
-            GrabModeAsync, GrabModeAsync, None, None);
+        for(size_t j=0; j<ARRAY_NUM(masks); j++)
+            XGrabButton(wm->display, buttonbinds_list[i].button,
+                buttonbinds_list[i].modifier|masks[j], c->win, False, BUTTON_MASK,
+                GrabModeAsync, GrabModeAsync, None, None);
 }
 
 void handle_events(WM *wm)
@@ -380,6 +383,8 @@ void handle_events(WM *wm)
 void handle_button_press(WM *wm, XEvent *e)
 {
     BUTTONBINDS bb;
+    CLIENT *c=win_to_client(wm, e->xbutton.window);
+    if(!c) return;
 	for(size_t i=0; i<ARRAY_NUM(buttonbinds_list); i++)
     {
         bb=buttonbinds_list[i];
@@ -401,12 +406,12 @@ void handle_config_request(WM *wm, XEvent *e)
     CLIENT *c=win_to_client(wm, cr.window);
 
     if(c)
-        config_managed_win(wm, c);
+        config_managed_client(wm, c);
     else
         config_unmanaged_win(wm, &cr);
 }
 
-void config_managed_win(WM *wm, CLIENT *c)
+void config_managed_client(WM *wm, CLIENT *c)
 {
     XConfigureEvent ce;
     ce.type=ConfigureNotify;
@@ -446,16 +451,16 @@ CLIENT *win_to_client(WM *wm, Window win)
 
 void handle_destroy_notify(WM *wm, XEvent *e)
 {
-    if(win_to_client(wm, e->xdestroywindow.window))
+    CLIENT *c=win_to_client(wm, e->xdestroywindow.window);
+    if(c)
     {
-        del_client(wm, e->xdestroywindow.window);
+        del_client(wm, c);
         update_layout(wm);
     }
 }
  
-void del_client(WM *wm, Window win)
+void del_client(WM *wm, CLIENT *c)
 {
-    CLIENT *c=win_to_client(wm, win);
     if(c)
     {
         del_client_node(c);
@@ -526,9 +531,10 @@ void handle_map_request(WM *wm, XEvent *e)
 
 void handle_unmap_notify(WM *wm, XEvent *e)
 {
-    if(win_to_client(wm, e->xunmap.window))
+    CLIENT *c=win_to_client(wm, e->xunmap.window);
+    if(c)
     {
-        del_client(wm, e->xunmap.window);
+        del_client(wm, c);
         update_layout(wm);
     }
 }
@@ -653,7 +659,7 @@ void close_win(WM *wm, XEvent *e, FUNC_ARG unused)
             XKillClient(wm->display, wm->focus_client->win);
             XUngrabServer(wm->display);
         }
-        del_client(wm, wm->focus_client->win);
+        del_client(wm, wm->focus_client);
         update_layout(wm);
     }
     else
@@ -716,7 +722,7 @@ void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
     }
 }
 
-void pointer_move_resize_win(WM *wm, XEvent *e, FUNC_ARG arg)
+void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
 {
     CLIENT *c;
     XEvent ev;
