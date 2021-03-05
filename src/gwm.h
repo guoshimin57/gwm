@@ -52,6 +52,12 @@ enum layout_tag
 };
 typedef enum layout_tag LAYOUT;
 
+enum cursor_type_tag
+{
+    MOVE_CURSOR, RESIZE_CURSOR, CURSORS_N
+};
+typedef enum cursor_type_tag CURSOR_TYPE;
+
 struct status_bar_tag
 {
     Window win;
@@ -70,7 +76,7 @@ struct wm_tag
 	XModifierKeymap *mod_map;
     Window root_win;
     GC gc, wm_gc;
-    CLIENT *clients, *focus_client;
+    CLIENT *clients, *cur_focus_client, *prev_focus_client;
     unsigned int n, /* 除頭結點以外的clients總數 */
         n_float,    /* 懸浮的clients數量 */
         n_fixed,    /* 固定區域的clients數量 */
@@ -78,6 +84,7 @@ struct wm_tag
         n_main_max; /* 主區域可容納的clients數量 */
     LAYOUT layout;
     XFontSet font_set;
+    Cursor cursors[CURSORS_N];
     STATUS_BAR status_bar;
     float main_area_ratio, fixed_area_ratio;
 };
@@ -134,12 +141,12 @@ typedef struct wm_rule_tag WM_RULE;
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask|PropertyChangeMask|POINTER_MASK|ExposureMask)
 #define FONT_SET "*-24-*"
-#define GREY21 0x363636
 
 void init_wm(WM *wm);
 void set_wm(WM *wm);
 int my_x_error_handler(Display *display, XErrorEvent *e);
 void create_font_set(WM *wm);
+void create_cursors(WM *wm);
 void create_cursors(WM *wm);
 void create_status_bar(WM *wm);
 void print_error_msg(Display *display, XErrorEvent *e);
@@ -154,6 +161,7 @@ void set_full_layout(WM *wm);
 void set_preview_layout(WM *wm);
 void to_stack_layout(WM *wm);
 void set_tile_layout(WM *wm);
+void fix_rect_for_border(CLIENT *c);
 void grab_keys(WM *wm);
 unsigned int get_num_lock_mask(WM *wm);
 void grab_buttons(WM *wm, CLIENT *c);
@@ -181,12 +189,17 @@ bool is_valid_move_resize(WM *wm, CLIENT *c, int dx, int dy, int dw, int dh);
 void quit_wm(WM *wm, XEvent *e, FUNC_ARG unused);
 void close_win(WM *wm, XEvent *e, FUNC_ARG unused);
 int send_event(WM *wm, Atom protocol);
-void next_win(WM *wm, XEvent *e, FUNC_ARG unused);
+void next_client(WM *wm, XEvent *e, FUNC_ARG unused);
+void prev_client(WM *wm, XEvent *e, FUNC_ARG unused);
 void focus_client(WM *wm, CLIENT *c);
+void fix_focus_client(WM *wm);
+CLIENT *get_next_client(WM *wm, CLIENT *c);
+CLIENT *get_prev_client(WM *wm, CLIENT *c);
+bool is_client(WM *wm, CLIENT *c);
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg);
 void pointer_focus_client(WM *wm, XEvent *e, FUNC_ARG arg);
 void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg);
-bool grab_pointer_for_move_resize(WM *wm);
+bool grab_pointer_for_move_resize(WM *wm, bool resize_flag);
 bool query_pointer_for_move_resize(WM *wm, int *x, int *y, Window *win);
 void get_rect_sign(WM *wm, int px, int py, bool resize_flag, int *xs, int *ys, int *ws, int *hs);
 void apply_rules(WM *wm, CLIENT *c);
