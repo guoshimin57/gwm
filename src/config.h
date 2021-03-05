@@ -17,12 +17,16 @@
 #define CMD_KEY (Mod4Mask|Mod1Mask) /* 與命令行相關的功能轉換鍵 */
 #define MOVE_RESIZE_INC 32 /* 調整窗口的步進值，單位爲像素 */
 #define STATUS_BAR_HEIGHT 32 /* 狀態欄高度，單位爲像素 */
+#define BORDER_WIDTH 2 /* 窗口边框宽度，单位为像素 */
 #define DEFAULT_LAYOUT TILE /* 默認的窗口布局模式 */
 #define DEFAULT_MAIN_AREA_RATIO 0.6 /* 默認的主區域比例 */
 #define DEFAULT_FIXED_AREA_RATIO 0.15 /* 默認的固定區域比例 */
 #define DEFAULT_N_MAIN_MAX 1 /* 默認的主區域最大窗口數量 */
+#define GREY21 0x363636 /* 灰色的一種 */
+#define CORNFLOWERBLUE 0x6495ed /* 矢車菊藍 */
 #define STATUS_BAR_BACKGROUND_COLOR GREY21 /*狀態欄背景色 */
 #define STATUS_BAR_FOREGROUND_COLOR 0xffffff /*狀態欄前景色 */
+#define BORDER_COLOR CORNFLOWERBLUE /* 窗口边框顏色 */
 
 KEYBINDS keybinds_list[]= /* 鍵盤快捷鍵綁定 */
 { /* 功能轉換鍵     鍵符號          要綁定的函數                函數的參數 */
@@ -46,7 +50,8 @@ KEYBINDS keybinds_list[]= /* 鍵盤快捷鍵綁定 */
     {WM_KEY,     XK_equal,        key_move_resize_client,     {.direction=RIGHT2RIGHT}},
     {WM_KEY,     XK_Delete,       quit_wm,                    {0}},
     {WM_KEY,     XK_c,            close_win,                  {0}},
-    {WM_KEY,     XK_Tab,          next_win,                   {0}},
+    {WM_KEY,     XK_Tab,          next_client,                {0}},
+    {WM_SKEY,    XK_Tab,          prev_client,                {0}},
     {WM_KEY,     XK_f,            change_layout,              {.layout=FULL}},
     {WM_KEY,     XK_p,            change_layout,              {.layout=PREVIEW}},
     {WM_KEY,     XK_s,            change_layout,              {.layout=STACK}},
