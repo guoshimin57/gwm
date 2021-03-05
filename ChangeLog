@@ -9,6 +9,14 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 03月 05日 星期五 19:03:54 CST	gsm <406643764@qq.com>
+	* 發布第0.8.10版，增加了改變光標形狀的功能，實現了給聚焦窗口增加邊框的功能，修復了未分類綁定定位器按鈕的缺陷，修復了未響應點擊非client窗口的缺陷，實現了用按鍵切換到前一個client的功能，聚焦功能更合理，修復了用鍵盤改變client放置區域後光標位置沒相應移動的缺陷。
+	* src/gwm.c：爲了增加改變光標形狀的功能，創建了create_cursors函數，修改了set_wm、pointer_move_resize_client、grab_pointer_for_move_resize、pointer_change_area函數；爲了實現給聚焦窗口增加邊框的功能，修改了create_clients、add_client、set_full_layout、set_preview_layout、set_tile_layout、del_client、key_move_resize_client、prepare_for_move_resize、close_win、send_event、next_win（並重命名爲next_client）、focus_client、pointer_move_resize_client、get_rect_sign、key_change_area、to_main_area、to_second_area、to_fixed_area、to_floating_area、pointer_change_area、raise_client函數，創建了fix_rect_for_border函數；爲了提高效率，修改了set_preview_layout、handle_key_press函數；爲了修復未分類綁定定位器按鈕的缺陷，修改了grab_buttons函數；爲了修復未響應點擊非client窗口的缺陷，修改了handle_button_press、pointer_move_resize_client函數；爲了實現用按鍵切換到前一個client的功能，創建prev_client函數；爲了使聚焦功能更合理，修改了focus_client函數，創建了fix_focus_client、get_next_client、get_prev_client、is_client函數；爲了修復用鍵盤改變client放置區域後光標位置沒相應移動的缺陷，修改了key_change_area函數。
+	src/gwm.h：爲了增加改變光標形狀的功能，創建了CURSOR_TYPE類型，WM增加成員cursors，創建了create_cursors函數聲明，修改了grab_pointer_for_move_resize函數聲明；爲了實現給聚焦窗口增加邊框的功能，創建了fix_rect_for_border函數聲明，把next_win重命名爲next_client；爲了實現用按鍵切換到前一個client的功能，創建prev_client函數聲明；爲了使聚焦功能更合理，創建了fix_focus_client、get_next_client、get_prev_client、is_client函數聲明；刪除了GREY21宏定義，把它放到src/config.h更合理。
+	* src/config.h：爲了實現給聚焦窗口增加邊框的功能，創建了BORDER_WIDTH、CORNFLOWERBLUE、BORDER_COLOR宏；創建GREY21宏；把next_win重命名爲next_client；爲了實現切換至上一個client的功能，keybinds_list增加相關綁定。
+	* man/zh_HK/man1/gwm.1：鍵盤命令章節增加切換到上一client的幫助信息。
+	* tools/startgwm：增加版權信息。
+
 2021年 03月 04日 星期四 00:07:18 CST	gsm <406643764@qq.com>
 	* 發布第0.8.9版，把gwm配置代碼移至單獨的文件以便配置。
 	* src/gwm.c：把keybinds_list、buttonbinds_list、rules數組定義移至config.h文件；修改init_wm、create_status_bar、handle_expose函數。
