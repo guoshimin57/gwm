@@ -66,6 +66,7 @@ KEYBINDS keybinds_list[]= /* 鍵盤快捷鍵綁定 */
     {WM_KEY,     XK_F2,           key_change_area,            {.area_type=SECOND_AREA}},
     {WM_KEY,     XK_F3,           key_change_area,            {.area_type=FIXED_AREA}},
     {WM_KEY,     XK_F4,           key_change_area,            {.area_type=FLOATING_AREA}},
+    {WM_KEY,     XK_F5,           refresh_wm,            {0}},
 };
 
 BUTTONBINDS buttonbinds_list[]= /* 定位器按鈕綁定 */
