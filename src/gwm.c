@@ -66,6 +66,7 @@ void set_wm(WM *wm)
     create_clients(wm);
     update_layout(wm);
     grab_keys(wm);
+    exec(wm, NULL, (FUNC_ARG)SH_CMD("~/.config/gwm/autostart.sh"));
 }
 
 int my_x_error_handler(Display *display, XErrorEvent *e)
@@ -496,7 +497,6 @@ unsigned int get_modifier_mask(WM *wm, KeySym key_sym)
 void handle_map_request(WM *wm, XEvent *e)
 {
     Window win=e->xmaprequest.window;
-
     XMapWindow(wm->display, win);
     if(is_wm_win(wm, win))
     {
@@ -1083,6 +1083,15 @@ void set_floating_size(CLIENT *c)
         c->w-=MOVE_RESIZE_INC;
     if(c->h >= 2*MOVE_RESIZE_INC)
         c->h-=MOVE_RESIZE_INC;
+}
+
+void refresh_wm(WM *wm, XEvent *e, FUNC_ARG unused)
+{
+    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
+        free(c);
+    free(wm->clients);
+    create_clients(wm);
+    update_layout(wm);
 }
 
 void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
