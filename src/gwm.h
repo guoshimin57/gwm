@@ -219,6 +219,7 @@ CLIENT *get_second_area_head(WM *wm);
 void to_fixed_area(WM *wm);
 void to_floating_area(WM *wm);
 void set_floating_size(CLIENT *c);
+void refresh_wm(WM *wm, XEvent *e, FUNC_ARG unused);
 void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg);
 int compare_client_order(WM *wm, CLIENT *c1, CLIENT *c2);
 void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type);
