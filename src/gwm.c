@@ -239,7 +239,8 @@ void set_preview_layout(WM *wm)
         /* 下邊和右邊的窗口佔用剩餘空間 */
         c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
         c->h=i<cols*(rows-1) ? h : h+(ch-h*rows);
-        fix_rect_for_border(c);
+        if(c->place_type != FLOATING)
+            fix_rect_for_border(c);
     }
 }
 
@@ -278,14 +279,18 @@ void set_tile_layout(WM *wm)
                 c->x=0, c->y=(j-wm->n_main_max)*sh, c->w=sw, c->h=sh;
             j++;
         }
-        fix_rect_for_border(c);
+        if(c->place_type != FLOATING)
+            fix_rect_for_border(c);
     }
 }
 
 void fix_rect_for_border(CLIENT *c)
 {
     c->x+=BORDER_WIDTH, c->y+=BORDER_WIDTH;
-    c->w-=2*BORDER_WIDTH, c->h-=2*BORDER_WIDTH;
+    if(c->w > 2*BORDER_WIDTH)
+        c->w-=2*BORDER_WIDTH;
+    if(c->h > 2*BORDER_WIDTH)
+        c->h-=2*BORDER_WIDTH;
 }
 
 void grab_keys(WM *wm)
@@ -581,8 +586,13 @@ void key_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
         CLIENT *c=wm->cur_focus_client;
         prepare_for_move_resize(wm);
         if(is_valid_move_resize(wm, c, p[0], p[1], p[2], p[3]))
-            XMoveResizeWindow(wm->display, c->win,
-                c->x+=p[0], c->y+=p[1], c->w+=p[2], c->h+=p[3]);
+        {
+            if(p[2]>=0 || (p[2]<0 && c->w>=-p[2]+s))
+                c->x+=p[0], c->w+=p[2];
+            if(p[3]>=0 || (p[3]<0 && c->h>=-p[3]+s))
+                c->y+=p[1], c->h+=p[3];
+            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+        }
     }
 }
 
@@ -673,13 +683,21 @@ int send_event(WM *wm, Atom protocol)
 void next_client(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     if(wm->n) /* 允許切換至根窗口 */
+    {
         focus_client(wm, wm->cur_focus_client->prev);
+        CLIENT *c=wm->cur_focus_client;
+        XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
+    }
 }
 
 void prev_client(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     if(wm->n) /* 允許切換至根窗口 */
+    {
         focus_client(wm, wm->cur_focus_client->next);
+        CLIENT *c=wm->cur_focus_client;
+        XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
+    }
 }
 
 void focus_client(WM *wm, CLIENT *c)
@@ -692,7 +710,6 @@ void focus_client(WM *wm, CLIENT *c)
         fix_focus_client(wm);
     if(wm->prev_focus_client != wm->clients)
         XSetWindowBorderWidth(wm->display, wm->prev_focus_client->win, 0);
-    XSetInputFocus(wm->display, wm->cur_focus_client->win, RevertToParent, CurrentTime);
     if(wm->cur_focus_client != wm->clients)
     {
         raise_client(wm);
@@ -769,7 +786,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
     CLIENT *c;
     XEvent ev;
     Window focus_win;
-    int i=0, old_x, old_y, new_x, new_y, x_sign, y_sign, w_sign, h_sign;
+    int i=0, old_x, old_y, new_x, new_y, x_sign, y_sign, w_sign, h_sign, dw, dh;
     if(!grab_pointer_for_move_resize(wm, arg.resize_flag)) return;
     if(!query_pointer_for_move_resize(wm, &old_x, &old_y, &focus_win)) return;
     c=win_to_client(wm, focus_win);
@@ -789,8 +806,11 @@ void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
             if(!i++)
                 prepare_for_move_resize(wm);
             new_x=ev.xmotion.x, new_y=ev.xmotion.y;
-            c->x+=x_sign*(new_x-old_x), c->y+=y_sign*(new_y-old_y);
-            c->w+=w_sign*(new_x-old_x), c->h+=h_sign*(new_y-old_y);
+            dw=w_sign*(new_x-old_x), dh=h_sign*(new_y-old_y);
+            if(dw>=0 || (dw<0 && c->w>=-dw+MOVE_RESIZE_INC))
+                c->x+=x_sign*(new_x-old_x), c->w+=dw;
+            if(dh>=0 || (dh<0 && c->h>=-dh+MOVE_RESIZE_INC))
+                c->y+=y_sign*(new_y-old_y), c->h+=dh;
             XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
             old_x=new_x, old_y=new_y;
         }
@@ -910,10 +930,14 @@ void apply_rules(WM *wm, CLIENT *c)
 
 void set_default_rect(WM *wm, CLIENT *c)
 {
-    c->x=wm->screen_width/4;
-    c->y=wm->screen_height/4;
-    c->w=wm->screen_width/2;
-    c->h=wm->screen_height/2;
+    Window r;
+    int x, y;
+    unsigned int w, h, b, d;
+    if(XGetGeometry(wm->display, c->win, &r, &x, &y, &w, &h, &b, &d))
+        c->x=x, c->y=y, c->w=w, c->h=h;
+    else
+        c->x=wm->screen_width/4, c->y=wm->screen_height/4,
+        c->w=wm->screen_width/2, c->h=wm->screen_height/2;
 }
 
 void adjust_n_main_max(WM *wm, XEvent *e, FUNC_ARG arg)
