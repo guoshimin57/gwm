@@ -9,6 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 03月 07日 星期日 16:48:06 CST	gsm <406643764@qq.com>
+	* 發布第0.8.12版，修復了未根據窗口放置類型來調整窗口位置和尺寸的缺陷，修復了無符號整數減法運算造成溢出回繞的缺陷，修復了無法聚焦非gwm管理的窗口的缺陷。
+	* src/gwm.c：爲了修復未根據窗口放置類型來調整窗口位置和尺寸的缺陷，修改了set_preview_layout、set_tile_layout函數；爲了修復無符號整數減法運算造成溢出回繞的缺陷，修改了set_preview_layout、set_tile_layout、fix_rect_for_border、key_move_resize_client、pointer_move_resize_client函數；爲了修復無法聚焦非gwm管理的窗口的缺陷，修改了next_client、prev_client、focus_client函數。
+	* src/config.h：爲了更好地管理gwm目前尚無法完美管理的程序窗口，修改了rules數組。
+
 2021年 03月 06日 星期六 19:57:37 CST	gsm <406643764@qq.com>
 	* 發布第0.8.11版，實現了啓動gwm之後馬上執行腳本的功能；實現了刷新gwm的功能。
 	* src/gwm.c：爲了實現啓動gwm之後馬上執行腳本的功能，修改了set_wm函數；爲了實現刷新gwm的功能，創建了refresh_wm函數。
