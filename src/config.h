@@ -83,9 +83,10 @@ WM_RULE rules[]= /* 窗口管理器對窗口的管理規則 */
      其結果表示爲：
         WM_CLASS(STRING) = "客戶程序實例名稱", "客戶程序名稱"
     客戶程序名稱   客戶程序實例名稱    窗口放置位置 */ 
-    {"Stardict",    "stardict",         FLOATING},
     {"Qq",          "qq",               FIXED},
     {"Peek",        "peek",             FLOATING},
+    {"explorer.exe","explorer.exe",     FLOATING},
+    {"Thunder.exe", "Thunder.exe",      FLOATING},
 };
 
 #endif
