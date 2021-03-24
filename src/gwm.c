@@ -9,16 +9,17 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
 #include "config.h"
+#include "gwm.h"
 
 void (*event_handlers[])(WM *, XEvent *)=
 {
     [ButtonPress]       = handle_button_press,
     [ConfigureRequest]  = handle_config_request,
-    [DestroyNotify]     = handle_destroy_notify,
+    [EnterNotify]       = handle_enter_notify,
     [Expose]            = handle_expose,
     [KeyPress]          = handle_key_press,
+    [LeaveNotify]       = handle_leave_notify,
     [MapRequest]        = handle_map_request,
     [UnmapNotify]       = handle_unmap_notify,
     [PropertyNotify]    = handle_property_notify,
@@ -45,8 +46,6 @@ void init_wm(WM *wm)
     wm->screen=DefaultScreen(wm->display);
     wm->screen_width=DisplayWidth(wm->display, wm->screen);
     wm->screen_height=DisplayHeight(wm->display, wm->screen);
-    wm->black=BlackPixel(wm->display, wm->screen);
-    wm->white=WhitePixel(wm->display, wm->screen);
 	wm->mod_map=XGetModifierMapping(wm->display);
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
@@ -62,11 +61,11 @@ void set_wm(WM *wm)
     XSelectInput(wm->display, wm->root_win, ROOT_EVENT_MASK);
     create_font_set(wm);
     create_cursors(wm);
-    create_status_bar(wm);
+    create_taskbar(wm);
     create_clients(wm);
     update_layout(wm);
     grab_keys(wm);
-    exec(wm, NULL, (FUNC_ARG)SH_CMD("~/.config/gwm/autostart.sh"));
+    exec(wm, NULL, (FUNC_ARG)SH_CMD("[ -x "AUTOSTART" ] && "AUTOSTART));
 }
 
 int my_x_error_handler(Display *display, XErrorEvent *e)
@@ -100,18 +99,37 @@ void create_cursors(WM *wm)
     wm->cursors[RESIZE_CURSOR]=XCreateFontCursor(wm->display, XC_sizing);
 }
 
+void create_taskbar(WM *wm)
+{
+    TASKBAR *b=&wm->taskbar;
+    b->x=0;
+    b->y=wm->screen_height-TASKBAR_HEIGHT;
+    b->w=wm->screen_width;
+    b->h=TASKBAR_HEIGHT;
+    b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
+        b->w, b->h, 0, 0, TASKBAR_COLOR);
+    XSelectInput(wm->display, b->win, SubstructureRedirectMask|SubstructureNotifyMask|ExposureMask);
+    for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
+    {
+        b->buttons[i]=XCreateSimpleWindow(wm->display, b->win,
+            b->w-TASKBAR_BUTTON_WIDTH*(TASKBAR_BUTTON_N-i), 0, TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT, 0, 0, TASKBAR_BUTTON_COLOR);
+        XSelectInput(wm->display, b->buttons[i], ButtonPressMask|ExposureMask|EnterWindowMask|LeaveWindowMask);
+    }
+    create_status_bar(wm);
+    XMapRaised(wm->display, b->win);
+    XMapSubwindows(wm->display, b->win);
+}
+
 void create_status_bar(WM *wm)
 {
-    STATUS_BAR *b=&wm->status_bar;
-    b->x=0;
-    b->y=wm->screen_height-STATUS_BAR_HEIGHT;
-    b->w=wm->screen_width;
-    b->h=STATUS_BAR_HEIGHT;
-    b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
-        b->w, b->h, 0, 0, STATUS_BAR_BACKGROUND_COLOR);
+    STATUS_BAR *b=&wm->taskbar.status_bar;
+    b->x=0, b->y=0;
+    b->w=wm->taskbar.w-TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N;
+    b->h=TASKBAR_HEIGHT;
+    b->win=XCreateSimpleWindow(wm->display, wm->taskbar.win, b->x, b->y,
+        b->w, b->h, 0, 0, STATUS_BAR_COLOR);
     b->text="gwm";
-    XSelectInput(wm->display, wm->status_bar.win, ExposureMask);
-    XMapRaised(wm->display, wm->status_bar.win);
+    XSelectInput(wm->display, b->win, ExposureMask);
 }
 
 void print_error_msg(Display *display, XErrorEvent *e)
@@ -156,7 +174,7 @@ void *malloc_s(size_t size)
 bool is_wm_win(WM *wm, Window win)
 {
     XWindowAttributes attr;
-    return ( win != wm->status_bar.win
+    return ( win != wm->taskbar.win
         && XGetWindowAttributes(wm->display, win, &attr)
         && attr.map_state != IsUnmapped
         && get_state_hint(wm, win) == NormalState
@@ -181,8 +199,8 @@ void add_client(WM *wm, Window win)
     add_client_node(get_area_head(wm, c->place_type), c);
     update_n_for_add(wm, c);
     set_default_rect(wm, c);
+    frame_client(wm, c);
     focus_client(wm, c);
-    XSetWindowBorder(wm->display, c->win, BORDER_COLOR);
     grab_buttons(wm, c);
 }
 
@@ -213,18 +231,18 @@ void update_layout(WM *wm)
         default: return;
     }
     for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
-        XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+        do_move_resize_client(wm, c, 0, 0, 0, 0);
 }
 
 void set_full_layout(WM *wm)
 {
     CLIENT *c=wm->cur_focus_client;
-    c->x=c->y=-BORDER_WIDTH, c->w=wm->screen_width, c->h=wm->screen_height;
+    c->x=c->y=-BORDER_WIDTH, c->w=wm->screen_width+2*BORDER_WIDTH, c->h=wm->screen_height;
 }
 
 void set_preview_layout(WM *wm)
 {
-    int i=wm->n-1, rows, cols, w, h, ch=(wm->screen_height-wm->status_bar.h);
+    int i=wm->n-1, rows, cols, w, h, ch=(wm->screen_height-wm->taskbar.h);
     /* 行、列数量尽量相近，以保证窗口比例基本不变 */
     for(cols=1; cols<=wm->n; cols++)
         if(cols*cols >= wm->n)
@@ -239,17 +257,8 @@ void set_preview_layout(WM *wm)
         /* 下邊和右邊的窗口佔用剩餘空間 */
         c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
         c->h=i<cols*(rows-1) ? h : h+(ch-h*rows);
-        if(c->place_type != FLOATING)
-            fix_rect_for_border(c);
+        fix_win_rect(c);
     }
-}
-
-void to_stack_layout(WM *wm)
-{
-    if(wm->n > 0)
-        for(CLIENT *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-            set_floating_size(c),
-            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
 }
 
 void set_tile_layout(WM *wm)
@@ -260,8 +269,9 @@ void set_tile_layout(WM *wm)
     mw=wm->main_area_ratio*wm->screen_width;
     fw=wm->screen_width*wm->fixed_area_ratio;
     sw=wm->screen_width-fw-mw;
-    h=wm->screen_height-wm->status_bar.h;
-    mh=wm->n_normal>=wm->n_main_max ? h/wm->n_main_max : (wm->n_normal ? h/wm->n_normal : h);
+    h=wm->screen_height-wm->taskbar.h;
+    mh=wm->n_normal>=wm->n_main_max ? h/wm->n_main_max :
+        (wm->n_normal ? h/wm->n_normal : h);
     fh=wm->n_fixed ? h/wm->n_fixed : h;
     sh=wm->n_normal>wm->n_main_max ? h/(wm->n_normal-wm->n_main_max) : h;
     if(wm->n_fixed == 0) mw+=fw, fw=0;
@@ -280,17 +290,8 @@ void set_tile_layout(WM *wm)
             j++;
         }
         if(c->place_type != FLOATING)
-            fix_rect_for_border(c);
+            fix_win_rect(c);
     }
-}
-
-void fix_rect_for_border(CLIENT *c)
-{
-    c->x+=BORDER_WIDTH, c->y+=BORDER_WIDTH;
-    if(c->w > 2*BORDER_WIDTH)
-        c->w-=2*BORDER_WIDTH;
-    if(c->h > 2*BORDER_WIDTH)
-        c->h-=2*BORDER_WIDTH;
 }
 
 void grab_keys(WM *wm)
@@ -299,10 +300,10 @@ void grab_keys(WM *wm)
     unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     KeyCode code;
     XUngrabKey(wm->display, AnyKey, AnyModifier, wm->root_win);
-    for(size_t i=0; i<ARRAY_NUM(keybinds_list); i++)
-        if((code=XKeysymToKeycode(wm->display, keybinds_list[i].keysym)))
+    for(size_t i=0; i<ARRAY_NUM(KEYBINDS); i++)
+        if((code=XKeysymToKeycode(wm->display, KEYBINDS[i].keysym)))
             for(size_t j=0; j<ARRAY_NUM(masks); j++)
-                XGrabKey(wm->display, code, keybinds_list[i].modifier|masks[j],
+                XGrabKey(wm->display, code, KEYBINDS[i].modifier|masks[j],
                     wm->root_win, True, GrabModeAsync, GrabModeAsync);
 }
 
@@ -329,20 +330,25 @@ unsigned int get_num_lock_mask(WM *wm)
     
 void grab_buttons(WM *wm, CLIENT *c)
 {
-    unsigned int num_lock_mask=get_num_lock_mask(wm);
-    unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
+    unsigned int num_lock_mask=get_num_lock_mask(wm),
+                 masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
+    BUTTONBIND *p=BUTTONBINDS;
     XUngrabButton(wm->display, AnyButton, AnyModifier, c->win);
-    for(size_t i=0; i<ARRAY_NUM(buttonbinds_list); i++)
+    for(size_t i=0; i<ARRAY_NUM(BUTTONBINDS); i++, p++)
     {
-        for(size_t j=0; j<ARRAY_NUM(masks); j++)
+        if(p->click_type == CLICK_WIN)
         {
-            BUTTONBINDS *b=buttonbinds_list+i;
-            if(is_equal_modifier_mask(wm, 0, b->modifier))
-                XGrabButton(wm->display, b->button, masks[j], c->win,
-                    False, BUTTON_MASK, GrabModeSync, GrabModeSync, None, None);
-            else
-                XGrabButton(wm->display, b->button, b->modifier|masks[j], c->win,
-                    False, BUTTON_MASK, GrabModeAsync, GrabModeAsync, None, None);
+            for(size_t j=0; j<ARRAY_NUM(masks); j++)
+            {
+                if(is_equal_modifier_mask(wm, 0, p->modifier))
+                    XGrabButton(wm->display, p->button, p->modifier|masks[j],
+                        c->win, False, BUTTON_MASK,
+                        GrabModeSync, GrabModeSync, None, None);
+                else
+                    XGrabButton(wm->display, p->button, p->modifier|masks[j],
+                        c->win, False, BUTTON_MASK,
+                        GrabModeSync, GrabModeSync, None, None);
+            }
         }
     }
 }
@@ -358,17 +364,22 @@ void handle_events(WM *wm)
 
 void handle_button_press(WM *wm, XEvent *e)
 {
-    BUTTONBINDS bb;
-	for(size_t i=0; i<ARRAY_NUM(buttonbinds_list); i++)
+    CLIENT *c=win_to_client(wm, e->xbutton.window);
+    if(c)
+        focus_client(wm, c);
+    BUTTONBIND *p=BUTTONBINDS;
+    CLICK_TYPE type=get_click_type(wm, e->xbutton.window);
+	for(size_t i=0; i<ARRAY_NUM(BUTTONBINDS); i++, p++)
     {
-        bb=buttonbinds_list[i];
-		if( bb.button == e->xbutton.button
-            && is_equal_modifier_mask(wm, bb.modifier, e->xbutton.state))
+        if( p->click_type == type 
+            && p->button == e->xbutton.button
+            && is_equal_modifier_mask(wm, p->modifier, e->xbutton.state))
         {
-            if(bb.func)
-                bb.func(wm, e, bb.arg);
-            if(is_equal_modifier_mask(wm, 0, e->xbutton.state))
+            if(p->func)
+                p->func(wm, e, p->arg);
+            if(type == CLICK_WIN)
                 XAllowEvents(wm->display, ReplayPointer, CurrentTime);
+            break;
         }
     }
 }
@@ -422,21 +433,17 @@ void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e)
 CLIENT *win_to_client(WM *wm, Window win)
 {
     for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(c->win == win)
+    {
+        if(win==c->win || win==c->frame || win==c->title_area)
             return c;
+        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+            if(win == c->buttons[i])
+                return c;
+    }
+        
     return NULL;
 }
 
-void handle_destroy_notify(WM *wm, XEvent *e)
-{
-    CLIENT *c=win_to_client(wm, e->xdestroywindow.window);
-    if(c)
-    {
-        del_client(wm, c);
-        update_layout(wm);
-    }
-}
- 
 void del_client(WM *wm, CLIENT *c)
 {
     if(c)
@@ -451,11 +458,25 @@ void del_client(WM *wm, CLIENT *c)
 void handle_expose(WM *wm, XEvent *e)
 {
     Window win=e->xexpose.window;
-    STATUS_BAR *b=&wm->status_bar;
+    STATUS_BAR *b=&wm->taskbar.status_bar;
+
+    for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
+    {
+        if(win == wm->taskbar.buttons[i])
+        {
+            draw_string(wm, win, TASKBAR_BUTTON_TEXT_COLOR, CENTER, 0, 0,
+                TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT, TASKBAR_BUTTON_TEXT[i]);
+            return;
+        }
+    }
 
     if(win == b->win)
-        draw_string(wm, b->win, STATUS_BAR_FOREGROUND_COLOR, CENTER,
+        draw_string(wm, b->win, STATUS_BAR_TEXT_COLOR, CENTER,
             0, 0, b->w, b->h, b->text);
+    else
+        for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_part_of_title_bar(c, win))
+                update_title_bar_text(wm, c, win);
 }
 
 void handle_key_press(WM *wm, XEvent *e)
@@ -463,15 +484,14 @@ void handle_key_press(WM *wm, XEvent *e)
     int n;
     KeyCode kc=e->xkey.keycode;
 	KeySym *keysym=XGetKeyboardMapping(wm->display, kc, 1, &n);
-    KEYBINDS kb;
-	for(size_t i=0; i<ARRAY_NUM(keybinds_list); i++)
+    KEYBIND *p=KEYBINDS;
+	for(size_t i=0; i<ARRAY_NUM(KEYBINDS); i++, p++)
     {
-        kb=keybinds_list[i];
-		if( *keysym == kb.keysym
-            && is_equal_modifier_mask(wm, kb.modifier, e->xkey.state)
-            && kb.func)
+		if( *keysym == p->keysym
+            && is_equal_modifier_mask(wm, p->modifier, e->xkey.state)
+            && p->func)
         {
-            kb.func(wm, e, kb.arg);
+            p->func(wm, e, p->arg);
             break;
         }
     }
@@ -510,11 +530,22 @@ void handle_map_request(WM *wm, XEvent *e)
     }
 }
 
+/* 對已經映射的窗口重設父窗口會依次執行以下操作：
+ *     1、自動解除映射該窗口，原父窗口可以收到该UnmapNotify事件；
+ *     2、把該窗口從窗口層次結構中移走；
+ *     3、把該窗口插入到新父窗口的子窗口堆疊頂部；
+ *     4、產生ReparentNotify事件；
+ *     5、自動重新映射該窗口，新父窗口可以收到该MapNotify事件。
+ * 因爲只在接收MapRequest事件時才考慮添加client，而在接受MapNotify事件時沒
+ * 考慮，從而保證不會重復添加，所以相應地，重設父窗口產生UnmapNotify事件時
+ * ，也不重復刪除client。重設父窗口產生UnmapNotify事件時，xunmap.event等於
+ * 原父窗口。銷毀窗口產生UnmapNotify事件時，xunmap.event等於新父窗口。*/
 void handle_unmap_notify(WM *wm, XEvent *e)
 {
     CLIENT *c=win_to_client(wm, e->xunmap.window);
-    if(c)
+    if(c && e->xunmap.event==c->frame && e->xunmap.window==c->win)
     {
+        XDestroyWindow(wm->display, c->frame);
         del_client(wm, c);
         update_layout(wm);
     }
@@ -522,11 +553,11 @@ void handle_unmap_notify(WM *wm, XEvent *e)
 
 void handle_property_notify(WM *wm, XEvent *e)
 {
-    STATUS_BAR *b=&wm->status_bar;
+    STATUS_BAR *b=&wm->taskbar.status_bar;
     XTextProperty name;
     if( e->xproperty.window==wm->root_win && e->xproperty.atom==XA_WM_NAME
         && XGetTextProperty(wm->display, wm->root_win, &name, XA_WM_NAME))
-            draw_string(wm, b->win, wm->white, CENTER,
+            draw_string(wm, b->win, STATUS_BAR_TEXT_COLOR, CENTER,
                 0, 0, b->w, b->h, b->text=(char *)name.value);
 }
 
@@ -591,7 +622,7 @@ void key_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
                 c->x+=p[0], c->w+=p[2];
             if(p[3]>=0 || (p[3]<0 && c->h>=-p[3]+s))
                 c->y+=p[1], c->h+=p[3];
-            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+            do_move_resize_client(wm, c, 0, 0, 0, 0);
         }
     }
 }
@@ -614,15 +645,15 @@ void prepare_for_move_resize(WM *wm)
     }
 }
 
+/* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外，即是否合法。
+ * 若滿足以下條件，則有交集：窗口與屏幕中心距≤窗口半邊長+屏幕半邊長。
+ * 即：|x+w/2-0-sw/2|＜|w/2+sw/2| 且 |y+h/2-0-sh/2|＜|h/2+sh/2|。
+ * 兩邊同乘以2，得：|2*x+w-sw|＜|w+sw| 且 |2*y+h-sh|＜|h+sh|。
+ */
 bool is_valid_move_resize(WM *wm, CLIENT *c, int dx, int dy, int dw, int dh)
 {
     int x=c->x+dx, y=c->y+dy, w=c->w+dw, h=c->h+dh,
         sw=wm->screen_width, sh=wm->screen_height;
-    /* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外，即是否合法。
-     * 若滿足以下條件，則有交集：窗口與屏幕中心距≤窗口半邊長+屏幕半邊長。
-     * 即：|x+w/2-0-sw/2|＜|w/2+sw/2| 且 |y+h/2-0-sh/2|＜|h/2+sh/2|。
-     * 兩邊同乘以2，得：|2*x+w-sw|＜|w+sw| 且 |2*y+h-sh|＜|h+sh|。
-     */
     return w>0 && h>0 && abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
 }
 
@@ -638,15 +669,9 @@ void quit_wm(WM *wm, XEvent *e, FUNC_ARG unused)
 void close_win(WM *wm, XEvent *e, FUNC_ARG unused)
 {
     if(wm->cur_focus_client != wm->clients)
-    {
+    {   /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
         if(!send_event(wm, XInternAtom(wm->display, "WM_DELETE_WINDOW", False)))
-        {
-            XGrabServer(wm->display);
-            XKillClient(wm->display, wm->cur_focus_client->win);
-            XUngrabServer(wm->display);
-        }
-        del_client(wm, wm->cur_focus_client);
-        update_layout(wm);
+            XDestroyWindow(wm->display, wm->cur_focus_client->win);
     }
     else
         fprintf(stderr, "錯誤：不能關閉根窗口！\n");
@@ -660,11 +685,8 @@ int send_event(WM *wm, Atom protocol)
 
 	if(XGetWMProtocols(wm->display, wm->cur_focus_client->win, &protocols, &n))
     {
-        for(i=0; i<n; i++)
-        {
-            if(protocols[i] == protocol)
-                break;
-        }
+        for(i=0; i<n && protocols[i]!=protocol; i++)
+            ;
 		XFree(protocols);
 	}
 	if(i < n)
@@ -677,7 +699,7 @@ int send_event(WM *wm, Atom protocol)
 		event.xclient.data.l[1]=CurrentTime;
 		XSendEvent(wm->display, wm->cur_focus_client->win, False, NoEventMask, &event);
 	}
-	return i<n ;
+	return i<n;
 }
 
 void next_client(WM *wm, XEvent *e, FUNC_ARG unused)
@@ -686,7 +708,8 @@ void next_client(WM *wm, XEvent *e, FUNC_ARG unused)
     {
         focus_client(wm, wm->cur_focus_client->prev);
         CLIENT *c=wm->cur_focus_client;
-        XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
+        if(e->type == KeyPress)
+            XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
     }
 }
 
@@ -696,7 +719,8 @@ void prev_client(WM *wm, XEvent *e, FUNC_ARG unused)
     {
         focus_client(wm, wm->cur_focus_client->next);
         CLIENT *c=wm->cur_focus_client;
-        XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
+        if(e->type == KeyPress)
+            XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
     }
 }
 
@@ -709,11 +733,11 @@ void focus_client(WM *wm, CLIENT *c)
     else
         fix_focus_client(wm);
     if(wm->prev_focus_client != wm->clients)
-        XSetWindowBorderWidth(wm->display, wm->prev_focus_client->win, 0);
+        update_frame(wm, wm->prev_focus_client);
     if(wm->cur_focus_client != wm->clients)
     {
         raise_client(wm);
-        XSetWindowBorderWidth(wm->display, wm->cur_focus_client->win, BORDER_WIDTH);
+        update_frame(wm, wm->cur_focus_client);
     }
 }
 
@@ -769,10 +793,22 @@ void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
     if(wm->layout != arg.layout)
     {
         wm->layout=arg.layout;
-        if(wm->layout == STACK)
-            to_stack_layout(wm);
-        else
-            update_layout(wm);
+        update_layout(wm);
+        update_title_bar_layout(wm);
+    }
+}
+
+void update_title_bar_layout(WM *wm)
+{
+    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+            if(should_button_visible(wm, i))
+                XMapWindow(wm->display, c->buttons[i]);
+            else
+                XUnmapWindow(wm->display, c->buttons[i]);
+        RECT r=get_title_area_rect(wm, c);
+        XResizeWindow(wm->display, c->title_area, r.w, r.h);
     }
 }
 
@@ -783,21 +819,15 @@ void pointer_focus_client(WM *wm, XEvent *e, FUNC_ARG arg)
 
 void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
 {
-    CLIENT *c;
     XEvent ev;
-    Window focus_win;
-    int i=0, old_x, old_y, new_x, new_y, x_sign, y_sign, w_sign, h_sign, dw, dh;
-    if(!grab_pointer_for_move_resize(wm, arg.resize_flag)) return;
-    if(!query_pointer_for_move_resize(wm, &old_x, &old_y, &focus_win)) return;
-    c=win_to_client(wm, focus_win);
-    if(!c)
-        c=wm->clients;
-    focus_client(wm, c);
-    if(c == wm->clients) return;
+    int i=0, old_x=e->xbutton.x_root, old_y=e->xbutton.y_root, new_x, new_y,
+        x_sign, y_sign, w_sign, h_sign, dw, dh;
+    CLIENT *c=wm->cur_focus_client;
     if(wm->layout==FULL || wm->layout==PREVIEW) return;
     get_rect_sign(wm, old_x, old_y, arg.resize_flag, 
         &x_sign, &y_sign, &w_sign, &h_sign);
 
+    if(!grab_pointer_for_move_resize(wm, arg.resize_flag)) return;
     do
     {
         XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
@@ -811,13 +841,13 @@ void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg)
                 c->x+=x_sign*(new_x-old_x), c->w+=dw;
             if(dh>=0 || (dh<0 && c->h>=-dh+MOVE_RESIZE_INC))
                 c->y+=y_sign*(new_y-old_y), c->h+=dh;
-            XMoveResizeWindow(wm->display, c->win, c->x, c->y, c->w, c->h);
+            do_move_resize_client(wm, c, 0, 0, 0, 0);
             old_x=new_x, old_y=new_y;
         }
         /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
         else if(event_handlers[ev.type])
             event_handlers[ev.type](wm, &ev);
-    }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
+    }while(!(ev.type==ButtonRelease && ev.xbutton.button==e->xbutton.button));
     XUngrabPointer(wm->display, CurrentTime);
 }
 
@@ -911,21 +941,22 @@ void get_rect_sign(WM *wm, int px, int py, bool resize_flag, int *xs, int *ys, i
 void apply_rules(WM *wm, CLIENT *c)
 {
     XClassHint ch={NULL, NULL};
-    WM_RULE *r;
-
     c->place_type=NORMAL;
     if(!XGetClassHint(wm->display, c->win, &ch))
         return ;
-    for(size_t i=0; i<ARRAY_NUM(rules); i++)
+
+    WM_RULE *p=RULES;
+    for(size_t i=0; i<ARRAY_NUM(RULES); i++, p++)
     {
-        r=rules+i;
-        if( (!r->app_class || strstr(ch.res_class, r->app_class))
-            && (!r->app_name || strstr(ch.res_name, r->app_name)))
-            c->place_type=r->place_type;
+        if( (!p->app_class || strstr(ch.res_class, p->app_class))
+            && (!p->app_name || strstr(ch.res_name, p->app_name)))
+            c->place_type=p->place_type;
     }
 
-    if(ch.res_class) XFree(ch.res_class);
-    if(ch.res_name) XFree(ch.res_name);
+    if(ch.res_class)
+        XFree(ch.res_class);
+    if(ch.res_name)
+        XFree(ch.res_name);
 }
 
 void set_default_rect(WM *wm, CLIENT *c)
@@ -981,7 +1012,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg)
     }
 }
 
-void key_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
+void change_area(WM *wm, XEvent *e, FUNC_ARG arg)
 {
     if(wm->cur_focus_client != wm->clients)
     {
@@ -994,7 +1025,8 @@ void key_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
             case FLOATING_AREA: to_floating_area(wm); break;
         }
         CLIENT *c=wm->cur_focus_client;
-        XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
+        if(e->type == KeyPress)
+            XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
     }
 }
 
@@ -1109,23 +1141,12 @@ void set_floating_size(CLIENT *c)
         c->h-=MOVE_RESIZE_INC;
 }
 
-void refresh_wm(WM *wm, XEvent *e, FUNC_ARG unused)
-{
-    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
-        free(c);
-    free(wm->clients);
-    create_clients(wm);
-    update_layout(wm);
-}
-
 void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
 {
-    if(wm->layout==TILE && grab_pointer_for_move_resize(wm, false))
+    if(wm->layout==TILE)
     {
-        CLIENT *from=win_to_client(wm, e->xbutton.window), *to;
-        focus_client(wm, from);
-        from=wm->cur_focus_client;
-        if(from != wm->clients)
+        CLIENT *from=wm->cur_focus_client, *to;
+        if(from!=wm->clients && grab_pointer_for_move_resize(wm, false))
         {
             XEvent ev;
             do
@@ -1136,8 +1157,8 @@ void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg)
             }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
             XUngrabPointer(wm->display, CurrentTime);
 
-            /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在的按下按鈕時
-             * 定位器所有的窗口的外邊。因此，接收事件的是根窗口 */
+            /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
+             * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
             to=win_to_client(wm, ev.xbutton.subwindow);
             if(to && to!=from)
             {
@@ -1178,9 +1199,254 @@ void move_client(WM *wm, CLIENT *from, CLIENT *to, PLACE_TYPE type)
 void raise_client(WM *wm)
 {
     CLIENT *c=wm->cur_focus_client;
-    Window wins[]={wm->status_bar.win, c->win};
+    Window wins[]={wm->taskbar.win, c->frame};
     if(c->place_type == FLOATING)
-        XRaiseWindow(wm->display, c->win);
+        XRaiseWindow(wm->display, c->frame);
     else
         XRestackWindows(wm->display, wins, ARRAY_NUM(wins));
+}
+
+void frame_client(WM *wm, CLIENT *c)
+{
+    RECT fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
+    c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y,
+        fr.w, fr.h, BORDER_WIDTH, CURRENT_BORDER_COLOR, CURRENT_FRAME_COLOR);
+    XSelectInput(wm->display, c->frame,
+        SubstructureRedirectMask|SubstructureNotifyMask|ExposureMask);
+    c->title_area=XCreateSimpleWindow(wm->display, c->frame,
+        tr.x, tr.y, tr.w, tr.h, 0, 0, CURRENT_TITLE_AREA_COLOR);
+    XSelectInput(wm->display, c->title_area, ButtonPressMask|ExposureMask);
+    for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+    {
+        RECT br=get_button_rect(c, i);
+        c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame,
+            br.x, br.y, br.w, br.h, 0, 0, CURRENT_BUTTON_COLOR);
+        XSelectInput(wm->display, c->buttons[i],
+            ButtonPressMask|ExposureMask|EnterWindowMask|LeaveWindowMask);
+    }
+    XAddToSaveSet(wm->display, c->win);
+    XReparentWindow(wm->display, c->win, c->frame, 0, TITLE_BAR_HEIGHT);
+    XMapWindow(wm->display, c->frame);
+    XMapSubwindows(wm->display, c->frame);
+}
+
+RECT get_frame_rect(CLIENT *c)
+{
+    return (RECT){c->x-BORDER_WIDTH, c->y-TITLE_BAR_HEIGHT-BORDER_WIDTH,
+        c->w, c->h+TITLE_BAR_HEIGHT};
+}
+
+RECT get_title_area_rect(WM *wm, CLIENT *c)
+{
+    return (RECT){0, 0,
+        c->w-CLIENT_BUTTON_WIDTH*get_visible_button_count(wm), TITLE_BAR_HEIGHT};
+}
+
+int get_visible_button_count(WM *wm)
+{
+    int n=0;
+    for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+        if(should_button_visible(wm, i))
+            n++;
+    return n;
+}
+
+RECT get_button_rect(CLIENT *c, size_t index)
+{
+    return (RECT){c->w-CLIENT_BUTTON_WIDTH*(CLIENT_BUTTON_N-index),
+    (TITLE_BAR_HEIGHT-CLIENT_BUTTON_HEIGHT)/2, CLIENT_BUTTON_WIDTH, CLIENT_BUTTON_HEIGHT};
+}
+
+bool is_part_of_title_bar(CLIENT *c, Window win)
+{
+    for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+        if(win == c->buttons[i])
+            return true;
+    if(win == c->title_area)
+        return true;
+    return false;
+}
+
+void update_title_bar_text(WM *wm, CLIENT *c, Window win)
+{
+    char *title_str=NULL;
+    for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+    {
+        if(win == c->buttons[i])
+        {
+            draw_string(wm, c->buttons[i], BUTTON_TEXT_COLOR, CENTER, 0, 0,
+                CLIENT_BUTTON_WIDTH, CLIENT_BUTTON_HEIGHT, CLIENT_BUTTON_TEXT[i]);
+            return ;
+        }
+    }
+    if(win==c->title_area && XFetchName(wm->display, c->win, &title_str))
+    {
+        RECT tr=get_title_area_rect(wm, c);
+        draw_string(wm, c->title_area, TITLE_TEXT_COLOR, LEFT,
+            tr.x, tr.y, tr.w, tr.h, title_str);
+        XFree(title_str);
+    }
+}
+
+void do_move_resize_client(WM *wm, CLIENT *c, int dx, int dy, unsigned int dw, unsigned int dh)
+{
+    c->x+=dx, c->y+=dy, c->w+=dw, c->h+=dh;
+    RECT fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
+    XMoveResizeWindow(wm->display, c->frame, fr.x, fr.y, fr.w, fr.h);
+    XMoveResizeWindow(wm->display, c->win, 0, TITLE_BAR_HEIGHT, c->w, c->h);
+    XMoveResizeWindow(wm->display, c->title_area, tr.x, tr.y, tr.w, tr.h);
+    for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+    {
+        RECT br=get_button_rect(c, i);
+        XMoveResizeWindow(wm->display, c->buttons[i], br.x, br.y, br.w, br.h);
+    }
+}
+
+void fix_win_rect(CLIENT *c)
+{
+    c->x+=BORDER_WIDTH;
+    c->y+=BORDER_WIDTH+TITLE_BAR_HEIGHT;
+    if(c->w > 2*BORDER_WIDTH+WINS_SPACE)
+        c->w-=2*BORDER_WIDTH+WINS_SPACE;
+    if(c->h > 2*BORDER_WIDTH+WINS_SPACE+TITLE_BAR_HEIGHT)
+        c->h-=2*BORDER_WIDTH+WINS_SPACE+TITLE_BAR_HEIGHT;
+}
+
+void update_frame(WM *wm, CLIENT *c)
+{
+    if(c == wm->cur_focus_client)
+    {
+        XSetWindowBorder(wm->display, c->frame, CURRENT_BORDER_COLOR);
+        update_win_background(wm, c->frame, CURRENT_FRAME_COLOR);
+        update_win_background(wm, c->title_area, CURRENT_TITLE_AREA_COLOR);
+        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+            update_win_background(wm, c->buttons[i], CURRENT_BUTTON_COLOR);
+    }
+    else
+    {
+        XSetWindowBorder(wm->display, c->frame, NORMAL_BORDER_COLOR);
+        update_win_background(wm, c->frame, NORMAL_FRAME_COLOR);
+        update_win_background(wm, c->title_area, NORMAL_TITLE_AREA_COLOR);
+        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+            update_win_background(wm, c->buttons[i], NORMAL_BUTTON_COLOR);
+    }
+}
+
+/* 在調用XSetWindowBackground之後，在收到下一個顯露事件或調用XClearWindow
+ * 之前，背景不變。此處用發送顯露事件的方式使背景設置立即生效。*/
+void update_win_background(WM *wm, Window win, unsigned long color)
+{
+    XEvent event={.xexpose={.type=Expose, .window=win}};
+    XSetWindowBackground(wm->display, win, color);
+    XSendEvent(wm->display, win, False, NoEventMask, &event);
+}
+
+CLICK_TYPE get_click_type(WM *wm, Window win)
+{
+    CLICK_TYPE i;
+    CLIENT *c;
+    for(i=CLICK_TASKBAR_BUTTON_BEGIN; i<=CLICK_TASKBAR_BUTTON_END; i++)
+        if(win == wm->taskbar.buttons[i-CLICK_TASKBAR_BUTTON_BEGIN])
+            return i;
+    if((c=win_to_client(wm, win)))
+    {
+        if(win == c->win)
+            return CLICK_WIN;
+        else if(win == c->title_area)
+            return CLICK_TITLE;
+        else
+        {
+            for(i=CLICK_CLIENT_BUTTON_BEGIN; i<=CLICK_CLIENT_BUTTON_END; i++)
+                if(win == c->buttons[i-CLICK_CLIENT_BUTTON_BEGIN])
+                    return i;
+        }
+    }
+    return UNDEFINED;
+}
+
+void handle_enter_notify(WM *wm, XEvent *e)
+{
+    for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
+    {
+        if(e->xcrossing.window == wm->taskbar.buttons[i])
+        {
+            update_win_background(wm, e->xcrossing.window, ENTERED_TASKBAR_BUTTON_COLOR);
+            break;
+        }
+    }
+
+    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+        {
+            if(e->xcrossing.window == c->buttons[i])
+            {
+                update_win_background(wm, e->xcrossing.window,
+                    i==CLOSE_WIN-CLICK_CLIENT_BUTTON_BEGIN ?
+                    ENTERED_CLOSE_BUTTON_COLOR : ENTERED_NORMAL_BUTTON_COLOR);
+                break;
+            }
+        }
+    }
+}
+
+void handle_leave_notify(WM *wm, XEvent *e)
+{
+    for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
+    {
+        if(e->xcrossing.window == wm->taskbar.buttons[i])
+        {
+            update_win_background(wm, e->xcrossing.window, TASKBAR_BUTTON_COLOR);
+            break;
+        }
+    }
+    for(CLIENT *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+        {
+            if(e->xcrossing.window == c->buttons[i])
+            {
+                update_win_background(wm, e->xcrossing.window,
+                    c==wm->cur_focus_client ?
+                    CURRENT_BUTTON_COLOR : NORMAL_BUTTON_COLOR);
+                break;
+            }
+        }
+    }
+}
+
+void maximize_client(WM *wm, XEvent *e, FUNC_ARG unused)
+{
+    wm->prev_focus_client=wm->cur_focus_client;
+    CLIENT *c=wm->cur_focus_client;
+    if(c != wm->clients)
+    {
+        c->x=BORDER_WIDTH;
+        c->y=BORDER_WIDTH+TITLE_BAR_HEIGHT;
+        c->w=wm->screen_width-2*BORDER_WIDTH;
+        c->h=wm->screen_height-2*BORDER_WIDTH-TITLE_BAR_HEIGHT;
+        prepare_for_move_resize(wm);
+        do_move_resize_client(wm, c, 0, 0, 0, 0);
+    }
+}
+
+void minimize_client(WM *wm, XEvent *e, FUNC_ARG unused)
+{
+    wm->prev_focus_client=wm->cur_focus_client;
+    CLIENT *c=wm->cur_focus_client;
+    if(c != wm->clients)
+    {
+        c->x=BORDER_WIDTH;
+        c->y=wm->taskbar.y+TITLE_BAR_HEIGHT+BORDER_WIDTH;
+        c->w=wm->screen_width/4-2*BORDER_WIDTH;
+        c->h=MOVE_RESIZE_INC;
+        prepare_for_move_resize(wm);
+        do_move_resize_client(wm, c, 0, 0, 0, 0);
+    }
+}
+
+bool should_button_visible(WM *wm, size_t index)
+{
+    return (wm->layout==TILE || (wm->layout==STACK && index>=MIN_WIN-CLICK_CLIENT_BUTTON_BEGIN)
+        || (wm->layout==PREVIEW && index==CLOSE_WIN-CLICK_CLIENT_BUTTON_BEGIN));
 }
