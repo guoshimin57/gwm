@@ -237,7 +237,7 @@ void update_layout(WM *wm)
 void set_full_layout(WM *wm)
 {
     CLIENT *c=wm->cur_focus_client;
-    c->x=c->y=-BORDER_WIDTH, c->w=wm->screen_width+2*BORDER_WIDTH, c->h=wm->screen_height;
+    c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 }
 
 void set_preview_layout(WM *wm)
@@ -793,8 +793,30 @@ void change_layout(WM *wm, XEvent *e, FUNC_ARG arg)
     if(wm->layout != arg.layout)
     {
         wm->layout=arg.layout;
+        update_taskbar_layout(wm);
         update_layout(wm);
         update_title_bar_layout(wm);
+    }
+}
+
+void update_taskbar_layout(WM *wm)
+{
+    if(wm->layout == FULL)
+        XUnmapWindow(wm->display, wm->taskbar.win);
+    else
+    {
+        int n=0;
+        Window *b=wm->taskbar.buttons;
+        XMapWindow(wm->display, wm->taskbar.win);
+        if(wm->layout == TILE)
+            for(size_t i=ADJUST_MAIN; i<=ADJUST_N_MAIN; i++)
+                XMapWindow(wm->display, b[i-CLICK_TASKBAR_BUTTON_BEGIN]), n++;
+        else
+            for(size_t i=ADJUST_MAIN; i<=ADJUST_N_MAIN; i++)
+                XUnmapWindow(wm->display, b[i-CLICK_TASKBAR_BUTTON_BEGIN]), n--;
+        STATUS_BAR *s=&wm->taskbar.status_bar;
+        s->w+=n*TASKBAR_BUTTON_WIDTH;
+        XResizeWindow(wm->display, s->win, s->w, s->h);
     }
 }
 
@@ -1212,7 +1234,7 @@ void frame_client(WM *wm, CLIENT *c)
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y,
         fr.w, fr.h, BORDER_WIDTH, CURRENT_BORDER_COLOR, CURRENT_FRAME_COLOR);
     XSelectInput(wm->display, c->frame,
-        SubstructureRedirectMask|SubstructureNotifyMask|ExposureMask);
+        SubstructureRedirectMask|SubstructureNotifyMask|ExposureMask|ButtonPressMask);
     c->title_area=XCreateSimpleWindow(wm->display, c->frame,
         tr.x, tr.y, tr.w, tr.h, 0, 0, CURRENT_TITLE_AREA_COLOR);
     XSelectInput(wm->display, c->title_area, ButtonPressMask|ExposureMask);
@@ -1352,6 +1374,8 @@ CLICK_TYPE get_click_type(WM *wm, Window win)
     {
         if(win == c->win)
             return CLICK_WIN;
+        else if(win == c->frame)
+            return CLICK_FRAME;
         else if(win == c->title_area)
             return CLICK_TITLE;
         else
