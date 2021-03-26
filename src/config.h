@@ -63,7 +63,7 @@
 #define CLIENT_BUTTON_TEXT (const char *[])  /* 客戶窗口的按鈕標籤 */ \
 {"主", "次", "固", "浮", "-", "□", "×"}
 #define TASKBAR_BUTTON_TEXT (const char *[]) /* 任務欄按鈕標籤 */ \
-{"全", "概", "堆", "平", "量", "主", "固", "易"}
+{"主", "固", "量", "易", "全", "概", "堆", "平"}
 
 #define KEYBINDS (KEYBIND []) /* 按鍵功能綁定 */                                      \
 {/* 功能轉換鍵   鍵符號          要綁定的函數             函數的參數 */               \
@@ -132,6 +132,7 @@
     {CLICK_WIN,     WM_KEY,  Button1, pointer_move_resize_client, {.resize_flag=false}},       \
     {CLICK_WIN,     WM_KEY,  Button3, pointer_move_resize_client, {.resize_flag=true}},        \
     {CLICK_WIN,     WM_SKEY, Button1, pointer_change_area,        {0}},                        \
+    {CLICK_FRAME,   0,       Button1, pointer_move_resize_client, {.resize_flag=true}},        \
 }
 
 #define RULES (WM_RULE []) /* 窗口管理器對窗口的管理規則 */     \
