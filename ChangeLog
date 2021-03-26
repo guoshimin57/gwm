@@ -9,6 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 03月 26日 星期五 12:58:45 CST	gsm <406643764@qq.com>
+	* 發布第0.9.1版，主要修復了全屏窗口尺寸不正確、全屏窗口被任務欄遮擋以及任務欄按鈕沒根據布局模式更新的缺陷，增加通過拖動邊框調整窗口尺寸的功能。
+	* src/gwm.c：爲了修復全屏窗口尺寸不正確的缺陷，修改了set_full_layout函數；爲了修復全屏窗口被任務欄遮擋以及任務欄按鈕沒根據布局模式更新的缺陷，修改了change_layout函數，創建了update_taskbar_layout函數；爲了增加通過拖動邊框調整窗口尺寸的功能，修改了frame_client、get_click_type函數。
+	* src/gwm.h：爲了修復任務欄按鈕沒根據布局模式更新的缺陷，修改了click_type_tag聯合，創建了update_taskbar_layout函數聲明。
+	* src/config.h：爲了修復任務欄按鈕沒根據布局模式更新的缺陷，修改了KEYBINDS宏；爲了增加通過拖動邊框調整窗口尺寸的功能，修改了BUTTONBINDS宏。
+	* man/zh_HK/man1/gwm.1：描述章節增加任務欄相關幫助信息；定位器按鈕1章節增加窗口邊框相關幫助信息。
+
 2021年 03月 24日 星期三 20:20:28 CST	gsm <406643764@qq.com>
 	* 發布第0.9版，主要實現了窗口標題欄和邊框、任務欄功能，以及使配置更方便。
 	* src/gwm.c：爲了實現標題欄和窗口邊框功能，event_handlers數組增加handle_leave_notify元素，修改了add_client、update_layout、set_full_layout、set_preview_layout、set_tile_layout、handle_button_press、win_to_client、handle_expose、handle_unmap_notify、draw_string、close_win、focus_client、change_layout、pointer_move_resize_client、raise_client函數，刪除了to_stack_layout、handle_destroy_notify函數，用fix_win_rect函數代替fix_rect_for_border函數，創建update_title_bar_layout、frame_client、get_frame_rect、get_title_area_rect、get_visible_button_count、get_button_rect、is_part_of_title_bar、update_title_bar_text、do_move_resize_client、fix_win_rect、update_frame、update_win_background、get_click_type、handle_enter_notify、handle_leave_notify、maximize_client、minimize_client、should_button_visible函數；改爲使用RGB顏色，因此刪除了與WM的black和white的相關代碼；創建任務欄，原狀態欄作爲任務欄的一部分，爲此把create_status_bar函數替換爲create_taskbar函數，並修改了is_wm_win、set_preview_layout、set_tile_layout、handle_button_press、handle_expose、handle_property_notify、raise_client函數，創建update_win_background、get_click_type、handle_enter_notify、handle_leave_notify函數；打開自啓腳本之前先測試腳本是否存在，爲此修改了set_wm函數；爲了方便配置，把keybinds_list數組改爲KEYBINDS宏，把buttonbinds_list數組改爲BUTTONBINDS宏，把rules數組改爲RULES宏，並修改了grab_keys、grab_buttons、handle_button_press、handle_key_press、apply_rules函數；XWarpPointer調用時機更改爲僅在鍵盤操作時產生，爲此修改了next_client、prev_client、key_change_area函數；把定位器按鈕點擊窗口時聚焦窗口的代碼移到handle_button_press函數，並修改了pointer_move_resize_client、pointer_change_area函數；考慮到key_change_area函數實際上同樣適合於定位器實現相應功能，將其重命名爲change_area；目前刷新功能不太實用，因此把refresh_wm函數刪除。
