@@ -47,13 +47,13 @@ typedef enum area_type_tag AREA_TYPE;
 
 enum click_type_tag
 {
-    UNDEFINED, CLICK_WIN, CLICK_TITLE,
+    UNDEFINED, CLICK_WIN, CLICK_FRAME, CLICK_TITLE,
     TO_MAIN, TO_SECOND, TO_FIX, TO_FLOAT, MIN_WIN, MAX_WIN, CLOSE_WIN,
-    TO_FULL, TO_PREVIEW, TO_STACK, TO_TILE, ADJUST_N_MAIN, ADJUST_MAIN, ADJUST_FIX, SWITCH_WIN,
+    ADJUST_MAIN, ADJUST_FIX, ADJUST_N_MAIN, SWITCH_WIN, TO_FULL, TO_PREVIEW, TO_STACK, TO_TILE,
     CLICK_CLIENT_BUTTON_BEGIN=TO_MAIN,
     CLICK_CLIENT_BUTTON_END=CLOSE_WIN,
-    CLICK_TASKBAR_BUTTON_BEGIN=TO_FULL,
-    CLICK_TASKBAR_BUTTON_END=SWITCH_WIN,
+    CLICK_TASKBAR_BUTTON_BEGIN=ADJUST_MAIN,
+    CLICK_TASKBAR_BUTTON_END=TO_TILE,
 };
 typedef enum click_type_tag CLICK_TYPE;
 
@@ -225,6 +225,7 @@ CLIENT *get_next_client(WM *wm, CLIENT *c);
 CLIENT *get_prev_client(WM *wm, CLIENT *c);
 bool is_client(WM *wm, CLIENT *c);
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg);
+void update_taskbar_layout(WM *wm);
 void update_title_bar_layout(WM *wm);
 void pointer_focus_client(WM *wm, XEvent *e, FUNC_ARG arg);
 void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg);
