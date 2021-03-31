@@ -523,7 +523,7 @@ void handle_map_request(WM *wm, XEvent *e)
 {
     Window win=e->xmaprequest.window;
     XMapWindow(wm->display, win);
-    if(is_wm_win(wm, win))
+    if(is_wm_win(wm, win) && !win_to_client(wm, win))
     {
         add_client(wm, win);
         update_layout(wm);
@@ -545,7 +545,7 @@ void handle_unmap_notify(WM *wm, XEvent *e)
     CLIENT *c=win_to_client(wm, e->xunmap.window);
     if(c && e->xunmap.event==c->frame && e->xunmap.window==c->win)
     {
-        XDestroyWindow(wm->display, c->frame);
+        XUnmapWindow(wm->display, c->frame);
         del_client(wm, c);
         update_layout(wm);
     }
@@ -739,6 +739,7 @@ void focus_client(WM *wm, CLIENT *c)
         raise_client(wm);
         update_frame(wm, wm->cur_focus_client);
     }
+    XSetInputFocus(wm->display, wm->cur_focus_client->win, RevertToNone, CurrentTime);
 }
 
 void fix_focus_client(WM *wm)
