@@ -35,20 +35,20 @@
 
 enum place_type_tag
 {
-     NORMAL, FIXED, FLOATING,
+     NORMAL, FIXED, FLOATING, ICONIFY,
 };
 typedef enum place_type_tag PLACE_TYPE;
 
 enum area_type_tag
 {
-     MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA,
+     MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA, ICONIFY_AREA,
 };
 typedef enum area_type_tag AREA_TYPE;
 
 enum click_type_tag
 {
-    UNDEFINED, CLICK_WIN, CLICK_FRAME, CLICK_TITLE,
-    TO_MAIN, TO_SECOND, TO_FIX, TO_FLOAT, MIN_WIN, MAX_WIN, CLOSE_WIN,
+    UNDEFINED, CLICK_WIN, CLICK_ICON, CLICK_FRAME, CLICK_TITLE,
+    TO_MAIN, TO_SECOND, TO_FIX, TO_FLOAT, ICON_WIN, MAX_WIN, CLOSE_WIN,
     ADJUST_MAIN, ADJUST_FIX, ADJUST_N_MAIN, SWITCH_WIN, TO_FULL, TO_PREVIEW, TO_STACK, TO_TILE,
     CLICK_CLIENT_BUTTON_BEGIN=TO_MAIN,
     CLICK_CLIENT_BUTTON_END=CLOSE_WIN,
@@ -64,12 +64,22 @@ struct rectangle_tag
 };
 typedef struct rectangle_tag RECT;
 
+struct icon_tag
+{
+    Window win;
+    int x, y;
+    unsigned int w, h;
+    PLACE_TYPE place_type;
+};
+typedef struct icon_tag ICON;
+
 struct client_tag
 {
     Window win, frame, title_area, buttons[CLIENT_BUTTON_N];
     int x, y;
     unsigned int w, h;
     PLACE_TYPE place_type;
+    ICON icon;
     struct client_tag *prev, *next;
 };
 typedef struct client_tag CLIENT;
@@ -114,6 +124,7 @@ struct wm_tag
     GC gc, wm_gc;
     CLIENT *clients, *cur_focus_client, *prev_focus_client;
     unsigned int n, /* 除頭結點以外的clients總數 */
+        n_icon,     /* 縮微的clients數量 */
         n_float,    /* 懸浮的clients數量 */
         n_fixed,    /* 固定區域的clients數量 */
         n_normal,   /* 除頭結點和以上兩種結點的clients數量 */
@@ -209,6 +220,7 @@ unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
 void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
 void handle_property_notify(WM *wm, XEvent *e);
+char *get_text_prop(WM *wm, Window win, Atom atom);
 void draw_string(WM *wm, Drawable drawable, unsigned long color, DIRECTION d, int x, int y, unsigned int w, unsigned h, const char *str);
 void exec(WM *wm, XEvent *e, FUNC_ARG arg);
 void key_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg);
@@ -221,11 +233,10 @@ void next_client(WM *wm, XEvent *e, FUNC_ARG unused);
 void prev_client(WM *wm, XEvent *e, FUNC_ARG unused);
 void focus_client(WM *wm, CLIENT *c);
 void fix_focus_client(WM *wm);
-CLIENT *get_next_client(WM *wm, CLIENT *c);
-CLIENT *get_prev_client(WM *wm, CLIENT *c);
 bool is_client(WM *wm, CLIENT *c);
 void change_layout(WM *wm, XEvent *e, FUNC_ARG arg);
 void update_taskbar_layout(WM *wm);
+bool should_taskbar_button_visible(WM *wm, size_t index);
 void update_title_bar_layout(WM *wm);
 void pointer_focus_client(WM *wm, XEvent *e, FUNC_ARG arg);
 void pointer_move_resize_client(WM *wm, XEvent *e, FUNC_ARG arg);
@@ -238,16 +249,16 @@ void adjust_n_main_max(WM *wm, XEvent *e, FUNC_ARG arg);
 void adjust_main_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg);
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, FUNC_ARG arg);
 void change_area(WM *wm, XEvent *e, FUNC_ARG arg);
-void to_main_area(WM *wm);
+void to_main_area(WM *wm, CLIENT *c);
 bool is_in_main_area(WM *wm, CLIENT *c);
 void del_client_node(CLIENT *c);
 void update_n_for_del(WM *wm, CLIENT *c);
 void add_client_node(CLIENT *head, CLIENT *c);
 void update_n_for_add(WM *wm, CLIENT *c);
-void to_second_area(WM *wm);
+void to_second_area(WM *wm, CLIENT *c);
 CLIENT *get_second_area_head(WM *wm);
-void to_fixed_area(WM *wm);
-void to_floating_area(WM *wm);
+void to_fixed_area(WM *wm, CLIENT *c);
+void to_floating_area(WM *wm, CLIENT *c);
 void set_floating_size(CLIENT *c);
 void pointer_change_area(WM *wm, XEvent *e, FUNC_ARG arg);
 int compare_client_order(WM *wm, CLIENT *c1, CLIENT *c2);
@@ -260,6 +271,7 @@ int get_visible_button_count(WM *wm);
 RECT get_button_rect(CLIENT *c, size_t index);
 bool is_part_of_title_bar(CLIENT *c, Window win);
 void update_title_bar_text(WM *wm, CLIENT *c, Window win);
+void update_title_text(WM *wm, CLIENT *c);
 void do_move_resize_client(WM *wm, CLIENT *c, int dx, int dy, unsigned int dw, unsigned int dh);
 void fix_win_rect(CLIENT *c);
 void update_frame(WM *wm, CLIENT *c);
@@ -268,7 +280,11 @@ CLICK_TYPE get_click_type(WM *wm, Window win);
 void handle_enter_notify(WM *wm, XEvent *e);
 void handle_leave_notify(WM *wm, XEvent *e);
 void maximize_client(WM *wm, XEvent *e, FUNC_ARG unused);
-void minimize_client(WM *wm, XEvent *e, FUNC_ARG unused);
 bool should_button_visible(WM *wm, size_t index);
+void iconify(WM *wm, CLIENT *c);
+void create_icon(WM *wm, CLIENT *c);
+void set_drawable_size(WM *wm, Drawable d, unsigned int *w, unsigned int *h);
+void set_icon_position(WM *wm, CLIENT *c);
+void deiconify(WM *wm, XEvent *e, FUNC_ARG unused);
 
 #endif
