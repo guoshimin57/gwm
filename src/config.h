@@ -103,6 +103,8 @@
     {WM_KEY,  XK_F2,           change_area,             {.area_type=SECOND_AREA}},    \
     {WM_KEY,  XK_F3,           change_area,             {.area_type=FIXED_AREA}},     \
     {WM_KEY,  XK_F4,           change_area,             {.area_type=FLOATING_AREA}},  \
+    {WM_KEY,  XK_F5,           change_area,             {.area_type=ICONIFY_AREA}},   \
+    {WM_KEY,  XK_Return,       deiconify,               {0}},                         \
 }
 
 #define BUTTONBINDS (BUTTONBIND []) /* 按鈕功能綁定 */                                         \
@@ -124,8 +126,8 @@
     {TO_SECOND,     0,       Button1, change_area,                {.area_type=SECOND_AREA}},   \
     {TO_FIX,        0,       Button1, change_area,                {.area_type=FIXED_AREA}},    \
     {TO_FLOAT,      0,       Button1, change_area,                {.area_type=FLOATING_AREA}}, \
+    {ICON_WIN,      0,       Button1, change_area,                {.area_type=ICONIFY_AREA}},  \
     {MAX_WIN,       0,       Button1, maximize_client,            {0}},                        \
-    {MIN_WIN,       0,       Button1, minimize_client,            {0}},                        \
     {CLOSE_WIN,     0,       Button1, close_win,                  {0}},                        \
     {CLICK_WIN,     0,       Button1, pointer_focus_client,       {0}},                        \
     {CLICK_WIN,     0,       Button3, pointer_focus_client,       {0}},                        \
@@ -133,6 +135,7 @@
     {CLICK_WIN,     WM_KEY,  Button3, pointer_move_resize_client, {.resize_flag=true}},        \
     {CLICK_WIN,     WM_SKEY, Button1, pointer_change_area,        {0}},                        \
     {CLICK_FRAME,   0,       Button1, pointer_move_resize_client, {.resize_flag=true}},        \
+    {CLICK_ICON,    0,       Button1, deiconify,                  {0}},                        \
 }
 
 #define RULES (WM_RULE []) /* 窗口管理器對窗口的管理規則 */     \
