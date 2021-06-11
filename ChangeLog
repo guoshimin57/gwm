@@ -9,6 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 06月 08日 星期二 00:31:24 CST	gsm <406643764@qq.com>
+	* 發布第0.9.3版，實現了縮微功能，修復了標題欄文字沒有及時更新的缺陷，簡化聚焦功能，修復了狀態欄文字不居中的缺陷，刪除不實用的最小化功能。
+	* src/gwm.c：爲了實現縮微功能，修改了create_clients、add_client、get_area_head、set_tile_layout、handle_button_press、handle_unmap_notify、focus_client、change_area、to_main_area、update_n_for_del、update_n_for_add、to_second_area、to_fixed_area、to_floating_area、get_click_type、should_button_visible函數，創建了iconify、create_icon、set_drawable_size、set_icon_position、deiconify函數；爲修復標題欄文字沒有及時更新的缺陷，修改了handle_property_notify、update_title_bar_text函數，創建了get_text_prop、update_title_text函數；爲簡化聚焦功能，修改了focus_client、fix_focus_client函數，刪除了get_next_client、get_prev_client函數；爲了修復狀態欄狀態欄文字不居中的缺陷，修改了update_taskbar_layout函數；簡化了update_taskbar_layout函數的邏輯，創建了should_taskbar_button_visible函數；簡化is_part_of_title_bar函數的邏輯；刪除不實用的最小化功能，故而刪除了minimize_client函數。
+	* src/gwm.h：爲了實現縮微功能，修改了PLACE_TYPE、CLICK_TYPE聯合體，創建了ICON結構體，修改了CLIENT、WM結構體，修改了to_main_area、to_second_area、to_fixed_area、to_floating_area函數聲明，創建了iconify、create_icon、set_drawable_size、set_icon_position、deiconify函數聲明；爲了修復標題欄文字沒有及時更新的缺陷，創建了get_text_prop、update_title_text函數聲明；爲了簡化聚焦功能，刪除了get_next_client、get_prev_client函數聲明；爲了簡化update_taskbar_layout函數的邏輯，創建了should_taskbar_button_visible函數聲明；刪除不實用的最小化功能，故而刪除了minimize_client函數聲明。
+	* src/config.h：爲了實現縮微功能，修改了KEYBINDS、BUTTONBINDS宏；刪除不實用的最小化功能，故而修改了BUTTONBINDS宏。
+	* man/zh_HK/man1/gwm.1：修正關於任務欄與狀態欄的說明；用法章節增加縮微和還原窗口的幫助信息。
+
 2021年 03月 31日 星期三 22:27:50 CST	gsm <406643764@qq.com>
 	* 發布第0.9.2版，修復了某些程序窗口不能正常關閉、偶爾不能正常聚焦窗口的缺陷。
 	* src/gwm.c：爲了解決某些程序窗口不能正常關閉的缺陷，修改了handle_map_request、handle_unmap_notify函數；爲了解決偶爾不能正常聚焦窗口的缺陷，修改了focus_client函數。
