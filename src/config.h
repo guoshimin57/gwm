@@ -44,26 +44,27 @@
 #define BUTTON_TEXT_COLOR WHITE /* 窗口按鈕文字的顏色 */
 
 #define TASKBAR_COLOR GREY21 /* 任務欄的顏色 */
-#define STATUS_BAR_COLOR GREY21 /*狀態欄背景色 */
-#define STATUS_BAR_TEXT_COLOR WHITE /*狀態欄前景色 */
+#define STATUS_AREA_COLOR GREY21 /*狀態區域背景色 */
+#define STATUS_AREA_TEXT_COLOR WHITE /*狀態區域前景色 */
 #define TASKBAR_BUTTON_COLOR GREY11 /* 任務欄按鈕的顏色 */
 #define ENTERED_TASKBAR_BUTTON_COLOR (~DODGERBLUE) /* 定位器進入任務欄按鈕時按鈕的顏色 */
 #define TASKBAR_BUTTON_TEXT_COLOR WHITE  /* 任務欄按鈕文字的顏色 */
 
+#define FONT_SET "*-24-*"
 #define MOVE_RESIZE_INC 32 /* 調整窗口的步進值，單位爲像素 */
 #define TITLE_BAR_HEIGHT 32 /* 窗口標題欄高度，單位爲像素 */
-#define BORDER_WIDTH 2 /* 窗口边框宽度，单位为像素 */
+#define BORDER_WIDTH 4 /* 窗口边框宽度，单位为像素 */
 #define TASKBAR_HEIGHT 32 /* 狀態欄高度，單位爲像素 */
 #define TASKBAR_BUTTON_WIDTH 32 /* 任務欄按鈕的寬度，單位爲像素 */
 #define TASKBAR_BUTTON_HEIGHT 32 /* 任務欄按鈕的高度，單位爲像素 */
 #define CLIENT_BUTTON_WIDTH 28 /* 窗口按鈕的寬度，單位爲像素 */
 #define CLIENT_BUTTON_HEIGHT 28 /* 窗口按鈕的高度，單位爲像素 */
-#define WINS_SPACE 2 /* 窗口間隔，單位爲像素 */
+#define WINS_SPACE 4 /* 窗口間隔，單位爲像素 */
 
 #define CLIENT_BUTTON_TEXT (const char *[])  /* 客戶窗口的按鈕標籤 */ \
 {"主", "次", "固", "浮", "-", "□", "×"}
 #define TASKBAR_BUTTON_TEXT (const char *[]) /* 任務欄按鈕標籤 */ \
-{"主", "固", "量", "易", "全", "概", "堆", "平"}
+{"全", "概", "堆", "平", "主"}
 
 #define KEYBINDS (KEYBIND []) /* 按鍵功能綁定 */                                      \
 {/* 功能轉換鍵   鍵符號          要綁定的函數             函數的參數 */               \
@@ -115,13 +116,8 @@
     {TO_TILE,       0,       Button1, change_layout,              {.layout=TILE}},             \
     {ADJUST_N_MAIN, 0,       Button1, adjust_n_main_max,          {.n=1}},                     \
     {ADJUST_N_MAIN, 0,       Button3, adjust_n_main_max,          {.n=-1}},                    \
-    {ADJUST_MAIN,   0,       Button1, adjust_main_area_ratio,     {.change_ratio=0.01}},       \
-    {ADJUST_MAIN,   0,       Button3, adjust_main_area_ratio,     {.change_ratio=-0.01}},      \
-    {ADJUST_FIX,    0,       Button1, adjust_fixed_area_ratio,    {.change_ratio=0.01}},       \
-    {ADJUST_FIX,    0,       Button3, adjust_fixed_area_ratio,    {.change_ratio=-0.01}},      \
-    {SWITCH_WIN,    0,       Button1, next_client,                {0}},                        \
-    {SWITCH_WIN,    0,       Button3, prev_client,                {0}},                        \
-    {CLICK_TITLE,   0,       Button1, pointer_move_resize_client, {.resize_flag=false}},       \
+    {CLICK_TITLE,   0,       Button1, pointer_move_client,        {0}},                        \
+    {CLICK_TITLE,   0,       Button3, pointer_change_area,        {0}},                        \
     {TO_MAIN,       0,       Button1, change_area,                {.area_type=MAIN_AREA}},     \
     {TO_SECOND,     0,       Button1, change_area,                {.area_type=SECOND_AREA}},   \
     {TO_FIX,        0,       Button1, change_area,                {.area_type=FIXED_AREA}},    \
@@ -131,11 +127,9 @@
     {CLOSE_WIN,     0,       Button1, close_win,                  {0}},                        \
     {CLICK_WIN,     0,       Button1, pointer_focus_client,       {0}},                        \
     {CLICK_WIN,     0,       Button3, pointer_focus_client,       {0}},                        \
-    {CLICK_WIN,     WM_KEY,  Button1, pointer_move_resize_client, {.resize_flag=false}},       \
-    {CLICK_WIN,     WM_KEY,  Button3, pointer_move_resize_client, {.resize_flag=true}},        \
-    {CLICK_WIN,     WM_SKEY, Button1, pointer_change_area,        {0}},                        \
-    {CLICK_FRAME,   0,       Button1, pointer_move_resize_client, {.resize_flag=true}},        \
+    {CLICK_FRAME,   0,       Button1, pointer_resize_client,      {0}},                        \
     {CLICK_ICON,    0,       Button1, deiconify,                  {0}},                        \
+    {CLICK_ROOT,    0,       Button1, adjust_layout_ratio,        {0}},                        \
 }
 
 #define RULES (WM_RULE []) /* 窗口管理器對窗口的管理規則 */     \
