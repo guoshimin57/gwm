@@ -57,8 +57,8 @@
 #define TASKBAR_HEIGHT 32 /* 狀態欄高度，單位爲像素 */
 #define TASKBAR_BUTTON_WIDTH 32 /* 任務欄按鈕的寬度，單位爲像素 */
 #define TASKBAR_BUTTON_HEIGHT 32 /* 任務欄按鈕的高度，單位爲像素 */
-#define CLIENT_BUTTON_WIDTH 28 /* 窗口按鈕的寬度，單位爲像素 */
-#define CLIENT_BUTTON_HEIGHT 28 /* 窗口按鈕的高度，單位爲像素 */
+#define CLIENT_BUTTON_WIDTH TITLE_BAR_HEIGHT /* 窗口按鈕的寬度，單位爲像素 */
+#define CLIENT_BUTTON_HEIGHT TITLE_BAR_HEIGHT /* 窗口按鈕的高度，單位爲像素 */
 #define WINS_SPACE 4 /* 窗口間隔，單位爲像素 */
 
 #define CLIENT_BUTTON_TEXT (const char *[])  /* 客戶窗口的按鈕標籤 */ \
@@ -66,7 +66,7 @@
 #define TASKBAR_BUTTON_TEXT (const char *[]) /* 任務欄按鈕標籤 */ \
 {"全", "概", "堆", "平", "主"}
 
-#define KEYBINDS (KEYBIND []) /* 按鍵功能綁定 */                                      \
+#define KEYBINDS (Keybind []) /* 按鍵功能綁定 */                                      \
 {/* 功能轉換鍵   鍵符號          要綁定的函數             函數的參數 */               \
     {CMD_KEY, XK_t,            exec,                    SH_CMD("lxterminal")},        \
     {CMD_KEY, XK_f,            exec,                    SH_CMD("xdg-open ~")},        \
@@ -108,7 +108,7 @@
     {WM_KEY,  XK_Return,       deiconify,               {0}},                         \
 }
 
-#define BUTTONBINDS (BUTTONBIND []) /* 按鈕功能綁定 */                                         \
+#define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                         \
 { /* 點擊類型   功能轉換鍵  定位器按鈕  要綁定的函數                函數的參數 */              \
     {TO_FULL,       0,       Button1, change_layout,              {.layout=FULL}},             \
     {TO_PREVIEW,    0,       Button1, change_layout,              {.layout=PREVIEW}},          \
@@ -132,7 +132,7 @@
     {CLICK_ROOT,    0,       Button1, adjust_layout_ratio,        {0}},                        \
 }
 
-#define RULES (WM_RULE []) /* 窗口管理器對窗口的管理規則 */     \
+#define RULES (WM_rule []) /* 窗口管理器對窗口的管理規則 */     \
 { /* 可通過xprop命令查看客戶程序名稱和客戶程序實例名稱。        \
      其結果表示爲：                                             \
         WM_CLASS(STRING) = "客戶程序實例名稱", "客戶程序名稱"   \
