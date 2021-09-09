@@ -105,31 +105,31 @@
     {WM_KEY,  XK_F3,           change_area,             {.area_type=FIXED_AREA}},     \
     {WM_KEY,  XK_F4,           change_area,             {.area_type=FLOATING_AREA}},  \
     {WM_KEY,  XK_F5,           change_area,             {.area_type=ICONIFY_AREA}},   \
-    {WM_KEY,  XK_Return,       deiconify,               {0}},                         \
+    {0,       XK_Return,       key_choose_client,       {0}},                         \
 }
 
-#define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                         \
-{ /* 點擊類型   功能轉換鍵  定位器按鈕  要綁定的函數                函數的參數 */              \
-    {TO_FULL,       0,       Button1, change_layout,              {.layout=FULL}},             \
-    {TO_PREVIEW,    0,       Button1, change_layout,              {.layout=PREVIEW}},          \
-    {TO_STACK,      0,       Button1, change_layout,              {.layout=STACK}},            \
-    {TO_TILE,       0,       Button1, change_layout,              {.layout=TILE}},             \
-    {ADJUST_N_MAIN, 0,       Button1, adjust_n_main_max,          {.n=1}},                     \
-    {ADJUST_N_MAIN, 0,       Button3, adjust_n_main_max,          {.n=-1}},                    \
-    {CLICK_TITLE,   0,       Button1, pointer_move_client,        {0}},                        \
-    {CLICK_TITLE,   0,       Button3, pointer_change_area,        {0}},                        \
-    {TO_MAIN,       0,       Button1, change_area,                {.area_type=MAIN_AREA}},     \
-    {TO_SECOND,     0,       Button1, change_area,                {.area_type=SECOND_AREA}},   \
-    {TO_FIX,        0,       Button1, change_area,                {.area_type=FIXED_AREA}},    \
-    {TO_FLOAT,      0,       Button1, change_area,                {.area_type=FLOATING_AREA}}, \
-    {ICON_WIN,      0,       Button1, change_area,                {.area_type=ICONIFY_AREA}},  \
-    {MAX_WIN,       0,       Button1, maximize_client,            {0}},                        \
-    {CLOSE_WIN,     0,       Button1, close_win,                  {0}},                        \
-    {CLICK_WIN,     0,       Button1, pointer_focus_client,       {0}},                        \
-    {CLICK_WIN,     0,       Button3, pointer_focus_client,       {0}},                        \
-    {CLICK_FRAME,   0,       Button1, pointer_resize_client,      {0}},                        \
-    {CLICK_ICON,    0,       Button1, deiconify,                  {0}},                        \
-    {CLICK_ROOT,    0,       Button1, adjust_layout_ratio,        {0}},                        \
+#define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                    \
+{ /* 點擊類型   功能轉換鍵  定位器按鈕  要綁定的函數           函數的參數 */              \
+    {TO_FULL,       0,       Button1, change_layout,         {.layout=FULL}},             \
+    {TO_PREVIEW,    0,       Button1, change_layout,         {.layout=PREVIEW}},          \
+    {TO_STACK,      0,       Button1, change_layout,         {.layout=STACK}},            \
+    {TO_TILE,       0,       Button1, change_layout,         {.layout=TILE}},             \
+    {ADJUST_N_MAIN, 0,       Button1, adjust_n_main_max,     {.n=1}},                     \
+    {ADJUST_N_MAIN, 0,       Button3, adjust_n_main_max,     {.n=-1}},                    \
+    {CLICK_TITLE,   0,       Button1, pointer_move_client,   {0}},                        \
+    {CLICK_TITLE,   0,       Button3, pointer_change_area,   {0}},                        \
+    {TO_MAIN,       0,       Button1, change_area,           {.area_type=MAIN_AREA}},     \
+    {TO_SECOND,     0,       Button1, change_area,           {.area_type=SECOND_AREA}},   \
+    {TO_FIX,        0,       Button1, change_area,           {.area_type=FIXED_AREA}},    \
+    {TO_FLOAT,      0,       Button1, change_area,           {.area_type=FLOATING_AREA}}, \
+    {ICON_WIN,      0,       Button1, change_area,           {.area_type=ICONIFY_AREA}},  \
+    {MAX_WIN,       0,       Button1, maximize_client,       {0}},                        \
+    {CLOSE_WIN,     0,       Button1, close_win,             {0}},                        \
+    {CLICK_WIN,     0,       Button1, pointer_focus_client,  {0}},                        \
+    {CLICK_WIN,     0,       Button3, pointer_focus_client,  {0}},                        \
+    {CLICK_FRAME,   0,       Button1, pointer_resize_client, {0}},                        \
+    {CLICK_ICON,    0,       Button1, pointer_deiconify,     {0}},                        \
+    {CLICK_ROOT,    0,       Button1, adjust_layout_ratio,   {0}},                        \
 }
 
 #define RULES (WM_rule []) /* 窗口管理器對窗口的管理規則 */     \
