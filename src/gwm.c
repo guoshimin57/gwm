@@ -53,7 +53,7 @@ void init_wm(WM *wm)
 	wm->mod_map=XGetModifierMapping(wm->display);
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
-    wm->layout=DEFAULT_LAYOUT;
+    wm->cur_layout=wm->prev_layout=DEFAULT_LAYOUT;
     wm->main_area_ratio=DEFAULT_MAIN_AREA_RATIO;
     wm->fixed_area_ratio=DEFAULT_FIXED_AREA_RATIO;
     wm->n_main_max=DEFAULT_N_MAIN_MAX;
@@ -86,10 +86,9 @@ int my_x_error_handler(Display *display, XErrorEvent *e)
 
 void create_font_set(WM *wm)
 {
-    char **missing_charset_list, *missing_charset_def_str;
-    int missing_charset_count;
-    wm->font_set=XCreateFontSet(wm->display, FONT_SET, &missing_charset_list,
-        &missing_charset_count, &missing_charset_def_str);
+    char **list, *str;
+    int n;
+    wm->font_set=XCreateFontSet(wm->display, FONT_SET, &list, &n, &str);
 }
 
 void create_cursors(WM *wm)
@@ -217,7 +216,8 @@ void update_layout(WM *wm)
 {
     if(wm->clients == wm->clients->next)
         return;
-    switch(wm->layout)
+
+    switch(wm->cur_layout)
     {
         case FULL: set_full_layout(wm); break;
         case PREVIEW: set_preview_layout(wm); break;
@@ -226,6 +226,37 @@ void update_layout(WM *wm)
     }
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         move_resize_client(wm, c, 0, 0, 0, 0);
+}
+
+void iconify_all_for_vision(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        if(c->place_type == ICONIFY)
+        {
+            XMapWindow(wm->display, c->icon.win);
+            XUnmapWindow(wm->display, c->frame);
+            if(c == wm->cur_focus_client)
+            {
+                focus_client(wm, NULL);
+                update_frame(wm, c);
+            }
+        }
+    }
+}
+
+void deiconify_all_for_vision(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        if(c->place_type == ICONIFY)
+        {
+            XMapWindow(wm->display, c->frame);
+            XUnmapWindow(wm->display, c->icon.win);
+            if(c == wm->cur_focus_client)
+                focus_client(wm, c);
+        }
+    }
 }
 
 void set_full_layout(WM *wm)
@@ -353,31 +384,56 @@ void handle_events(WM *wm)
 
 void handle_button_press(WM *wm, XEvent *e)
 {
+    Buttonbind *b=BUTTONBINDS;
+    Click_type type=get_click_type(wm, e->xbutton.window);
     Client *c=win_to_client(wm, e->xbutton.window);
     if(c)
         focus_client(wm, c);
-    Buttonbind *p=BUTTONBINDS;
-    Click_type type=get_click_type(wm, e->xbutton.window);
-	for(size_t i=0; i<ARRAY_NUM(BUTTONBINDS); i++, p++)
+    for(size_t i=0; i<ARRAY_NUM(BUTTONBINDS); i++, b++)
     {
-        if( p->click_type == type 
-            && p->button == e->xbutton.button
-            && is_equal_modifier_mask(wm, p->modifier, e->xbutton.state))
+        if(is_func_click(wm, type, b, e))
         {
-            if(p->func)
-                p->func(wm, e, p->arg);
+            if(b->func)
+                b->func(wm, e, b->arg);
             if(type == CLICK_WIN)
                 XAllowEvents(wm->display, ReplayPointer, CurrentTime);
             break;
         }
     }
-    if(type==ICON_WIN || type==CLOSE_WIN)
-        focus_client(wm, wm->prev_focus_client);
+    if(is_click_client_in_preview(wm, type))
+        choose_client_in_preview(wm, c);
 }
  
+bool is_func_click(WM *wm, Click_type type, Buttonbind *b, XEvent *e)
+{
+    return (b->click_type == type 
+        && b->button == e->xbutton.button
+        && is_equal_modifier_mask(wm, b->modifier, e->xbutton.state));
+}
+
 bool is_equal_modifier_mask(WM *wm, unsigned int m1, unsigned int m2)
 {
     return (get_valid_mask(wm, m1) == get_valid_mask(wm, m2));
+}
+
+bool is_click_client_in_preview(WM *wm, Click_type type)
+{
+    return ((type==CLICK_WIN || type==CLICK_FRAME || type==CLICK_TITLE)
+        && wm->cur_layout==PREVIEW);
+}
+
+void choose_client_in_preview(WM *wm, Client *c)
+{
+    for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
+    {
+        if(p->place_type==ICONIFY && p==c)
+        {
+            update_client_n_and_place_type(wm, p, NORMAL);
+            memset(&p->icon, 0, sizeof(p->icon));
+        }
+    }
+    focus_client(wm, c);
+    change_layout(wm, NULL, (Func_arg){.layout=wm->prev_layout});
 }
 
 void handle_config_request(WM *wm, XEvent *e)
@@ -550,8 +606,8 @@ void handle_unmap_notify(WM *wm, XEvent *e)
 void handle_property_notify(WM *wm, XEvent *e)
 {
     Window win=e->xproperty.window;
-    char *s=get_text_prop(wm, win, XA_WM_NAME);
-    if(s && e->xproperty.atom==XA_WM_NAME)
+    char *s;
+    if(e->xproperty.atom==XA_WM_NAME && (s=get_text_prop(wm, win, XA_WM_NAME)))
     {
         Client *c;
         if(win == wm->root_win)
@@ -617,7 +673,7 @@ void exec(WM *wm, XEvent *e, Func_arg arg)
 
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(wm->layout==TILE || wm->layout==STACK)
+    if(wm->cur_layout==TILE || wm->cur_layout==STACK)
     {
         int s=MOVE_RESIZE_INC;
         int d[][4]={      /* dx, dy, dw, dh */
@@ -636,7 +692,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         };
         int *p=d[arg.direction];
         Client *c=wm->cur_focus_client;
-        if(wm->layout == TILE)
+        if(wm->cur_layout == TILE)
             to_floating_area(wm, wm->cur_focus_client);
         if(is_valid_move_resize(wm, c, p[0], p[1], p[2], p[3]))
         {
@@ -712,8 +768,7 @@ void next_client(WM *wm, XEvent *e, Func_arg unused)
     {
         focus_client(wm, wm->cur_focus_client->prev);
         Client *c=wm->cur_focus_client;
-        if(e->type == KeyPress)
-            XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
+        warp_pointer_for_key_press(wm, c, e->type);
     }
 }
 
@@ -723,48 +778,76 @@ void prev_client(WM *wm, XEvent *e, Func_arg unused)
     {
         focus_client(wm, wm->cur_focus_client->next);
         Client *c=wm->cur_focus_client;
-        if(e->type == KeyPress)
-            XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
+        warp_pointer_for_key_press(wm, c, e->type);
     }
 }
 
 void focus_client(WM *wm, Client *c)
 {
-    if(c == wm->cur_focus_client)
-        return;
-    if(c)
-        wm->prev_focus_client=wm->cur_focus_client, wm->cur_focus_client=c;
-    else
+    if(!c)
         fix_focus_client(wm);
+    else if(c != wm->cur_focus_client)
+        wm->prev_focus_client=wm->cur_focus_client, wm->cur_focus_client=c;
 
     Client *pp=wm->prev_focus_client, *pc=wm->cur_focus_client;
     if(pp != wm->clients)
     {
-        if(pp->icon.win)
-            frame_icon(wm, &pp->icon);
+        if(pp->place_type == ICONIFY && wm->cur_layout != PREVIEW)
+            unframe_icon(wm, &pp->icon);
         else
             update_frame(wm, pp);
     }
     if(pc != wm->clients)
     {
-        if(pc->icon.win)
-            unframe_icon(wm, &pc->icon);
+        if(pc->place_type == ICONIFY && wm->cur_layout != PREVIEW)
+        {
+            frame_icon(wm, &pc->icon);
+            XSetInputFocus(wm->display, PointerRoot, RevertToPointerRoot, CurrentTime);
+        }
         else
         {
             raise_client(wm);
             update_frame(wm, pc);
-            XSetInputFocus(wm->display, pc->win, RevertToNone, CurrentTime);
+            XSetInputFocus(wm->display, pc->win, RevertToPointerRoot, CurrentTime);
         }
     }
 }
 
 void fix_focus_client(WM *wm)
 {
-    Client *p=wm->prev_focus_client->next, *c=wm->cur_focus_client->prev;
-    if(!is_client(wm, p))
-        wm->prev_focus_client=(p ? p : wm->clients);
+    Client *c, *pp=wm->prev_focus_client, *pc=wm->cur_focus_client;
+    if(!is_client(wm, pp))
+    {
+        if(pp->next != wm->clients)
+            c=get_next_client(wm, pp);
+        else
+            c=get_prev_client(wm, pp);
+        wm->prev_focus_client=(c ? c : wm->clients);
+    }
     if(!is_client(wm, c))
+    {
+        if(pc->prev != wm->clients)
+            c=get_prev_client(wm, pc);
+        else
+            c=get_next_client(wm, pc);
         wm->cur_focus_client=(c ? c : wm->clients);
+    }
+}
+
+Client *get_next_client(WM *wm, Client *c)
+{
+    for(Client *p=c->next; p!=wm->cur_focus_client; p=p->next)
+        if(p != wm->clients)
+            return p;
+    return NULL;
+}
+
+Client *get_prev_client(WM *wm, Client *c)
+{
+    for(Client *p=c->prev; p!=c; p=p->prev)
+        if(p != wm->clients)
+            return p;
+    return NULL;
 }
 
 bool is_client(WM *wm, Client *c)
@@ -775,13 +858,13 @@ bool is_client(WM *wm, Client *c)
     return false;
 }
         
-void frame_icon(WM *wm, Icon *icon)
+void unframe_icon(WM *wm, Icon *icon)
 {
     XSetWindowBorderWidth(wm->display, icon->win, 0);
     XMoveWindow(wm->display, icon->win, icon->x, icon->y);
 }
 
-void unframe_icon(WM *wm, Icon *icon)
+void frame_icon(WM *wm, Icon *icon)
 {
     XSetWindowBorderWidth(wm->display, icon->win, BORDER_WIDTH);
     XSetWindowBorder(wm->display, icon->win, CURRENT_BORDER_COLOR);
@@ -791,9 +874,14 @@ void unframe_icon(WM *wm, Icon *icon)
 
 void change_layout(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(wm->layout != arg.layout)
+    if(wm->cur_layout != arg.layout)
     {
-        wm->layout=arg.layout;
+        if(wm->cur_layout == PREVIEW)
+            iconify_all_for_vision(wm);
+        if(arg.layout == PREVIEW)
+            deiconify_all_for_vision(wm);
+        wm->prev_layout=wm->cur_layout;
+        wm->cur_layout=arg.layout;
         update_layout(wm);
         update_title_bar_layout(wm);
     }
@@ -867,7 +955,7 @@ void set_default_rect(WM *wm, Client *c)
 
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(wm->layout == TILE)
+    if(wm->cur_layout == TILE)
     {
         wm->n_main_max+=arg.n;
         if(wm->n_main_max < 1)
@@ -879,7 +967,7 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
 /* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
 void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(wm->layout==TILE && wm->clients_n[NORMAL]>wm->n_main_max)
+    if(wm->cur_layout==TILE && wm->clients_n[NORMAL]>wm->n_main_max)
     {
         float ratio=wm->main_area_ratio+arg.change_ratio;
         int mw=ratio*wm->screen_width,
@@ -895,7 +983,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 /* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 { 
-    if(wm->layout==TILE && wm->clients_n[FIXED])
+    if(wm->cur_layout==TILE && wm->clients_n[FIXED])
     {
         float ratio=wm->fixed_area_ratio+arg.change_ratio;
         int mw=wm->screen_width*(wm->main_area_ratio-arg.change_ratio),
@@ -912,19 +1000,40 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 void change_area(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=wm->cur_focus_client;
-    if(wm->layout==TILE && c!=wm->clients)
+    if(c != wm->clients)
     {
         Area_type type=arg.area_type;
-        switch(type)
+        if(wm->cur_layout == TILE)
         {
-            case MAIN_AREA: to_main_area(wm, c); break;
-            case SECOND_AREA: to_second_area(wm, c); break;
-            case FIXED_AREA: to_fixed_area(wm, c); break;
-            case FLOATING_AREA: to_floating_area(wm, c); break;
-            case ICONIFY_AREA: iconify(wm, c); break;
+            switch(type)
+            {
+                case MAIN_AREA: to_main_area(wm, c); break;
+                case SECOND_AREA: to_second_area(wm, c); break;
+                case FIXED_AREA: to_fixed_area(wm, c); break;
+                case FLOATING_AREA: to_floating_area(wm, c); break;
+                case ICONIFY_AREA: iconify(wm, c); break;
+            }
+            warp_pointer_for_key_press(wm, c, e->type);
         }
-        if(e->type == KeyPress)
-            XWarpPointer(wm->display, None, c->win, 0, 0, 0, 0, c->w/2, c->h/2);
+        else if(wm->cur_layout==STACK && type==ICONIFY_AREA)
+        {
+            iconify(wm, c);
+            warp_pointer_for_key_press(wm, c, e->type);
+        }
+    }
+}
+
+void warp_pointer_for_key_press(WM *wm, Client *c, int event_type)
+{
+    if(event_type == KeyPress)
+    {
+        Window win;
+        int x, y;
+        if(c == wm->clients)
+            win=wm->taskbar.win, x=wm->taskbar.w/2, y=wm->taskbar.h/2;
+        else
+            win=c->win, x=c->w/2, y=c->h/2;
+        XWarpPointer(wm->display, None, win, 0, 0, 0, 0, x, y);
     }
 }
 
@@ -994,7 +1103,7 @@ void to_floating_area(WM *wm, Client *c)
 void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *from=wm->cur_focus_client, *to;
-    if(wm->layout==TILE && from!=wm->clients && grab_pointer(wm, e))
+    if(wm->cur_layout==TILE && from!=wm->clients && grab_pointer(wm, e))
     {
         XEvent ev;
         do
@@ -1080,7 +1189,7 @@ Rect get_frame_rect(Client *c)
 Rect get_title_area_rect(WM *wm, Client *c)
 {
     int n[]={0, 1, 3, 7};
-    return (Rect){0, 0, c->w-CLIENT_BUTTON_WIDTH*n[wm->layout],
+    return (Rect){0, 0, c->w-CLIENT_BUTTON_WIDTH*n[wm->cur_layout],
         TITLE_BAR_HEIGHT};
 }
 
@@ -1277,7 +1386,7 @@ void maximize_client(WM *wm, XEvent *e, Func_arg unused)
         c->y=BORDER_WIDTH+TITLE_BAR_HEIGHT;
         c->w=wm->screen_width-2*BORDER_WIDTH;
         c->h=wm->screen_height-2*BORDER_WIDTH-TITLE_BAR_HEIGHT;
-        if(wm->layout == TILE)
+        if(wm->cur_layout == TILE)
             to_floating_area(wm, wm->cur_focus_client);
         move_resize_client(wm, c, 0, 0, 0, 0);
     }
@@ -1286,13 +1395,18 @@ void maximize_client(WM *wm, XEvent *e, Func_arg unused)
 void iconify(WM *wm, Client *c)
 {
     create_icon(wm, c);
-    XMoveWindow(wm->display, c->icon.win, c->icon.x, c->icon.y);
     XSelectInput(wm->display, c->icon.win, ButtonPressMask|ExposureMask);
+    XMoveWindow(wm->display, c->icon.win, c->icon.x, c->icon.y);
     XMapWindow(wm->display, c->icon.win);
     XUnmapWindow(wm->display, c->frame);
     c->icon.place_type=c->place_type;
     update_client_n_and_place_type(wm, c, ICONIFY);
     update_layout(wm);
+    if(c == wm->cur_focus_client)
+    {
+        focus_client(wm, NULL);
+        update_frame(wm, c);
+    }
 }
 
 void create_icon(WM *wm, Client *c)
@@ -1334,21 +1448,39 @@ void set_icon_position(WM *wm, Client *c)
             c->icon.x+=p->icon.w+BORDER_WIDTH;
 }
 
-void deiconify(WM *wm, XEvent *e, Func_arg unused)
+void key_choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=wm->cur_focus_client;
-    Window win=e->xbutton.window;
-    Display *dsp=wm->display;
-    if(e->type == ButtonPress)
-        for(c=wm->clients->next; c!=wm->clients && win!=c->icon.win; c=c->next)
-            ;
-    XMapWindow(dsp, c->frame);
-    XUnmapWindow(dsp, c->icon.win);
+    if(c != wm->clients)
+    {
+        if(wm->cur_layout == PREVIEW)
+            choose_client_in_preview(wm, c);
+        else if(c->place_type == ICONIFY)
+            deiconify(wm, wm->cur_focus_client);
+    }
+}
+
+void pointer_deiconify(WM *wm, XEvent *e, Func_arg arg)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        if(e->xbutton.window == c->icon.win)
+        {
+            deiconify(wm, c);
+            break;
+        }
+    }
+}
+
+void deiconify(WM *wm, Client *c)
+{
+    XMapWindow(wm->display, c->frame);
+    XUnmapWindow(wm->display, c->icon.win);
     update_client_n_and_place_type(wm, c, c->icon.place_type);
     update_layout(wm);
     for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
         if(p!=c && p->icon.win && p->icon.x>c->icon.x)
-            XMoveWindow(dsp, p->icon.win,
+            XMoveWindow(wm->display, p->icon.win,
                 p->icon.x-=c->icon.w+BORDER_WIDTH, p->icon.y);
     memset(&c->icon, 0, sizeof(c->icon));
     focus_client(wm, c);
@@ -1363,11 +1495,11 @@ void update_client_n_and_place_type(WM *wm, Client *c, Place_type type)
 
 void pointer_move_client(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(wm->layout==FULL || wm->layout==PREVIEW || !grab_pointer(wm, e))
+    if(wm->cur_layout==FULL || wm->cur_layout==PREVIEW || !grab_pointer(wm, e))
         return;
     int ox=e->xbutton.x_root, oy=e->xbutton.y_root, nx, ny, dx, dy;
     XEvent ev;
-    if(wm->layout == TILE)
+    if(wm->cur_layout == TILE)
         to_floating_area(wm, wm->cur_focus_client);
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
@@ -1389,12 +1521,12 @@ void pointer_move_client(WM *wm, XEvent *e, Func_arg arg)
 
 void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(wm->layout==FULL || wm->layout==PREVIEW || !grab_pointer(wm, e))
+    if(wm->cur_layout==FULL || wm->cur_layout==PREVIEW || !grab_pointer(wm, e))
         return;
     Client *c=wm->cur_focus_client;
     int ox=e->xbutton.x_root, oy=e->xbutton.y_root, nx, ny, dx, dy, dw, dh;
     XEvent ev;
-    if(wm->layout == TILE)
+    if(wm->cur_layout == TILE)
         to_floating_area(wm, wm->cur_focus_client);
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
@@ -1441,7 +1573,7 @@ Pointer_act get_resize_incr(Client *c, int ox, int oy, int nx, int ny, int *dx, 
 
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(wm->layout!=TILE || !grab_pointer(wm, e))
+    if(wm->cur_layout!=TILE || !grab_pointer(wm, e))
         return;
     int ox=e->xbutton.x_root, nx, dx;
     XEvent ev;
