@@ -9,6 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 09月 09日 星期四 16:58:23 CST	gsm <406643764@qq.com>
+	* 發布第0.9.6版，修改了預覽模式的行爲；簡化了代碼；增強了代碼可讀性；提高了代碼效率；修復了在某些情況下聚焦客戶窗口錯誤的缺陷；修正函數命名筆誤；使按鍵和按鈕去縮微化的代碼分離，以及實現了在預覽模式選中客戶窗口的功能；修復了自動調整定位器位置的功能在某些情況下不正確的缺陷；修復了堆疊模式下無法縮微化窗口的缺陷；修改了手冊。
+	* src/gwm.c：修改預覽模式的行爲，即在預覽模式下點擊客戶窗口就會切換至上一模式，爲此，修改了init_wm、update_layout、key_move_resize_client、focus_client、change_layout、adjust_n_main_max、adjust_main_area_ratio、adjust_fixed_area_ratio、change_area、pointer_change_area、get_title_area_rect、maximize_client、iconify、pointer_move_client、pointer_resize_client、adjust_layout_ratio函數，創建了iconify_all_for_vision、deiconify_all_for_vision、handle_button_press、is_click_client_in_preview、choose_client_in_preview函數；爲了簡化代碼，修改了create_font_set函數；爲了增強代碼可讀性，修改了handle_button_press函數，創建了is_func_click函數；爲了提高代碼效率，修改了handle_property_notify函數；爲了修復某些情況下聚焦客戶窗口錯誤的缺陷，修改了focus_client、fix_focus_client函數，創建了get_next_client、get_prev_client函數；爲了修正函數命名筆誤，frame_icon和unframe_icon函數名互換；爲了使按鍵和按鈕去縮微化的代碼分離，以及實現在預覽模式選中客戶窗口的功能，創建了key_choose_client、pointer_deiconify函數，修改了deiconify函數；爲了修復自動調整定位器位置的功能在某些情況下不正確的缺陷，修改了next_client、prev_client、change_area函數，創建了warp_pointer_for_key_press函數；爲了修復堆疊模式下無法縮微化窗口的缺陷，修改了change_area函數。
+	* src/gwm.h：修改預覽模式的行爲，即在預覽模式下點擊客戶窗口就會切換至上一模式，爲此，修改了WM結構體，創建了iconify_all_for_vision、deiconify_all_for_vision、is_click_client_in_preview、choose_client_in_preview函數聲明；爲了增強代碼可讀性，創建了is_func_click函數聲明；爲了修復某些情況下聚焦客戶窗口錯誤的缺陷，創建了get_next_client、get_prev_client函數聲明。
+	* src/config.h：爲了使按鍵和按鈕去縮微化的代碼分離，以及實現在預覽模式選中客戶窗口的功能，修改了KEYBINDS、BUTTONBINDS宏。
+	* man/zh_HK/man1/gwm.1：修改了預覽模式的相關幫助信息；修正切換懸浮模式和縮微當前窗口的幫助信息；刪除Mod4+Return條目；創建Return條目及相應的幫助信息。
+
 2021年 08月 14日 星期六 19:26:59 CST	gsm <406643764@qq.com>
 	* 發布第0.9.5版，修復了窗口管理器無法管理某些窗口的缺陷；修復了結構體清零潛在缺陷；使代碼更加顧名思義；修復了圖標位置不正確的缺陷；修復了某些圖標尺寸不正確的缺陷；調整了代碼命名風格。
 	* src/gwm.c：爲了修復窗口管理器無法管理某些窗口的缺陷，修改了is_wm_win函數，刪除了get_state_hint函數；爲了修復結構體清零潛在缺陷，修改了函數add_client、deiconify；爲了更加顧名思義，do_move_resize_client函數重命名爲move_resize_client，修改了move_client函數，以使其包含更新布局的功能，並修改了所有調用該函數的函數，set_drawable_size函數重命名爲get_drawable_size；爲了修復圖標位置不正確的缺陷，修改了focus_client函數，創建了frame_icon、unframe_icon、set_icon_position、deiconify函數；爲了修復某些圖標尺寸不正確的缺陷，修改了create_icon函數；其餘代碼修改則是爲了調整代碼命名風格，即typedef 結構體的類型名統一改爲僅首字符大字，除非是縮寫，否則其餘字符爲小寫。
