@@ -9,6 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 09月 10日 星期五 17:21:58 CST	gsm <406643764@qq.com>
+	* 發布第0.9.7版，修復了在全屏模式切換到其他模式時全屏窗口遮擋整個屏幕的缺陷；CMD_KEY+XK_w按鍵綁定改爲綁定打開網絡瀏覽器功能；key_choose_client功能改用WM_KEY+XK_Return按鍵綁定。
+	* src/gwm.c：爲了修復在全屏模式切換到其他模式時全屏窗口遮擋整個屏幕的缺陷，修改了update_layout函數，創建了fix_cur_focus_client_rect函數；爲了保證各比率的浮點類型一致，修改了adjust_main_area_ratio、adjust_fixed_area_ratio函數。
+	* src/gwm.h：爲了修復在全屏模式切換到其他模式時全屏窗口遮擋整個屏幕的缺陷，創建了fix_cur_focus_client_rect函數聲明；爲了保證各比率的浮點類型一致，修改了change_ratio的類型。
+	* src/config.h：CMD_KEY+XK_w按鍵綁定改爲綁定打開網絡瀏覽器功能；key_choose_client功能改用WM_KEY+XK_Return按鍵綁定。
+	* man/zh_HK/man1/gwm.1：更新按鍵綁定的幫助信息。
+
 2021年 09月 09日 星期四 16:58:23 CST	gsm <406643764@qq.com>
 	* 發布第0.9.6版，修改了預覽模式的行爲；簡化了代碼；增強了代碼可讀性；提高了代碼效率；修復了在某些情況下聚焦客戶窗口錯誤的缺陷；修正函數命名筆誤；使按鍵和按鈕去縮微化的代碼分離，以及實現了在預覽模式選中客戶窗口的功能；修復了自動調整定位器位置的功能在某些情況下不正確的缺陷；修復了堆疊模式下無法縮微化窗口的缺陷；修改了手冊。
 	* src/gwm.c：修改預覽模式的行爲，即在預覽模式下點擊客戶窗口就會切換至上一模式，爲此，修改了init_wm、update_layout、key_move_resize_client、focus_client、change_layout、adjust_n_main_max、adjust_main_area_ratio、adjust_fixed_area_ratio、change_area、pointer_change_area、get_title_area_rect、maximize_client、iconify、pointer_move_client、pointer_resize_client、adjust_layout_ratio函數，創建了iconify_all_for_vision、deiconify_all_for_vision、handle_button_press、is_click_client_in_preview、choose_client_in_preview函數；爲了簡化代碼，修改了create_font_set函數；爲了增強代碼可讀性，修改了handle_button_press函數，創建了is_func_click函數；爲了提高代碼效率，修改了handle_property_notify函數；爲了修復某些情況下聚焦客戶窗口錯誤的缺陷，修改了focus_client、fix_focus_client函數，創建了get_next_client、get_prev_client函數；爲了修正函數命名筆誤，frame_icon和unframe_icon函數名互換；爲了使按鍵和按鈕去縮微化的代碼分離，以及實現在預覽模式選中客戶窗口的功能，創建了key_choose_client、pointer_deiconify函數，修改了deiconify函數；爲了修復自動調整定位器位置的功能在某些情況下不正確的缺陷，修改了next_client、prev_client、change_area函數，創建了warp_pointer_for_key_press函數；爲了修復堆疊模式下無法縮微化窗口的缺陷，修改了change_area函數。
