@@ -145,7 +145,7 @@ union func_arg_tag
     Pointer_act pointer_act;
     int n;
     Area_type area_type;
-    float change_ratio;
+    double change_ratio;
 };
 typedef union func_arg_tag Func_arg;
 
@@ -191,6 +191,7 @@ bool is_wm_win(WM *wm, Window win);
 void add_client(WM *wm, Window win);
 Client *get_area_head(WM *wm, Place_type type);
 void update_layout(WM *wm);
+void fix_cur_focus_client_rect(WM *wm);
 void iconify_all_for_vision(WM *wm);
 void deiconify_all_for_vision(WM *wm);
 void set_full_layout(WM *wm);
@@ -295,4 +296,5 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg);
 bool change_layout_ratio(WM *wm, int ox, int nx);
 bool is_main_sec_space(WM *wm, int x);
 bool is_main_fix_space(WM *wm, int x);
+
 #endif
