@@ -70,7 +70,7 @@
 {/* 功能轉換鍵   鍵符號          要綁定的函數             函數的參數 */               \
     {CMD_KEY, XK_t,            exec,                    SH_CMD("lxterminal")},        \
     {CMD_KEY, XK_f,            exec,                    SH_CMD("xdg-open ~")},        \
-    {CMD_KEY, XK_w,            exec,                    SH_CMD("xwininfo -wm >log")}, \
+    {CMD_KEY, XK_w,            exec,                    SH_CMD("xdg-open http:")}, \
     {CMD_KEY, XK_p,            exec,                    SH_CMD("dmenu_run")},         \
     {CMD_KEY, XK_q,            exec,                    SH_CMD("qq")},                \
     {CMD_KEY, XK_s,            exec,                    SH_CMD("stardict")},          \
@@ -105,7 +105,7 @@
     {WM_KEY,  XK_F3,           change_area,             {.area_type=FIXED_AREA}},     \
     {WM_KEY,  XK_F4,           change_area,             {.area_type=FLOATING_AREA}},  \
     {WM_KEY,  XK_F5,           change_area,             {.area_type=ICONIFY_AREA}},   \
-    {0,       XK_Return,       key_choose_client,       {0}},                         \
+    {WM_KEY,  XK_Return,       key_choose_client,       {0}},                         \
 }
 
 #define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                    \
@@ -139,7 +139,6 @@
     客戶程序名稱   客戶程序實例名稱    窗口放置位置 */          \
     {"Qq",          "qq",               FIXED},                 \
     {"explorer.exe","explorer.exe",     FLOATING},              \
-    {"Thunder.exe", "Thunder.exe",      FLOATING},              \
 }
 
 #endif
