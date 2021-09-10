@@ -221,11 +221,19 @@ void update_layout(WM *wm)
     {
         case FULL: set_full_layout(wm); break;
         case PREVIEW: set_preview_layout(wm); break;
-        case STACK: return;
+        case STACK: break;;
         case TILE: set_tile_layout(wm); break;
     }
+    fix_cur_focus_client_rect(wm);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         move_resize_client(wm, c, 0, 0, 0, 0);
+}
+
+void fix_cur_focus_client_rect(WM *wm)
+{
+    if( wm->prev_layout==FULL && wm->cur_focus_client->place_type==FLOATING
+        && (wm->cur_layout==TILE || wm->cur_layout==STACK))
+        set_default_rect(wm, wm->cur_focus_client);
 }
 
 void iconify_all_for_vision(WM *wm)
@@ -969,7 +977,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     if(wm->cur_layout==TILE && wm->clients_n[NORMAL]>wm->n_main_max)
     {
-        float ratio=wm->main_area_ratio+arg.change_ratio;
+        double ratio=wm->main_area_ratio+arg.change_ratio;
         int mw=ratio*wm->screen_width,
             sw=wm->screen_width*(1-wm->fixed_area_ratio)-mw;
         if(sw>=MOVE_RESIZE_INC && mw>=MOVE_RESIZE_INC)
@@ -985,7 +993,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 { 
     if(wm->cur_layout==TILE && wm->clients_n[FIXED])
     {
-        float ratio=wm->fixed_area_ratio+arg.change_ratio;
+        double ratio=wm->fixed_area_ratio+arg.change_ratio;
         int mw=wm->screen_width*(wm->main_area_ratio-arg.change_ratio),
             fw=wm->screen_width*ratio;
         if(mw>=MOVE_RESIZE_INC && fw>=MOVE_RESIZE_INC)
