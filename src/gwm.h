@@ -73,6 +73,7 @@ struct icon_tag
     int x, y; /* 無邊框時的坐標 */
     unsigned int w, h;
     Place_type place_type;
+    bool is_pixel_bg;
 };
 typedef struct icon_tag Icon;
 
@@ -84,6 +85,7 @@ struct client_tag
     Place_type place_type;
     char *title_text;
     Icon icon;
+    XClassHint class_hint;
     struct client_tag *prev, *next;
 };
 typedef struct client_tag Client;
@@ -131,11 +133,19 @@ typedef struct wm_tag WM;
 
 enum direction_tag
 {
-    UP, DOWN, LEFT, RIGHT, CENTER,
+    UP, DOWN, LEFT, RIGHT, 
     LEFT2LEFT, LEFT2RIGHT, RIGHT2LEFT, RIGHT2RIGHT,
     UP2UP, UP2DOWN, DOWN2UP, DOWN2DOWN,
 };
 typedef enum direction_tag Direction;
+
+enum align_type_tag
+{
+    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
+    CENTER_LEFT, CENTER, CENTER_RIGHT,
+    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT,
+};
+typedef enum align_type_tag ALIGN_TYPE;
 
 union func_arg_tag
 {
@@ -213,6 +223,7 @@ void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c);
 void handle_expose(WM *wm, XEvent *e);
+bool update_icon_text(WM *wm, Window win);
 bool update_taskbar_button_text(WM *wm, Window win);
 void handle_key_press(WM *wm, XEvent *e);
 unsigned int get_valid_mask(WM *wm, unsigned int mask);
@@ -221,7 +232,8 @@ void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
 void handle_property_notify(WM *wm, XEvent *e);
 char *get_text_prop(WM *wm, Window win, Atom atom);
-void draw_string(WM *wm, Drawable drawable, unsigned long color, Direction d, int x, int y, unsigned int w, unsigned h, const char *str);
+void draw_string(WM *wm, Drawable drawable, unsigned long color, ALIGN_TYPE align, int x, int y, unsigned int w, unsigned h, const char *str);
+void get_string_size(WM *wm, const char *str, unsigned int *w, unsigned int *h);
 void exec(WM *wm, XEvent *e, Func_arg arg);
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg);
 bool is_valid_move_resize(WM *wm, Client *c, int dx, int dy, int dw, int dh);
