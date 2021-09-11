@@ -29,6 +29,7 @@
 #define RED 0xff0000            /* 紅色 */
 #define WHITE 0xffffff          /* 白色 */
 #define BLACK 0x000000          /* 黑色 */
+#define DARKSLATEGRAY 0x2f4f4f  /* 深石板灰 */
 
 #define NORMAL_FRAME_COLOR CORNFLOWERBLUE /* 非當前窗口的框架顏色 */
 #define CURRENT_FRAME_COLOR DODGERBLUE /* 當前窗口的框架顏色 */
@@ -42,6 +43,7 @@
 #define ENTERED_CLOSE_BUTTON_COLOR RED /* 定位器進入窗口關閉按鈕時按鈕的顏色 */
 #define TITLE_TEXT_COLOR WHITE /* 窗口標題欄文字的顏色 */
 #define BUTTON_TEXT_COLOR WHITE /* 窗口按鈕文字的顏色 */
+#define ICON_BG_COLOR DARKSLATEGRAY /* 縮微化窗口的背景色 */
 
 #define TASKBAR_COLOR GREY21 /* 任務欄的顏色 */
 #define STATUS_AREA_COLOR GREY21 /*狀態區域背景色 */
