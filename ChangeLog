@@ -9,6 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 09月 11日 星期六 22:49:39 CST	gsm <406643764@qq.com>
+	* 發布第0.9.8版，當圖符化窗口無合適的圖標可用時，改爲用程序類型名代替；適配更多的文字對齊方式；修復某些情況下聚焦窗口不正確的缺陷。
+	* src/gwm.c：當圖符化窗口無合適的圖標可用時，改爲用程序類型名代替，爲此修改了del_client、handle_expose、apply_rules、create_icon函數，創建了update_icon_text函數；爲了適配更多的文字對齊方式，修改了draw_string、update_title_area_text、update_status_area_text，創建了get_string_size；爲了修復某些情況下聚焦窗口不正確的缺陷，修改了get_next_client、get_prev_client函數。
+	* src/gwm.h：當圖符化窗口無合適的圖標可用時，改爲用程序類型名代替，爲此修改了Icon、Client結構體，創建了update_icon_text函數聲明；爲了適配更多的文字對齊方式，修改了Direction結構體、draw_string函數聲明，創建了ALIGN_TYPE結構體、get_string_size函數聲明。
+	* src/config.h：當圖符化窗口無合適的圖標可用時，改爲用程序類型名代替，爲此創建了DARKSLATEGRAY、ICON_BG_COLOR宏。
+
 2021年 09月 10日 星期五 17:21:58 CST	gsm <406643764@qq.com>
 	* 發布第0.9.7版，修復了在全屏模式切換到其他模式時全屏窗口遮擋整個屏幕的缺陷；CMD_KEY+XK_w按鍵綁定改爲綁定打開網絡瀏覽器功能；key_choose_client功能改用WM_KEY+XK_Return按鍵綁定。
 	* src/gwm.c：爲了修復在全屏模式切換到其他模式時全屏窗口遮擋整個屏幕的缺陷，修改了update_layout函數，創建了fix_cur_focus_client_rect函數；爲了保證各比率的浮點類型一致，修改了adjust_main_area_ratio、adjust_fixed_area_ratio函數。
