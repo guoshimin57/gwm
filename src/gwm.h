@@ -35,6 +35,7 @@
 #define BUTTON_EVENT_MASK (ButtonPressMask|ExposureMask|EnterWindowMask|LeaveWindowMask)
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask|ExposureMask|ButtonPressMask|EnterWindowMask|LeaveWindowMask)
 #define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|EnterWindowMask|LeaveWindowMask)
+#define STATUS_AREA_EVENT_MASK (ButtonPressMask|ExposureMask)
 
 enum place_type_tag
 {
@@ -52,11 +53,12 @@ enum click_type_tag
 {
     UNDEFINED, CLICK_WIN, CLICK_ICON, CLICK_FRAME, CLICK_TITLE, CLICK_ROOT,
     TO_MAIN, TO_SECOND, TO_FIX, TO_FLOAT, ICON_WIN, MAX_WIN, CLOSE_WIN,
-    TO_FULL, TO_PREVIEW, TO_STACK, TO_TILE, ADJUST_N_MAIN,
+    TO_FULL, TO_PREVIEW, TO_STACK, TO_TILE, TOGGLE_DESKTOP,
     CLICK_CLIENT_BUTTON_BEGIN=TO_MAIN,
     CLICK_CLIENT_BUTTON_END=CLOSE_WIN,
     CLICK_TASKBAR_BUTTON_BEGIN=TO_FULL,
-    CLICK_TASKBAR_BUTTON_END=ADJUST_N_MAIN,
+    CLICK_TASKBAR_BUTTON_END=TOGGLE_DESKTOP,
+    CLICK_STATUS_AREA,
 };
 typedef enum click_type_tag Click_type;
 
@@ -73,7 +75,7 @@ struct icon_tag
     int x, y; /* 無邊框時的坐標 */
     unsigned int w, h;
     Place_type place_type;
-    bool is_pixel_bg;
+    bool is_short_text;
 };
 typedef struct icon_tag Icon;
 
@@ -84,7 +86,8 @@ struct client_tag
     unsigned int w, h;
     Place_type place_type;
     char *title_text;
-    Icon icon;
+    Icon *icon;
+    const char *class_name;
     XClassHint class_hint;
     struct client_tag *prev, *next;
 };
@@ -105,10 +108,10 @@ typedef enum pointer_act_tag Pointer_act;
 
 struct taskbar_tag
 {
-    Window win, buttons[TASKBAR_BUTTON_N], status_win;
+    Window win, buttons[TASKBAR_BUTTON_N], status_area;
     int x, y;
     unsigned int w, h;
-    const char *status_text;
+    char *status_text;
 };
 typedef struct taskbar_tag Taskbar;
 
@@ -181,6 +184,7 @@ typedef struct keybind_tag Keybind;
 struct wm_rule_tag
 {
     const char *app_class, *app_name;
+    const char *class_alias;
     Place_type place_type;
 };
 typedef struct wm_rule_tag WM_rule;
@@ -223,8 +227,8 @@ void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c);
 void handle_expose(WM *wm, XEvent *e);
-bool update_icon_text(WM *wm, Window win);
-bool update_taskbar_button_text(WM *wm, Window win);
+void update_icon_text(WM *wm, Window win);
+void update_taskbar_button_text(WM *wm, Window win);
 void handle_key_press(WM *wm, XEvent *e);
 unsigned int get_valid_mask(WM *wm, unsigned int mask);
 unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
@@ -232,23 +236,23 @@ void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
 void handle_property_notify(WM *wm, XEvent *e);
 char *get_text_prop(WM *wm, Window win, Atom atom);
-void draw_string(WM *wm, Drawable drawable, unsigned long color, ALIGN_TYPE align, int x, int y, unsigned int w, unsigned h, const char *str);
+char *copy_string(const char *s);
+void draw_string(WM *wm, Drawable drawable, unsigned long fg, unsigned long bg, ALIGN_TYPE align, int x, int y, unsigned int w, unsigned h, const char *str);
 void get_string_size(WM *wm, const char *str, unsigned int *w, unsigned int *h);
 void exec(WM *wm, XEvent *e, Func_arg arg);
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg);
-bool is_valid_move_resize(WM *wm, Client *c, int dx, int dy, int dw, int dh);
+bool is_valid_resize(WM *wm, Client *c, int dw, int dh);
 void quit_wm(WM *wm, XEvent *e, Func_arg unused);
 void close_win(WM *wm, XEvent *e, Func_arg unused);
-int send_event(WM *wm, Atom protocol);
+int send_event(WM *wm, Atom protocol, Client *c);
 void next_client(WM *wm, XEvent *e, Func_arg unused);
 void prev_client(WM *wm, XEvent *e, Func_arg unused);
 void focus_client(WM *wm, Client *c);
-void fix_focus_client(WM *wm);
-Client *get_next_client(WM *wm, Client *c);
-Client *get_prev_client(WM *wm, Client *c);
+void update_focus_client_pointer(WM *wm, Client *c);
+Client *get_next_nonicon_client(WM *wm, Client *c);
+Client *get_prev_nonicon_client(WM *wm, Client *c);
 bool is_client(WM *wm, Client *c);
-void frame_icon(WM *wm, Icon *icon);
-void unframe_icon(WM *wm, Icon *icon);
+bool is_icon_client(WM *wm, Client *c);
 void change_layout(WM *wm, XEvent *e, Func_arg arg);
 void update_title_bar_layout(WM *wm);
 void pointer_focus_client(WM *wm, XEvent *e, Func_arg arg);
@@ -277,7 +281,7 @@ Rect get_frame_rect(Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
 Rect get_button_rect(Client *c, size_t index);
 void update_title_area_text(WM *wm, Client *c);
-bool update_title_button_text(WM *wm, Client *c, Window win);
+void update_title_button_text(WM *wm, Client *c, size_t index);
 void update_status_area_text(WM *wm);
 void move_resize_client(WM *wm, Client *c, int dx, int dy, unsigned int dw, unsigned int dh);
 void fix_win_rect(Client *c);
@@ -285,21 +289,28 @@ void update_frame(WM *wm, Client *c);
 void update_win_background(WM *wm, Window win, unsigned long color);
 Click_type get_click_type(WM *wm, Window win);
 void handle_enter_notify(WM *wm, XEvent *e);
-void hint_enter_taskbar_button(WM *wm, Window win);
-void hint_enter_client_button(WM *wm, Window win);
-void hint_resizing(WM *wm, Window win, int x, int y);
-void hint_motion(WM *wm, Window win, int x, int y);
+void hint_enter_taskbar_button(WM *wm, size_t index);
+void hint_enter_client_button(WM *wm, Client *c, size_t index);
+void hint_resize_client(WM *wm, Client *c, int x, int y);
+void hint_move_client(WM *wm, Client *c);
+void hint_adjust_layout_ratio(WM *wm, Window win, int x, int y);
 void handle_leave_notify(WM *wm, XEvent *e);
-void hint_leave_taskbar_button(WM *wm, Window win);
-void hint_leave_client_button(WM *wm, Window win);
+void hint_leave_taskbar_button(WM *wm, size_t index);
+void hint_leave_client_button(WM *wm, Client *c, size_t index);
 void maximize_client(WM *wm, XEvent *e, Func_arg unused);
 void iconify(WM *wm, Client *c);
 void create_icon(WM *wm, Client *c);
-void get_drawable_size(WM *wm, Drawable d, unsigned int *w, unsigned int *h);
-void set_icon_position(WM *wm, Client *c);
+void set_icons_rect_for_add(WM *wm, Client *c);
+void move_later_icons(WM *wm, Client *ref, Client *exclude, int dx);
+bool is_later_icon_client(Client *ref, Client *cmp);
+bool is_earlier_icon_client(Client *ref, Client *cmp);
+Client *find_same_class_icon_client(WM *wm, Client *c, int *n);
+void set_icon_x_for_add(WM *wm, Client *c);
 void key_choose_client(WM *wm, XEvent *e, Func_arg arg);
 void pointer_deiconify(WM *wm, XEvent *e, Func_arg arg);
 void deiconify(WM *wm, Client *c);
+void del_icon(WM *wm, Client *c);
+void fix_icon_pos_for_preview(WM *wm);
 void update_client_n_and_place_type(WM *wm, Client *c, Place_type type);
 void pointer_move_client(WM *wm, XEvent *e, Func_arg arg);
 void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg);
@@ -308,5 +319,8 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg);
 bool change_layout_ratio(WM *wm, int ox, int nx);
 bool is_main_sec_space(WM *wm, int x);
 bool is_main_fix_space(WM *wm, int x);
+void iconify_all_clients(WM *wm, XEvent *e, Func_arg arg);
+void deiconify_all_clients(WM *wm, XEvent *e, Func_arg arg);
+Client *win_to_iconic_state_client(WM *wm, Window win);
 
 #endif
