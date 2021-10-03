@@ -24,31 +24,33 @@
 
 #define GREY11 0x1c1c1c         /* 灰色的一種 */
 #define GREY21 0x363636         /* 灰色的一種 */
-#define CORNFLOWERBLUE 0x6495ed /* 矢車菊藍 */
+#define GREY31 0x4f4f4f         /* 灰色的一種 */
 #define DODGERBLUE 0x1e90ff     /* 道奇藍 */
 #define RED 0xff0000            /* 紅色 */
 #define WHITE 0xffffff          /* 白色 */
-#define BLACK 0x000000          /* 黑色 */
-#define DARKSLATEGRAY 0x2f4f4f  /* 深石板灰 */
 
-#define NORMAL_FRAME_COLOR CORNFLOWERBLUE /* 非當前窗口的框架顏色 */
+#define NORMAL_FRAME_COLOR GREY31 /* 非當前窗口的框架顏色 */
 #define CURRENT_FRAME_COLOR DODGERBLUE /* 當前窗口的框架顏色 */
-#define NORMAL_BORDER_COLOR CORNFLOWERBLUE /* 非當前窗口的边框顏色 */
-#define CURRENT_BORDER_COLOR DODGERBLUE /* 當前窗口的边框顏色 */
-#define NORMAL_TITLE_AREA_COLOR CORNFLOWERBLUE /* 非當前窗口的標題區域顏色 */
-#define CURRENT_TITLE_AREA_COLOR DODGERBLUE /* 當前窗口的標題區域顏色 */
-#define NORMAL_BUTTON_COLOR CORNFLOWERBLUE /* 非當前窗口的按鈕顏色 */
+#define NORMAL_BORDER_COLOR GREY31 /* 非當前窗口的边框顏色 */
+#define CURRENT_BORDER_COLOR DODGERBLUE/* 當前窗口的边框顏色 */
+#define NORMAL_TITLE_AREA_COLOR GREY31 /* 非當前窗口的標題區域顏色 */
+#define CURRENT_TITLE_AREA_COLOR DODGERBLUE/* 當前窗口的標題區域顏色 */
+#define NORMAL_BUTTON_COLOR GREY31 /* 非當前窗口的按鈕顏色 */
 #define CURRENT_BUTTON_COLOR DODGERBLUE /* 當前窗口的按鈕顏色 */
 #define ENTERED_NORMAL_BUTTON_COLOR (~DODGERBLUE) /* 定位器進入非當前窗口按鈕時按鈕的顏色 */
 #define ENTERED_CLOSE_BUTTON_COLOR RED /* 定位器進入窗口關閉按鈕時按鈕的顏色 */
 #define TITLE_TEXT_COLOR WHITE /* 窗口標題欄文字的顏色 */
 #define BUTTON_TEXT_COLOR WHITE /* 窗口按鈕文字的顏色 */
-#define ICON_BG_COLOR DARKSLATEGRAY /* 縮微化窗口的背景色 */
+#define ICON_BG_COLOR GREY11 /* 縮微化窗口的背景色 */
+#define ICON_CLASS_NAME_FG_COLOR WHITE /* 縮微化窗口類型名文字的前景色 */
+#define ICON_CLASS_NAME_BG_COLOR GREY31 /* 縮微化窗口類型名文字的背景色 */
+#define ICON_TITLE_TEXT_FG_COLOR WHITE /* 縮微化窗口標題文字的前景色 */
+#define ICON_TITLE_TEXT_BG_COLOR GREY11 /* 縮微化窗口標題文字的背景色 */
 
-#define TASKBAR_COLOR GREY21 /* 任務欄的顏色 */
-#define STATUS_AREA_COLOR GREY21 /*狀態區域背景色 */
+#define TASKBAR_COLOR GREY11 /* 任務欄的顏色 */
+#define STATUS_AREA_COLOR GREY11 /*狀態區域背景色 */
 #define STATUS_AREA_TEXT_COLOR WHITE /*狀態區域前景色 */
-#define TASKBAR_BUTTON_COLOR GREY11 /* 任務欄按鈕的顏色 */
+#define TASKBAR_BUTTON_COLOR GREY21 /* 任務欄按鈕的顏色 */
 #define ENTERED_TASKBAR_BUTTON_COLOR (~DODGERBLUE) /* 定位器進入任務欄按鈕時按鈕的顏色 */
 #define TASKBAR_BUTTON_TEXT_COLOR WHITE  /* 任務欄按鈕文字的顏色 */
 
@@ -62,17 +64,19 @@
 #define CLIENT_BUTTON_WIDTH TITLE_BAR_HEIGHT /* 窗口按鈕的寬度，單位爲像素 */
 #define CLIENT_BUTTON_HEIGHT TITLE_BAR_HEIGHT /* 窗口按鈕的高度，單位爲像素 */
 #define WINS_SPACE 4 /* 窗口間隔，單位爲像素 */
+#define ICONS_SPACE 16 /* 圖標間隔，單位爲像素 */
+#define ICON_TEXT_PAD 2
 
 #define CLIENT_BUTTON_TEXT (const char *[])  /* 客戶窗口的按鈕標籤 */ \
 {"主", "次", "固", "浮", "-", "□", "×"}
 #define TASKBAR_BUTTON_TEXT (const char *[]) /* 任務欄按鈕標籤 */ \
-{"全", "概", "堆", "平", "主"}
+{"全", "概", "堆", "平", "■"}
 
 #define KEYBINDS (Keybind []) /* 按鍵功能綁定 */                                      \
 {/* 功能轉換鍵   鍵符號          要綁定的函數             函數的參數 */               \
     {CMD_KEY, XK_t,            exec,                    SH_CMD("lxterminal")},        \
     {CMD_KEY, XK_f,            exec,                    SH_CMD("xdg-open ~")},        \
-    {CMD_KEY, XK_w,            exec,                    SH_CMD("xdg-open http:")}, \
+    {CMD_KEY, XK_w,            exec,                    SH_CMD("xdg-open http:")},    \
     {CMD_KEY, XK_p,            exec,                    SH_CMD("dmenu_run")},         \
     {CMD_KEY, XK_q,            exec,                    SH_CMD("qq")},                \
     {CMD_KEY, XK_s,            exec,                    SH_CMD("stardict")},          \
@@ -108,6 +112,8 @@
     {WM_KEY,  XK_F4,           change_area,             {.area_type=FLOATING_AREA}},  \
     {WM_KEY,  XK_F5,           change_area,             {.area_type=ICONIFY_AREA}},   \
     {WM_KEY,  XK_Return,       key_choose_client,       {0}},                         \
+    {WM_KEY,  XK_d,            iconify_all_clients,     {0}},                         \
+    {WM_SKEY, XK_d,            deiconify_all_clients,   {0}},                         \
 }
 
 #define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                    \
@@ -116,8 +122,10 @@
     {TO_PREVIEW,    0,       Button1, change_layout,         {.layout=PREVIEW}},          \
     {TO_STACK,      0,       Button1, change_layout,         {.layout=STACK}},            \
     {TO_TILE,       0,       Button1, change_layout,         {.layout=TILE}},             \
-    {ADJUST_N_MAIN, 0,       Button1, adjust_n_main_max,     {.n=1}},                     \
-    {ADJUST_N_MAIN, 0,       Button3, adjust_n_main_max,     {.n=-1}},                    \
+    {CLICK_STATUS_AREA, 0,   Button1, adjust_n_main_max,     {.n=1}},                     \
+    {CLICK_STATUS_AREA, 0,   Button3, adjust_n_main_max,     {.n=-1}},                    \
+    {TOGGLE_DESKTOP,0,       Button1, iconify_all_clients,   {0}},                        \
+    {TOGGLE_DESKTOP,0,       Button3, deiconify_all_clients, {0}},                        \
     {CLICK_TITLE,   0,       Button1, pointer_move_client,   {0}},                        \
     {CLICK_TITLE,   0,       Button3, pointer_change_area,   {0}},                        \
     {TO_MAIN,       0,       Button1, change_area,           {.area_type=MAIN_AREA}},     \
@@ -131,16 +139,19 @@
     {CLICK_WIN,     0,       Button3, pointer_focus_client,  {0}},                        \
     {CLICK_FRAME,   0,       Button1, pointer_resize_client, {0}},                        \
     {CLICK_ICON,    0,       Button1, pointer_deiconify,     {0}},                        \
+    {CLICK_ICON,    0,       Button2, close_win,             {0}},                        \
     {CLICK_ROOT,    0,       Button1, adjust_layout_ratio,   {0}},                        \
 }
 
-#define RULES (WM_rule []) /* 窗口管理器對窗口的管理規則 */     \
-{ /* 可通過xprop命令查看客戶程序名稱和客戶程序實例名稱。        \
-     其結果表示爲：                                             \
-        WM_CLASS(STRING) = "客戶程序實例名稱", "客戶程序名稱"   \
-    客戶程序名稱   客戶程序實例名稱    窗口放置位置 */          \
-    {"Qq",          "qq",               FIXED},                 \
-    {"explorer.exe","explorer.exe",     FLOATING},              \
+#define RULES (WM_rule []) /* 窗口管理器對窗口的管理規則 */             \
+{ /* 可通過xprop命令查看客戶程序類型和客戶程序名稱。                    \
+     其結果表示爲：                                                     \
+        WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"               \
+    客戶程序類型        客戶程序名稱        圖標文字    窗口放置位置 */ \
+    {"Qq",              "qq",               "QQ",       FIXED},         \
+    {"explorer.exe",    "explorer.exe",     NULL,       FLOATING},      \
+    {"Google-chrome",   "google-chrome",    "chrome",   NORMAL},        \
+    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "文件", NORMAL},       \
 }
 
 #endif
