@@ -54,6 +54,7 @@ void init_wm(WM *wm)
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
     wm->cur_layout=wm->prev_layout=DEFAULT_LAYOUT;
+    wm->area_type=DEFAULT_AREA_TYPE;
     wm->main_area_ratio=DEFAULT_MAIN_AREA_RATIO;
     wm->fixed_area_ratio=DEFAULT_FIXED_AREA_RATIO;
     wm->n_main_max=DEFAULT_N_MAIN_MAX;
@@ -96,13 +97,15 @@ void create_cursors(WM *wm)
 {
     wm->cursors[NO_OP]=None;
     create_cursor(wm, MOVE, XC_fleur);
-    create_cursor(wm, HORIZ_RESIZE, XC_sb_h_double_arrow);
-    create_cursor(wm, VERT_RESIZE, XC_sb_v_double_arrow);
+    create_cursor(wm, LEFT_RESIZE, XC_left_side);
+    create_cursor(wm, RIGHT_RESIZE, XC_right_side);
+    create_cursor(wm, TOP_RESIZE, XC_top_side);
+    create_cursor(wm, BOTTOM_RESIZE, XC_bottom_side);
     create_cursor(wm, TOP_LEFT_RESIZE, XC_top_left_corner);
     create_cursor(wm, TOP_RIGHT_RESIZE, XC_top_right_corner);
     create_cursor(wm, BOTTOM_LEFT_RESIZE, XC_bottom_left_corner);
     create_cursor(wm, BOTTOM_RIGHT_RESIZE, XC_bottom_right_corner);
-    create_cursor(wm, ADJUST_LAYOUT_RATIO, XC_cross);
+    create_cursor(wm, ADJUST_LAYOUT_RATIO, XC_sb_h_double_arrow);
 }
 
 void create_cursor(WM *wm, Pointer_act act, unsigned int shape)
@@ -123,7 +126,7 @@ void create_taskbar(WM *wm)
         b->buttons[i]=XCreateSimpleWindow(wm->display, b->win,
             TASKBAR_BUTTON_WIDTH*i, 0,
             TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT,
-            0, 0, TASKBAR_BUTTON_COLOR);
+            0, 0, NORMAL_TASKBAR_BUTTON_COLOR);
         XSelectInput(wm->display, b->buttons[i], BUTTON_EVENT_MASK);
     }
     create_status_area(wm);
@@ -185,20 +188,23 @@ bool is_wm_win(WM *wm, Window win)
 
 void add_client(WM *wm, Window win)
 {
-    Client *c;
+    Client *c, *head;
     c=malloc_s(sizeof(Client));
     c->win=win;
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
     apply_rules(wm, c);
-    add_client_node(get_area_head(wm, c->place_type), c);
+    head = wm->area_type == SECOND_AREA ? get_second_area_head(wm)->prev :
+        get_area_head(wm, c->place_type);
+    add_client_node(head, c);
     wm->clients_n[c->place_type]++;
     set_default_rect(wm, c);
     frame_client(wm, c);
-    focus_client(wm, c);
-    grab_buttons(wm, c);
-    XSelectInput(wm->display, win, PropertyChangeMask);
     if(c->place_type == ICONIFY)
         iconify(wm, c);
+    else
+        focus_client(wm, c);
+    grab_buttons(wm, c);
+    XSelectInput(wm->display, win, PropertyChangeMask);
 }
 
 Client *get_area_head(WM *wm, Place_type type)
@@ -224,7 +230,7 @@ void update_layout(WM *wm)
     }
     fix_cur_focus_client_rect(wm);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        move_resize_client(wm, c, 0, 0, 0, 0);
+        move_resize_client(wm, c, NULL);
 }
 
 void fix_cur_focus_client_rect(WM *wm)
@@ -368,7 +374,7 @@ void grab_buttons(WM *wm, Client *c)
     XUngrabButton(wm->display, AnyButton, AnyModifier, c->win);
     for(size_t i=0; i<ARRAY_NUM(BUTTONBINDS); i++, p++)
     {
-        if(p->click_type == CLICK_WIN)
+        if(p->widget_type == CLIENT_WIN)
         {
             int m=is_equal_modifier_mask(wm, 0, p->modifier) ?
                 GrabModeSync : GrabModeAsync;
@@ -391,7 +397,7 @@ void handle_events(WM *wm)
 void handle_button_press(WM *wm, XEvent *e)
 {
     Buttonbind *b=BUTTONBINDS;
-    Click_type type=get_click_type(wm, e->xbutton.window);
+    Widget_type type=get_widget_type(wm, e->xbutton.window);
     Client *c=win_to_client(wm, e->xbutton.window);
     if(c)
         focus_client(wm, c);
@@ -401,7 +407,7 @@ void handle_button_press(WM *wm, XEvent *e)
         {
             if(b->func)
                 b->func(wm, e, b->arg);
-            if(type == CLICK_WIN)
+            if(type == CLIENT_WIN)
                 XAllowEvents(wm->display, ReplayPointer, CurrentTime);
             break;
         }
@@ -410,9 +416,9 @@ void handle_button_press(WM *wm, XEvent *e)
         choose_client_in_preview(wm, c);
 }
  
-bool is_func_click(WM *wm, Click_type type, Buttonbind *b, XEvent *e)
+bool is_func_click(WM *wm, Widget_type type, Buttonbind *b, XEvent *e)
 {
-    return (b->click_type == type 
+    return (b->widget_type == type 
         && b->button == e->xbutton.button
         && is_equal_modifier_mask(wm, b->modifier, e->xbutton.state));
 }
@@ -422,9 +428,9 @@ bool is_equal_modifier_mask(WM *wm, unsigned int m1, unsigned int m2)
     return (get_valid_mask(wm, m1) == get_valid_mask(wm, m2));
 }
 
-bool is_click_client_in_preview(WM *wm, Click_type type)
+bool is_click_client_in_preview(WM *wm, Widget_type type)
 {
-    return ((type==CLICK_WIN || type==CLICK_FRAME || type==CLICK_TITLE)
+    return ((type==CLIENT_WIN || type==CLIENT_FRAME || type==TITLE_AREA)
         && wm->cur_layout==PREVIEW);
 }
 
@@ -484,7 +490,7 @@ Client *win_to_client(WM *wm, Window win)
     {
         if(win==c->win || win==c->frame || win==c->title_area)
             return c;
-        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+        for(size_t i=0; i<TITLE_BUTTON_N; i++)
             if(win == c->buttons[i])
                 return c;
     }
@@ -513,18 +519,18 @@ void handle_expose(WM *wm, XEvent *e)
     if(e->xexpose.count)
         return;
     Window win=e->xexpose.window;
-    Click_type type=get_click_type(wm, win);
-    if(type == CLICK_ICON)
+    Widget_type type=get_widget_type(wm, win);
+    if(type == CLIENT_ICON)
         update_icon_text(wm, win);
-    else if(type>=CLICK_TASKBAR_BUTTON_BEGIN && type<=CLICK_TASKBAR_BUTTON_END)
-        update_taskbar_button_text(wm, type-CLICK_TASKBAR_BUTTON_BEGIN);
-    else if(type == CLICK_STATUS_AREA)
+    else if(IS_TASKBAR_BUTTON(type))
+        update_taskbar_button_text(wm, TASKBAR_BUTTON_INDEX(type));
+    else if(type == STATUS_AREA)
         update_status_area_text(wm);
-    else if(type == CLICK_TITLE)
+    else if(type == TITLE_AREA)
         update_title_area_text(wm, win_to_client(wm, win));
-    else if(type>=CLICK_CLIENT_BUTTON_BEGIN && type<=CLICK_CLIENT_BUTTON_END)
+    else if(IS_TITLE_BUTTON(type))
         update_title_button_text(wm, win_to_client(wm, win),
-            type-CLICK_CLIENT_BUTTON_BEGIN);
+            TITLE_BUTTON_INDEX(type));
 }
 
 void update_icon_text(WM *wm, Window win)
@@ -532,27 +538,25 @@ void update_icon_text(WM *wm, Window win)
     Client *c=win_to_iconic_state_client(wm, win);
     if(c)
     {
-        Icon *i=c->icon;
-        unsigned int w=i->w, h=i->h-2*ICON_TEXT_PAD;
-        get_string_size(wm, c->class_name, &i->w, NULL);
-        draw_string(wm, i->win, ICON_CLASS_NAME_FG_COLOR,
-            ICON_CLASS_NAME_BG_COLOR, CENTER, ICON_TEXT_PAD, ICON_TEXT_PAD,
-            i->w, h, c->class_name);
-        if(!i->is_short_text)
+        unsigned int w;
+        get_string_size(wm, c->class_name, &w, NULL);
+        String_format f={{0, 0, w, c->icon->h},
+            CENTER, ICON_CLASS_NAME_FG_COLOR, ICON_CLASS_NAME_BG_COLOR};
+        draw_string(wm, c->icon->win, c->class_name, &f);
+        if(!c->icon->is_short_text)
         {
-            draw_string(wm, i->win, ICON_TITLE_TEXT_FG_COLOR,
-                ICON_TITLE_TEXT_BG_COLOR, CENTER, i->w+3*ICON_TEXT_PAD,
-                ICON_TEXT_PAD, w-i->w-4*ICON_TEXT_PAD, h, c->title_text);
-            i->w=w;
+            String_format f={{w, 0, c->icon->w-w, c->icon->h},
+                CENTER, ICON_TITLE_TEXT_FG_COLOR, ICON_TITLE_TEXT_BG_COLOR};
+            draw_string(wm, c->icon->win, c->title_text, &f);
         }
     }
 }
 
 void update_taskbar_button_text(WM *wm, size_t index)
 {
-    draw_string(wm, wm->taskbar.buttons[index], TASKBAR_BUTTON_TEXT_COLOR, 
-        TASKBAR_BUTTON_TEXT_COLOR, CENTER, 0, 0, TASKBAR_BUTTON_WIDTH,
-        TASKBAR_BUTTON_HEIGHT, TASKBAR_BUTTON_TEXT[index]);
+    String_format f={{0, 0, TASKBAR_BUTTON_WIDTH,TASKBAR_BUTTON_HEIGHT},
+        CENTER, TASKBAR_BUTTON_TEXT_COLOR, TASKBAR_BUTTON_TEXT_COLOR};
+    draw_string(wm, wm->taskbar.buttons[index], TASKBAR_BUTTON_TEXT[index], &f);
 }
 
 void handle_key_press(WM *wm, XEvent *e)
@@ -603,6 +607,7 @@ void handle_map_request(WM *wm, XEvent *e)
     {
         add_client(wm, win);
         update_layout(wm);
+        wm->area_type=DEFAULT_AREA_TYPE;
     }
 }
 
@@ -669,38 +674,37 @@ char *get_text_prop(WM *wm, Window win, Atom atom)
 
 char *copy_string(const char *s)
 {
-    return strcpy(malloc_s(strlen(s)), s);
+    return strcpy(malloc_s(strlen(s)+1), s);
 }
 
-void draw_string(WM *wm, Drawable drawable, unsigned long fg, unsigned long bg, ALIGN_TYPE align, int x, int y, unsigned int w, unsigned h, const char *str)
+void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
 {
     if(str && str[0]!='\0')
     {
-        unsigned int lw, lh;
+        unsigned int w=f->r.w, h=f->r.h, lw, lh, n=strlen(str);
         get_string_size(wm, str, &lw, &lh);
-        int x_start, y_start, left=x, x_center=x+w/2-lw/2, right=x+w-lw,
-            top=y+lh, y_center=y+h/2+lh/2, bottom=y+h;
-        switch(align)
+        int x=f->r.x, y=f->r.y, sx, sy, cx=x+w/2-lw/2, cy=y+h/2+lh/2,
+            left=x, right=x+w-lw, top=y+lh, bottom=y+h;
+        switch(f->align)
         {
-            case TOP_LEFT: x_start=left, y_start=top; break;
-            case TOP_CENTER: x_start=x_center, y_start=top; break;
-            case TOP_RIGHT: x_start=right, y_start=top; break;
-            case CENTER_LEFT: x_start=left, y_start=y_center; break;
-            case CENTER: x_start=x_center, y_start=y_center; break;
-            case CENTER_RIGHT: x_start=right, y_start=y_center; break;
-            case BOTTOM_LEFT: x_start=left, y_start=bottom; break;
-            case BOTTOM_CENTER: x_start=x_center, y_start=bottom; break;
-            case BOTTOM_RIGHT: x_start=right, y_start=bottom; break;
+            case TOP_LEFT: sx=left, sy=top; break;
+            case TOP_CENTER: sx=cx, sy=top; break;
+            case TOP_RIGHT: sx=right, sy=top; break;
+            case CENTER_LEFT: sx=left, sy=cy; break;
+            case CENTER: sx=cx, sy=cy; break;
+            case CENTER_RIGHT: sx=right, sy=cy; break;
+            case BOTTOM_LEFT: sx=left, sy=bottom; break;
+            case BOTTOM_CENTER: sx=cx, sy=bottom; break;
+            case BOTTOM_RIGHT: sx=right, sy=bottom; break;
         }
-        XClearArea(wm->display, drawable, x, y, w, h, False); 
-        if(bg != fg)
+        XClearArea(wm->display, d, x, y, w, h, False); 
+        if(f->bg != f->fg)
         {
-            XSetForeground(wm->display, wm->gc, bg);
-            XFillRectangle(wm->display, drawable, wm->gc, x, y, w, h);
+            XSetForeground(wm->display, wm->gc, f->bg);
+            XFillRectangle(wm->display, d, wm->gc, x, y, w, h);
         }
-        XSetForeground(wm->display, wm->gc, fg);
-        XmbDrawString(wm->display, drawable, wm->font_set, wm->gc,
-            x_start, y_start, str, strlen(str));
+        XSetForeground(wm->display, wm->gc, f->fg);
+        XmbDrawString(wm->display, d, wm->font_set, wm->gc, sx, sy, str, n);
     }
 }
 
@@ -733,7 +737,8 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     if(wm->cur_layout==TILE || wm->cur_layout==STACK)
     {
         int s=MOVE_RESIZE_INC;
-        int d[][4]={      /* dx, dy, dw, dh */
+        Resize_info rs[] =
+        {
             [UP]          = { 0, -s,  0,  0},
             [DOWN]        = { 0,  s,  0,  0},
             [LEFT]        = {-s,  0,  0,  0},
@@ -747,12 +752,12 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
             [DOWN2UP]     = { 0,  0,  0, -s},
             [DOWN2DOWN]   = { 0,  0,  0,  s},
         };
-        int *p=d[arg.direction];
+        Resize_info r=rs[arg.direction];
         Client *c=wm->cur_focus_client;
         if(wm->cur_layout == TILE)
             to_floating_area(wm, wm->cur_focus_client);
-        if(is_valid_resize(wm, c, p[2], p[3]))
-            move_resize_client(wm, c, p[0], p[1], p[2], p[3]);
+        if(is_valid_resize(wm, c, r.dw, r.dh))
+            move_resize_client(wm, c, &r);
     }
 }
 
@@ -773,7 +778,7 @@ void quit_wm(WM *wm, XEvent *e, Func_arg unused)
     exit(EXIT_SUCCESS);
 }
 
-void close_win(WM *wm, XEvent *e, Func_arg unused)
+void close_client(WM *wm, XEvent *e, Func_arg unused)
 {
     Client *c=NULL;
     if(e->type == KeyPress)
@@ -791,6 +796,13 @@ void close_win(WM *wm, XEvent *e, Func_arg unused)
     if( c != wm->clients
         && !send_event(wm, XInternAtom(wm->display, "WM_DELETE_WINDOW", False), c))
         XDestroyWindow(wm->display, c->win);
+}
+
+void close_all_clients(WM *wm, XEvent *e, Func_arg unused)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        if(!send_event(wm, XInternAtom(wm->display, "WM_DELETE_WINDOW", False), c))
+            XDestroyWindow(wm->display, c->win);
 }
 
 int send_event(WM *wm, Atom protocol, Client *c)
@@ -840,14 +852,17 @@ void prev_client(WM *wm, XEvent *e, Func_arg unused)
 
 void focus_client(WM *wm, Client *c)
 {
+    if(wm->clients == wm->clients->next)
+        return;
+
     Display *d=wm->display;
     update_focus_client_pointer(wm, c);
     Client *pp=wm->prev_focus_client, *pc=wm->cur_focus_client;
+
     if(pp != wm->clients)
     {
         if(pp->place_type == ICONIFY && wm->cur_layout != PREVIEW)
-            XMoveWindow(d, pp->icon->win, pp->icon->x,
-                pp->icon->y=wm->screen_height-pp->icon->h);
+            XSetWindowBorder(d, pp->icon->win, NORMAL_ICON_BORDER_COLOR);
         else
             update_frame(wm, pp);
     }
@@ -855,8 +870,7 @@ void focus_client(WM *wm, Client *c)
     {
         if(pc->place_type == ICONIFY && wm->cur_layout != PREVIEW)
         {
-            XMoveWindow(d, pc->icon->win, pc->icon->x,
-                pc->icon->y=wm->screen_height-pc->icon->h-pc->icon->h/2);
+            XSetWindowBorder(d, pc->icon->win, CURRENT_ICON_BORDER_COLOR);
             XSetInputFocus(d, PointerRoot, RevertToPointerRoot, CurrentTime);
         }
         else
@@ -958,7 +972,7 @@ bool grab_pointer(WM *wm, XEvent *e)
     Cursor gc;
     XButtonEvent *be=&e->xbutton;
     Client *c=win_to_client(wm, be->window);
-    int x=be->x_root, y=be->y_root, d;
+    Move_info m={be->x_root, be->y_root, 0, 0};
     if(be->window == wm->root_win)
         gc=wm->cursors[ADJUST_LAYOUT_RATIO];
     else if(c)
@@ -966,7 +980,7 @@ bool grab_pointer(WM *wm, XEvent *e)
         if(be->window == c->title_area)
             gc=wm->cursors[MOVE];
         else if(be->window == c->frame)
-            gc=wm->cursors[get_resize_incr(c, x, y, d, d, &d, &d, &d, &d)];
+            gc=wm->cursors[get_resize_act(c, &m)];
     }
     else
         return false;
@@ -977,7 +991,8 @@ bool grab_pointer(WM *wm, XEvent *e)
 void apply_rules(WM *wm, Client *c)
 {
     WM_rule *p=RULES;
-    c->place_type=NORMAL;
+    Place_type type=area_to_place_type(wm->area_type);
+    c->place_type=type;
     if(!XGetClassHint(wm->display, c->win, &c->class_hint))
         c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     else
@@ -986,23 +1001,27 @@ void apply_rules(WM *wm, Client *c)
         {
             if( (!p->app_class || strstr(c->class_hint.res_class, p->app_class))
                 && (!p->app_name || strstr(c->class_hint.res_name, p->app_name)))
-                c->place_type=p->place_type, c->class_name=p->class_alias;
+            {
+                c->place_type = wm->area_type==DEFAULT_AREA_TYPE ? p->place_type : type;
+                c->class_name=p->class_alias;
+            }
             else
                 c->class_name=c->class_hint.res_class;
         }
     }
 }
 
+Place_type area_to_place_type(Area_type type)
+{
+    Place_type table[]={[MAIN_AREA]=NORMAL, [SECOND_AREA]=NORMAL,
+        [FIXED_AREA]=FIXED, [FLOATING_AREA]=FLOATING, [ICONIFY_AREA]=ICONIFY};
+    return table[type];
+}
+
 void set_default_rect(WM *wm, Client *c)
 {
-    Window r;
-    int x, y;
-    unsigned int w, h, b, d;
-    if(XGetGeometry(wm->display, c->win, &r, &x, &y, &w, &h, &b, &d))
-        c->x=x, c->y=y, c->w=w, c->h=h;
-    else
-        c->x=wm->screen_width/4, c->y=wm->screen_height/4,
-        c->w=wm->screen_width/2, c->h=wm->screen_height/2;
+    c->w=wm->screen_width/4, c->h=wm->screen_height/4,
+    c->x=wm->screen_width/2-c->w/2, c->y=wm->screen_height/2-c->h/2;
 }
 
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
@@ -1094,15 +1113,6 @@ void to_main_area(WM *wm, Client *c)
     move_client(wm, c, wm->clients, NORMAL);
 }
 
-bool is_in_main_area(WM *wm, Client *c)
-{
-    Client *p=wm->clients->next;
-    for(int i=0; i<wm->n_main_max; i++, p=p->next)
-        if(p == c)
-            return true;
-    return false;
-}
-
 void del_client_node(Client *c)
 {
     c->prev->next=c->next;
@@ -1120,10 +1130,7 @@ void add_client_node(Client *head, Client *c)
 void to_second_area(WM *wm, Client *c)
 {
     Client *to;
-
-    if( (wm->clients_n[NORMAL] > wm->n_main_max ||
-        (wm->clients_n[NORMAL]==wm->n_main_max && !is_in_main_area(wm, c)))
-        && (to=get_second_area_head(wm)))
+    if(wm->clients_n[NORMAL]>wm->n_main_max && (to=get_second_area_head(wm)))
         move_client(wm, c, to, NORMAL);
 }
 
@@ -1214,13 +1221,13 @@ void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y,
-        fr.w, fr.h, BORDER_WIDTH, CURRENT_BORDER_COLOR, CURRENT_FRAME_COLOR);
+        fr.w, fr.h, FRAME_BORDER_WIDTH, CURRENT_FRAME_BORDER_COLOR, CURRENT_FRAME_COLOR);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
-    for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+    for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(c, i);
         c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame,
-            br.x, br.y, br.w, br.h, 0, 0, CURRENT_BUTTON_COLOR);
+            br.x, br.y, br.w, br.h, 0, 0, CURRENT_TITLE_BUTTON_COLOR);
         XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
     }
     c->title_area=XCreateSimpleWindow(wm->display, c->frame,
@@ -1234,52 +1241,53 @@ void frame_client(WM *wm, Client *c)
 
 Rect get_frame_rect(Client *c)
 {
-    return (Rect){c->x-BORDER_WIDTH, c->y-TITLE_BAR_HEIGHT-BORDER_WIDTH,
+    return (Rect){c->x-FRAME_BORDER_WIDTH, c->y-TITLE_BAR_HEIGHT-FRAME_BORDER_WIDTH,
         c->w, c->h+TITLE_BAR_HEIGHT};
 }
 
 Rect get_title_area_rect(WM *wm, Client *c)
 {
-    int n[]={0, 1, 3, 7}; /* 與布局模式對應的標題按鈕數量 */
-    return (Rect){0, 0, c->w-CLIENT_BUTTON_WIDTH*n[wm->cur_layout],
+    int buttons_n[]={[FULL]=0, [PREVIEW]=1, [FLOATING]=3, [TILE]=7};
+    return (Rect){0, 0, c->w-TITLE_BUTTON_WIDTH*buttons_n[wm->cur_layout],
         TITLE_BAR_HEIGHT};
 }
 
 Rect get_button_rect(Client *c, size_t index)
 {
-    return (Rect){c->w-CLIENT_BUTTON_WIDTH*(CLIENT_BUTTON_N-index),
-    (TITLE_BAR_HEIGHT-CLIENT_BUTTON_HEIGHT)/2,
-    CLIENT_BUTTON_WIDTH, CLIENT_BUTTON_HEIGHT};
+    return (Rect){c->w-TITLE_BUTTON_WIDTH*(TITLE_BUTTON_N-index),
+    (TITLE_BAR_HEIGHT-TITLE_BUTTON_HEIGHT)/2,
+    TITLE_BUTTON_WIDTH, TITLE_BUTTON_HEIGHT};
 }
 
 void update_title_area_text(WM *wm, Client *c)
 {
-    Rect tr=get_title_area_rect(wm, c);
-    draw_string(wm, c->title_area, TITLE_TEXT_COLOR, TITLE_TEXT_COLOR,
-        CENTER_LEFT, tr.x, tr.y, tr.w, tr.h, c->title_text);
+    String_format f={get_title_area_rect(wm, c),
+        CENTER_LEFT, TITLE_TEXT_COLOR, TITLE_TEXT_COLOR};
+    draw_string(wm, c->title_area, c->title_text, &f);
 }
 
 void update_title_button_text(WM *wm, Client *c, size_t index)
 {
-    draw_string(wm, c->buttons[index], BUTTON_TEXT_COLOR,
-        BUTTON_TEXT_COLOR, CENTER, 0, 0, CLIENT_BUTTON_WIDTH,
-        CLIENT_BUTTON_HEIGHT, CLIENT_BUTTON_TEXT[index]);
+    String_format f={{0, 0, TITLE_BUTTON_WIDTH, TITLE_BUTTON_HEIGHT},
+        CENTER, TITLE_BUTTON_TEXT_COLOR, TITLE_BUTTON_TEXT_COLOR};
+    draw_string(wm, c->buttons[index], TITLE_BUTTON_TEXT[index], &f);
 }
 
 void update_status_area_text(WM *wm)
 {
     Taskbar *b=&wm->taskbar;
-    draw_string(wm, b->status_area, STATUS_AREA_TEXT_COLOR,
-        STATUS_AREA_TEXT_COLOR, CENTER_RIGHT, 0, 0,
-        b->w-TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N, b->h, b->status_text);
+    String_format f={{0, 0, b->w-TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N, b->h},
+        CENTER_RIGHT, STATUS_AREA_TEXT_COLOR, STATUS_AREA_TEXT_COLOR};
+    draw_string(wm, b->status_area, b->status_text, &f);
 }
 
-void move_resize_client(WM *wm, Client *c, int dx, int dy, unsigned int dw, unsigned int dh)
+void move_resize_client(WM *wm, Client *c, const Resize_info *r)
 {
-    c->x+=dx, c->y+=dy, c->w+=dw, c->h+=dh;
+    if(r)
+        c->x+=r->dx, c->y+=r->dy, c->w+=r->dw, c->h+=r->dh;
     Rect fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
     XResizeWindow(wm->display, c->win, c->w, c->h);
-    for(size_t i=0; i<CLIENT_BUTTON_N; i++)
+    for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(c, i);
         XMoveWindow(wm->display, c->buttons[i], br.x, br.y);
@@ -1290,31 +1298,31 @@ void move_resize_client(WM *wm, Client *c, int dx, int dy, unsigned int dw, unsi
 
 void fix_win_rect(Client *c)
 {
-    c->x+=BORDER_WIDTH;
-    c->y+=BORDER_WIDTH+TITLE_BAR_HEIGHT;
-    if(c->w > 2*BORDER_WIDTH+WINS_SPACE)
-        c->w-=2*BORDER_WIDTH+WINS_SPACE;
-    if(c->h > 2*BORDER_WIDTH+WINS_SPACE+TITLE_BAR_HEIGHT)
-        c->h-=2*BORDER_WIDTH+WINS_SPACE+TITLE_BAR_HEIGHT;
+    c->x+=FRAME_BORDER_WIDTH;
+    c->y+=FRAME_BORDER_WIDTH+TITLE_BAR_HEIGHT;
+    if(c->w > 2*FRAME_BORDER_WIDTH+WINS_SPACE)
+        c->w-=2*FRAME_BORDER_WIDTH+WINS_SPACE;
+    if(c->h > 2*FRAME_BORDER_WIDTH+WINS_SPACE+TITLE_BAR_HEIGHT)
+        c->h-=2*FRAME_BORDER_WIDTH+WINS_SPACE+TITLE_BAR_HEIGHT;
 }
 
 void update_frame(WM *wm, Client *c)
 {
     if(c == wm->cur_focus_client)
     {
-        XSetWindowBorder(wm->display, c->frame, CURRENT_BORDER_COLOR);
+        XSetWindowBorder(wm->display, c->frame, CURRENT_FRAME_BORDER_COLOR);
         update_win_background(wm, c->frame, CURRENT_FRAME_COLOR);
         update_win_background(wm, c->title_area, CURRENT_TITLE_AREA_COLOR);
-        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
-            update_win_background(wm, c->buttons[i], CURRENT_BUTTON_COLOR);
+        for(size_t i=0; i<TITLE_BUTTON_N; i++)
+            update_win_background(wm, c->buttons[i], CURRENT_TITLE_BUTTON_COLOR);
     }
     else
     {
-        XSetWindowBorder(wm->display, c->frame, NORMAL_BORDER_COLOR);
+        XSetWindowBorder(wm->display, c->frame, NORMAL_FRAME_BORDER_COLOR);
         update_win_background(wm, c->frame, NORMAL_FRAME_COLOR);
         update_win_background(wm, c->title_area, NORMAL_TITLE_AREA_COLOR);
-        for(size_t i=0; i<CLIENT_BUTTON_N; i++)
-            update_win_background(wm, c->buttons[i], NORMAL_BUTTON_COLOR);
+        for(size_t i=0; i<TITLE_BUTTON_N; i++)
+            update_win_background(wm, c->buttons[i], NORMAL_TITLE_BUTTON_COLOR);
     }
 }
 
@@ -1327,32 +1335,32 @@ void update_win_background(WM *wm, Window win, unsigned long color)
     XSendEvent(wm->display, win, False, NoEventMask, &event);
 }
 
-Click_type get_click_type(WM *wm, Window win)
+Widget_type get_widget_type(WM *wm, Window win)
 {
-    Click_type i;
+    Widget_type type;
     Client *c;
     if(win == wm->root_win)
-        return CLICK_ROOT;
-    for(i=CLICK_TASKBAR_BUTTON_BEGIN; i<=CLICK_TASKBAR_BUTTON_END; i++)
-        if(win == wm->taskbar.buttons[i-CLICK_TASKBAR_BUTTON_BEGIN])
-            return i;
+        return ROOT_WIN;
+    for(type=TASKBAR_BUTTON_BEGIN; type<=TASKBAR_BUTTON_END; type++)
+        if(win == wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)])
+            return type;
     if(win == wm->taskbar.status_area)
-        return CLICK_STATUS_AREA;
+        return STATUS_AREA;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(c->place_type==ICONIFY && win==c->icon->win)
-            return CLICK_ICON;
+            return CLIENT_ICON;
     if((c=win_to_client(wm, win)))
     {
         if(win == c->win)
-            return CLICK_WIN;
+            return CLIENT_WIN;
         else if(win == c->frame)
-            return CLICK_FRAME;
+            return CLIENT_FRAME;
         else if(win == c->title_area)
-            return CLICK_TITLE;
+            return TITLE_AREA;
         else
-            for(i=CLICK_CLIENT_BUTTON_BEGIN; i<=CLICK_CLIENT_BUTTON_END; i++)
-                if(win == c->buttons[i-CLICK_CLIENT_BUTTON_BEGIN])
-                    return i;
+            for(type=TITLE_BUTTON_BEGIN; type<=TITLE_BUTTON_END; type++)
+                if(win == c->buttons[TITLE_BUTTON_INDEX(type)])
+                    return type;
     }
     return UNDEFINED;
 }
@@ -1361,37 +1369,38 @@ void handle_enter_notify(WM *wm, XEvent *e)
 {
     int x=e->xcrossing.x_root, y=e->xcrossing.y_root;
     Window win=e->xcrossing.window;
-    Click_type type=get_click_type(wm, win);
-    if(type == CLICK_ROOT)
+    Widget_type type=get_widget_type(wm, win);
+    if(type == ROOT_WIN)
         hint_adjust_layout_ratio(wm, win, x, y);
-    else if(type>=CLICK_TASKBAR_BUTTON_BEGIN && type<=CLICK_TASKBAR_BUTTON_END)
-        hint_enter_taskbar_button(wm, type-CLICK_TASKBAR_BUTTON_BEGIN);
-    else if(type == CLICK_FRAME)
+    else if(IS_TASKBAR_BUTTON(type))
+        hint_enter_taskbar_button(wm, TASKBAR_BUTTON_INDEX(type));
+    else if(type == CLIENT_FRAME)
         hint_resize_client(wm, win_to_client(wm, win), x, y);
-    else if(type == CLICK_TITLE)
+    else if(type == TITLE_AREA)
         hint_move_client(wm, win_to_client(wm, win));
-    else if(type>=CLICK_CLIENT_BUTTON_BEGIN && type<=CLICK_CLIENT_BUTTON_END)
-        hint_enter_client_button(wm, win_to_client(wm, win),
-            type-CLICK_CLIENT_BUTTON_BEGIN);
+    else if(IS_TITLE_BUTTON(type))
+        hint_enter_title_button(wm, win_to_client(wm, win),
+            TITLE_BUTTON_INDEX(type));
 }
 
 void hint_enter_taskbar_button(WM *wm, size_t index)
 {
-    update_win_background(wm, wm->taskbar.buttons[index], ENTERED_TASKBAR_BUTTON_COLOR);
+    update_win_background(wm, wm->taskbar.buttons[index],
+        ENTERED_TASKBAR_BUTTON_COLOR);
 }
 
-void hint_enter_client_button(WM *wm, Client *c, size_t index)
+void hint_enter_title_button(WM *wm, Client *c, size_t index)
 {
     update_win_background(wm, c->buttons[index],
-        index==CLOSE_WIN-CLICK_CLIENT_BUTTON_BEGIN ?
-        ENTERED_CLOSE_BUTTON_COLOR : ENTERED_NORMAL_BUTTON_COLOR);
+        index==TITLE_BUTTON_INDEX(CLOSE_BUTTON) ?
+        ENTERED_CLOSE_BUTTON_COLOR : ENTERED_TITLE_BUTTON_COLOR);
 }
 
 void hint_resize_client(WM *wm, Client *c, int x, int y)
 {
-    int d=0;
+    Move_info m={x, y, 0, 0};
     XDefineCursor(wm->display, c->frame,
-        wm->cursors[get_resize_incr(c, x, y, d, d, &d, &d, &d, &d)]);
+        wm->cursors[get_resize_act(c, &m)]);
 }
 
 void hint_adjust_layout_ratio(WM *wm, Window win, int x, int y)
@@ -1409,38 +1418,38 @@ void hint_move_client(WM *wm, Client *c)
 void handle_leave_notify(WM *wm, XEvent *e)
 {
     Window win=e->xcrossing.window;
-    Click_type type=get_click_type(wm, win);
-    if(type>=CLICK_TASKBAR_BUTTON_BEGIN && type<=CLICK_TASKBAR_BUTTON_END)
-        hint_leave_taskbar_button(wm, type-CLICK_TASKBAR_BUTTON_BEGIN);
-    else if(type>=CLICK_CLIENT_BUTTON_BEGIN && type<=CLICK_CLIENT_BUTTON_END)
-        hint_leave_client_button(wm, win_to_client(wm, win), type-CLICK_CLIENT_BUTTON_BEGIN);
+    Widget_type type=get_widget_type(wm, win);
+    if(IS_TASKBAR_BUTTON(type))
+        hint_leave_taskbar_button(wm, TASKBAR_BUTTON_INDEX(type));
+    else if(IS_TITLE_BUTTON(type))
+        hint_leave_title_button(wm, win_to_client(wm, win),
+            TITLE_BUTTON_INDEX(type));
     XUndefineCursor(wm->display, win);
 }
 
 void hint_leave_taskbar_button(WM *wm, size_t index)
 {
-    update_win_background(wm, wm->taskbar.buttons[index], TASKBAR_BUTTON_COLOR);
+    update_win_background(wm, wm->taskbar.buttons[index], NORMAL_TASKBAR_BUTTON_COLOR);
 }
 
-void hint_leave_client_button(WM *wm, Client *c, size_t index)
+void hint_leave_title_button(WM *wm, Client *c, size_t index)
 {
     update_win_background(wm, c->buttons[index], c==wm->cur_focus_client ?
-        CURRENT_BUTTON_COLOR : NORMAL_BUTTON_COLOR);
+        CURRENT_TITLE_BUTTON_COLOR : NORMAL_TITLE_BUTTON_COLOR);
 }
 
 void maximize_client(WM *wm, XEvent *e, Func_arg unused)
 {
-    wm->prev_focus_client=wm->cur_focus_client;
     Client *c=wm->cur_focus_client;
     if(c != wm->clients)
     {
-        c->x=BORDER_WIDTH;
-        c->y=BORDER_WIDTH+TITLE_BAR_HEIGHT;
-        c->w=wm->screen_width-2*BORDER_WIDTH;
-        c->h=wm->screen_height-2*BORDER_WIDTH-TITLE_BAR_HEIGHT;
+        unsigned int bw=FRAME_BORDER_WIDTH, th=TITLE_BAR_HEIGHT;
+        c->x=bw, c->y=bw+th;
+        c->w=wm->screen_width-2*bw;
+        c->h=wm->screen_height-2*bw-th-wm->taskbar.h;
         if(wm->cur_layout == TILE)
             to_floating_area(wm, wm->cur_focus_client);
-        move_resize_client(wm, c, 0, 0, 0, 0);
+        move_resize_client(wm, c, NULL);
     }
 }
 
@@ -1465,8 +1474,8 @@ void create_icon(WM *wm, Client *c)
     p->is_short_text=true;
     update_client_n_and_place_type(wm, c, ICONIFY);
     set_icons_rect_for_add(wm, c);
-    p->win=XCreateSimpleWindow(wm->display, wm->root_win, p->x, p->y,
-        p->w, p->h, 0, 0, ICON_BG_COLOR);
+    p->win=XCreateSimpleWindow(wm->display, wm->taskbar.win, p->x, p->y,
+        p->w, p->h, ICON_BORDER_WIDTH, NORMAL_ICON_BORDER_COLOR, ICON_BG_COLOR);
 }
 
 void set_icons_rect_for_add(WM *wm, Client *c)
@@ -1474,24 +1483,23 @@ void set_icons_rect_for_add(WM *wm, Client *c)
     unsigned int w;
     int n;
     Client *same=find_same_class_icon_client(wm, c, &n);
-    get_string_size(wm, c->class_name, &w, NULL);
-    c->icon->w=w+2*ICON_TEXT_PAD;
+    get_string_size(wm, c->class_name, &c->icon->w, NULL);
     if(n)
     {
         get_string_size(wm, c->title_text, &w, NULL);
-        c->icon->w+=w+2*ICON_TEXT_PAD;
+        c->icon->w+=w;
         same->icon->is_short_text=c->icon->is_short_text=false;
     }
     if(n == 1)
     {
         get_string_size(wm, same->title_text, &w, NULL);
-        same->icon->w+=w+2*ICON_TEXT_PAD;
+        same->icon->w+=w;
         XResizeWindow(wm->display, same->icon->win, same->icon->w, same->icon->h);
-        move_later_icons(wm, same, c, w+2*ICON_TEXT_PAD);
+        move_later_icons(wm, same, c, w);
     }
-    c->icon->h=wm->taskbar.h;
+    c->icon->h=ICON_HEIGHT;
     set_icon_x_for_add(wm, c);
-    c->icon->y=wm->screen_height-c->icon->h;
+    c->icon->y=wm->taskbar.h/2-c->icon->h/2-ICON_BORDER_WIDTH;
 }
 
 void move_later_icons(WM *wm, Client *ref, Client *except, int dx)
@@ -1559,19 +1567,19 @@ void deiconify(WM *wm, Client *c)
 void del_icon(WM *wm, Client *c)
 {
     int n;
+    Place_type l=c->icon->place_type, d=area_to_place_type(DEFAULT_AREA_TYPE);
     Client *same=find_same_class_icon_client(wm, c, &n);
     if(n == 1)
     {
         unsigned int w=same->icon->w;
         get_string_size(wm, same->class_name, &same->icon->w, NULL);
-        same->icon->w+=2*ICON_TEXT_PAD;
         XResizeWindow(wm->display, same->icon->win, same->icon->w, same->icon->h);
         move_later_icons(wm, same, c, same->icon->w-w);
         same->icon->is_short_text=true;
     }
     move_later_icons(wm, c, NULL, -c->icon->w-ICONS_SPACE);
     XDestroyWindow(wm->display, c->icon->win);
-    update_client_n_and_place_type(wm, c, c->icon->place_type);
+    update_client_n_and_place_type(wm, c, l==ICONIFY ? d: l);
     free(c->icon);
 }
 
@@ -1594,21 +1602,20 @@ void pointer_move_client(WM *wm, XEvent *e, Func_arg arg)
 {
     if(wm->cur_layout==FULL || wm->cur_layout==PREVIEW || !grab_pointer(wm, e))
         return;
-    int ox=e->xbutton.x_root, oy=e->xbutton.y_root, nx, ny, dx, dy;
     XEvent ev;
-    if(wm->cur_layout == TILE)
-        to_floating_area(wm, wm->cur_focus_client);
+    Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
+    Resize_info r={0, 0, 0, 0};
+    Client *c=wm->cur_focus_client;
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
         XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            nx=ev.xmotion.x, ny=ev.xmotion.y, dx=nx-ox, dy=ny-oy;
-            if(abs(dx)>=1 || abs(dy)>=1)
-            {
-                move_resize_client(wm, wm->cur_focus_client, dx, dy, 0, 0);
-                ox=nx, oy=ny;
-            }
+            m.nx=ev.xmotion.x, m.ny=ev.xmotion.y, r.dx=m.nx-m.ox, r.dy=m.ny-m.oy;
+            if(c->place_type!=FLOATING && wm->cur_layout==TILE)
+                to_floating_area(wm, c);
+            move_resize_client(wm, c, &r);
+            m.ox=m.nx, m.oy=m.ny;
         }
         else if(event_handlers[ev.type])
             event_handlers[ev.type](wm, &ev);
@@ -1620,22 +1627,23 @@ void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     if(wm->cur_layout==FULL || wm->cur_layout==PREVIEW || !grab_pointer(wm, e))
         return;
-    Client *c=wm->cur_focus_client;
-    int ox=e->xbutton.x_root, oy=e->xbutton.y_root, nx, ny, dx, dy, dw, dh;
     XEvent ev;
-    if(wm->cur_layout == TILE)
-        to_floating_area(wm, wm->cur_focus_client);
+    Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
+    Resize_info r;
+    Client *c=wm->cur_focus_client;
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
         XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            nx=ev.xmotion.x, ny=ev.xmotion.y;
-            get_resize_incr(c, ox, oy, nx, ny, &dx, &dy, &dw, &dh);
-            if(is_valid_resize(wm, c, dw, dh))
+            if(c->place_type!=FLOATING && wm->cur_layout==TILE)
+                to_floating_area(wm, c);
+            m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
+            r=get_resize_info(c, &m);
+            if(is_valid_resize(wm, c, r.dw, r.dh))
             {
-                move_resize_client(wm, c, dx, dy, dw, dh);
-                ox=nx, oy=ny;
+                move_resize_client(wm, c, &r);
+                m.ox=m.nx, m.oy=m.ny;
             }
         }
         else if(event_handlers[ev.type])
@@ -1644,28 +1652,46 @@ void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg)
     XUngrabPointer(wm->display, CurrentTime);
 }
 
-Pointer_act get_resize_incr(Client *c, int ox, int oy, int nx, int ny, int *dx, int *dy, int *dw, int *dh)
+Pointer_act get_resize_act(Client *c, const Move_info *m)
 {
-    int bw=BORDER_WIDTH, cl=MOVE_RESIZE_INC, lx=c->x-bw, rx=c->x+c->w+bw,
+    int bw=FRAME_BORDER_WIDTH, cl=RESIZE_CORNER_LEN, lx=c->x-bw, rx=c->x+c->w+bw,
         ty=c->y-TITLE_BAR_HEIGHT-bw, by=c->y+c->h+bw;
-    if(ox>=lx && ox<lx+cl && oy>=ty && oy<ty+cl) /* 左上邊框 */
-        return TOP_LEFT_RESIZE+0*(*dx=nx-ox, *dy=ny-oy, *dw=-*dx, *dh=-*dy);
-    else if(ox>=rx-cl && ox<rx && oy>=ty && oy<ty+cl) /* 右上邊框 */
-        return TOP_RIGHT_RESIZE+0*(*dx=0, *dy=ny-oy, *dw=nx-ox, *dh=-*dy);
-    else if(ox>=lx && ox<lx+cl && oy>=by-cl && oy<by) /* 左下邊框 */
-        return BOTTOM_LEFT_RESIZE+0*(*dx=nx-ox, *dy=0, *dw=-*dx, *dh=ny-oy);
-    else if(ox>=rx-cl && ox<rx && oy>=by-cl && oy<by) /* 右下邊框 */
-        return BOTTOM_RIGHT_RESIZE+0*(*dx=0, *dy=0, *dw=nx-ox, *dh=ny-oy);
-    else if(oy>=ty && oy<ty+bw) /* 上邊框 */
-        return VERT_RESIZE+0*(*dx=0, *dy=ny-oy, *dw=0, *dh=-*dy);
-    else if(oy>=by-bw && oy<by) /* 下邊框 */
-        return VERT_RESIZE+0*(*dx=0, *dy=0, *dw=0, *dh=ny-oy);
-    else if(ox>=lx && ox<lx+bw) /* 左邊框 */
-        return HORIZ_RESIZE+0*(*dx=nx-ox, *dy=0, *dw=-*dx, *dh=0);
-    else if(ox>=rx-bw && ox<rx) /* 右邊框 */
-        return HORIZ_RESIZE+0*(*dx=0, *dy=0, *dw=nx-ox, *dh=0);
+    if(m->ox>=lx && m->ox<lx+cl && m->oy>=ty && m->oy<ty+cl)
+        return TOP_LEFT_RESIZE;
+    else if(m->ox>=rx-cl && m->ox<rx && m->oy>=ty && m->oy<ty+cl)
+        return TOP_RIGHT_RESIZE;
+    else if(m->ox>=lx && m->ox<lx+cl && m->oy>=by-cl && m->oy<by)
+        return BOTTOM_LEFT_RESIZE;
+    else if(m->ox>=rx-cl && m->ox<rx && m->oy>=by-cl && m->oy<by)
+        return BOTTOM_RIGHT_RESIZE;
+    else if(m->oy>=ty && m->oy<ty+bw)
+        return TOP_RESIZE;
+    else if(m->oy>=by-bw && m->oy<by)
+        return BOTTOM_RESIZE;
+    else if(m->ox>=lx && m->ox<lx+bw)
+        return LEFT_RESIZE;
+    else if(m->ox>=rx-bw && m->ox<rx)
+        return RIGHT_RESIZE;
     else
-        return NO_OP+0*(*dx=0, *dy=0, *dw=0, *dh=0);
+        return NO_OP;
+}
+
+Resize_info get_resize_info(Client *c, const Move_info *m)
+{
+    int dx=m->nx-m->ox, dy=m->ny-m->oy;
+    Resize_info rs[] =
+    {
+        [TOP_LEFT_RESIZE]     = {dx, dy, -dx, -dy},
+        [TOP_RIGHT_RESIZE]    = { 0, dy,  dx, -dy},
+        [BOTTOM_LEFT_RESIZE]  = {dx,  0, -dx,  dy},
+        [BOTTOM_RIGHT_RESIZE] = { 0,  0,  dx,  dy},
+        [TOP_RESIZE]          = { 0, dy,   0, -dy},
+        [BOTTOM_RESIZE]       = { 0,  0,   0,  dy},
+        [LEFT_RESIZE]         = {dx,  0, -dx,   0},
+        [RIGHT_RESIZE]        = { 0,  0,  dx,   0},
+        [NO_OP]               = { 0,  0,   0,   0},
+    };
+    return rs[get_resize_act(c, m)];
 }
 
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
@@ -1734,4 +1760,9 @@ Client *win_to_iconic_state_client(WM *wm, Window win)
         if(c->place_type==ICONIFY && c->icon->win==win)
             return c;
     return NULL;
+}
+
+void change_area_type(WM *wm, XEvent *e, Func_arg arg)
+{
+    wm->area_type=arg.area_type;
 }
