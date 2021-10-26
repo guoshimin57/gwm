@@ -8,7 +8,7 @@
 ./"     你應該已經收到一份附隨此程序的GNU通用公共許可證副本。否則，請參閱
 ./" <http://www.gnu.org/licenses/>。
 ./" ************************************************************************/
-.TH gwm 1 2021年10月 "gwm 0.9.10" gwm
+.TH gwm 1 2021年10月 "gwm 0.9.11" gwm
 .
 .SH 名稱
 gwm \- gwm（gsm's window manager），是一個X11動態窗口管理器。
@@ -59,7 +59,7 @@ gwm啓動後會立即嘗試執行~/.config/gwm/autostart.sh。
 .
 .TP
 .B Mod1+Mod4+t
-打開lxterminal(1)模擬終端。
+依次嘗試打開以下模擬終端直到打開其中之一或試完爲止：lxterminal、xfce4-terminal、gnome-terminal、konsole5。
 .
 .B Mod1+Mod4+f
 打開默認的文件瀏覽器。
@@ -69,16 +69,60 @@ gwm啓動後會立即嘗試執行~/.config/gwm/autostart.sh。
 打開默認的網絡瀏覽器。
 .
 .TP
-.B Mod1+Mod4+p
-打開dmenu_run。可用它來運行其他程序。
-.
-.TP
 .B Mod1+Mod4+q
 打開QQ。
 .
 .TP
 .B Mod1+Mod4+s
 打開星際譯王。
+.
+.TP
+.B Mod1+Mod4+F1
+運行以下命令：mplayer -shuffle /keep/keep/music/*。
+.
+.TP
+.B Mod1+Mod4+F2
+暫停以上mplayer命令。
+.
+.TP
+.B Mod1+Mod4+F3
+繼續執行以上mplayer命令。
+.
+.TP
+.B Mod1+Mod4+F4
+終止以上mplayer命令。
+.
+.TP
+.B Mod4+Control+F1
+用amixer來減小5%的音量。
+.
+.TP
+.B Mod4+Control+F2
+用amixer來增加5%的音量。
+.
+.TP
+.B Mod4+Control+F3
+用amixer來把音量設置成最大。
+.
+.TP
+.B Mod4+Control+F4
+用amixer來在當前音量與靜音之間切換。
+.
+.TP
+.B Mod4+Control+d
+打開dmenu_run。可用它來運行其他程序。
+.
+.TP
+.B Mod4+Control+l
+注銷gwm會話，即：pkill -9 startgwm。
+.
+.TP
+.B Mod4+Control+r
+重啓操作系統。
+.
+.TP
+.B Mod4+Control+p
+關機。
 .
 .TP
 .B Mod4+Up
@@ -130,7 +174,7 @@ gwm啓動後會立即嘗試執行~/.config/gwm/autostart.sh。
 .
 .TP
 .B Mod4+Delete
-退出gwm。如果通過startgwm啓動gwm的話，應當使用pkill -9 startgwm退出。
+退出gwm。
 .
 .TP
 .B Mod4+c
