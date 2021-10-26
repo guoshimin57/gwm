@@ -28,10 +28,24 @@ void (*event_handlers[])(WM *, XEvent *)=
 int main(int argc, char *argv[])
 {
     WM wm;
+    set_signals();
+    clear_zombies(0);
     init_wm(&wm);
     set_wm(&wm);
     handle_events(&wm);
     return EXIT_SUCCESS;
+}
+
+void set_signals(void)
+{
+	if(signal(SIGCHLD, clear_zombies) == SIG_ERR)
+    exit_with_perror("不能安裝SIGCHLD信號處理函數");
+}
+
+void exit_with_perror(const char *s)
+{
+    perror(s);
+    exit(EXIT_FAILURE);
 }
 
 void exit_with_msg(const char *msg)
@@ -95,22 +109,8 @@ void create_font_set(WM *wm)
 
 void create_cursors(WM *wm)
 {
-    wm->cursors[NO_OP]=None;
-    create_cursor(wm, MOVE, XC_fleur);
-    create_cursor(wm, LEFT_RESIZE, XC_left_side);
-    create_cursor(wm, RIGHT_RESIZE, XC_right_side);
-    create_cursor(wm, TOP_RESIZE, XC_top_side);
-    create_cursor(wm, BOTTOM_RESIZE, XC_bottom_side);
-    create_cursor(wm, TOP_LEFT_RESIZE, XC_top_left_corner);
-    create_cursor(wm, TOP_RIGHT_RESIZE, XC_top_right_corner);
-    create_cursor(wm, BOTTOM_LEFT_RESIZE, XC_bottom_left_corner);
-    create_cursor(wm, BOTTOM_RIGHT_RESIZE, XC_bottom_right_corner);
-    create_cursor(wm, ADJUST_LAYOUT_RATIO, XC_sb_h_double_arrow);
-}
-
-void create_cursor(WM *wm, Pointer_act act, unsigned int shape)
-{
-    wm->cursors[act]=XCreateFontCursor(wm->display, shape);
+    for(size_t i=0; i<POINTER_ACT_N; i++)
+        wm->cursors[i]=XCreateFontCursor(wm->display, CURSORS_SHAPE[i]);
 }
 
 void create_taskbar(WM *wm)
@@ -292,7 +292,7 @@ void set_preview_layout(WM *wm)
         /* 下邊和右邊的窗口佔用剩餘空間 */
         c->w=(i+1)%cols ? w : w+(wm->screen_width-w*cols);
         c->h=i<cols*(rows-1) ? h : h+(ch-h*rows);
-        fix_win_rect(c);
+        fix_win_rect_for_frame(c);
     }
 }
 
@@ -304,10 +304,15 @@ unsigned int get_clients_n(WM *wm)
     return n;
 }
 
+/* 平鋪布局模式的空間布置如下：
+ *     1、屏幕從左至右分別布置次要區域、主要區域、固定區域；
+ *     2、同一區域內的窗口均分本區域空間，窗口間隔設置在前窗尾部；
+ *     3、在次要區域內設置其與主區域的窗口間隔；
+ *     4、在固定區域內設置其與主區域的窗口間隔 */
 void set_tile_layout(WM *wm)
 {
     Client *c;
-    unsigned int *n=wm->clients_n, i, j, mw, sw, fw, mh, sh, fh, h;
+    unsigned int *n=wm->clients_n, i, j, mw, sw, fw, mh, sh, fh, h, g=WIN_GAP;
 
     mw=wm->main_area_ratio*wm->screen_width;
     fw=wm->screen_width*wm->fixed_area_ratio;
@@ -323,17 +328,17 @@ void set_tile_layout(WM *wm)
     for(i=0, j=0, c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         if(c->place_type == FIXED)
-            c->x=mw+sw, c->y=i++*fh, c->w=fw, c->h=fh;
+            c->x=mw+sw+g, c->y=i++*fh, c->w=fw-g, c->h=fh-g;
         else if(c->place_type == NORMAL)
         {
             if(j < wm->n_main_max)
-                c->x=sw, c->y=j*mh, c->w=mw, c->h=mh;
+                c->x=sw, c->y=j*mh, c->w=mw, c->h=mh-g;
             else
-                c->x=0, c->y=(j-wm->n_main_max)*sh, c->w=sw, c->h=sh;
+                c->x=0, c->y=(j-wm->n_main_max)*sh, c->w=sw-g, c->h=sh-g;
             j++;
         }
         if(c->place_type==NORMAL || c->place_type==FIXED)
-            fix_win_rect(c);
+            fix_win_rect_for_frame(c);
     }
 }
 
@@ -720,16 +725,18 @@ void get_string_size(WM *wm, const char *str, unsigned int *w, unsigned int *h)
 
 void exec(WM *wm, XEvent *e, Func_arg arg)
 {
-	if(fork() == 0)
+    pid_t pid=fork();
+	if(pid == 0)
     {
-		if(wm->display && close(ConnectionNumber(wm->display)))
-            perror("命令錯誤地繼承了其父進程打開的文件的描述符：");
+		if(wm->display)
+            close(ConnectionNumber(wm->display));
 		if(!setsid())
             perror("未能成功地爲命令創建新會話：");
-		execvp(arg.cmd[0], arg.cmd);
-		perror("命令執行錯誤：");
-		exit(EXIT_FAILURE);
+		if(execvp(arg.cmd[0], arg.cmd) == -1)
+            exit_with_perror("命令執行錯誤：");
     }
+    else if(pid == -1)
+        perror("未能成功地爲命令創建新進程：");
 }
 
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
@@ -770,11 +777,18 @@ bool is_valid_resize(WM *wm, Client *c, int dw, int dh)
 
 void quit_wm(WM *wm, XEvent *e, Func_arg unused)
 {
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        del_client(wm, c);
+    XDestroyWindow(wm->display, wm->taskbar.win);
+    free(wm->taskbar.status_text);
+    XFreeFontSet(wm->display, wm->font_set);
+    for(size_t i=0; i<POINTER_ACT_N; i++)
+        XFreeCursor(wm->display, wm->cursors[i]);
     XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
     XClearWindow(wm->display, wm->root_win);
     XFlush(wm->display);
     XCloseDisplay(wm->display);
-    free(wm->taskbar.status_text);
+    clear_zombies(0);
     exit(EXIT_SUCCESS);
 }
 
@@ -973,7 +987,7 @@ bool grab_pointer(WM *wm, XEvent *e)
     XButtonEvent *be=&e->xbutton;
     Client *c=win_to_client(wm, be->window);
     Move_info m={be->x_root, be->y_root, 0, 0};
-    if(be->window == wm->root_win)
+    if(wm->cur_layout==TILE && wm->clients_n[NORMAL] && be->window==wm->root_win)
         gc=wm->cursors[ADJUST_LAYOUT_RATIO];
     else if(c)
     {
@@ -990,7 +1004,7 @@ bool grab_pointer(WM *wm, XEvent *e)
 
 void apply_rules(WM *wm, Client *c)
 {
-    WM_rule *p=RULES;
+    Rule *p=RULES;
     Place_type type=area_to_place_type(wm->area_type);
     c->place_type=type;
     if(!XGetClassHint(wm->display, c->win, &c->class_hint))
@@ -1296,14 +1310,14 @@ void move_resize_client(WM *wm, Client *c, const Resize_info *r)
     XMoveResizeWindow(wm->display, c->frame, fr.x, fr.y, fr.w, fr.h);
 }
 
-void fix_win_rect(Client *c)
+void fix_win_rect_for_frame(Client *c)
 {
     c->x+=FRAME_BORDER_WIDTH;
     c->y+=FRAME_BORDER_WIDTH+TITLE_BAR_HEIGHT;
-    if(c->w > 2*FRAME_BORDER_WIDTH+WINS_SPACE)
-        c->w-=2*FRAME_BORDER_WIDTH+WINS_SPACE;
-    if(c->h > 2*FRAME_BORDER_WIDTH+WINS_SPACE+TITLE_BAR_HEIGHT)
-        c->h-=2*FRAME_BORDER_WIDTH+WINS_SPACE+TITLE_BAR_HEIGHT;
+    if(c->w > 2*FRAME_BORDER_WIDTH)
+        c->w-=2*FRAME_BORDER_WIDTH;
+    if(c->h > 2*FRAME_BORDER_WIDTH+TITLE_BAR_HEIGHT)
+        c->h-=2*FRAME_BORDER_WIDTH+TITLE_BAR_HEIGHT;
 }
 
 void update_frame(WM *wm, Client *c)
@@ -1369,50 +1383,49 @@ void handle_enter_notify(WM *wm, XEvent *e)
 {
     int x=e->xcrossing.x_root, y=e->xcrossing.y_root;
     Window win=e->xcrossing.window;
+    Client *c=win_to_client(wm, win);
     Widget_type type=get_widget_type(wm, win);
-    if(type == ROOT_WIN)
-        hint_adjust_layout_ratio(wm, win, x, y);
+    if(is_layout_adjust_area(wm, win, x))
+        XDefineCursor(wm->display, win, wm->cursors[ADJUST_LAYOUT_RATIO]);
+    else if(type == ROOT_WIN)
+        XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+    else if(type == STATUS_AREA)
+        XDefineCursor(wm->display, wm->taskbar.status_area, wm->cursors[NO_OP]);
     else if(IS_TASKBAR_BUTTON(type))
-        hint_enter_taskbar_button(wm, TASKBAR_BUTTON_INDEX(type));
+        hint_enter_taskbar_button(wm, type);
     else if(type == CLIENT_FRAME)
-        hint_resize_client(wm, win_to_client(wm, win), x, y);
+        hint_resize_client(wm, c, x, y);
     else if(type == TITLE_AREA)
-        hint_move_client(wm, win_to_client(wm, win));
+        XDefineCursor(wm->display, c->title_area, wm->cursors[MOVE]);
     else if(IS_TITLE_BUTTON(type))
-        hint_enter_title_button(wm, win_to_client(wm, win),
-            TITLE_BUTTON_INDEX(type));
+        hint_enter_title_button(wm, c, type);
 }
 
-void hint_enter_taskbar_button(WM *wm, size_t index)
+void hint_enter_taskbar_button(WM *wm, Widget_type type)
 {
-    update_win_background(wm, wm->taskbar.buttons[index],
-        ENTERED_TASKBAR_BUTTON_COLOR);
+    Window win=wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)];
+    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+    update_win_background(wm, win, ENTERED_TASKBAR_BUTTON_COLOR);
 }
 
-void hint_enter_title_button(WM *wm, Client *c, size_t index)
+void hint_enter_title_button(WM *wm, Client *c, Widget_type type)
 {
-    update_win_background(wm, c->buttons[index],
-        index==TITLE_BUTTON_INDEX(CLOSE_BUTTON) ?
+    Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
+    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+    update_win_background(wm, win, type==CLOSE_BUTTON ?
         ENTERED_CLOSE_BUTTON_COLOR : ENTERED_TITLE_BUTTON_COLOR);
 }
 
 void hint_resize_client(WM *wm, Client *c, int x, int y)
 {
     Move_info m={x, y, 0, 0};
-    XDefineCursor(wm->display, c->frame,
-        wm->cursors[get_resize_act(c, &m)]);
+    XDefineCursor(wm->display, c->frame, wm->cursors[get_resize_act(c, &m)]);
 }
 
-void hint_adjust_layout_ratio(WM *wm, Window win, int x, int y)
+bool is_layout_adjust_area(WM *wm, Window win, int x)
 {
-    if( win == wm->root_win
-        && (is_main_sec_space(wm, x) || is_main_fix_space(wm, x)))
-        XDefineCursor(wm->display, win, wm->cursors[ADJUST_LAYOUT_RATIO]);
-}
-
-void hint_move_client(WM *wm, Client *c)
-{
-    XDefineCursor(wm->display, c->title_area, wm->cursors[MOVE]);
+    return (wm->cur_layout==TILE && win==wm->root_win
+        && (is_main_sec_gap(wm, x) || is_main_fix_gap(wm, x)));
 }
 
 void handle_leave_notify(WM *wm, XEvent *e)
@@ -1420,21 +1433,22 @@ void handle_leave_notify(WM *wm, XEvent *e)
     Window win=e->xcrossing.window;
     Widget_type type=get_widget_type(wm, win);
     if(IS_TASKBAR_BUTTON(type))
-        hint_leave_taskbar_button(wm, TASKBAR_BUTTON_INDEX(type));
+        hint_leave_taskbar_button(wm, type);
     else if(IS_TITLE_BUTTON(type))
-        hint_leave_title_button(wm, win_to_client(wm, win),
-            TITLE_BUTTON_INDEX(type));
+        hint_leave_title_button(wm, win_to_client(wm, win), type);
     XUndefineCursor(wm->display, win);
 }
 
-void hint_leave_taskbar_button(WM *wm, size_t index)
+void hint_leave_taskbar_button(WM *wm, Widget_type type)
 {
-    update_win_background(wm, wm->taskbar.buttons[index], NORMAL_TASKBAR_BUTTON_COLOR);
+    Window win=wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)];
+    update_win_background(wm, win, NORMAL_TASKBAR_BUTTON_COLOR);
 }
 
-void hint_leave_title_button(WM *wm, Client *c, size_t index)
+void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
 {
-    update_win_background(wm, c->buttons[index], c==wm->cur_focus_client ?
+    Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
+    update_win_background(wm, win, c==wm->cur_focus_client ?
         CURRENT_TITLE_BUTTON_COLOR : NORMAL_TITLE_BUTTON_COLOR);
 }
 
@@ -1719,25 +1733,25 @@ bool change_layout_ratio(WM *wm, int ox, int nx)
 {
     double dr;
     dr=1.0*(nx-ox)/wm->screen_width;
-    if(is_main_sec_space(wm, ox))
+    if(is_main_sec_gap(wm, ox))
         wm->main_area_ratio-=dr;
-    else if(is_main_fix_space(wm, ox))
+    else if(is_main_fix_gap(wm, ox))
         wm->main_area_ratio+=dr, wm->fixed_area_ratio-=dr;
     else
         return false;
     return true;
 }
 
-bool is_main_sec_space(WM *wm, int x)
+bool is_main_sec_gap(WM *wm, int x)
 {
     unsigned int w=wm->screen_width*(1-wm->main_area_ratio-wm->fixed_area_ratio);
-    return (x>=w-WINS_SPACE && x<w);
+    return (x>=w-WIN_GAP && x<w);
 }
 
-bool is_main_fix_space(WM *wm, int x)
+bool is_main_fix_gap(WM *wm, int x)
 {
     unsigned int w=wm->screen_width*(1-wm->fixed_area_ratio);
-    return (x>=w-WINS_SPACE && x<w);
+    return (x>=w-WIN_GAP && x<w);
 }
 
 void iconify_all_clients(WM *wm, XEvent *e, Func_arg arg)
@@ -1765,4 +1779,10 @@ Client *win_to_iconic_state_client(WM *wm, Window win)
 void change_area_type(WM *wm, XEvent *e, Func_arg arg)
 {
     wm->area_type=arg.area_type;
+}
+
+void clear_zombies(int unused)
+{
+	while(0 < waitpid(-1, NULL, WNOHANG))
+        ;
 }
