@@ -15,6 +15,7 @@
 #define WM_KEY Mod4Mask // 窗口管理器的基本功能轉換鍵
 #define WM_SKEY (Mod4Mask|ShiftMask) // 與WM_KEY功能相反的功能轉換鍵
 #define CMD_KEY (Mod4Mask|Mod1Mask) // 與系統命令相關的功能轉換鍵
+#define SYS_KEY (Mod4Mask|ControlMask) // 與系統相關的功能轉換鍵
 
 #define DEFAULT_LAYOUT TILE // 默認的窗口布局模式
 #define DEFAULT_AREA_TYPE MAIN_AREA // 新打開的窗口的默認區域類型
@@ -65,7 +66,7 @@
 #define TITLE_BAR_HEIGHT 32 // 窗口標題欄的高度，單位爲像素
 #define TITLE_BUTTON_WIDTH TITLE_BAR_HEIGHT // 窗口按鈕的寬度，單位爲像素
 #define TITLE_BUTTON_HEIGHT TITLE_BAR_HEIGHT // 窗口按鈕的高度，單位爲像素
-#define WINS_SPACE 4 // 窗口間隔，單位爲像素
+#define WIN_GAP 4 // 窗口間隔，單位爲像素
 #define ICON_BORDER_WIDTH 1 // 縮微窗口边框的宽度，单位为像素
 #define ICON_HEIGHT 30 // 縮微化窗口的高度，單位爲像素
 #define ICONS_SPACE 16 // 縮微化窗口的間隔，單位爲像素
@@ -83,14 +84,50 @@
 /* 切換至全屏模式 切換至概覽模式 切換至堆疊模式 切換至平鋪模式 切換桌面可見性 */ \
 {       "全",           "概",         "堆",          "平",          "■" }
 
+#define CURSORS_SHAPE (unsigned int []) /* 定位器相關的光標字體 */  \
+{                                                           \
+    /* NO_OP */                  XC_left_ptr,               \
+    /* MOVE */                   XC_fleur,                  \
+    /* TOP_RESIZE */             XC_top_side,               \
+    /* BOTTOM_RESIZE */          XC_bottom_side,            \
+    /* LEFT_RESIZE */            XC_left_side,              \
+    /* RIGHT_RESIZE */           XC_right_side,             \
+    /* TOP_LEFT_RESIZE */        XC_top_left_corner,        \
+    /* TOP_RIGHT_RESIZE */       XC_top_right_corner,       \
+    /* BOTTOM_LEFT_RESIZE */     XC_bottom_left_corner,     \
+    /* BOTTOM_RIGHT_RESIZE */    XC_bottom_right_corner,    \
+    /* ADJUST_LAYOUT_RATIO */    XC_sb_h_double_arrow,      \
+}
+
+#define TERMINAL "lxterminal || xfce4-terminal || gnome-terminal || konsole5 || xterm"
+#define PLAY_START "mplayer -shuffle /keep/keep/music/*"
+#define PLAY_STOP "kill -STOP $(pgrep -f '"PLAY_START"')"
+#define PLAY_CONTUE "kill -CONT $(pgrep -f '"PLAY_START"')"
+#define PLAY_QUIT "kill -KILL $(pgrep -f '"PLAY_START"')"
+#define VOLUME_DOWN "amixer -q sset Master 5%-"
+#define VOLUME_UP "amixer -q sset Master 5%+"
+#define VOLUME_MAX "amixer -q sset Master 100%"
+#define VOLUME_TOGGLE "amixer -q sset Master toggle"
+
 #define KEYBINDS (Keybind []) /* 按鍵功能綁定 */                                        \
 {/* 功能轉換鍵  鍵符號           要綁定的函數(詳見gwm.h)  函數的參數 */                 \
-    {CMD_KEY,	XK_t,            exec,                    SH_CMD("lxterminal")},        \
+    {CMD_KEY,	XK_t,            exec,                    SH_CMD(TERMINAL)},            \
     {CMD_KEY,	XK_f,            exec,                    SH_CMD("xdg-open ~")},        \
     {CMD_KEY,	XK_w,            exec,                    SH_CMD("xdg-open http:")},    \
-    {CMD_KEY,	XK_p,            exec,                    SH_CMD("dmenu_run")},         \
     {CMD_KEY,	XK_q,            exec,                    SH_CMD("qq")},                \
     {CMD_KEY,	XK_s,            exec,                    SH_CMD("stardict")},          \
+    {CMD_KEY, 	XK_F1,           exec,                    SH_CMD(PLAY_START)},          \
+    {CMD_KEY, 	XK_F2,           exec,                    SH_CMD(PLAY_STOP)},           \
+    {CMD_KEY, 	XK_F3,           exec,                    SH_CMD(PLAY_CONTUE)},         \
+    {CMD_KEY, 	XK_F4,           exec,                    SH_CMD(PLAY_QUIT)},           \
+    {SYS_KEY, 	XK_F1,           exec,                    SH_CMD(VOLUME_DOWN)},         \
+    {SYS_KEY, 	XK_F2,           exec,                    SH_CMD(VOLUME_UP)},           \
+    {SYS_KEY, 	XK_F3,           exec,                    SH_CMD(VOLUME_MAX)},          \
+    {SYS_KEY, 	XK_F4,           exec,                    SH_CMD(VOLUME_TOGGLE)},       \
+    {SYS_KEY,	XK_d,            exec,                    SH_CMD("dmenu_run")},         \
+    {SYS_KEY, 	XK_l,            exec,                    SH_CMD("pkill -9 startgwm")}, \
+    {SYS_KEY, 	XK_r,            exec,                    SH_CMD("reboot")},            \
+    {SYS_KEY, 	XK_p,            exec,                    SH_CMD("poweroff")},          \
     {WM_KEY, 	XK_Up,           key_move_resize_client,  {.direction=UP}},             \
     {WM_KEY, 	XK_Down,         key_move_resize_client,  {.direction=DOWN}},           \
     {WM_KEY, 	XK_Left,         key_move_resize_client,  {.direction=LEFT}},           \
@@ -166,7 +203,7 @@
     {ROOT_WIN,          0,      Button1,	adjust_layout_ratio,   {0}},                        \
 }
 
-#define RULES (WM_rule []) /* 窗口管理器對窗口的管理規則 */                     \
+#define RULES (Rule []) /* 窗口管理器對窗口的管理規則 */                     \
 {/* 可通過xprop命令查看客戶程序類型和客戶程序名稱。其結果表示爲：               \
         WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"                       \
     客戶程序類型            客戶程序名稱            圖標文字    窗口放置位置 */ \
