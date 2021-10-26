@@ -16,6 +16,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <locale.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
@@ -35,12 +38,13 @@
 #define CROSSING_MASK (EnterWindowMask|LeaveWindowMask)
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
         PropertyChangeMask|POINTER_MASK|ExposureMask|CROSSING_MASK)
-#define TASKBAR_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask|ExposureMask)
+#define TASKBAR_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask|\
+        ExposureMask)
 #define BUTTON_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
         ExposureMask|ButtonPressMask|CROSSING_MASK)
 #define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
-#define STATUS_AREA_EVENT_MASK (ButtonPressMask|ExposureMask)
+#define STATUS_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 
 #define TITLE_BUTTON_INDEX(type) ((type)-TITLE_BUTTON_BEGIN)
 #define TITLE_BUTTON_TYPE(index) (TITLE_BUTTON_BEGIN+(index))
@@ -197,13 +201,13 @@ struct keybind_tag
 };
 typedef struct keybind_tag Keybind;
 
-struct wm_rule_tag
+struct rule_tag
 {
     const char *app_class, *app_name;
     const char *class_alias;
     Place_type place_type;
 };
-typedef struct wm_rule_tag WM_rule;
+typedef struct rule_tag Rule;
 
 struct move_info_tag /* 定位器新舊坐標信息 */
 {
@@ -225,13 +229,14 @@ struct string_format_tag
 };
 typedef struct string_format_tag String_format;
 
+void set_signals(void);
+void exit_with_perror(const char *s);
 void exit_with_msg(const char *msg);
 void init_wm(WM *wm);
 void set_wm(WM *wm);
 int my_x_error_handler(Display *display, XErrorEvent *e);
 void create_font_set(WM *wm);
 void create_cursors(WM *wm);
-void create_cursor(WM *wm, Pointer_act act, unsigned int shape);
 void create_taskbar(WM *wm);
 void create_status_area(WM *wm);
 void print_fatal_msg(Display *display, XErrorEvent *e);
@@ -321,19 +326,18 @@ void update_title_area_text(WM *wm, Client *c);
 void update_title_button_text(WM *wm, Client *c, size_t index);
 void update_status_area_text(WM *wm);
 void move_resize_client(WM *wm, Client *c, const Resize_info *r);
-void fix_win_rect(Client *c);
+void fix_win_rect_for_frame(Client *c);
 void update_frame(WM *wm, Client *c);
 void update_win_background(WM *wm, Window win, unsigned long color);
 Widget_type get_widget_type(WM *wm, Window win);
 void handle_enter_notify(WM *wm, XEvent *e);
-void hint_enter_taskbar_button(WM *wm, size_t index);
-void hint_enter_title_button(WM *wm, Client *c, size_t index);
+void hint_enter_taskbar_button(WM *wm, Widget_type type);
+void hint_enter_title_button(WM *wm, Client *c, Widget_type type);
 void hint_resize_client(WM *wm, Client *c, int x, int y);
-void hint_move_client(WM *wm, Client *c);
-void hint_adjust_layout_ratio(WM *wm, Window win, int x, int y);
+bool is_layout_adjust_area(WM *wm, Window win, int x);
 void handle_leave_notify(WM *wm, XEvent *e);
-void hint_leave_taskbar_button(WM *wm, size_t index);
-void hint_leave_title_button(WM *wm, Client *c, size_t index);
+void hint_leave_taskbar_button(WM *wm, Widget_type type);
+void hint_leave_title_button(WM *wm, Client *c, Widget_type type);
 void maximize_client(WM *wm, XEvent *e, Func_arg unused);
 void iconify(WM *wm, Client *c);
 void create_icon(WM *wm, Client *c);
@@ -355,11 +359,12 @@ Pointer_act get_resize_act(Client *c, const Move_info *m);
 Resize_info get_resize_info(Client *c, const Move_info *m);
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg);
 bool change_layout_ratio(WM *wm, int ox, int nx);
-bool is_main_sec_space(WM *wm, int x);
-bool is_main_fix_space(WM *wm, int x);
+bool is_main_sec_gap(WM *wm, int x);
+bool is_main_fix_gap(WM *wm, int x);
 void iconify_all_clients(WM *wm, XEvent *e, Func_arg arg);
 void deiconify_all_clients(WM *wm, XEvent *e, Func_arg arg);
 Client *win_to_iconic_state_client(WM *wm, Window win);
 void change_area_type(WM *wm, XEvent *e, Func_arg arg);
+void clear_zombies(int unused);
 
 #endif
