@@ -9,6 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+2021年 11月 02日 星期二 16:24:55 CST	gsm <406643764@qq.com>
+	* 發布第0.9.12版，實現了任意窗口可以變換到任意區域的功能；僅使用area_type表示窗口的所屬區域；取消了光標跟隨的功能；修復了在堆疊模式下標題區域寬度不正確的缺陷；修改了區域間隔的歸屬；實現了一鍵切換多媒體播放程序啓停狀態的功能。
+	* src/gwm.c：爲了實現任意窗口可以變換到任意區域的功能，修改了event_handlers數組，修改了set_tile_layout、grab_pointer、change_area、maximize_client、pointer_move_client、pointer_resize_client、adjust_layout_ratio函數，創建了handle_motion_notify函數。刪除了to_main_area、to_second_area、get_second_area_head、to_fixed_area、to_floating_area函數；爲了僅使用area_type表示窗口的所屬區域，修改了add_client、get_area_head、fix_cur_focus_client_rect、iconify_all_for_vision、deiconify_all_for_vision、get_clients_n、set_tile_layout、del_client、key_move_resize_client、focus_client、get_next_nonicon_client、get_prev_nonicon_client、is_icon_client、apply_rules、adjust_main_area_ratioadjust_fixed_area_ratio、change_area、pointer_change_area、move_client、raise_client、get_widget_type、create_icon、is_later_icon_client、find_same_class_icon_client、set_icon_x_for_add、key_choose_client、del_icon、fix_icon_pos_for_preview、update_client_n_and_place_type（並衙命名爲update_client_n_and_area_type）、pointer_move_client、pointer_resize_client、iconify_all_clients、deiconify_all_clients、win_to_iconic_state_client函數，刪除了area_to_place_type函數；爲了取消光標跟隨的功能，修改了next_client、prev_client、change_area函數，刪除了warp_pointer_for_key_press函數；爲了修復在堆疊模式下標題區域寬度不正確的缺陷，修改了get_title_area_rect函數；爲了修改區域間隔的歸屬，修改了is_main_sec_gap、is_main_fix_gap函數。
+	* src/gwm.h：爲了實現任意窗口可以變換到任意區域的功能，修改了ROOT_EVENT_MASK宏，創建了FUNC_ARG宏，創建了handle_motion_notify函數聲明。刪除了to_main_area、to_second_area、get_second_area_head、to_fixed_area、to_floating_area函數聲明；爲了僅使用area_type表示窗口的所屬區域，修改了Area_type、Icon、Client、WM、Rule類型，修改了get_area_head、move_client函數聲明，刪除了area_to_place_type函數聲明；爲了取消光標跟隨的功能，刪除了warp_pointer_for_key_press函數聲明。
+	* src/config.h：爲了實現一鍵切換多媒體播放程序啓停狀態的功能，創建了TOGGLE_PROCESS_STATE、PLAY_TOGGLE宏，刪除了PLAY_STOP、PLAY_CONTUE宏，修改了KEYBINDS宏；爲了僅使用area_type表示窗口的所屬區域，修改了RULES宏；其餘修改爲代碼重構。
+
 2021年 10月 26日 星期二 10:48:38 CST	gsm <406643764@qq.com>
 	* 發布第0.9.11版，減少了資源佔用量；光標更易於定制；修復了在平鋪模式下不能使用屏幕最右側空間的缺陷；修復了某些情況下光標形狀不正確的缺陷；實現了開關機、注銷、影音控制、音量控制的按鍵功能綁定；按鍵功能綁定中的虛擬終端更易於定制；修復了"#!/bin/sh"未放置在startdwm的第一行的缺陷;其他修改均爲代碼重構。
 	* src/gwm.c：爲了減少資源佔用量，創建了clear_zombies、set_signals、exit_with_perror函數，修改了main、quit_wm函數；爲使光標變得更易於定制，修改了create_cursors函數；爲了修復在平鋪模式下不能使用屏幕最右側空間的缺陷，修改了set_tile_layout函數；爲了修復某些情況下光標形狀不正確的缺陷，修改了grab_pointer、handle_enter_notify、hint_enter_taskbar_button、hint_enter_title_button函數，創建了is_layout_adjust_area函數；其他修改均爲代碼重構。
