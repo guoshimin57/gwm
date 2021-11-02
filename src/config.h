@@ -99,15 +99,18 @@
     /* ADJUST_LAYOUT_RATIO */    XC_sb_h_double_arrow,      \
 }
 
+#define TOGGLE_PROCESS_STATE(process) "{ pid=$(pgrep -f "process");" \
+    "ps -o stat $pid | tail -n1 | grep T > /dev/null; }" \
+    "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
 #define TERMINAL "lxterminal || xfce4-terminal || gnome-terminal || konsole5 || xterm"
 #define PLAY_START "mplayer -shuffle /keep/keep/music/*"
-#define PLAY_STOP "kill -STOP $(pgrep -f '"PLAY_START"')"
-#define PLAY_CONTUE "kill -CONT $(pgrep -f '"PLAY_START"')"
+#define PLAY_TOGGLE TOGGLE_PROCESS_STATE(PLAY_START)
 #define PLAY_QUIT "kill -KILL $(pgrep -f '"PLAY_START"')"
 #define VOLUME_DOWN "amixer -q sset Master 5%-"
 #define VOLUME_UP "amixer -q sset Master 5%+"
 #define VOLUME_MAX "amixer -q sset Master 100%"
 #define VOLUME_TOGGLE "amixer -q sset Master toggle"
+#define LOGOUT "pkill -9 'startgwm|gwm'"
 
 #define KEYBINDS (Keybind []) /* 按鍵功能綁定 */                                        \
 {/* 功能轉換鍵  鍵符號           要綁定的函數(詳見gwm.h)  函數的參數 */                 \
@@ -117,15 +120,14 @@
     {CMD_KEY,	XK_q,            exec,                    SH_CMD("qq")},                \
     {CMD_KEY,	XK_s,            exec,                    SH_CMD("stardict")},          \
     {CMD_KEY, 	XK_F1,           exec,                    SH_CMD(PLAY_START)},          \
-    {CMD_KEY, 	XK_F2,           exec,                    SH_CMD(PLAY_STOP)},           \
-    {CMD_KEY, 	XK_F3,           exec,                    SH_CMD(PLAY_CONTUE)},         \
-    {CMD_KEY, 	XK_F4,           exec,                    SH_CMD(PLAY_QUIT)},           \
+    {CMD_KEY, 	XK_F2,           exec,                    SH_CMD(PLAY_TOGGLE)},         \
+    {CMD_KEY, 	XK_F3,           exec,                    SH_CMD(PLAY_QUIT)},           \
     {SYS_KEY, 	XK_F1,           exec,                    SH_CMD(VOLUME_DOWN)},         \
     {SYS_KEY, 	XK_F2,           exec,                    SH_CMD(VOLUME_UP)},           \
     {SYS_KEY, 	XK_F3,           exec,                    SH_CMD(VOLUME_MAX)},          \
     {SYS_KEY, 	XK_F4,           exec,                    SH_CMD(VOLUME_TOGGLE)},       \
     {SYS_KEY,	XK_d,            exec,                    SH_CMD("dmenu_run")},         \
-    {SYS_KEY, 	XK_l,            exec,                    SH_CMD("pkill -9 startgwm")}, \
+    {SYS_KEY, 	XK_l,            exec,                    SH_CMD(LOGOUT)},              \
     {SYS_KEY, 	XK_r,            exec,                    SH_CMD("reboot")},            \
     {SYS_KEY, 	XK_p,            exec,                    SH_CMD("poweroff")},          \
     {WM_KEY, 	XK_Up,           key_move_resize_client,  {.direction=UP}},             \
@@ -203,15 +205,15 @@
     {ROOT_WIN,          0,      Button1,	adjust_layout_ratio,   {0}},                        \
 }
 
-#define RULES (Rule []) /* 窗口管理器對窗口的管理規則 */                     \
-{/* 可通過xprop命令查看客戶程序類型和客戶程序名稱。其結果表示爲：               \
-        WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"                       \
-    客戶程序類型            客戶程序名稱            圖標文字    窗口放置位置 */ \
-    {"Qq",                  "qq",                   "QQ",       FIXED},         \
-    {"explorer.exe",        "explorer.exe",         NULL,       FLOATING},      \
-    {"Thunder.exe",         "Thunder.exe",          NULL,       FLOATING},      \
-    {"Google-chrome",       "google-chrome",        "chrome",   NORMAL},        \
-    {"Org.gnome.Nautilus",  "org.gnome.Nautilus",   "文件",     NORMAL},        \
+#define RULES (Rule []) /* 窗口管理器對窗口的管理規則 */                            \
+{/* 可通過xprop命令查看客戶程序類型和客戶程序名稱。其結果表示爲：                   \
+        WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"                           \
+    客戶程序類型            客戶程序名稱            圖標文字    窗口放置位置 */     \
+    {"Qq",                  "qq",                   "QQ",       FIXED_AREA},        \
+    {"explorer.exe",        "explorer.exe",         NULL,       FLOATING_AREA},     \
+    {"Thunder.exe",         "Thunder.exe",          NULL,       FLOATING_AREA},     \
+    {"Google-chrome",       "google-chrome",        "chrome",   DEFAULT_AREA_TYPE}, \
+    {"Org.gnome.Nautilus",  "org.gnome.Nautilus",   "文件",     DEFAULT_AREA_TYPE}, \
 }
 
 #endif
