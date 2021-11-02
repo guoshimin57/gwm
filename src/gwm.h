@@ -29,6 +29,7 @@
 
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
+#define FUNC_ARG(var, data) (Func_arg){.var=data}
 
 #define TITLE_BUTTON_N ARRAY_NUM(TITLE_BUTTON_TEXT)
 #define TASKBAR_BUTTON_N ARRAY_NUM(TASKBAR_BUTTON_TEXT)
@@ -37,12 +38,12 @@
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
 #define CROSSING_MASK (EnterWindowMask|LeaveWindowMask)
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
-        PropertyChangeMask|POINTER_MASK|ExposureMask|CROSSING_MASK)
+    PropertyChangeMask|POINTER_MASK|PointerMotionMask|ExposureMask|CROSSING_MASK)
 #define TASKBAR_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask|\
-        ExposureMask)
+    ExposureMask)
 #define BUTTON_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
-        ExposureMask|ButtonPressMask|CROSSING_MASK)
+    ExposureMask|ButtonPressMask|CROSSING_MASK)
 #define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 #define STATUS_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 
@@ -56,15 +57,9 @@
 #define IS_TASKBAR_BUTTON(type) \
     ((type)>=TASKBAR_BUTTON_BEGIN && (type)<=TASKBAR_BUTTON_END)
 
-enum place_type_tag
-{
-     NORMAL, FIXED, FLOATING, ICONIFY, PLACE_TYPE_N
-};
-typedef enum place_type_tag Place_type;
-
 enum area_type_tag
 {
-     MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA, ICONIFY_AREA,
+     MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA, ICONIFY_AREA, AREA_TYPE_N
 };
 typedef enum area_type_tag Area_type;
 
@@ -92,7 +87,7 @@ struct icon_tag
     Window win;
     int x, y; /* 無邊框時的坐標 */
     unsigned int w, h;
-    Place_type place_type;
+    Area_type area_type;
     bool is_short_text;
 };
 typedef struct icon_tag Icon;
@@ -102,7 +97,7 @@ struct client_tag
     Window win, frame, title_area, buttons[TITLE_BUTTON_N];
     int x, y;
     unsigned int w, h;
-    Place_type place_type;
+    Area_type area_type;
     char *title_text;
     Icon *icon;
     const char *class_name;
@@ -143,7 +138,7 @@ struct wm_tag
     Window root_win;
     GC gc;
     Client *clients, *cur_focus_client, *prev_focus_client;
-    unsigned int clients_n[PLACE_TYPE_N], 
+    unsigned int clients_n[AREA_TYPE_N], 
         n_main_max; /* 主區域可容納的clients數量 */
     Layout cur_layout, prev_layout;
     Area_type area_type;
@@ -205,7 +200,7 @@ struct rule_tag
 {
     const char *app_class, *app_name;
     const char *class_alias;
-    Place_type place_type;
+    Area_type area_type;
 };
 typedef struct rule_tag Rule;
 
@@ -244,7 +239,7 @@ void create_clients(WM *wm);
 void *malloc_s(size_t size);
 bool is_wm_win(WM *wm, Window win);
 void add_client(WM *wm, Window win);
-Client *get_area_head(WM *wm, Place_type type);
+Client *get_area_head(WM *wm, Area_type type);
 void update_layout(WM *wm);
 void fix_cur_focus_client_rect(WM *wm);
 void iconify_all_for_vision(WM *wm);
@@ -269,12 +264,13 @@ Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c);
 void handle_expose(WM *wm, XEvent *e);
 void update_icon_text(WM *wm, Window win);
-void update_taskbar_button_text(WM *wm, Window win);
+void update_taskbar_button_text(WM *wm, size_t index);
 void handle_key_press(WM *wm, XEvent *e);
 unsigned int get_valid_mask(WM *wm, unsigned int mask);
 unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
 void handle_map_request(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
+void handle_motion_notify(WM *wm, XEvent *e);
 void handle_property_notify(WM *wm, XEvent *e);
 char *get_text_prop(WM *wm, Window win, Atom atom);
 char *copy_string(const char *s);
@@ -300,23 +296,16 @@ void update_title_bar_layout(WM *wm);
 void pointer_focus_client(WM *wm, XEvent *e, Func_arg arg);
 bool grab_pointer(WM *wm, XEvent *e);
 void apply_rules(WM *wm, Client *c);
-Place_type area_to_place_type(Area_type type);
 void set_default_rect(WM *wm, Client *c);
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg);
 void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg);
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg);
 void change_area(WM *wm, XEvent *e, Func_arg arg);
-void warp_pointer_for_key_press(WM *wm, Client *c, int event_type);
-void to_main_area(WM *wm, Client *c);
 void del_client_node(Client *c);
 void add_client_node(Client *head, Client *c);
-void to_second_area(WM *wm, Client *c);
-Client *get_second_area_head(WM *wm);
-void to_fixed_area(WM *wm, Client *c);
-void to_floating_area(WM *wm, Client *c);
 void pointer_change_area(WM *wm, XEvent *e, Func_arg arg);
 int compare_client_order(WM *wm, Client *c1, Client *c2);
-void move_client(WM *wm, Client *from, Client *to, Place_type type);
+void move_client(WM *wm, Client *from, Client *to, Area_type type);
 void raise_client(WM *wm);
 void frame_client(WM *wm, Client *c);
 Rect get_frame_rect(Client *c);
@@ -342,9 +331,8 @@ void maximize_client(WM *wm, XEvent *e, Func_arg unused);
 void iconify(WM *wm, Client *c);
 void create_icon(WM *wm, Client *c);
 void set_icons_rect_for_add(WM *wm, Client *c);
-void move_later_icons(WM *wm, Client *ref, Client *exclude, int dx);
+void move_later_icons(WM *wm, Client *ref, Client *except, int dx);
 bool is_later_icon_client(Client *ref, Client *cmp);
-bool is_earlier_icon_client(Client *ref, Client *cmp);
 Client *find_same_class_icon_client(WM *wm, Client *c, int *n);
 void set_icon_x_for_add(WM *wm, Client *c);
 void key_choose_client(WM *wm, XEvent *e, Func_arg arg);
@@ -352,7 +340,7 @@ void pointer_deiconify(WM *wm, XEvent *e, Func_arg arg);
 void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);
 void fix_icon_pos_for_preview(WM *wm);
-void update_client_n_and_place_type(WM *wm, Client *c, Place_type type);
+void update_client_n_and_area_type(WM *wm, Client *c, Area_type type);
 void pointer_move_client(WM *wm, XEvent *e, Func_arg arg);
 void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg);
 Pointer_act get_resize_act(Client *c, const Move_info *m);
