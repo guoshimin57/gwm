@@ -59,7 +59,8 @@
 
 enum area_type_tag
 {
-     MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA, ICONIFY_AREA, AREA_TYPE_N
+     MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA, ICONIFY_AREA,
+     AREA_TYPE_N, PREV_AREA,
 };
 typedef enum area_type_tag Area_type;
 
@@ -141,7 +142,7 @@ struct wm_tag
     unsigned int clients_n[AREA_TYPE_N], 
         n_main_max; /* 主區域可容納的clients數量 */
     Layout cur_layout, prev_layout;
-    Area_type area_type;
+    Area_type default_area_type;
     XFontSet font_set;
     Cursor cursors[POINTER_ACT_N];
     Taskbar taskbar;
@@ -278,7 +279,7 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f);
 void get_string_size(WM *wm, const char *str, unsigned int *w, unsigned int *h);
 void exec(WM *wm, XEvent *e, Func_arg arg);
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg);
-bool is_valid_resize(WM *wm, Client *c, int dw, int dh);
+bool is_valid_move_resize(WM *wm, Client *c, Resize_info *r);
 void quit_wm(WM *wm, XEvent *e, Func_arg unused);
 void close_client(WM *wm, XEvent *e, Func_arg unused);
 void close_all_clients(WM *wm, XEvent *e, Func_arg unused);
@@ -306,6 +307,9 @@ void add_client_node(Client *head, Client *c);
 void pointer_change_area(WM *wm, XEvent *e, Func_arg arg);
 int compare_client_order(WM *wm, Client *c1, Client *c2);
 void move_client(WM *wm, Client *from, Client *to, Area_type type);
+void fix_area_type(WM *wm);
+void pointer_swap_clients(WM *wm, XEvent *e, Func_arg unused);
+void swap_clients(WM *wm, Client *a, Client *b);
 void raise_client(WM *wm);
 void frame_client(WM *wm, Client *c);
 Rect get_frame_rect(Client *c);
@@ -336,11 +340,10 @@ bool is_later_icon_client(Client *ref, Client *cmp);
 Client *find_same_class_icon_client(WM *wm, Client *c, int *n);
 void set_icon_x_for_add(WM *wm, Client *c);
 void key_choose_client(WM *wm, XEvent *e, Func_arg arg);
-void pointer_deiconify(WM *wm, XEvent *e, Func_arg arg);
 void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);
 void fix_icon_pos_for_preview(WM *wm);
-void update_client_n_and_area_type(WM *wm, Client *c, Area_type type);
+void update_area_type(WM *wm, Client *c, Area_type type);
 void pointer_move_client(WM *wm, XEvent *e, Func_arg arg);
 void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg);
 Pointer_act get_resize_act(Client *c, const Move_info *m);
@@ -352,7 +355,7 @@ bool is_main_fix_gap(WM *wm, int x);
 void iconify_all_clients(WM *wm, XEvent *e, Func_arg arg);
 void deiconify_all_clients(WM *wm, XEvent *e, Func_arg arg);
 Client *win_to_iconic_state_client(WM *wm, Window win);
-void change_area_type(WM *wm, XEvent *e, Func_arg arg);
+void change_default_area_type(WM *wm, XEvent *e, Func_arg arg);
 void clear_zombies(int unused);
 
 #endif
