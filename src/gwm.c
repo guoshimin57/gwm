@@ -69,7 +69,7 @@ void init_wm(WM *wm)
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
     wm->cur_layout=wm->prev_layout=DEFAULT_LAYOUT;
-    wm->area_type=DEFAULT_AREA_TYPE;
+    wm->default_area_type=DEFAULT_AREA_TYPE;
     wm->main_area_ratio=DEFAULT_MAIN_AREA_RATIO;
     wm->fixed_area_ratio=DEFAULT_FIXED_AREA_RATIO;
     wm->n_main_max=DEFAULT_N_MAIN_MAX;
@@ -189,17 +189,13 @@ bool is_wm_win(WM *wm, Window win)
 
 void add_client(WM *wm, Window win)
 {
-    Client *c;
-    c=malloc_s(sizeof(Client));
+    Client *c=malloc_s(sizeof(Client));
     c->win=win;
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
     apply_rules(wm, c);
-    if( wm->cur_layout == TILE
-        && c->area_type == MAIN_AREA
-        && wm->clients_n[MAIN_AREA] >= wm->n_main_max)
-        c->area_type=SECOND_AREA;
     add_client_node(get_area_head(wm, c->area_type), c);
     wm->clients_n[c->area_type]++;
+    fix_area_type(wm);
     set_default_rect(wm, c);
     frame_client(wm, c);
     if(c->area_type == ICONIFY_AREA)
@@ -234,6 +230,10 @@ void update_layout(WM *wm)
     fix_cur_focus_client_rect(wm);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         move_resize_client(wm, c, NULL);
+    if(wm->cur_layout == FULL)
+        XUnmapWindow(wm->display, wm->taskbar.win);
+    else if(wm->prev_layout == FULL)
+        XMapWindow(wm->display, wm->taskbar.win);
 }
 
 void fix_cur_focus_client_rect(WM *wm)
@@ -321,10 +321,6 @@ void set_tile_layout(WM *wm)
     fw=wm->screen_width*wm->fixed_area_ratio;
     sw=wm->screen_width-fw-mw;
     h=wm->screen_height-wm->taskbar.h;
-    /*
-    mh=n[MAIN_AREA]>=wm->n_main_max ? h/wm->n_main_max :
-        (n[MAIN_AREA] ? h/n[MAIN_AREA] : h);
-        */
     mh=n[MAIN_AREA] ? h/n[MAIN_AREA] : h;
     fh=n[FIXED_AREA] ? h/n[FIXED_AREA] : h;
     sh=n[SECOND_AREA] ? h/n[SECOND_AREA] : h;
@@ -408,6 +404,8 @@ void handle_button_press(WM *wm, XEvent *e)
     Buttonbind *b=BUTTONBINDS;
     Widget_type type=get_widget_type(wm, e->xbutton.window);
     Client *c=win_to_client(wm, e->xbutton.window);
+    if(c == NULL)
+        c=win_to_iconic_state_client(wm, e->xbutton.window);
     if(c)
         focus_client(wm, c);
     for(size_t i=0; i<ARRAY_NUM(BUTTONBINDS); i++, b++)
@@ -515,6 +513,7 @@ void del_client(WM *wm, Client *c)
             del_icon(wm, c);
         del_client_node(c);
         wm->clients_n[c->area_type]--;
+        fix_area_type(wm);
         XFree(c->class_hint.res_class);
         XFree(c->class_hint.res_name);
         free(c->title_text);
@@ -616,7 +615,7 @@ void handle_map_request(WM *wm, XEvent *e)
     {
         add_client(wm, win);
         update_layout(wm);
-        wm->area_type=DEFAULT_AREA_TYPE;
+        wm->default_area_type=DEFAULT_AREA_TYPE;
     }
 }
 
@@ -778,17 +777,22 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         Resize_info r=rs[arg.direction];
         Client *c=wm->cur_focus_client;
         if(wm->cur_layout == TILE)
-            change_area(wm, NULL, FUNC_ARG(area_type, FLOATING_AREA));
-        if(is_valid_resize(wm, c, r.dw, r.dh))
+            move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
+        if(is_valid_move_resize(wm, c, &r))
             move_resize_client(wm, c, &r);
     }
 }
 
-bool is_valid_resize(WM *wm, Client *c, int dw, int dh)
+/* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外，即是否合法。
+ * 若滿足以下條件，則有交集：窗口與屏幕中心距≤窗口半邊長+屏幕半邊長。
+ * 即：|x+w/2-0-sw/2|＜|w/2+sw/2| 且 |y+h/2-0-sh/2|＜|h/2+sh/2|。
+ * 兩邊同乘以2，得：|2*x+w-sw|＜|w+sw| 且 |2*y+h-sh|＜|h+sh|。
+ */
+bool is_valid_move_resize(WM *wm, Client *c, Resize_info *r)
 {
-    int s=MOVE_RESIZE_INC;
-    return (dw>=0 || c->w>=s-dw) && (dh>=0 || c->h>=s-dh)
-        && (dw>=s || dh>=s || -dw>=s || -dh>=s);
+    int x=c->x+r->dx, y=c->y+r->dy, w=c->w+r->dw, h=c->h+r->dh,
+        sw=wm->screen_width, sh=wm->screen_height, s=MOVE_RESIZE_INC;
+    return w>=s && h>=s && abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
 }
 
 void quit_wm(WM *wm, XEvent *e, Func_arg unused)
@@ -908,12 +912,12 @@ void update_focus_client_pointer(WM *wm, Client *c)
 {
     if(!c)
     {
-        Client *p, *pp=wm->prev_focus_client, *pc=wm->cur_focus_client;
+        Client *p=NULL, *pp=wm->prev_focus_client, *pc=wm->cur_focus_client;
         if(!is_client(wm, pp) || is_icon_client(wm, pp))
         {
             if(pp->next != wm->clients)
                 p=get_next_nonicon_client(wm, pp);
-            else
+            if(!p)
                 p=get_prev_nonicon_client(wm, pp);
             wm->prev_focus_client=(p ? p : wm->clients);
         }
@@ -933,16 +937,16 @@ void update_focus_client_pointer(WM *wm, Client *c)
 
 Client *get_next_nonicon_client(WM *wm, Client *c)
 {
-    for(Client *p=c->next; p!=c; p=p->next)
-        if(p!=wm->clients && p->area_type!=ICONIFY_AREA)
+    for(Client *p=c->next; p!=wm->clients; p=p->next)
+        if(p->area_type != ICONIFY_AREA)
             return p;
     return NULL;
 }
 
 Client *get_prev_nonicon_client(WM *wm, Client *c)
 {
-    for(Client *p=c->prev; p!=c; p=p->prev)
-        if(p!=wm->clients && p->area_type!=ICONIFY_AREA)
+    for(Client *p=c->prev; p!=wm->clients; p=p->prev)
+        if(p->area_type != ICONIFY_AREA)
             return p;
     return NULL;
 }
@@ -1013,7 +1017,7 @@ bool grab_pointer(WM *wm, XEvent *e)
 void apply_rules(WM *wm, Client *c)
 {
     Rule *p=RULES;
-    c->area_type=wm->area_type;
+    c->area_type=wm->default_area_type;
     if(!XGetClassHint(wm->display, c->win, &c->class_hint))
         c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     else
@@ -1039,9 +1043,13 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
 {
     if(wm->cur_layout == TILE)
     {
+        Client *c=wm->clients->next;
+        int i, n=wm->clients_n[MAIN_AREA]+wm->clients_n[SECOND_AREA];
         wm->n_main_max+=arg.n;
         if(wm->n_main_max < 1)
             wm->n_main_max=1;
+        for(i=0; i<n; i++, c=c->next)
+            update_area_type(wm, c, i<wm->n_main_max ? MAIN_AREA : SECOND_AREA);
         update_layout(wm);
     }
 }
@@ -1082,21 +1090,10 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 void change_area(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=wm->cur_focus_client;
-    if(c != wm->clients)
-    {
-        Area_type type=arg.area_type;
-        if(wm->cur_layout == TILE)
-        {
-            if(type == ICONIFY_AREA)
-                iconify(wm, c);
-            else
-                move_client(wm, c, get_area_head(wm, type), type);
-            if(wm->clients_n[MAIN_AREA] > wm->n_main_max)
-                wm->n_main_max++;
-        }
-        else if(wm->cur_layout==STACK && type==ICONIFY_AREA)
-            iconify(wm, c);
-    }
+    Area_type t=arg.area_type==PREV_AREA ? c->icon->area_type : arg.area_type;
+    if( c!=wm->clients
+        && (wm->cur_layout==TILE || (wm->cur_layout==STACK && t==ICONIFY_AREA)))
+        move_client(wm, c, get_area_head(wm, t), t);
 }
 
 void del_client_node(Client *c)
@@ -1130,8 +1127,18 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
         /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
          * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
         to=win_to_client(wm, ev.xbutton.subwindow);
-        if(to && to!=from)
+        if(ev.xbutton.x == 0)
+            move_client(wm, from, get_area_head(wm, SECOND_AREA), SECOND_AREA);
+        else if(ev.xbutton.x == wm->screen_width-1)
+            move_client(wm, from, get_area_head(wm, FIXED_AREA), FIXED_AREA);
+        else if(ev.xbutton.y == 0)
+            maximize_client(wm, NULL, arg);
+        else if(ev.xbutton.subwindow == wm->taskbar.win)
+            move_client(wm, from, get_area_head(wm, ICONIFY_AREA), ICONIFY_AREA);
+        else if(to && to!=from)
             move_client(wm, from, to, to->area_type);
+        else if(ev.xbutton.window == wm->root_win)
+            move_client(wm, from, get_area_head(wm, MAIN_AREA), MAIN_AREA);
     }
 }
 
@@ -1147,28 +1154,98 @@ int compare_client_order(WM *wm, Client *c1, Client *c2)
 
 void move_client(WM *wm, Client *from, Client *to, Area_type type)
 {
+    if(from == wm->clients)
+        return;
+
+    Area_type ft=from->area_type, tt=to->area_type;
+
     if(from != to)
     {
         del_client_node(from);
-        if(compare_client_order(wm, from, to)==1 && to!=wm->clients)
-            add_client_node(to->prev, from);
-        else
+        if(tt!=type && ft==MAIN_AREA && type==SECOND_AREA)
+            add_client_node(to->next, from);
+        else if( to == wm->clients
+            || tt != type
+            || (ft==MAIN_AREA && tt==SECOND_AREA)
+            || (ft==tt && compare_client_order(wm, from, to)==-1))
             add_client_node(to, from);
+        else
+            add_client_node(to->prev, from);
     }
-    update_client_n_and_area_type(wm, from, type);
+
+    if(type == ICONIFY_AREA)
+        iconify(wm, from);
+    if(ft == ICONIFY_AREA)
+        deiconify(wm, from);
+
+    update_area_type(wm, from, type);
+    if(ft != type)
+        fix_area_type(wm);
+
     raise_client(wm);
     update_layout(wm);
 }
+
+void fix_area_type(WM *wm)
+{
+    unsigned int n1=wm->clients_n[MAIN_AREA], n2=wm->clients_n[SECOND_AREA],
+        max=wm->n_main_max;
+    Client *h=get_area_head(wm, SECOND_AREA);
+    if(n1 > max)
+        update_area_type(wm, h, SECOND_AREA);
+    else if(n1<max && n2)
+        update_area_type(wm, h->next, MAIN_AREA);
+}
+
+void pointer_swap_clients(WM *wm, XEvent *e, Func_arg unused)
+{
+    XEvent ev;
+    Client *from=wm->cur_focus_client, *to;
+    if(wm->cur_layout!=TILE || from==wm->clients || !grab_pointer(wm, e))
+        return;
+    do
+    {
+        XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
+        if(event_handlers[ev.type])
+            event_handlers[ev.type](wm, &ev);
+    }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
+    XUngrabPointer(wm->display, CurrentTime);
+
+    /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
+     * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
+    if((to=win_to_client(wm, ev.xbutton.subwindow)))
+        swap_clients(wm, from, to);
+}
+
+void swap_clients(WM *wm, Client *a, Client *b)
+{
+    if(a != b)
+    {
+        Client *aprev=a->prev, *bprev=b->prev;
+        Area_type atype=a->area_type, btype=b->area_type;
+        del_client_node(a), add_client_node(compare_client_order(wm, a, b)==-1 ? b : bprev, a);
+        if(aprev!=b && bprev!=a) //不相邻
+            del_client_node(b), add_client_node(aprev, b);
+        update_area_type(wm, a, btype);
+        update_area_type(wm, b, atype);
+        raise_client(wm);
+        update_layout(wm);
+    }
+}
+
 
 /* 僅在移動窗口、聚焦窗口時才有可能需要提升 */
 void raise_client(WM *wm)
 {
     Client *c=wm->cur_focus_client;
-    Window wins[]={wm->taskbar.win, c->frame};
-    if(c->area_type == FLOATING_AREA)
-        XRaiseWindow(wm->display, c->frame);
-    else
-        XRestackWindows(wm->display, wins, ARRAY_NUM(wins));
+    if(c != wm->clients)
+    {
+        Window wins[]={wm->taskbar.win, c->frame};
+        if(c->area_type == FLOATING_AREA)
+            XRaiseWindow(wm->display, c->frame);
+        else
+            XRestackWindows(wm->display, wins, ARRAY_NUM(wins));
+    }
 }
 
 void frame_client(WM *wm, Client *c)
@@ -1402,7 +1479,7 @@ void maximize_client(WM *wm, XEvent *e, Func_arg unused)
         c->w=wm->screen_width-2*bw;
         c->h=wm->screen_height-2*bw-th-wm->taskbar.h;
         if(wm->cur_layout == TILE)
-            change_area(wm, NULL, FUNC_ARG(area_type, FLOATING_AREA));
+            move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
         move_resize_client(wm, c, NULL);
     }
 }
@@ -1413,7 +1490,6 @@ void iconify(WM *wm, Client *c)
     XSelectInput(wm->display, c->icon->win, ButtonPressMask|ExposureMask);
     XMapWindow(wm->display, c->icon->win);
     XUnmapWindow(wm->display, c->frame);
-    update_layout(wm);
     if(c == wm->cur_focus_client)
     {
         focus_client(wm, NULL);
@@ -1424,9 +1500,9 @@ void iconify(WM *wm, Client *c)
 void create_icon(WM *wm, Client *c)
 {
     Icon *p=c->icon=malloc_s(sizeof(Icon));
-    p->area_type=c->area_type;
+    p->area_type=c->area_type==ICONIFY_AREA ? DEFAULT_AREA_TYPE : c->area_type;
     p->is_short_text=true;
-    update_client_n_and_area_type(wm, c, ICONIFY_AREA);
+    update_area_type(wm, c, ICONIFY_AREA);
     set_icons_rect_for_add(wm, c);
     p->win=XCreateSimpleWindow(wm->display, wm->taskbar.win, p->x, p->y,
         p->w, p->h, ICON_BORDER_WIDTH, NORMAL_ICON_BORDER_COLOR, ICON_BG_COLOR);
@@ -1466,8 +1542,8 @@ void move_later_icons(WM *wm, Client *ref, Client *except, int dx)
 
 bool is_later_icon_client(Client *ref, Client *cmp)
 {
-    return (ref && cmp && ref->area_type==ICONIFY_AREA && cmp->area_type==ICONIFY_AREA
-        && cmp->icon->x>ref->icon->x);
+    return (ref && cmp && ref->area_type==ICONIFY_AREA
+        && cmp->area_type==ICONIFY_AREA && cmp->icon->x>ref->icon->x);
 }
 
 Client *find_same_class_icon_client(WM *wm, Client *c, int *n)
@@ -1475,7 +1551,7 @@ Client *find_same_class_icon_client(WM *wm, Client *c, int *n)
     Client *first=NULL;
     *n=0;
     for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
-        if( p!=c && c->area_type==ICONIFY_AREA && p->area_type==ICONIFY_AREA
+        if( p!=c && p->area_type==ICONIFY_AREA
             && !strcmp(p->class_hint.res_class, c->class_hint.res_class))
             if(++*n == 1)
                 first=p;
@@ -1498,13 +1574,8 @@ void key_choose_client(WM *wm, XEvent *e, Func_arg arg)
         if(wm->cur_layout == PREVIEW)
             choose_client_in_preview(wm, c);
         else if(c->area_type == ICONIFY_AREA)
-            deiconify(wm, c);
+            move_client(wm, c, get_area_head(wm, c->icon->area_type), c->icon->area_type);
     }
-}
-
-void pointer_deiconify(WM *wm, XEvent *e, Func_arg arg)
-{
-    deiconify(wm, win_to_iconic_state_client(wm, e->xbutton.window));
 }
 
 void deiconify(WM *wm, Client *c)
@@ -1513,15 +1584,14 @@ void deiconify(WM *wm, Client *c)
     {
         XMapWindow(wm->display, c->frame);
         del_icon(wm, c);
-        update_layout(wm);
         focus_client(wm, c);
+
     }
 }
 
 void del_icon(WM *wm, Client *c)
 {
     int n;
-    Area_type last=c->icon->area_type, def=DEFAULT_AREA_TYPE;
     Client *same=find_same_class_icon_client(wm, c, &n);
     if(n == 1)
     {
@@ -1533,7 +1603,7 @@ void del_icon(WM *wm, Client *c)
     }
     move_later_icons(wm, c, NULL, -c->icon->w-ICONS_SPACE);
     XDestroyWindow(wm->display, c->icon->win);
-    update_client_n_and_area_type(wm, c, last==ICONIFY_AREA ? def: last);
+    update_area_type(wm, c, c->icon->area_type);
     free(c->icon);
 }
 
@@ -1545,11 +1615,10 @@ void fix_icon_pos_for_preview(WM *wm)
             p->icon->x, wm->screen_height-p->icon->h);
 }
 
-void update_client_n_and_area_type(WM *wm, Client *c, Area_type type)
+void update_area_type(WM *wm, Client *c, Area_type type)
 {
     wm->clients_n[c->area_type]--;
-    c->area_type=type;
-    wm->clients_n[c->area_type]++;
+    wm->clients_n[c->area_type=type]++;
 }
 
 void pointer_move_client(WM *wm, XEvent *e, Func_arg arg)
@@ -1568,7 +1637,7 @@ void pointer_move_client(WM *wm, XEvent *e, Func_arg arg)
         {
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y, r.dx=m.nx-m.ox, r.dy=m.ny-m.oy;
             if(c->area_type!=FLOATING_AREA && wm->cur_layout==TILE)
-                change_area(wm, NULL, FUNC_ARG(area_type, FLOATING_AREA));
+                move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
             move_resize_client(wm, c, &r);
             m.ox=m.nx, m.oy=m.ny;
         }
@@ -1592,10 +1661,10 @@ void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg)
         if(ev.type == MotionNotify)
         {
             if(c->area_type!=FLOATING_AREA && wm->cur_layout==TILE)
-                change_area(wm, NULL, FUNC_ARG(area_type, FLOATING_AREA));
+                move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             r=get_resize_info(c, &m);
-            if(is_valid_resize(wm, c, r.dw, r.dh))
+            if(is_valid_move_resize(wm, c, &r))
             {
                 move_resize_client(wm, c, &r);
                 m.ox=m.nx, m.oy=m.ny;
@@ -1709,6 +1778,7 @@ void deiconify_all_clients(WM *wm, XEvent *e, Func_arg arg)
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(c->area_type == ICONIFY_AREA)
             deiconify(wm, c);
+    update_layout(wm);
 }
 
 Client *win_to_iconic_state_client(WM *wm, Window win)
@@ -1719,9 +1789,9 @@ Client *win_to_iconic_state_client(WM *wm, Window win)
     return NULL;
 }
 
-void change_area_type(WM *wm, XEvent *e, Func_arg arg)
+void change_default_area_type(WM *wm, XEvent *e, Func_arg arg)
 {
-    wm->area_type=arg.area_type;
+    wm->default_area_type=arg.area_type;
 }
 
 void clear_zombies(int unused)
