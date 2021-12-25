@@ -99,10 +99,11 @@
     /* ADJUST_LAYOUT_RATIO */    XC_sb_h_double_arrow,      \
 }
 
-#define TOGGLE_PROCESS_STATE(process) "{ pid=$(pgrep -f "process");" \
-    "ps -o stat $pid | tail -n1 | grep T > /dev/null; }" \
-    "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
+#define HELP "lxterminal -e 'man gwm' || xfce4-terminal -e 'man gwm' || xterm -e 'man gwm'"
 #define TERMINAL "lxterminal || xfce4-terminal || gnome-terminal || konsole5 || xterm"
+#define TOGGLE_PROCESS_STATE(process) "{ pid=$(pgrep -f '"process"'); " \
+    "ps -o stat $pid | tail -n +2 | grep T > /dev/null ; } " \
+    "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
 #define PLAY_START "mplayer -shuffle /keep/keep/music/*"
 #define PLAY_TOGGLE TOGGLE_PROCESS_STATE(PLAY_START)
 #define PLAY_QUIT "kill -KILL $(pgrep -f '"PLAY_START"')"
@@ -112,97 +113,99 @@
 #define VOLUME_TOGGLE "amixer -q sset Master toggle"
 #define LOGOUT "pkill -9 'startgwm|gwm'"
 
-#define KEYBINDS (Keybind []) /* 按鍵功能綁定 */                                        \
-{/* 功能轉換鍵  鍵符號           要綁定的函數(詳見gwm.h)  函數的參數 */                 \
-    {CMD_KEY,	XK_t,            exec,                    SH_CMD(TERMINAL)},            \
-    {CMD_KEY,	XK_f,            exec,                    SH_CMD("xdg-open ~")},        \
-    {CMD_KEY,	XK_w,            exec,                    SH_CMD("xdg-open http:")},    \
-    {CMD_KEY,	XK_q,            exec,                    SH_CMD("qq")},                \
-    {CMD_KEY,	XK_s,            exec,                    SH_CMD("stardict")},          \
-    {CMD_KEY, 	XK_F1,           exec,                    SH_CMD(PLAY_START)},          \
-    {CMD_KEY, 	XK_F2,           exec,                    SH_CMD(PLAY_TOGGLE)},         \
-    {CMD_KEY, 	XK_F3,           exec,                    SH_CMD(PLAY_QUIT)},           \
-    {SYS_KEY, 	XK_F1,           exec,                    SH_CMD(VOLUME_DOWN)},         \
-    {SYS_KEY, 	XK_F2,           exec,                    SH_CMD(VOLUME_UP)},           \
-    {SYS_KEY, 	XK_F3,           exec,                    SH_CMD(VOLUME_MAX)},          \
-    {SYS_KEY, 	XK_F4,           exec,                    SH_CMD(VOLUME_TOGGLE)},       \
-    {SYS_KEY,	XK_d,            exec,                    SH_CMD("dmenu_run")},         \
-    {SYS_KEY, 	XK_l,            exec,                    SH_CMD(LOGOUT)},              \
-    {SYS_KEY, 	XK_r,            exec,                    SH_CMD("reboot")},            \
-    {SYS_KEY, 	XK_p,            exec,                    SH_CMD("poweroff")},          \
-    {WM_KEY, 	XK_Up,           key_move_resize_client,  {.direction=UP}},             \
-    {WM_KEY, 	XK_Down,         key_move_resize_client,  {.direction=DOWN}},           \
-    {WM_KEY, 	XK_Left,         key_move_resize_client,  {.direction=LEFT}},           \
-    {WM_KEY, 	XK_Right,        key_move_resize_client,  {.direction=RIGHT}},          \
-    {WM_KEY, 	XK_bracketleft,  key_move_resize_client,  {.direction=UP2UP}},          \
-    {WM_KEY, 	XK_bracketright, key_move_resize_client,  {.direction=UP2DOWN}},        \
-    {WM_KEY, 	XK_semicolon,    key_move_resize_client,  {.direction=DOWN2UP}},        \
-    {WM_KEY, 	XK_quoteright,   key_move_resize_client,  {.direction=DOWN2DOWN}},      \
-    {WM_KEY, 	XK_9,            key_move_resize_client,  {.direction=LEFT2LEFT}},      \
-    {WM_KEY, 	XK_0,            key_move_resize_client,  {.direction=LEFT2RIGHT}},     \
-    {WM_KEY, 	XK_minus,        key_move_resize_client,  {.direction=RIGHT2LEFT}},     \
-    {WM_KEY, 	XK_equal,        key_move_resize_client,  {.direction=RIGHT2RIGHT}},    \
-    {WM_KEY, 	XK_Delete,       quit_wm,                 {0}},                         \
-    {WM_KEY, 	XK_c,            close_client,            {0}},                         \
-    {WM_SKEY, 	XK_c,            close_all_clients,       {0}},                         \
-    {WM_KEY, 	XK_Tab,          next_client,             {0}},                         \
-    {WM_SKEY,	XK_Tab,          prev_client,             {0}},                         \
-    {WM_KEY, 	XK_f,            change_layout,           {.layout=FULL}},              \
-    {WM_KEY, 	XK_p,            change_layout,           {.layout=PREVIEW}},           \
-    {WM_KEY, 	XK_s,            change_layout,           {.layout=STACK}},             \
-    {WM_KEY, 	XK_t,            change_layout,           {.layout=TILE}},              \
-    {WM_KEY, 	XK_i,            adjust_n_main_max,       {.n=1}},                      \
-    {WM_SKEY,	XK_i,            adjust_n_main_max,       {.n=-1}},                     \
-    {WM_KEY, 	XK_m,            adjust_main_area_ratio,  {.change_ratio=0.01}},        \
-    {WM_SKEY,	XK_m,            adjust_main_area_ratio,  {.change_ratio=-0.01}},       \
-    {WM_KEY, 	XK_x,            adjust_fixed_area_ratio, {.change_ratio=0.01}},        \
-    {WM_SKEY,	XK_x,            adjust_fixed_area_ratio, {.change_ratio=-0.01}},       \
-    {WM_KEY, 	XK_F1,           change_area,             {.area_type=MAIN_AREA}},      \
-    {WM_KEY, 	XK_F2,           change_area,             {.area_type=SECOND_AREA}},    \
-    {WM_KEY, 	XK_F3,           change_area,             {.area_type=FIXED_AREA}},     \
-    {WM_KEY, 	XK_F4,           change_area,             {.area_type=FLOATING_AREA}},  \
-    {WM_KEY, 	XK_F5,           change_area,             {.area_type=ICONIFY_AREA}},   \
-    {WM_SKEY, 	XK_F1,           change_area_type,        {.area_type=MAIN_AREA}},      \
-    {WM_SKEY, 	XK_F2,           change_area_type,        {.area_type=SECOND_AREA}},    \
-    {WM_SKEY, 	XK_F3,           change_area_type,        {.area_type=FIXED_AREA}},     \
-    {WM_SKEY, 	XK_F4,           change_area_type,        {.area_type=FLOATING_AREA}},  \
-    {WM_SKEY, 	XK_F5,           change_area_type,        {.area_type=ICONIFY_AREA}},   \
-    {WM_KEY, 	XK_Return,       key_choose_client,       {0}},                         \
-    {WM_KEY, 	XK_d,            iconify_all_clients,     {0}},                         \
-    {WM_SKEY,	XK_d,            deiconify_all_clients,   {0}},                         \
+#define KEYBINDS (Keybind []) /* 按鍵功能綁定 */                                           \
+{/* 功能轉換鍵  鍵符號           要綁定的函數(詳見gwm.h)      函數的參數 */                \
+    {0,	        XK_F1,           exec,                        SH_CMD(HELP)},               \
+    {CMD_KEY,	XK_t,            exec,                        SH_CMD(TERMINAL)},           \
+    {CMD_KEY,	XK_f,            exec,                        SH_CMD("xdg-open ~")},       \
+    {CMD_KEY,	XK_w,            exec,                        SH_CMD("xdg-open http:")},   \
+    {CMD_KEY,	XK_q,            exec,                        SH_CMD("qq")},               \
+    {CMD_KEY,	XK_s,            exec,                        SH_CMD("stardict")},         \
+    {CMD_KEY, 	XK_F1,           exec,                        SH_CMD(PLAY_START)},         \
+    {CMD_KEY, 	XK_F2,           exec,                        SH_CMD(PLAY_TOGGLE)},        \
+    {CMD_KEY, 	XK_F3,           exec,                        SH_CMD(PLAY_QUIT)},          \
+    {SYS_KEY, 	XK_F1,           exec,                        SH_CMD(VOLUME_DOWN)},        \
+    {SYS_KEY, 	XK_F2,           exec,                        SH_CMD(VOLUME_UP)},          \
+    {SYS_KEY, 	XK_F3,           exec,                        SH_CMD(VOLUME_MAX)},         \
+    {SYS_KEY, 	XK_F4,           exec,                        SH_CMD(VOLUME_TOGGLE)},      \
+    {SYS_KEY,	XK_d,            exec,                        SH_CMD("dmenu_run")},        \
+    {SYS_KEY, 	XK_l,            exec,                        SH_CMD(LOGOUT)},             \
+    {SYS_KEY, 	XK_r,            exec,                        SH_CMD("reboot")},           \
+    {SYS_KEY, 	XK_p,            exec,                        SH_CMD("poweroff")},         \
+    {WM_KEY, 	XK_Up,           key_move_resize_client,      {.direction=UP}},            \
+    {WM_KEY, 	XK_Down,         key_move_resize_client,      {.direction=DOWN}},          \
+    {WM_KEY, 	XK_Left,         key_move_resize_client,      {.direction=LEFT}},          \
+    {WM_KEY, 	XK_Right,        key_move_resize_client,      {.direction=RIGHT}},         \
+    {WM_KEY, 	XK_bracketleft,  key_move_resize_client,      {.direction=UP2UP}},         \
+    {WM_KEY, 	XK_bracketright, key_move_resize_client,      {.direction=UP2DOWN}},       \
+    {WM_KEY, 	XK_semicolon,    key_move_resize_client,      {.direction=DOWN2UP}},       \
+    {WM_KEY, 	XK_quoteright,   key_move_resize_client,      {.direction=DOWN2DOWN}},     \
+    {WM_KEY, 	XK_9,            key_move_resize_client,      {.direction=LEFT2LEFT}},     \
+    {WM_KEY, 	XK_0,            key_move_resize_client,      {.direction=LEFT2RIGHT}},    \
+    {WM_KEY, 	XK_minus,        key_move_resize_client,      {.direction=RIGHT2LEFT}},    \
+    {WM_KEY, 	XK_equal,        key_move_resize_client,      {.direction=RIGHT2RIGHT}},   \
+    {WM_KEY, 	XK_Delete,       quit_wm,                     {0}},                        \
+    {WM_KEY, 	XK_c,            close_client,                {0}},                        \
+    {WM_SKEY, 	XK_c,            close_all_clients,           {0}},                        \
+    {WM_KEY, 	XK_Tab,          next_client,                 {0}},                        \
+    {WM_SKEY,	XK_Tab,          prev_client,                 {0}},                        \
+    {WM_KEY, 	XK_f,            change_layout,               {.layout=FULL}},             \
+    {WM_KEY, 	XK_p,            change_layout,               {.layout=PREVIEW}},          \
+    {WM_KEY, 	XK_s,            change_layout,               {.layout=STACK}},            \
+    {WM_KEY, 	XK_t,            change_layout,               {.layout=TILE}},             \
+    {WM_KEY, 	XK_i,            adjust_n_main_max,           {.n=1}},                     \
+    {WM_SKEY,	XK_i,            adjust_n_main_max,           {.n=-1}},                    \
+    {WM_KEY, 	XK_m,            adjust_main_area_ratio,      {.change_ratio=0.01}},       \
+    {WM_SKEY,	XK_m,            adjust_main_area_ratio,      {.change_ratio=-0.01}},      \
+    {WM_KEY, 	XK_x,            adjust_fixed_area_ratio,     {.change_ratio=0.01}},       \
+    {WM_SKEY,	XK_x,            adjust_fixed_area_ratio,     {.change_ratio=-0.01}},      \
+    {WM_KEY, 	XK_F1,           change_area,                 {.area_type=MAIN_AREA}},     \
+    {WM_KEY, 	XK_F2,           change_area,                 {.area_type=SECOND_AREA}},   \
+    {WM_KEY, 	XK_F3,           change_area,                 {.area_type=FIXED_AREA}},    \
+    {WM_KEY, 	XK_F4,           change_area,                 {.area_type=FLOATING_AREA}}, \
+    {WM_KEY, 	XK_F5,           change_area,                 {.area_type=ICONIFY_AREA}},  \
+    {WM_SKEY, 	XK_F1,           change_default_area_type,    {.area_type=MAIN_AREA}},     \
+    {WM_SKEY, 	XK_F2,           change_default_area_type,    {.area_type=SECOND_AREA}},   \
+    {WM_SKEY, 	XK_F3,           change_default_area_type,    {.area_type=FIXED_AREA}},    \
+    {WM_SKEY, 	XK_F4,           change_default_area_type,    {.area_type=FLOATING_AREA}}, \
+    {WM_SKEY, 	XK_F5,           change_default_area_type,    {.area_type=ICONIFY_AREA}},  \
+    {WM_KEY, 	XK_Return,       key_choose_client,           {0}},                        \
+    {WM_KEY, 	XK_d,            iconify_all_clients,         {0}},                        \
+    {WM_SKEY,	XK_d,            deiconify_all_clients,       {0}},                        \
 }
 
-#define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                          \
-{/* 控件類型       功能轉換鍵   定位器按鈕  要綁定的函數           函數的參數 */                \
-    {FULL_BUTTON,       0,      Button1,	change_layout,         {.layout=FULL}},             \
-    {PREVIEW_BUTTON,    0,      Button1,	change_layout,         {.layout=PREVIEW}},          \
-    {STACK_BUTTON,      0,      Button1,	change_layout,         {.layout=STACK}},            \
-    {TILE_BUTTON,       0,      Button1,	change_layout,         {.layout=TILE}},             \
-    {TILE_BUTTON,       0,      Button5,	adjust_n_main_max,     {.n=1}},                     \
-    {TILE_BUTTON,       0,      Button4,	adjust_n_main_max,     {.n=-1}},                    \
-    {DESKTOP_BUTTON,    0,      Button1,	iconify_all_clients,   {0}},                        \
-    {DESKTOP_BUTTON,    0,      Button2,	close_all_clients,     {0}},                        \
-    {DESKTOP_BUTTON,    0,      Button3,	deiconify_all_clients, {0}},                        \
-    {TITLE_AREA,        0,      Button1,	pointer_move_client,   {0}},                        \
-    {TITLE_AREA,        0,      Button3,	pointer_change_area,   {0}},                        \
-    {MAIN_BUTTON,       0,      Button1,	change_area,           {.area_type=MAIN_AREA}},     \
-    {SECOND_BUTTON,     0,      Button1,	change_area,           {.area_type=SECOND_AREA}},   \
-    {FIXED_BUTTON,      0,      Button1,	change_area,           {.area_type=FIXED_AREA}},    \
-    {FLOAT_BUTTON,      0,      Button1,	change_area,           {.area_type=FLOATING_AREA}}, \
-    {ICON_BUTTON,       0,      Button1,	change_area,           {.area_type=ICONIFY_AREA}},  \
-    {MAX_BUTTON,        0,      Button1,	maximize_client,       {0}},                        \
-    {CLOSE_BUTTON,      0,      Button1,	close_client,          {0}},                        \
-    {MAIN_BUTTON,       0,      Button3,	change_area_type,      {.area_type=MAIN_AREA}},     \
-    {SECOND_BUTTON,     0,      Button3,	change_area_type,      {.area_type=SECOND_AREA}},   \
-    {FIXED_BUTTON,      0,      Button3,	change_area_type,      {.area_type=FIXED_AREA}},    \
-    {FLOAT_BUTTON,      0,      Button3,	change_area_type,      {.area_type=FLOATING_AREA}}, \
-    {ICON_BUTTON,       0,      Button3,	change_area_type,      {.area_type=ICONIFY_AREA}},  \
-    {CLIENT_WIN,        0,      Button1,	pointer_focus_client,  {0}},                        \
-    {CLIENT_WIN,        0,      Button3,	pointer_focus_client,  {0}},                        \
-    {CLIENT_FRAME,      0,      Button1,	pointer_resize_client, {0}},                        \
-    {CLIENT_ICON,       0,      Button1,	pointer_deiconify,     {0}},                        \
-    {CLIENT_ICON,       0,      Button2,	close_client,          {0}},                        \
-    {ROOT_WIN,          0,      Button1,	adjust_layout_ratio,   {0}},                        \
+#define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                              \
+{/* 控件類型       功能轉換鍵   定位器按鈕  要綁定的函數               函數的參數 */                \
+    {FULL_BUTTON,       0,      Button1,	change_layout,             {.layout=FULL}},             \
+    {PREVIEW_BUTTON,    0,      Button1,	change_layout,             {.layout=PREVIEW}},          \
+    {STACK_BUTTON,      0,      Button1,	change_layout,             {.layout=STACK}},            \
+    {TILE_BUTTON,       0,      Button1,	change_layout,             {.layout=TILE}},             \
+    {TILE_BUTTON,       0,      Button5,	adjust_n_main_max,         {.n=1}},                     \
+    {TILE_BUTTON,       0,      Button4,	adjust_n_main_max,         {.n=-1}},                    \
+    {DESKTOP_BUTTON,    0,      Button1,	iconify_all_clients,       {0}},                        \
+    {DESKTOP_BUTTON,    0,      Button2,	close_all_clients,         {0}},                        \
+    {DESKTOP_BUTTON,    0,      Button3,	deiconify_all_clients,     {0}},                        \
+    {TITLE_AREA,        0,      Button1,	pointer_swap_clients,      {0}},                        \
+    {TITLE_AREA,        0,      Button2,	pointer_move_client,       {0}},                        \
+    {TITLE_AREA,        0,      Button3,	pointer_change_area,       {0}},                        \
+    {MAIN_BUTTON,       0,      Button1,	change_area,               {.area_type=MAIN_AREA}},     \
+    {SECOND_BUTTON,     0,      Button1,	change_area,               {.area_type=SECOND_AREA}},   \
+    {FIXED_BUTTON,      0,      Button1,	change_area,               {.area_type=FIXED_AREA}},    \
+    {FLOAT_BUTTON,      0,      Button1,	change_area,               {.area_type=FLOATING_AREA}}, \
+    {ICON_BUTTON,       0,      Button1,	change_area,               {.area_type=ICONIFY_AREA}},  \
+    {MAX_BUTTON,        0,      Button1,	maximize_client,           {0}},                        \
+    {CLOSE_BUTTON,      0,      Button1,	close_client,              {0}},                        \
+    {MAIN_BUTTON,       0,      Button3,	change_default_area_type,  {.area_type=MAIN_AREA}},     \
+    {SECOND_BUTTON,     0,      Button3,	change_default_area_type,  {.area_type=SECOND_AREA}},   \
+    {FIXED_BUTTON,      0,      Button3,	change_default_area_type,  {.area_type=FIXED_AREA}},    \
+    {FLOAT_BUTTON,      0,      Button3,	change_default_area_type,  {.area_type=FLOATING_AREA}}, \
+    {ICON_BUTTON,       0,      Button3,	change_default_area_type,  {.area_type=ICONIFY_AREA}},  \
+    {CLIENT_WIN,        0,      Button1,	pointer_focus_client,      {0}},                        \
+    {CLIENT_WIN,        0,      Button3,	pointer_focus_client,      {0}},                        \
+    {CLIENT_FRAME,      0,      Button1,	pointer_resize_client,     {0}},                        \
+    {CLIENT_ICON,       0,      Button1,	change_area,               {.area_type=PREV_AREA}},     \
+    {CLIENT_ICON,       0,      Button2,	close_client,              {0}},                        \
+    {ROOT_WIN,          0,      Button1,	adjust_layout_ratio,       {0}},                        \
 }
 
 #define RULES (Rule []) /* 窗口管理器對窗口的管理規則 */                            \
