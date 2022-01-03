@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     ChangeLog：面向開發者的變更日志。
- *     版權 (C) 2021 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2022 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -8,6 +8,12 @@
  *     你應該已經收到一份附隨此程序的GNU通用公共許可證副本。否則，請參閱
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
+
+2022年 01月 03日 星期一 13:33:57 CST	gsm <406643764@qq.com>
+	* 發布第0.9.14版，實現了光標進入窗口時聚焦窗口的功能，實現了操作中心的功能，實現了任務欄隨狀態區域文字長度變化而調整各區域的寬度的功能，修復了某些情況下移動窗口不正確的缺陷，修改了任務欄配色，實現了打開韋諾之戰的快捷鍵綁定，修改了交換窗口和用光標改變窗口區域的快捷鍵綁定。
+	* src/gwm.c：爲了實現光標進入窗口時聚焦窗口的功能，修改了init_wm、handle_button_press、handle_enter_notify函數，創建了focus_clicked_client、choose_client、toggle_focus_mode函數，刪除了choose_client_in_preview、key_choose_client函數；爲了實現操作中心的功能，修改了set_wm、handle_button_press、handle_expose、get_widget_type、handle_enter_notify、handle_leave_notify函數，創建了create_cmd_center、update_cmd_center_button_text、hint_enter_cmd_center_button、hint_leave_cmd_center_button、open_cmd_center函數；爲了實現任務欄隨狀態區域文字長度變化而調整各區域的寬度的功能，修改了create_taskbar、create_status_area、handle_property_notify、update_status_area_text、create_icon、set_icon_x_for_add函數，創建了create_icon_area函數；爲了修復某些情況下移動窗口不正確的缺陷，修改了create_clients、move_client函數。
+	* src/gwm.h：爲了實現操作中心的功能，創建了CMD_CENTER_BUTTON_N、CMD_CENTER_BUTTON_INDEX、IS_CMD_CENTER_BUTTON宏和Cmd_center類型以及create_cmd_center、update_cmd_center_button_text、hint_enter_cmd_center_button、hint_leave_cmd_center_button、open_cmd_center函數聲明，修改了Widget_type、WM類型；爲了實現光標進入窗口時聚焦窗口的功能，創建了Area_type類型和focus_clicked_client、choose_client、toggle_focus_mode函數聲明，刪除了choose_client_in_preview、key_choose_client函數聲明，修改了Taskbar、WM類型；爲了實現任務欄隨狀態區域文字長度變化而調整各區域的寬度的功能，創建了create_icon_area函數聲明。
+	* src/config.h：爲了實現光標進入窗口時聚焦窗口的功能，創建了DEFAULT_FOCUS_MODE宏，修改了KEYBINDS、BUTTONBINDS宏；爲了修改任務欄配色，創建了ICON_AREA_COLOR宏，修改了STATUS_AREA_COLOR宏；爲了實現操作中心的功能，創建了CMD_CENTER_COLOR、NORMAL_CMD_CENTER_BUTTON_COLOR、ENTERED_CMD_CENTER_BUTTON_COLOR、CMD_CENTER_BUTTON_TEXT_COLOR、CMD_CENTER_BUTTON_WIDTH、CMD_CENTER_BUTTON_HEIGHT、CMD_CENTER_COL、TASKBAR_BUTTON_TEXT、CMD_CENTER_BUTTON_TEXT宏，修改了KEYBINDS、BUTTONBINDS宏；爲了實現任務欄隨狀態區域文字長度變化而調整各區域的寬度的功能，創建了STATUS_AREA_WIDTH_MAX宏；爲了實現打開韋諾之戰的快捷鍵綁定，修改了KEYBINDS宏；爲了修改交換窗口和用光標改變窗口區域的快捷鍵綁定，修改了BUTTONBINDS宏。
 
 2021年 12月 25日 星期六 20:00:28 CST	gsm <406643764@qq.com>
 	* 發布第0.9.13版，修復了新打開的窗口不在默認區域頂部的缺陷，修復了全屏模式時仍然顯示任務欄的缺陷，實現了鼠標聚焦縮微窗口的功能，實現了增刪主次區域窗口時主次區域窗口互補的功能，修復了快捷鍵不能移動窗口的缺陷，修復了某些情況下聚焦不正確的缺陷，修復了無法調整主區域最大可容納窗口數的缺陷，修復了堆疊模式下不能縮微窗口的缺陷，實現了把窗口移動到屏幕邊界時改變窗口所屬區域的功能，支持與懸浮、縮微區域相關的窗口移動操作，實現了交換窗口位置的功能，修復了某些情況下提升根窗口的缺陷，修復了切換進程啓停狀態不正確的缺陷，實現了用快捷鍵打開手冊頁的功能，增強了代碼可讀性。
