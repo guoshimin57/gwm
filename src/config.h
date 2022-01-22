@@ -36,8 +36,8 @@
 
 #define NORMAL_FRAME_COLOR GREY31 // 普通窗口框架的顏色
 #define CURRENT_FRAME_COLOR DODGERBLUE // 當前窗口框架的顏色
-#define NORMAL_FRAME_BORDER_COLOR GREY31 // 普通窗口框架边框的顏色
-#define CURRENT_FRAME_BORDER_COLOR DODGERBLUE// 當前窗口框架边框的顏色
+#define NORMAL_BORDER_COLOR GREY31 // 普通窗口边框的顏色
+#define CURRENT_BORDER_COLOR DODGERBLUE// 當前窗口边框的顏色
 
 #define NORMAL_TITLE_AREA_COLOR GREY31 // 普通窗口標題區域的顏色
 #define CURRENT_TITLE_AREA_COLOR DODGERBLUE// 當前窗口標題區域的顏色
@@ -67,7 +67,7 @@
 #define ENTERED_CMD_CENTER_BUTTON_COLOR (~DODGERBLUE) // 定位器進入操作中心按鈕時按鈕的顏色
 #define CMD_CENTER_BUTTON_TEXT_COLOR WHITE  // 操作中心按鈕文字的顏色
 
-#define FRAME_BORDER_WIDTH 4 // 窗口框架边框的宽度，单位为像素
+#define BORDER_WIDTH 4 // 窗口框架边框的宽度，单位为像素
 #define TITLE_BAR_HEIGHT 32 // 窗口標題欄的高度，單位爲像素
 #define TITLE_BUTTON_WIDTH TITLE_BAR_HEIGHT // 窗口按鈕的寬度，單位爲像素
 #define TITLE_BUTTON_HEIGHT TITLE_BAR_HEIGHT // 窗口按鈕的高度，單位爲像素
@@ -82,7 +82,6 @@
 #define CMD_CENTER_BUTTON_WIDTH (32*6) // 操作中心按鈕的寬度，單位爲像素
 #define CMD_CENTER_BUTTON_HEIGHT 32 // 操作中心按鈕的高度，單位爲像素
 #define CMD_CENTER_COL 4 // 操作中心按鈕列數
-#define RESIZE_CORNER_LEN 32 // 用於調整窗口尺寸的邊角長度，單位爲像素
 #define MOVE_RESIZE_INC 32 // 移動窗口、調整窗口尺寸的步進值，單位爲像素
 
 #define TITLE_BUTTON_TEXT (const char *[]) /* 窗口標題欄按鈕的標籤（從左至右）*/ \
@@ -96,11 +95,11 @@
 #define CMD_CENTER_BUTTON_TEXT (const char *[]) /* 操作中心按鈕的標籤（從左至右，從上至下） */  \
 {\
     "帮助",         "文件",         "终端模拟器",   "网络浏览器",   \
-    "减小音量",     "增大音量",     "最大音量",     "静音切换",     \
-    "暂主区开窗",   "暂次区开窗",   "暂固定区开窗", "暂悬浮区开窗", \
-    "暂缩微区开窗", "增大主区容量", "减小主区容量", "切换聚焦模式", \
-    "退出gwm",      "注销",         "重启",         "关机",         \
-    "运行",                                                         \
+    "播放影音",     "切换播放状态", "关闭影音",     "减小音量",     \
+    "增大音量",     "最大音量",     "静音切换",     "暂主区开窗",   \
+    "暂次区开窗",   "暂固定区开窗", "暂悬浮区开窗", "暂缩微区开窗", \
+    "增大主区容量", "减小主区容量", "切换聚焦模式", "退出gwm",      \
+    "注销",         "重启",         "关机",         "运行",         \
 }
 
 #define CURSORS_SHAPE (unsigned int []) /* 定位器相關的光標字體 */  \
@@ -125,7 +124,7 @@
 #define TOGGLE_PROCESS_STATE(process) "{ pid=$(pgrep -f '"process"'); " \
     "ps -o stat $pid | tail -n +2 | grep T > /dev/null ; } " \
     "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
-#define PLAY_START "mplayer -shuffle /keep/keep/music/*"
+#define PLAY_START "mplayer -shuffle ~/music/*"
 #define PLAY_TOGGLE TOGGLE_PROCESS_STATE(PLAY_START)
 #define PLAY_QUIT "kill -KILL $(pgrep -f '"PLAY_START"')"
 #define VOLUME_DOWN "amixer -q sset Master 5%-"
@@ -182,6 +181,7 @@
     {WM_KEY, 	XK_Return,       choose_client,               {0}},                        \
     {WM_KEY, 	XK_Tab,          next_client,                 {0}},                        \
     {WM_SKEY,	XK_Tab,          prev_client,                 {0}},                        \
+    {WM_KEY, 	XK_b,            toggle_border_visibility,    {0}},                        \
     {WM_KEY, 	XK_c,            close_client,                {0}},                        \
     {WM_SKEY, 	XK_c,            close_all_clients,           {0}},                        \
     {WM_KEY, 	XK_d,            iconify_all_clients,         {0}},                        \
@@ -192,6 +192,7 @@
     {WM_KEY, 	XK_p,            change_layout,               {.layout=PREVIEW}},          \
     {WM_KEY, 	XK_s,            change_layout,               {.layout=STACK}},            \
     {WM_KEY, 	XK_t,            change_layout,               {.layout=TILE}},             \
+    {WM_SKEY, 	XK_t,            toggle_title_bar_visibility, {0}},                        \
     {WM_KEY, 	XK_i,            adjust_n_main_max,           {.n=1}},                     \
     {WM_SKEY,	XK_i,            adjust_n_main_max,           {.n=-1}},                    \
     {WM_KEY, 	XK_m,            adjust_main_area_ratio,      {.change_ratio=0.01}},       \
@@ -216,20 +217,27 @@
     {MAX_BUTTON,           0,   Button1, maximize_client,          {0}},                        \
     {CLOSE_BUTTON,         0,   Button1, close_client,             {0}},                        \
     {CLIENT_WIN,           0,   Button1, choose_client,            {0}},                        \
+    {CLIENT_WIN,      WM_KEY,   Button1, pointer_move_client,      {0}},                        \
+    {CLIENT_WIN,     WM_SKEY,   Button1, pointer_resize_client,    {0}},                        \
     {CLIENT_FRAME,         0,   Button1, pointer_resize_client,    {0}},                        \
     {CLIENT_ICON,          0,   Button1, change_area,              {.area_type=PREV_AREA}},     \
     {ROOT_WIN,             0,   Button1, adjust_layout_ratio,      {0}},                        \
     {DESKTOP_BUTTON,       0,   Button2, close_all_clients,        {0}},                        \
-    {TITLE_AREA,           0,   Button1, pointer_change_area,      {0}},                        \
+    {TITLE_AREA,           0,   Button2, pointer_change_area,      {0}},                        \
+    {CLIENT_WIN,      WM_KEY,   Button2, pointer_change_area,      {0}},                        \
     {CLIENT_ICON,          0,   Button2, close_client,             {0}},                        \
     {DESKTOP_BUTTON,       0,   Button3, deiconify_all_clients,    {0}},                        \
     {TITLE_AREA,           0,   Button3, pointer_swap_clients,     {0}},                        \
     {CLIENT_WIN,           0,   Button3, pointer_focus_client,     {0}},                        \
+    {CLIENT_WIN,      WM_KEY,   Button3, pointer_swap_clients,     {0}},                        \
     {CMD_CENTER_BUTTON,    0,   Button1, open_cmd_center,          {0}},                        \
     {HELP_BUTTON,          0,   Button1, exec,                     SH_CMD(HELP)},               \
     {FILE_BUTTON,          0,   Button1, exec,                     SH_CMD(FILE_MANAGER)},       \
     {TERM_BUTTON,          0,   Button1, exec,                     SH_CMD(TERMINAL)},           \
     {BROWSER_BUTTON,       0,   Button1, exec,                     SH_CMD(BROWSER)},            \
+    {PLAY_START_BUTTON,    0,   Button1, exec,                     SH_CMD(PLAY_START)},         \
+    {PLAY_TOGGLE_BUTTON,   0,   Button1, exec,                     SH_CMD(PLAY_TOGGLE)},        \
+    {PLAY_QUIT_BUTTON,     0,   Button1, exec,                     SH_CMD(PLAY_QUIT)},          \
     {VOLUME_DOWN_BUTTON,   0,   Button1, exec,                     SH_CMD(VOLUME_DOWN)},        \
     {VOLUME_UP_BUTTON,     0,   Button1, exec,                     SH_CMD(VOLUME_UP)},          \
     {VOLUME_MAX_BUTTON,    0,   Button1, exec,                     SH_CMD(VOLUME_MAX)},         \
@@ -249,15 +257,15 @@
     {RUN_BUTTON,           0,   Button1, exec,                     SH_CMD(RUN)},                \
 }
 
-#define RULES (Rule []) /* 窗口管理器對窗口的管理規則 */                            \
-{/* 可通過xprop命令查看客戶程序類型和客戶程序名稱。其結果表示爲：                   \
-        WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"                           \
-    客戶程序類型            客戶程序名稱            圖標文字    窗口放置位置 */     \
-    {"Qq",                  "qq",                   "QQ",       FIXED_AREA},        \
-    {"explorer.exe",        "explorer.exe",         NULL,       FLOATING_AREA},     \
-    {"Thunder.exe",         "Thunder.exe",          NULL,       FLOATING_AREA},     \
-    {"Google-chrome",       "google-chrome",        "chrome",   DEFAULT_AREA_TYPE}, \
-    {"Org.gnome.Nautilus",  "org.gnome.Nautilus",   "文件",     DEFAULT_AREA_TYPE}, \
+#define RULES (Rule []) /* 窗口管理器對窗口的管理規則 */                                                       \
+{/* 可通過xprop命令查看客戶程序類型和客戶程序名稱。其結果表示爲：                                              \
+        WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"                                                      \
+    客戶程序類型           客戶程序名稱          圖標文字  窗口放置位置       標題欄高度        邊框寬度 */    \
+    {"Qq",                 "qq",                 "QQ",     FIXED_AREA,        0,                0},            \
+    {"explorer.exe",       "explorer.exe",       NULL,     FLOATING_AREA,     0,                0},            \
+    {"Thunder.exe",        "Thunder.exe",        NULL,     FLOATING_AREA,     TITLE_BAR_HEIGHT, BORDER_WIDTH}, \
+    {"Google-chrome",      "google-chrome",      "chrome", DEFAULT_AREA_TYPE, TITLE_BAR_HEIGHT, BORDER_WIDTH}, \
+    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "文件",   DEFAULT_AREA_TYPE, TITLE_BAR_HEIGHT, BORDER_WIDTH}, \
 }
 
 #endif
