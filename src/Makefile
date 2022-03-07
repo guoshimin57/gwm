@@ -10,7 +10,7 @@
 # *************************************************************************
 
 CC := gcc
-CFLAGS := -std=c17 -Wall -pedantic-errors -lX11 -ggdb3
+CFLAGS := -std=c17 -Wall -pedantic-errors -lX11 $(DEBUG)
 CTAGS := ctags
 tag := tags
 backup := $(wildcard *~)

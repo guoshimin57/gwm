@@ -26,13 +26,16 @@ do
     # 當支持utf時，應考慮使用🔊、🔋等unicode符號。
     VOL=$(amixer get Master | tail -1 | sed 's/.*\[\([0-9]*%\)\].*/音\1/')
     LOCALTIME=$(date "+%m/%d %a %p%H:%M")
-    if acpi -a 2> /dev/null | grep off-line
+    if acpi -a 2> /dev/null | grep line
     then
-        BAT="电$(acpi -b 2> /dev/null | awk '{ print $4 " " $5 }' | tr -d ',')"
-        xsetroot -name " $BAT $VOL $LOCALTIME"
-    else
-        xsetroot -name " $VOL $LOCALTIME"
+        if acpi -a 2> /dev/null | grep on-line
+        then
+            BAT=" 充$(acpi -b 2> /dev/null | awk '{ print $4 "+" $5 }' | tr -d ',')"
+        else
+            BAT=" 放$(acpi -b 2> /dev/null | awk '{ print $4 "-" $5 }' | tr -d ',')"
+        fi
     fi
+    xsetroot -name "$BAT $VOL $LOCALTIME"
     sleep 10s
 done &
 

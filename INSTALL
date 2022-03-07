@@ -9,13 +9,23 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-一、安裝此程序的步驟為：
+一、安裝準備：
+    1. 此程序使用xrdb、xsetroot、acpi、amixer來合並X資源文件、設置桌面背景和
+       狀態欄信息。應按自身需求來確定是否要安裝它們。
+    2. 此程序的按鈕功能綁定涉及lxterminal、xfce4-terminal、gnome-terminal、
+       konsole5、xterm、xdg-open、mplayer、light、dmenu_run、wesnoth、qq、
+       stardict。應按自身需求來確定是否要安裝它們。
+    3. 此程序使用xorg-x11-fonts-misc字體。如需顯示漢字，則須安裝它。
+    4. 此程序依賴C標準庫和Xlib。必須安裝它們才能編譯。
+
+二、安裝此程序的步驟為：
     1. cd gwm；
     2. make;
     3. make install，把程序安裝到標準目錄；若要安裝到其他目錄，可以設置prefix
        ，譬如：make prefix=/usr/local install；若你想安裝不帶調試信息的程序，
        請用make install-strip；你可能需要root權限來執行這一步；
-二、卸載此程序的步驟為：
+
+三、卸載此程序的步驟為：
     1. cd gwm；
     2. make clean，刪除編譯生成的目標文件、此程序的二進制文件以及一些備份文件
        ，但這一步不是必須的；

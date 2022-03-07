@@ -19,9 +19,17 @@ $(objs) : $(srcs)
 install :
 	install -d  $(prefix)/share/man/zh_HK/man1 ;
 	install -m 644 $(objs) $(prefix)/share/man/zh_HK/man1 ;
+	install -d  $(prefix)/share/man/zh_TW/man1 ;
+	install -m 644 $(objs) $(prefix)/share/man/zh_TW/man1 ;
+	install -d  $(prefix)/share/man/zh_CN/man1 ;
+	install -m 644 $(objs) $(prefix)/share/man/zh_CN/man1 ;
 install-strip:
 uninstall :
 	cd $(prefix)/share/man/zh_HK/man1 ;
+	rm -f $(objs) ;
+	cd $(prefix)/share/man/zh_TW/man1 ;
+	rm -f $(objs) ;
+	cd $(prefix)/share/man/zh_CN/man1 ;
 	rm -f $(objs) ;
 clean:
 	rm -f $(objs) *~

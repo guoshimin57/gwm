@@ -26,6 +26,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
+#include "config.h"
 
 #define ICCCM_NAMES (const char *[]) \
 {\
@@ -37,7 +38,8 @@
 
 #define TITLE_BUTTON_N ARRAY_NUM(TITLE_BUTTON_TEXT)
 #define TASKBAR_BUTTON_N ARRAY_NUM(TASKBAR_BUTTON_TEXT)
-#define CMD_CENTER_BUTTON_N ARRAY_NUM(CMD_CENTER_BUTTON_TEXT)
+#define CMD_CENTER_ITEM_N ARRAY_NUM(CMD_CENTER_ITEM_TEXT)
+#define DESKTOP_N (DESKTOP_BUTTON_END-DESKTOP_BUTTON_BEGIN+1)
 
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
@@ -46,8 +48,9 @@
     PropertyChangeMask|POINTER_MASK|PointerMotionMask|ExposureMask|CROSSING_MASK)
 #define BUTTON_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
-    ExposureMask|ButtonPressMask|CROSSING_MASK)
+    ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
 #define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
+#define ICON_EVENT_MASK (ButtonPressMask|ExposureMask|FocusChangeMask)
 
 #define TITLE_BUTTON_INDEX(type) ((type)-TITLE_BUTTON_BEGIN)
 #define IS_TITLE_BUTTON(type) \
@@ -56,10 +59,15 @@
 #define TASKBAR_BUTTON_INDEX(type) ((type)-TASKBAR_BUTTON_BEGIN)
 #define IS_TASKBAR_BUTTON(type) \
     ((type)>=TASKBAR_BUTTON_BEGIN && (type)<=TASKBAR_BUTTON_END)
+#define IS_CHECKED_TASKBAR_BUTTON(type) \
+    ((type)>=TASKBAR_BUTTON_BEGIN && (type)<=TASKBAR_BUTTON_END \
+    && (type)!=DESKTOP_BUTTON && (type)!=CMD_CENTER_ITEM)
 
-#define CMD_CENTER_BUTTON_INDEX(type) ((type)-CMD_CENTER_BUTTON_BEGIN)
-#define IS_CMD_CENTER_BUTTON(type) \
-    ((type)>=CMD_CENTER_BUTTON_BEGIN && (type)<=CMD_CENTER_BUTTON_END)
+#define CMD_CENTER_ITEM_INDEX(type) ((type)-CMD_CENTER_ITEM_BEGIN)
+#define IS_CMD_CENTER_ITEM(type) \
+    ((type)>=CMD_CENTER_ITEM_BEGIN && (type)<=CMD_CENTER_ITEM_END)
+
+#define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
 
 enum focus_mode_tag // 窗口聚焦模式
 {
@@ -70,7 +78,7 @@ typedef enum focus_mode_tag Focus_mode;
 enum area_type_tag // 窗口的區域類型
 {
      MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA, ICONIFY_AREA,
-     AREA_TYPE_N, PREV_AREA, ROOT_AREA,
+     PREV_AREA, ROOT_AREA,
 };
 typedef enum area_type_tag Area_type;
 
@@ -78,20 +86,27 @@ enum widget_type_tag // 構件類型
 {
     UNDEFINED, ROOT_WIN, STATUS_AREA,
     CLIENT_WIN, CLIENT_FRAME, TITLE_AREA, CLIENT_ICON,
+
     MAIN_BUTTON, SECOND_BUTTON, FIXED_BUTTON, FLOAT_BUTTON,
     ICON_BUTTON, MAX_BUTTON, CLOSE_BUTTON,
+
+    DESKTOP1_BUTTON, DESKTOP2_BUTTON, DESKTOP3_BUTTON, 
+
     FULL_BUTTON, PREVIEW_BUTTON, STACK_BUTTON, TILE_BUTTON, DESKTOP_BUTTON,
-    CMD_CENTER_BUTTON,
+
+    CMD_CENTER_ITEM,
     HELP_BUTTON, FILE_BUTTON, TERM_BUTTON, BROWSER_BUTTON, 
     PLAY_START_BUTTON, PLAY_TOGGLE_BUTTON, PLAY_QUIT_BUTTON,
     VOLUME_DOWN_BUTTON, VOLUME_UP_BUTTON, VOLUME_MAX_BUTTON, VOLUME_TOGGLE_BUTTON,
     MAIN_NEW_BUTTON, SEC_NEW_BUTTON, FIX_NEW_BUTTON, FLOAT_NEW_BUTTON,
     ICON_NEW_BUTTON, N_MAIN_UP_BUTTON, N_MAIN_DOWN_BUTTON, FOCUS_MODE_BUTTON,
-    QUIT_WM_BUTTON, LOGOUT_BUTTON, REBOOT_BUTTON, POWEROFF_BUTTON,
-    RUN_BUTTON,
+    QUIT_WM_BUTTON, LOGOUT_BUTTON, REBOOT_BUTTON, POWEROFF_BUTTON, RUN_BUTTON,
+
     TITLE_BUTTON_BEGIN=MAIN_BUTTON, TITLE_BUTTON_END=CLOSE_BUTTON,
-    TASKBAR_BUTTON_BEGIN=FULL_BUTTON, TASKBAR_BUTTON_END=CMD_CENTER_BUTTON,
-    CMD_CENTER_BUTTON_BEGIN=HELP_BUTTON, CMD_CENTER_BUTTON_END=RUN_BUTTON,
+    TASKBAR_BUTTON_BEGIN=DESKTOP1_BUTTON, TASKBAR_BUTTON_END=CMD_CENTER_ITEM,
+    LAYOUT_BUTTON_BEGIN=FULL_BUTTON, LAYOUT_BUTTON_END=TILE_BUTTON, 
+    DESKTOP_BUTTON_BEGIN=DESKTOP1_BUTTON, DESKTOP_BUTTON_END=DESKTOP3_BUTTON,
+    CMD_CENTER_ITEM_BEGIN=HELP_BUTTON, CMD_CENTER_ITEM_END=RUN_BUTTON,
 };
 typedef enum widget_type_tag Widget_type;
 
@@ -116,7 +131,8 @@ struct client_tag // 客戶窗口相關信息
 {   /* 分別爲客戶窗口、父窗口、標題區、標題區按鈕 */
     Window win, frame, title_area, buttons[TITLE_BUTTON_N];
     int x, y; // win的橫、縱坐標
-    unsigned int w, h, border_w, title_bar_h; // win的寬、高、邊框寬、標題欄高
+    /* win的寬、高、標題欄高、邊框寬、所属虚拟桌面的掩碼 */
+    unsigned int w, h, title_bar_h, border_w, desktop_mask;
     Area_type area_type; // 區域類型
     char *title_text; // 標題的文字
     Icon *icon; // 圖符信息
@@ -150,37 +166,48 @@ struct taskbar_tag // 窗口管理器的任務欄
 };
 typedef struct taskbar_tag Taskbar;
 
-struct cmd_center_tag // 操作中心
-{
-    Window win, buttons[CMD_CENTER_BUTTON_N]; // 窗口和按鈕
-};
-typedef struct cmd_center_tag Cmd_center;
-
 enum icccm_atom_tag // icccm規範的標識符
 {
     WM_PROTOCOLS, WM_DELETE_WINDOW, ICCCM_ATOMS_N
 };
 typedef enum icccm_atom_tag Icccm_atom;
 
+struct desktop_tag // 虛擬桌面相關信息
+{
+    int n_main_max; // 主區域可容納的客戶窗口數量
+    Client *cur_focus_client, *prev_focus_client; // 分別爲當前聚焦結點、前一個聚焦結點
+    Layout cur_layout, prev_layout; // 分別爲當前布局模式和前一個布局模式
+    Area_type default_area_type; // 默認的窗口區域類型
+    double main_area_ratio, fixed_area_ratio; // 分別爲主要和固定區域屏佔比
+};
+typedef struct desktop_tag Desktop;
+
+struct menu_tag // 一級多行多列菜單 
+{
+    Window win, *items; // 菜單窗口和菜單項
+    unsigned int n, col, row, w, h;
+    int x, y;
+    unsigned long bg;
+};
+typedef struct menu_tag Menu;
+
 struct wm_tag // 窗口管理器相關信息
 {
     Display *display; // 顯示器
     int screen; // 屏幕
     unsigned int screen_width, screen_height; // 屏幕寬度、高度
+    unsigned int cur_desktop; // 當前虛擬桌面編號
+    Desktop desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
     Window root_win; // 根窗口
     GC gc; // 窗口管理器的圖形信息
     Atom icccm_atoms[ICCCM_ATOMS_N]; // icccm規範的標識符
-    Client *clients, *cur_focus_client, *prev_focus_client; // 分別爲頭結點、當前聚焦結點、前一個聚焦結點
-    unsigned int clients_n[AREA_TYPE_N], n_main_max; // 分別爲客戶窗口總數、主區域可容納的客戶窗口數量
-    Layout cur_layout, prev_layout; // 分別爲當前布局模式和前一個布局模式
-    Area_type default_area_type; // 默認的窗口區域類型
+    Client *clients; // 頭結點
     Focus_mode focus_mode; // 窗口聚焦模式
     XFontSet font_set; // 窗口管理器用到的字體集
     Cursor cursors[POINTER_ACT_N]; // 光標
     Taskbar taskbar; // 任務欄
-    Cmd_center cmd_center; // 操作中心
-    double main_area_ratio, fixed_area_ratio; // 分別爲主要和固定區域屏佔比
+    Menu cmd_center; // 操作中心
 };
 typedef struct wm_tag WM;
 
@@ -202,11 +229,13 @@ typedef enum align_type_tag ALIGN_TYPE;
 
 union func_arg_tag // 函數參數類型
 {
+    bool focus; // 是否聚焦的標志
     char *const *cmd; // 命令字符串
     Direction direction; // 方向
     Layout layout; // 窗口布局模式
     Pointer_act pointer_act; // 窗口操作類型
-    int n; // 數量
+    int n; // 表示數量
+    unsigned int desktop_n; // 虛擬桌面編號
     Area_type area_type; // 窗口區域類型
     double change_ratio; // 變化率
 };
@@ -236,7 +265,7 @@ struct rule_tag // 窗口管理器的規則
     const char *app_class, *app_name; // 分別爲客戶窗口的程序類型和程序名稱
     const char *class_alias; // 客戶窗口的類型別名
     Area_type area_type; // 客戶窗口的區域類型
-    unsigned int border_w, title_bar_h; // 客戶窗口邊框寬度和標題欄高度
+    unsigned int title_bar_h, border_w, desktop_mask; // 客戶窗口標題欄高度和邊框寬度、所属虚拟桌面
 };
 typedef struct rule_tag Rule;
 
@@ -264,6 +293,7 @@ void set_signals(void);
 void exit_with_perror(const char *s);
 void exit_with_msg(const char *msg);
 void init_wm(WM *wm);
+void init_desktop(WM *wm);
 void set_wm(WM *wm);
 int x_fatal_handler(Display *display, XErrorEvent *e);
 void set_icccm_atoms(WM *wm);
@@ -281,11 +311,13 @@ bool is_wm_win(WM *wm, Window win);
 void add_client(WM *wm, Window win);
 Client *get_area_head(WM *wm, Area_type type);
 void update_layout(WM *wm);
+void fix_area_type(WM *wm);
 void fix_cur_focus_client_rect(WM *wm);
 void set_full_layout(WM *wm);
 void set_preview_layout(WM *wm);
 unsigned int get_clients_n(WM *wm);
 void set_tile_layout(WM *wm);
+unsigned int get_client_count(WM *wm, Area_type type);
 void grab_keys(WM *wm);
 unsigned int get_num_lock_mask(WM *wm);
 void grab_buttons(WM *wm, Client *c);
@@ -305,6 +337,8 @@ void handle_expose(WM *wm, XEvent *e);
 void update_icon_text(WM *wm, Window win);
 void update_taskbar_button_text(WM *wm, size_t index);
 void update_cmd_center_button_text(WM *wm, size_t index);
+void handle_focus_change(WM *wm, XEvent *e);
+void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
 void handle_key_press(WM *wm, XEvent *e);
 unsigned int get_valid_mask(WM *wm, unsigned int mask);
 unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
@@ -322,18 +356,16 @@ bool is_valid_move_resize(WM *wm, Client *c, Delta_rect *d);
 void quit_wm(WM *wm, XEvent *e, Func_arg unused);
 void close_client(WM *wm, XEvent *e, Func_arg unused);
 void close_all_clients(WM *wm, XEvent *e, Func_arg unused);
-int send_event(WM *wm, Atom protocol, Client *c);
+bool send_event(WM *wm, Atom protocol, Client *c);
 void next_client(WM *wm, XEvent *e, Func_arg unused);
 void prev_client(WM *wm, XEvent *e, Func_arg unused);
-void focus_client(WM *wm, Client *c);
-void update_focus_client_pointer(WM *wm, Client *c);
-Client *get_next_nonicon_client(WM *wm, Client *c);
-Client *get_prev_nonicon_client(WM *wm, Client *c);
-bool is_client(WM *wm, Client *c);
-bool is_icon_client(WM *wm, Client *c);
+Client *get_next_client(WM *wm, Client *c);
+Client *get_prev_client(WM *wm, Client *c);
+void focus_client(WM *wm, unsigned int desktop_n, Client *c);
+void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
+bool is_normal_client(WM *wm, unsigned int desktop_n, Client *c);
 void change_layout(WM *wm, XEvent *e, Func_arg arg);
 void update_title_bar_layout(WM *wm);
-void pointer_focus_client(WM *wm, XEvent *e, Func_arg arg);
 bool grab_pointer(WM *wm, XEvent *e);
 void apply_rules(WM *wm, Client *c);
 bool have_rule(Rule *r, Client *c);
@@ -351,7 +383,7 @@ bool move_client_node(WM *wm, Client *from, Client *to, Area_type type);
 void fix_area_type(WM *wm);
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg unused);
 void swap_clients(WM *wm, Client *a, Client *b);
-void raise_client(WM *wm);
+void raise_client(WM *wm, unsigned int desktop_n);
 void frame_client(WM *wm, Client *c);
 void create_title_bar(WM *wm, Client *c);
 Rect get_frame_rect(Client *c);
@@ -363,7 +395,7 @@ void update_status_area_text(WM *wm);
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
 void fix_win_rect_for_frame(WM *wm);
 bool should_fix_win_rect(WM *wm, Client *c);
-void update_frame(WM *wm, Client *c);
+void update_frame(WM *wm, unsigned int desktop_n, Client *c);
 void update_win_background(WM *wm, Window win, unsigned long color);
 Widget_type get_widget_type(WM *wm, Window win);
 void handle_enter_notify(WM *wm, XEvent *e);
@@ -383,7 +415,6 @@ bool have_same_class_icon_client(WM *wm, Client *c);
 void update_icon_area(WM *wm);
 void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);
-void update_area_type(WM *wm, Client *c, Area_type type);
 void pointer_move_client(WM *wm, XEvent *e, Func_arg arg);
 void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg);
 Pointer_act get_resize_act(Client *c, const Move_info *m);
