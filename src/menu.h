@@ -14,7 +14,6 @@
 
 void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg);
 void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind);
-void get_win_size(WM *wm, Window win, unsigned int *w, unsigned int *h);
 void set_menu_pos_for_click(WM *wm, Window win, int x, int y, Menu *menu);
 
 #endif

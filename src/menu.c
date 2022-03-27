@@ -11,6 +11,9 @@
 
 #include "gwm.h"
 #include "menu.h"
+#include "misc.h"
+
+static void get_win_size(WM *wm, Window win, unsigned int *w, unsigned int *h);
 
 void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg)
 {
@@ -48,7 +51,7 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
     menu->x=ox, menu->y=oy;
 }
 
-void get_win_size(WM *wm, Window win, unsigned int *w, unsigned int *h)
+static void get_win_size(WM *wm, Window win, unsigned int *w, unsigned int *h)
 {
     Window r;
     int xt, yt;

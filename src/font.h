@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     gwm.c：實現窗口管理器的主要部分。
+ *     font.h：與font.c相應的頭文件。
  *     版權 (C) 2020-2022 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,32 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "config.h"
-#include "gwm.h"
-#include "client.h"
-#include "desktop.h"
-#include "func.h"
-#include "grab.h"
-#include "handler.h"
-#include "init.h"
-#include "layout.h"
-#include "menu.h"
-#include "misc.h"
+#ifndef FONT_H
+#define FONT_H
 
-static void set_signals(void);
+void create_font_set(WM *wm);
+char *get_text_prop(WM *wm, Window win, Atom atom);
+void draw_string(WM *wm, Drawable d, const char *str, const String_format *f);
+void get_string_size(WM *wm, const char *str, unsigned int *w, unsigned int *h);
 
-int main(int argc, char *argv[])
-{
-    WM wm;
-    set_signals();
-    clear_zombies(0);
-    init_wm(&wm);
-    handle_events(&wm);
-    return EXIT_SUCCESS;
-}
-
-static void set_signals(void)
-{
-	if(signal(SIGCHLD, clear_zombies) == SIG_ERR)
-    exit_with_perror("不能安裝SIGCHLD信號處理函數");
-}
+#endif

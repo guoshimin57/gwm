@@ -1,0 +1,177 @@
+/* *************************************************************************
+ *     init.c：實現初始化gwm的功能。
+ *     版權 (C) 2020-2022 gsm <406643764@qq.com>
+ *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
+ * GNU通用公共許可證重新發布、修改本程序。
+ *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
+ * 定目標之適用性的暗示性擔保。詳見GNU通用公共許可證。
+ *     你應該已經收到一份附隨此程序的GNU通用公共許可證副本。否則，請參閱
+ * <http://www.gnu.org/licenses/>。
+ * ************************************************************************/
+
+#include "gwm.h"
+#include "init.h"
+#include "client.h"
+#include "desktop.h"
+#include "font.h"
+#include "func.h"
+#include "grab.h"
+#include "layout.h"
+#include "menu.h"
+#include "misc.h"
+
+static int x_fatal_handler(Display *display, XErrorEvent *e);
+static void set_icccm_atoms(WM *wm);
+static void create_cursors(WM *wm);
+static void create_taskbar(WM *wm);
+static void create_taskbar_buttons(WM *wm);
+static void create_icon_area(WM *wm);
+static void create_status_area(WM *wm);
+static void create_cmd_center(WM *wm);
+static void print_fatal_msg(Display *display, XErrorEvent *e);
+static void create_clients(WM *wm);
+
+void init_wm(WM *wm)
+{
+    memset(wm, 0, sizeof(WM));
+	if(!setlocale(LC_CTYPE, "") || !XSupportsLocale())
+		fprintf(stderr, "warning: no locale support\n");
+	if(!(wm->display=XOpenDisplay(NULL)))
+        exit_with_msg("error: cannot open display");
+
+    wm->screen=DefaultScreen(wm->display);
+    wm->screen_width=DisplayWidth(wm->display, wm->screen);
+    wm->screen_height=DisplayHeight(wm->display, wm->screen);
+	wm->mod_map=XGetModifierMapping(wm->display);
+    wm->root_win=RootWindow(wm->display, wm->screen);
+    wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
+    wm->focus_mode=DEFAULT_FOCUS_MODE;
+
+    init_desktop(wm);
+    XSetErrorHandler(x_fatal_handler);
+    XSelectInput(wm->display, wm->root_win, ROOT_EVENT_MASK);
+    set_icccm_atoms(wm);
+    create_font_set(wm);
+    create_cursors(wm);
+    create_taskbar(wm);
+    create_cmd_center(wm);
+    create_clients(wm);
+    update_layout(wm);
+    grab_keys(wm);
+    exec(wm, NULL, (Func_arg)SH_CMD("[ -x "AUTOSTART" ] && "AUTOSTART));
+}
+
+static int x_fatal_handler(Display *display, XErrorEvent *e)
+{
+    if( e->request_code == X_ChangeWindowAttributes
+        && e->error_code == BadAccess)
+        exit_with_msg("錯誤：已經有其他窗口管理器在運行！");
+    print_fatal_msg(display, e);
+	if( e->error_code == BadWindow
+        || (e->request_code==X_ConfigureWindow && e->error_code==BadMatch))
+		return -1;
+    return 0;
+}
+
+static void set_icccm_atoms(WM *wm)
+{
+    for(size_t i=0; i<ICCCM_ATOMS_N; i++)
+        wm->icccm_atoms[i]=XInternAtom(wm->display, ICCCM_NAMES[i], False);
+}
+
+static void create_cursors(WM *wm)
+{
+    for(size_t i=0; i<POINTER_ACT_N; i++)
+        wm->cursors[i]=XCreateFontCursor(wm->display, CURSORS_SHAPE[i]);
+}
+
+static void create_taskbar(WM *wm)
+{
+    Taskbar *b=&wm->taskbar;
+    b->x=0, b->y=wm->screen_height-TASKBAR_HEIGHT;
+    b->w=wm->screen_width, b->h=TASKBAR_HEIGHT;
+    b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
+        b->w, b->h, 0, 0, 0);
+    create_taskbar_buttons(wm);
+    create_status_area(wm);
+    create_icon_area(wm);
+    XMapRaised(wm->display, b->win);
+    XMapWindow(wm->display, b->win);
+    XMapSubwindows(wm->display, b->win);
+}
+
+static void create_taskbar_buttons(WM *wm)
+{
+    Taskbar *b=&wm->taskbar;
+    for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
+    {
+        b->buttons[i]=XCreateSimpleWindow(wm->display, b->win,
+            TASKBAR_BUTTON_WIDTH*i, 0,
+            TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT,
+            0, 0, NORMAL_TASKBAR_BUTTON_COLOR);
+        XSelectInput(wm->display, b->buttons[i], BUTTON_EVENT_MASK);
+    }
+}
+
+static void create_icon_area(WM *wm)
+{
+    Taskbar *b=&wm->taskbar;
+    unsigned int bw=TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N,
+        w=b->w-bw-b->status_area_w;
+    wm->taskbar.icon_area=XCreateSimpleWindow(wm->display, b->win,
+        bw, 0, w, b->h, 0, 0, ICON_AREA_COLOR);
+}
+
+static void create_status_area(WM *wm)
+{
+    Taskbar *b=&wm->taskbar;
+    b->status_text=get_text_prop(wm, wm->root_win, XA_WM_NAME);
+    get_string_size(wm, b->status_text, &b->status_area_w, NULL);
+    if(b->status_area_w > STATUS_AREA_WIDTH_MAX)
+        b->status_area_w=STATUS_AREA_WIDTH_MAX;
+    else if(b->status_area_w == 0)
+        b->status_area_w=1;
+    wm->taskbar.status_area=XCreateSimpleWindow(wm->display, b->win,
+        b->w-b->status_area_w, 0, b->status_area_w, b->h,
+        0, 0, STATUS_AREA_COLOR);
+    XSelectInput(wm->display, b->status_area, ExposureMask);
+}
+
+static void create_cmd_center(WM *wm)
+{
+    unsigned int n=CMD_CENTER_ITEM_N, col=CMD_CENTER_COL,
+                 w=CMD_CENTER_ITEM_WIDTH, h=CMD_CENTER_ITEM_HEIGHT,
+                 i=TASKBAR_BUTTON_INDEX(CMD_CENTER_ITEM);
+    int x=TASKBAR_BUTTON_WIDTH*i, y=wm->screen_height-wm->taskbar.h;
+    create_menu(wm, &wm->cmd_center, n, col, w, h, CMD_CENTER_COLOR);
+    set_menu_pos_for_click(wm, wm->taskbar.buttons[i], x, y, &wm->cmd_center);
+}
+
+static void print_fatal_msg(Display *display, XErrorEvent *e)
+{
+    fprintf(stderr, "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, "
+        "主請求碼=%d, 次請求碼=%d\n", e->resourceid, e->serial,
+        e->error_code, e->request_code, e->minor_code);
+}
+
+/* 生成帶表頭結點的雙向循環鏈表 */
+static void create_clients(WM *wm)
+{
+    Window root, parent, *child=NULL;
+    unsigned int n;
+    Desktop *d=wm->desktop;
+
+    wm->clients=malloc_s(sizeof(Client));
+    memset(wm->clients, 0, sizeof(Client));
+    for(size_t i=0; i<DESKTOP_N; i++)
+        d[i].cur_focus_client=d[i].prev_focus_client=wm->clients;
+    wm->clients->area_type=ROOT_AREA;
+    wm->clients->win=wm->root_win;
+    wm->clients->prev=wm->clients->next=wm->clients;
+    if(!XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
+        exit_with_msg("錯誤：查詢窗口清單失敗！");
+    for(size_t i=0; i<n; i++)
+        if(is_wm_win(wm, child[i]))
+            add_client(wm, child[i]);
+    XFree(child);
+}

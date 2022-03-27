@@ -12,21 +12,11 @@
 #ifndef DESKTOP_H
 #define DESKTOP_H
 
-void next_desktop(WM *wm, XEvent *e, Func_arg arg);
-void prev_desktop(WM *wm, XEvent *e, Func_arg arg);
-unsigned int get_desktop_n(WM *wm, XEvent *e, Func_arg arg);
-void focus_desktop(WM *wm, XEvent *e, Func_arg arg);
-void focus_desktop_n(WM *wm, unsigned int n);
+void init_desktop(WM *wm);
 bool is_on_cur_desktop(WM *wm, Client *c);
 bool is_on_desktop_n(unsigned int desktop_n, Client *c);
 unsigned int get_desktop_mask(unsigned int desktop_n);
-void move_to_desktop(WM *wm, XEvent *e, Func_arg arg);
-void all_move_to_desktop(WM *wm, XEvent *e, Func_arg arg);
-void change_to_desktop(WM *wm, XEvent *e, Func_arg arg);
-void all_change_to_desktop(WM *wm, XEvent *e, Func_arg arg);
-void update_taskbar_buttons(WM *wm);
-void attach_to_desktop(WM *wm, XEvent *e, Func_arg arg);
-void attach_to_all_desktops(WM *wm, XEvent *e, Func_arg arg);
-void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg);
+unsigned int get_desktop_n(WM *wm, XEvent *e, Func_arg arg);
+void focus_desktop_n(WM *wm, unsigned int n);
 
 #endif
