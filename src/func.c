@@ -149,7 +149,7 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
 /* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
 void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(DESKTOP(wm).cur_layout==TILE && get_client_count(wm, SECOND_AREA))
+    if(DESKTOP(wm).cur_layout==TILE && get_typed_clients_n(wm, SECOND_AREA))
     {
         Desktop *d=&DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
@@ -165,7 +165,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 /* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 { 
-    if(DESKTOP(wm).cur_layout==TILE && get_client_count(wm, FIXED_AREA))
+    if(DESKTOP(wm).cur_layout==TILE && get_typed_clients_n(wm, FIXED_AREA))
     {
         Desktop *d=&DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
@@ -409,6 +409,8 @@ void toggle_title_bar_visibility(WM *wm, XEvent *e, Func_arg arg)
 
 void focus_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
+    if(e->type==KeyPress)
+        puts(__func__);
     focus_desktop_n(wm, get_desktop_n(wm, e, arg));
 }
 

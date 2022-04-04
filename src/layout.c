@@ -117,9 +117,9 @@ static void set_tile_layout(WM *wm)
 {
     unsigned int n1, n2, n3, i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, h, g=WIN_GAP;
 
-    n1=get_client_count(wm, MAIN_AREA),
-    n2=get_client_count(wm, SECOND_AREA),
-    n3=get_client_count(wm, FIXED_AREA),
+    n1=get_typed_clients_n(wm, MAIN_AREA),
+    n2=get_typed_clients_n(wm, SECOND_AREA),
+    n3=get_typed_clients_n(wm, FIXED_AREA),
     mw=DESKTOP(wm).main_area_ratio*wm->screen_width;
     fw=wm->screen_width*DESKTOP(wm).fixed_area_ratio;
     sw=wm->screen_width-fw-mw;
@@ -203,13 +203,13 @@ bool is_main_sec_gap(WM *wm, int x)
 {
     Desktop *d=&DESKTOP(wm);
     unsigned int w=wm->screen_width*(1-d->main_area_ratio-d->fixed_area_ratio);
-    return (get_client_count(wm, SECOND_AREA) && x>=w-WIN_GAP && x<w);
+    return (get_typed_clients_n(wm, SECOND_AREA) && x>=w-WIN_GAP && x<w);
 }
 
 bool is_main_fix_gap(WM *wm, int x)
 {
     unsigned int w=wm->screen_width*(1-DESKTOP(wm).fixed_area_ratio);
-    return (get_client_count(wm, FIXED_AREA) && x>=w && x<w+WIN_GAP);
+    return (get_typed_clients_n(wm, FIXED_AREA) && x>=w && x<w+WIN_GAP);
 }
 
 bool is_layout_adjust_area(WM *wm, Window win, int x)

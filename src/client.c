@@ -161,7 +161,7 @@ static Rect get_button_rect(Client *c, size_t index)
         TITLE_BUTTON_WIDTH, TITLE_BUTTON_HEIGHT};
 }
 
-unsigned int get_client_count(WM *wm, Area_type type)
+unsigned int get_typed_clients_n(WM *wm, Area_type type)
 {
     unsigned int n=0;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -395,7 +395,8 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type)
 {
     Client *head;
     Area_type ft=from->area_type, tt=to->area_type;
-    if(from==wm->clients || (from==to && tt==type))
+    if( from==wm->clients || (from==to && tt==type)
+        || (ft==MAIN_AREA && type==SECOND_AREA && !get_typed_clients_n(wm, SECOND_AREA)))
         return false;
     del_client_node(from);
     if(tt == type)

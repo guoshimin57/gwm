@@ -20,6 +20,7 @@
 #define CMD_KEY (WM_KEY|Mod1Mask) // 與系統命令相關功能的轉換鍵
 #define SYS_KEY (WM_KEY|ControlMask) // 與系統相關的功能轉換鍵
 
+#define DEFAULT_CUR_DESKTOP 1 // 默認的當前桌面
 #define DEFAULT_FOCUS_MODE CLICK_FOCUS // 默認的聚焦模式
 #define DEFAULT_LAYOUT TILE // 默認的窗口布局模式
 #define DEFAULT_AREA_TYPE MAIN_AREA // 新打開的窗口的默認區域類型
@@ -91,13 +92,13 @@
 
 #define TITLE_BUTTON_TEXT (const char *[]) /* 窗口標題欄按鈕的標籤（從左至右）*/ \
 /* 切換至主區域 切換至次區域 切換至固定區 切換至懸浮態 縮微化 最大化 關閉 */     \
-{       "主",        "次",        "固",         "浮",  "-",   "□", "×" }
+{   "主",        "次",        "固",         "浮",  "-",   "□", "×" }
 
 #define TASKBAR_BUTTON_TEXT (const char *[]) /* 任務欄按鈕的標籤（從左至右） */  \
 {/* 依次爲各虛擬桌面標籤 */ \
     "主",   "次",   "备",   \
 /* 切換至全屏模式 切換至概覽模式 切換至堆疊模式 切換至平鋪模式 切換桌面可見性 打開操作中心*/ \
-       "全",           "概",         "堆",          "平",          "■",        "^",    \
+    "全",           "概",         "堆",          "平",          "■",        "^",    \
 }
 
 #define CMD_CENTER_ITEM_TEXT (const char *[]) /* 操作中心按鈕的標籤（從左至右，從上至下） */  \
@@ -144,16 +145,17 @@
 #define LOGOUT "pkill -9 'startgwm|gwm'"
 #define RUN "dmenu_run"
 
-#define DESKTOP_KEYBIND(key, n) /* 與虛擬桌面相關的按鍵功能綁定，n=0表示全部*/             \
-/*  功能轉換鍵                            鍵符號 要綁定的函數(詳見gwm.h) 函數的參數 */     \
-    {WM_KEY|ControlMask|ShiftMask,          key, focus_desktop,          {.desktop_n=n}},  \
-    {WM_KEY,	                            key, move_to_desktop,        {.desktop_n=n}},  \
-    {WM_KEY|Mod1Mask,	                    key, all_move_to_desktop,    {.desktop_n=n}},  \
-    {WM_KEY|ControlMask,	                key, change_to_desktop,      {.desktop_n=n}},  \
-    {WM_KEY|ControlMask|Mod1Mask,	        key, all_change_to_desktop,  {.desktop_n=n}},  \
-    {WM_KEY|ShiftMask,	                    key, attach_to_desktop,      {.desktop_n=n}},  \
-    {WM_KEY|ShiftMask|Mod1Mask,	            key, all_attach_to_desktop,  {.desktop_n=n}},  \
-    {WM_KEY|ShiftMask|Mod1Mask|ControlMask,	key, attach_to_all_desktops, {.desktop_n=n}},  \
+/* 與虛擬桌面相關的按鍵功能綁定。n=0僅作用於attach_to_all_desktops */
+#define DESKTOP_KEYBIND(key, n) \
+/*  功能轉換鍵            鍵符號 要綁定的函數(詳見gwm.h) 函數的參數 */    \
+    {WM_KEY|ShiftMask,      key, focus_desktop,          {.desktop_n=n}}, \
+    {WM_KEY,	            key, move_to_desktop,        {.desktop_n=n}}, \
+    {WM_KEY|Mod1Mask,	    key, all_move_to_desktop,    {.desktop_n=n}}, \
+    {ControlMask,           key, change_to_desktop,      {.desktop_n=n}}, \
+    {ControlMask|Mod1Mask,  key, all_change_to_desktop,  {.desktop_n=n}}, \
+    {Mod1Mask,              key, attach_to_desktop,      {.desktop_n=n}}, \
+    {Mod1Mask|ShiftMask,    key, all_attach_to_desktop,  {.desktop_n=n}}, \
+    {ShiftMask|ControlMask, key, attach_to_all_desktops, {.desktop_n=n}}
 
 #define KEYBINDS (Keybind []) /* 按鍵功能綁定 */                                           \
 {/* 功能轉換鍵  鍵符號           要綁定的函數(詳見gwm.h)      函數的參數 */                \
@@ -222,10 +224,10 @@
     {WM_SKEY,	XK_x,            adjust_fixed_area_ratio,     {.change_ratio=-0.01}},      \
     {WM_KEY,	XK_Page_Down,    next_desktop,                {0}},                        \
     {WM_KEY,	XK_Page_Up,      prev_desktop,                {0}},                        \
-    DESKTOP_KEYBIND(XK_0, 0)                                                               \
-    DESKTOP_KEYBIND(XK_1, 1)                                                               \
-    DESKTOP_KEYBIND(XK_2, 2)                                                               \
-    DESKTOP_KEYBIND(XK_3, 3)                                                               \
+    DESKTOP_KEYBIND(XK_0, 0),                                                              \
+    DESKTOP_KEYBIND(XK_9, 1),                                                              \
+    DESKTOP_KEYBIND(XK_2, 2),                                                              \
+    DESKTOP_KEYBIND(XK_3, 3),                                                              \
 }
 
 #define DESKTOPN_BUTTON(n) DESKTOP ## n ##_BUTTON /* 獲取虛擬桌面按鈕類型 */
@@ -239,7 +241,7 @@
     {DESKTOPN_BUTTON(n),             Mod1Mask,    Button2, all_attach_to_desktop,  {0}},   \
     {DESKTOPN_BUTTON(n),            ShiftMask,    Button2, attach_to_all_desktops, {0}},   \
     {DESKTOPN_BUTTON(n),                    0,    Button3, move_to_desktop,        {0}},   \
-    {DESKTOPN_BUTTON(n),             Mod1Mask,    Button3, all_move_to_desktop,    {0}},   \
+    {DESKTOPN_BUTTON(n),             Mod1Mask,    Button3, all_move_to_desktop,    {0}}
 
 #define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                            \
 {/* 控件類型             能轉換鍵 定位器按鈕 要綁定的函數            函數的參數 */                \
@@ -295,9 +297,9 @@
     {REBOOT_BUTTON,            0, Button1, exec,                     SH_CMD("reboot")},           \
     {POWEROFF_BUTTON,          0, Button1, exec,                     SH_CMD("poweroff")},         \
     {RUN_BUTTON,               0, Button1, exec,                     SH_CMD(RUN)},                \
-    DESKTOP_BUTTONBIND(1)                                                                         \
-    DESKTOP_BUTTONBIND(2)                                                                         \
-    DESKTOP_BUTTONBIND(3)                                                                         \
+    DESKTOP_BUTTONBIND(1),                                                                        \
+    DESKTOP_BUTTONBIND(2),                                                                        \
+    DESKTOP_BUTTONBIND(3),                                                                        \
 }
 
 #define RULES (Rule []) /* 窗口管理器對窗口的管理規則 */                                                          \

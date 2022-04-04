@@ -17,7 +17,7 @@
 
 void init_desktop(WM *wm)
 {
-    wm->cur_desktop=1;
+    wm->cur_desktop=DEFAULT_CUR_DESKTOP;
     for(size_t i=0; i<DESKTOP_N; i++)
     {
         Desktop *d=wm->desktop+i;
