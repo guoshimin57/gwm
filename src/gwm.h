@@ -12,14 +12,26 @@
 #ifndef GWM_H
 #define GWM_H
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <locale.h>
+#include <unistd.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
-#include <X11/Xft/Xft.h>
 #include "config.h"
 
-#define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW"}
+#define ICCCM_NAMES (const char *[]) \
+{\
+    "WM_PROTOCOLS", "WM_DELETE_WINDOW", \
+}
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define FUNC_ARG(var, data) (Func_arg){.var=data}
@@ -47,6 +59,9 @@
 #define TASKBAR_BUTTON_INDEX(type) ((type)-TASKBAR_BUTTON_BEGIN)
 #define IS_TASKBAR_BUTTON(type) \
     ((type)>=TASKBAR_BUTTON_BEGIN && (type)<=TASKBAR_BUTTON_END)
+#define IS_CHECKED_TASKBAR_BUTTON(type) \
+    ((type)>=TASKBAR_BUTTON_BEGIN && (type)<=TASKBAR_BUTTON_END \
+    && (type)!=DESKTOP_BUTTON && (type)!=CMD_CENTER_ITEM)
 
 #define CMD_CENTER_ITEM_INDEX(type) ((type)-CMD_CENTER_ITEM_BEGIN)
 #define IS_CMD_CENTER_ITEM(type) \
@@ -146,7 +161,7 @@ struct taskbar_tag // 窗口管理器的任務欄
     /* 分別爲任務欄的窗口、按鈕、縮微區域、狀態區域 */
     Window win, buttons[TASKBAR_BUTTON_N], icon_area, status_area;
     int x, y; // win的坐標
-    unsigned int w, h, status_area_w; // win的尺寸、按鈕的尺寸和狀態區域的寬度
+    unsigned int w, h, status_area_w; // win的尺寸和狀態區域的寬度
     char *status_text; // 狀態區域要顯示的文字
 };
 typedef struct taskbar_tag Taskbar;
@@ -170,33 +185,11 @@ typedef struct desktop_tag Desktop;
 struct menu_tag // 一級多行多列菜單 
 {
     Window win, *items; // 菜單窗口和菜單項
-    unsigned int n, col, row, w, h; // 菜單項數量、列數、行數、寬度、高度
-    int x, y; // 菜單窗口的坐標
-    unsigned long bg; // 菜單的背景色
+    unsigned int n, col, row, w, h;
+    int x, y;
+    unsigned long bg;
 };
 typedef struct menu_tag Menu;
-
-enum widget_color_tag // 構件顏色類型
-{
-    NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR,
-    NORMAL_TITLE_AREA_COLOR, CURRENT_TITLE_AREA_COLOR,
-    NORMAL_TITLE_BUTTON_COLOR, CURRENT_TITLE_BUTTON_COLOR,
-    ENTERED_NORMAL_BUTTON_COLOR, ENTERED_CLOSE_BUTTON_COLOR,
-    NORMAL_TASKBAR_BUTTON_COLOR, CHOSEN_TASKBAR_BUTTON_COLOR,
-    CMD_CENTER_COLOR, ICON_COLOR, ICON_AREA_COLOR, STATUS_AREA_COLOR,
-    WIDGET_COLOR_N 
-};
-typedef enum widget_color_tag Widget_color;
-
-enum text_color_tag // 文本顏色類型
-{
-    TITLE_AREA_TEXT_COLOR, TITLE_BUTTON_TEXT_COLOR,
-    TASKBAR_BUTTON_TEXT_COLOR, STATUS_AREA_TEXT_COLOR,
-    ICON_CLASS_TEXT_COLOR, ICON_TITLE_TEXT_COLOR,
-    CMD_CENTER_ITEM_TEXT_COLOR,
-    TEXT_COLOR_N 
-};
-typedef enum text_color_tag Text_color;
 
 struct wm_tag // 窗口管理器相關信息
 {
@@ -208,17 +201,13 @@ struct wm_tag // 窗口管理器相關信息
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
     Window root_win; // 根窗口
     GC gc; // 窗口管理器的圖形信息
-    Visual *visual; // 着色類型
-    Colormap colormap; // 着色圖
     Atom icccm_atoms[ICCCM_ATOMS_N]; // icccm規範的標識符
     Client *clients; // 頭結點
     Focus_mode focus_mode; // 窗口聚焦模式
-    XftFont *font; // 窗口管理器用到的字體
+    XFontSet font_set; // 窗口管理器用到的字體集
     Cursor cursors[POINTER_ACT_N]; // 光標
     Taskbar taskbar; // 任務欄
     Menu cmd_center; // 操作中心
-    XColor widget_color[WIDGET_COLOR_N]; // 構件顏色
-    XftColor text_color[TEXT_COLOR_N]; // 文本顏色
 };
 typedef struct wm_tag WM;
 
@@ -236,7 +225,7 @@ enum align_type_tag // 文字對齊方式
     CENTER_LEFT, CENTER, CENTER_RIGHT,
     BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT,
 };
-typedef enum align_type_tag Align_type;
+typedef enum align_type_tag ALIGN_TYPE;
 
 union func_arg_tag // 函數參數類型
 {
@@ -295,10 +284,8 @@ typedef struct delta_rect_tag Delta_rect;
 struct string_format_tag // 字符串格式
 {
     Rect r; // 坐標和尺寸信息
-    Align_type align; // 對齊方式
-    bool change_bg; // 是否改變背景色的標志
-    unsigned long bg; // r區域的背景色
-    XftColor fg; // 字符串的前景色
+    ALIGN_TYPE align; // 對齊方式
+    unsigned long fg, bg; // 前景色、背景色
 };
 typedef struct string_format_tag String_format;
 

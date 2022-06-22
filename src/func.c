@@ -9,7 +9,6 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <unistd.h>
 #include "gwm.h"
 #include "func.h"
 #include "client.h"
@@ -96,7 +95,7 @@ void quit_wm(WM *wm, XEvent *e, Func_arg arg)
         del_client(wm, c);
     XDestroyWindow(wm->display, wm->taskbar.win);
     free(wm->taskbar.status_text);
-    XftFontClose(wm->display, wm->font);
+    XFreeFontSet(wm->display, wm->font_set);
     for(size_t i=0; i<POINTER_ACT_N; i++)
         XFreeCursor(wm->display, wm->cursors[i]);
     XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);

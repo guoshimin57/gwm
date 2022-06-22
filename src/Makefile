@@ -10,8 +10,7 @@
 # *************************************************************************
 
 CC := gcc
-CFLAGS := -std=c17 -Wall -pedantic-errors $(DEBUG) `pkg-config --cflags --libs x11 xft`
-
+CFLAGS := -std=c17 -Wall -pedantic-errors -lX11 $(DEBUG)
 CTAGS := ctags
 tag := tags
 backup := $(wildcard *~)

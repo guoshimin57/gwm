@@ -9,11 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <locale.h>
 #include "gwm.h"
 #include "init.h"
 #include "client.h"
-#include "color.h"
 #include "desktop.h"
 #include "font.h"
 #include "func.h"
@@ -47,16 +45,13 @@ void init_wm(WM *wm)
 	wm->mod_map=XGetModifierMapping(wm->display);
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
-    wm->visual=DefaultVisual(wm->display, wm->screen);
-    wm->colormap=DefaultColormap(wm->display, wm->screen);
     wm->focus_mode=DEFAULT_FOCUS_MODE;
 
     init_desktop(wm);
     XSetErrorHandler(x_fatal_handler);
     XSelectInput(wm->display, wm->root_win, ROOT_EVENT_MASK);
     set_icccm_atoms(wm);
-    load_font(wm);
-    alloc_color(wm);
+    create_font_set(wm);
     create_cursors(wm);
     create_taskbar(wm);
     create_cmd_center(wm);
@@ -110,12 +105,10 @@ static void create_taskbar_buttons(WM *wm)
     Taskbar *b=&wm->taskbar;
     for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
     {
-        unsigned long color = is_chosen_button(wm, TASKBAR_BUTTON_BEGIN+i) ?
-            wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
-            wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel ;
         b->buttons[i]=XCreateSimpleWindow(wm->display, b->win,
             TASKBAR_BUTTON_WIDTH*i, 0,
-            TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT, 0, 0, color);
+            TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT,
+            0, 0, NORMAL_TASKBAR_BUTTON_COLOR);
         XSelectInput(wm->display, b->buttons[i], BUTTON_EVENT_MASK);
     }
 }
@@ -126,8 +119,9 @@ static void create_icon_area(WM *wm)
     unsigned int bw=TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N,
         w=b->w-bw-b->status_area_w;
     wm->taskbar.icon_area=XCreateSimpleWindow(wm->display, b->win,
-        bw, 0, w, b->h, 0, 0, wm->widget_color[ICON_AREA_COLOR].pixel);
+        bw, 0, w, b->h, 0, 0, ICON_AREA_COLOR);
 }
+
 static void create_status_area(WM *wm)
 {
     Taskbar *b=&wm->taskbar;
@@ -139,7 +133,7 @@ static void create_status_area(WM *wm)
         b->status_area_w=1;
     wm->taskbar.status_area=XCreateSimpleWindow(wm->display, b->win,
         b->w-b->status_area_w, 0, b->status_area_w, b->h,
-        0, 0, wm->widget_color[STATUS_AREA_COLOR].pixel);
+        0, 0, STATUS_AREA_COLOR);
     XSelectInput(wm->display, b->status_area, ExposureMask);
 }
 
@@ -149,7 +143,7 @@ static void create_cmd_center(WM *wm)
                  w=CMD_CENTER_ITEM_WIDTH, h=CMD_CENTER_ITEM_HEIGHT,
                  i=TASKBAR_BUTTON_INDEX(CMD_CENTER_ITEM);
     int x=TASKBAR_BUTTON_WIDTH*i, y=wm->screen_height-wm->taskbar.h;
-    create_menu(wm, &wm->cmd_center, n, col, w, h, wm->widget_color[CMD_CENTER_COLOR].pixel);
+    create_menu(wm, &wm->cmd_center, n, col, w, h, CMD_CENTER_COLOR);
     set_menu_pos_for_click(wm, wm->taskbar.buttons[i], x, y, &wm->cmd_center);
 }
 

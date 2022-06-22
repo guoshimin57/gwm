@@ -9,18 +9,18 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <X11/Xft/Xft.h>
 #include "gwm.h"
 #include "font.h"
 #include "misc.h"
 
 static char *copy_string(const char *s);
 
-void load_font(WM *wm)
+void create_font_set(WM *wm)
 {
-    wm->font=XftFontOpenName(wm->display, wm->screen, FONT_NAME);
-    if(wm->font == NULL)
-        exit_with_msg("錯誤：不能加載必要的字體。");
+    char **list, *str;
+    int n;
+    wm->font_set=XCreateFontSet(wm->display, FONT_SET, &list, &n, &str);
+    XFreeStringList(list);
 }
 
 char *get_text_prop(WM *wm, Window win, Atom atom)
@@ -32,7 +32,7 @@ char *get_text_prop(WM *wm, Window win, Atom atom)
     {
         if(name.encoding == XA_STRING)
             result=copy_string((char *)name.value);
-        else if(Xutf8TextPropertyToTextList(wm->display, &name, &list, &n) == Success)
+        else if(XmbTextPropertyToTextList(wm->display, &name, &list, &n) == Success)
             result=copy_string(*list), XFreeStringList(list);
         XFree(name.value);
     }
@@ -52,8 +52,8 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
     {
         unsigned int w=f->r.w, h=f->r.h, lw, lh, n=strlen(str);
         get_string_size(wm, str, &lw, &lh);
-        int x=f->r.x, y=f->r.y, cx=x+w/2-lw/2, cy=y+h/2-lh/2+wm->font->ascent,
-            sx, sy, left=x, right=x+w-lw, top=y+lh, bottom=y+h;
+        int x=f->r.x, y=f->r.y, sx, sy, cx=x+w/2-lw/2, cy=y+h/2+lh/2,
+            left=x, right=x+w-lw, top=y+lh, bottom=y+h;
         switch(f->align)
         {
             case TOP_LEFT: sx=left, sy=top; break;
@@ -67,25 +67,22 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
             case BOTTOM_RIGHT: sx=right, sy=bottom; break;
         }
         XClearArea(wm->display, d, x, y, w, h, False); 
-        if(f->change_bg)
+        if(f->bg != f->fg)
         {
             XSetForeground(wm->display, wm->gc, f->bg);
             XFillRectangle(wm->display, d, wm->gc, x, y, w, h);
         }
-        XftDraw *draw=XftDrawCreate(wm->display, d, wm->visual, wm->colormap);
-        XftDrawStringUtf8(draw, &f->fg, wm->font, sx, sy, (const FcChar8 *)str, n);
-        XftDrawDestroy(draw);
+        XSetForeground(wm->display, wm->gc, f->fg);
+        XmbDrawString(wm->display, d, wm->font_set, wm->gc, sx, sy, str, n);
     }
 }
 
 void get_string_size(WM *wm, const char *str, unsigned int *w, unsigned int *h)
 {
-    /* libXrender文檔沒有解釋XGlyphInfo結構體成員的含義。
-       猜測xOff指字符串原點到字符串限定框最右邊的偏移量。*/
-    XGlyphInfo e;
-    XftTextExtentsUtf8(wm->display, wm->font, (const FcChar8 *)str, strlen(str), &e);
+    XRectangle ink, logical;
+    XmbTextExtents(wm->font_set, str, strlen(str), &ink, &logical);
     if(w)
-        *w=e.xOff;
+        *w=logical.width;
     if(h)
-        *h=wm->font->height;
+        *h=logical.height;
 }
