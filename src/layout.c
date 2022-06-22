@@ -191,10 +191,10 @@ void update_taskbar_buttons(WM *wm)
     {
         size_t i=TASKBAR_BUTTON_INDEX(b);
         String_format f={{0, 0, TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT},
-                CENTER, TASKBAR_BUTTON_TEXT_COLOR, NORMAL_TASKBAR_BUTTON_COLOR};
+                CENTER, true, wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel, wm->text_color[TASKBAR_BUTTON_TEXT_COLOR]};
         if(b == DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1
             || (b == LAYOUT_BUTTON_BEGIN+DESKTOP(wm).cur_layout))
-            f.bg=CHECKED_TASKBAR_BUTTON_COLOR;
+            f.change_bg=true, f.bg=wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel;
         draw_string(wm, wm->taskbar.buttons[i], TASKBAR_BUTTON_TEXT[i], &f);
     }
 }

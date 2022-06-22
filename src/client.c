@@ -20,7 +20,7 @@
 static void apply_rules(WM *wm, Client *c);
 static bool have_rule(Rule *r, Client *c);
 static void frame_client(WM *wm, Client *c);
-static Rect get_button_rect(Client *c, size_t index);
+static Rect get_button_rect(WM *wm, Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
 static void create_icon(WM *wm, Client *c);
 static bool have_same_class_icon_client(WM *wm, Client *c);
@@ -115,7 +115,7 @@ static void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c);
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y,
-        fr.w, fr.h, c->border_w, CURRENT_BORDER_COLOR, 0);
+        fr.w, fr.h, c->border_w, wm->widget_color[CURRENT_BORDER_COLOR].pixel, 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
     if(c->title_bar_h)
         create_title_bar(wm, c);
@@ -131,13 +131,13 @@ void create_title_bar(WM *wm, Client *c)
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
-        Rect br=get_button_rect(c, i);
+        Rect br=get_button_rect(wm, c, i);
         c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame,
-            br.x, br.y, br.w, br.h, 0, 0, CURRENT_TITLE_BUTTON_COLOR);
+            br.x, br.y, br.w, br.h, 0, 0, wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel);
         XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
     }
     c->title_area=XCreateSimpleWindow(wm->display, c->frame,
-        tr.x, tr.y, tr.w, tr.h, 0, 0, CURRENT_TITLE_AREA_COLOR);
+        tr.x, tr.y, tr.w, tr.h, 0, 0, wm->widget_color[CURRENT_TITLE_AREA_COLOR].pixel);
     XSelectInput(wm->display, c->title_area, TITLE_AREA_EVENT_MASK);
 }
 
@@ -154,7 +154,7 @@ Rect get_title_area_rect(WM *wm, Client *c)
         TITLE_BUTTON_WIDTH*buttons_n[DESKTOP(wm).cur_layout], c->title_bar_h};
 }
 
-static Rect get_button_rect(Client *c, size_t index)
+static Rect get_button_rect(WM *wm, Client *c, size_t index)
 {
     return (Rect){c->w-TITLE_BUTTON_WIDTH*(TITLE_BUTTON_N-index),
         (c->title_bar_h-TITLE_BUTTON_HEIGHT)/2,
@@ -219,7 +219,7 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
         {
-            Rect br=get_button_rect(c, i);
+            Rect br=get_button_rect(wm, c, i);
             XMoveWindow(wm->display, c->buttons[i], br.x, br.y);
         }
         XResizeWindow(wm->display, c->title_area, tr.w, tr.h);
@@ -232,14 +232,17 @@ void update_frame(WM *wm, unsigned int desktop_n, Client *c)
     bool flag=(c==wm->desktop[desktop_n-1].cur_focus_client);
     if(c->border_w)
         XSetWindowBorder(wm->display, c->frame, flag ?
-            CURRENT_BORDER_COLOR : NORMAL_BORDER_COLOR);
+            wm->widget_color[CURRENT_BORDER_COLOR].pixel :
+            wm->widget_color[NORMAL_BORDER_COLOR].pixel);
     if(c->title_bar_h)
     {
         update_win_background(wm, c->title_area, flag ?
-            CURRENT_TITLE_AREA_COLOR : NORMAL_TITLE_AREA_COLOR);
+            wm->widget_color[CURRENT_TITLE_AREA_COLOR].pixel :
+            wm->widget_color[NORMAL_TITLE_AREA_COLOR].pixel);
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             update_win_background(wm, c->buttons[i], flag ?
-                CURRENT_TITLE_BUTTON_COLOR : NORMAL_TITLE_BUTTON_COLOR);
+                wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel :
+                wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel);
     }
 }
 
@@ -264,7 +267,9 @@ static void create_icon(WM *wm, Client *c)
     p->area_type=c->area_type==ICONIFY_AREA ? DEFAULT_AREA_TYPE : c->area_type;
     c->area_type=ICONIFY_AREA;
     p->win=XCreateSimpleWindow(wm->display, wm->taskbar.icon_area, p->x, p->y,
-        p->w, p->h, ICON_BORDER_WIDTH, NORMAL_ICON_BORDER_COLOR, ICON_BG_COLOR);
+        p->w, p->h, ICON_BORDER_WIDTH,
+        wm->widget_color[NORMAL_BORDER_COLOR].pixel,
+        wm->widget_color[ICON_COLOR].pixel);
     update_icon_area(wm);
 }
 

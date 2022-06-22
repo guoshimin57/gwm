@@ -9,6 +9,8 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "gwm.h"
 #include "client.h"
 #include "misc.h"
@@ -114,4 +116,10 @@ void clear_zombies(int unused)
 {
 	while(0 < waitpid(-1, NULL, WNOHANG))
         ;
+}
+
+bool is_chosen_button(WM *wm, Widget_type type)
+{
+    return(type == DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1
+        || type == LAYOUT_BUTTON_BEGIN+DESKTOP(wm).cur_layout);
 }

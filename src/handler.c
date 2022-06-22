@@ -163,14 +163,14 @@ static void hint_enter_taskbar_button(WM *wm, Widget_type type)
 {
     Window win=wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)];
     XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
-    update_win_background(wm, win, ENTERED_TASKBAR_BUTTON_COLOR);
+    update_win_background(wm, win, wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
 }
 
 static void hint_enter_cmd_center_button(WM *wm, Widget_type type)
 {
     Window win=wm->cmd_center.items[CMD_CENTER_ITEM_INDEX(type)];
     XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
-    update_win_background(wm, win, ENTERED_CMD_CENTER_ITEM_COLOR);
+    update_win_background(wm, win, wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
 }
 
 static void hint_enter_title_button(WM *wm, Client *c, Widget_type type)
@@ -178,7 +178,8 @@ static void hint_enter_title_button(WM *wm, Client *c, Widget_type type)
     Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
     XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
     update_win_background(wm, win, type==CLOSE_BUTTON ?
-        ENTERED_CLOSE_BUTTON_COLOR : ENTERED_TITLE_BUTTON_COLOR);
+        wm->widget_color[ENTERED_CLOSE_BUTTON_COLOR].pixel :
+        wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
 }
 
 static void hint_resize_client(WM *wm, Client *c, int x, int y)
@@ -216,12 +217,12 @@ static void update_icon_text(WM *wm, Window win)
         unsigned int w;
         get_string_size(wm, c->class_name, &w, NULL);
         String_format f={{0, 0, w, c->icon->h},
-            CENTER, ICON_CLASS_NAME_FG_COLOR, ICON_CLASS_NAME_BG_COLOR};
+            CENTER, false, 0, wm->text_color[ICON_CLASS_TEXT_COLOR]};
         draw_string(wm, c->icon->win, c->class_name, &f);
         if(!c->icon->is_short_text)
         {
             String_format f={{w, 0, c->icon->w-w, c->icon->h},
-                CENTER, ICON_TITLE_TEXT_FG_COLOR, ICON_TITLE_TEXT_BG_COLOR};
+                CENTER, false, 0, wm->text_color[ICON_TITLE_TEXT_COLOR]};
             draw_string(wm, c->icon->win, c->title_text, &f);
         }
     }
@@ -230,17 +231,14 @@ static void update_icon_text(WM *wm, Window win)
 static void update_taskbar_button_text(WM *wm, size_t index)
 {
     String_format f={{0, 0, TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT},
-            CENTER, TASKBAR_BUTTON_TEXT_COLOR, TASKBAR_BUTTON_TEXT_COLOR};
-    if(index == TASKBAR_BUTTON_INDEX(DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1)
-        || (index == TASKBAR_BUTTON_INDEX(LAYOUT_BUTTON_BEGIN+DESKTOP(wm).cur_layout)))
-        f.bg=CHECKED_TASKBAR_BUTTON_COLOR;
+            CENTER, false, 0, wm->text_color[TASKBAR_BUTTON_TEXT_COLOR]};
     draw_string(wm, wm->taskbar.buttons[index], TASKBAR_BUTTON_TEXT[index], &f);
 }
 
 static void update_cmd_center_button_text(WM *wm, size_t index)
 {
     String_format f={{0, 0, CMD_CENTER_ITEM_WIDTH, CMD_CENTER_ITEM_HEIGHT},
-        CENTER_LEFT, CMD_CENTER_ITEM_TEXT_COLOR, CMD_CENTER_ITEM_TEXT_COLOR};
+        CENTER_LEFT, false, 0, wm->text_color[CMD_CENTER_ITEM_TEXT_COLOR]};
     draw_string(wm, wm->cmd_center.items[index], CMD_CENTER_ITEM_TEXT[index], &f);
 }
 
@@ -249,7 +247,7 @@ static void update_title_area_text(WM *wm, Client *c)
     if(c->title_bar_h)
     {
         String_format f={get_title_area_rect(wm, c),
-            CENTER_LEFT, TITLE_TEXT_COLOR, TITLE_TEXT_COLOR};
+            CENTER_LEFT, false, 0, wm->text_color[TITLE_AREA_TEXT_COLOR]};
         draw_string(wm, c->title_area, c->title_text, &f);
     }
 }
@@ -259,7 +257,7 @@ static void update_title_button_text(WM *wm, Client *c, size_t index)
     if(c->title_bar_h)
     {
         String_format f={{0, 0, TITLE_BUTTON_WIDTH, TITLE_BUTTON_HEIGHT},
-            CENTER, TITLE_BUTTON_TEXT_COLOR, TITLE_BUTTON_TEXT_COLOR};
+            CENTER, false, 0, wm->text_color[TITLE_BUTTON_TEXT_COLOR]};
         draw_string(wm, c->buttons[index], TITLE_BUTTON_TEXT[index], &f);
     }
 }
@@ -268,7 +266,7 @@ static void update_status_area_text(WM *wm)
 {
     Taskbar *b=&wm->taskbar;
     String_format f={{0, 0, b->status_area_w, b->h},
-        CENTER_RIGHT, STATUS_AREA_TEXT_COLOR, STATUS_AREA_TEXT_COLOR};
+        CENTER_RIGHT, false, 0, wm->text_color[STATUS_AREA_TEXT_COLOR]};
     draw_string(wm, b->status_area, b->status_text, &f);
 }
 
@@ -288,7 +286,8 @@ static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
         Desktop *d=wm->desktop+desktop_n-1;
         if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
             XSetWindowBorder(wm->display, c->icon->win, c==d->cur_focus_client ?
-                CURRENT_ICON_BORDER_COLOR : NORMAL_ICON_BORDER_COLOR);
+                wm->widget_color[CURRENT_BORDER_COLOR].pixel :
+                wm->widget_color[NORMAL_BORDER_COLOR].pixel);
         else
             update_frame(wm, desktop_n,  c);
     }
@@ -323,24 +322,25 @@ void handle_leave_notify(WM *wm, XEvent *e)
 
 static void hint_leave_taskbar_button(WM *wm, Widget_type type)
 {
-    if(type !=DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1)
-    {
-        Window win=wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)];
-        update_win_background(wm, win, NORMAL_TASKBAR_BUTTON_COLOR);
-    }
+    unsigned long color = is_chosen_button(wm, type) ?
+        wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
+        wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel ;
+    Window win=wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)];
+    update_win_background(wm, win, color);
 }
 
 static void hint_leave_cmd_center_button(WM *wm, Widget_type type)
 {
     Window win=wm->cmd_center.items[CMD_CENTER_ITEM_INDEX(type)];
-    update_win_background(wm, win, NORMAL_CMD_CENTER_ITEM_COLOR);
+    update_win_background(wm, win, wm->widget_color[CMD_CENTER_COLOR].pixel);
 }
 
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
 {
     Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
     update_win_background(wm, win, c==DESKTOP(wm).cur_focus_client ?
-        CURRENT_TITLE_BUTTON_COLOR : NORMAL_TITLE_BUTTON_COLOR);
+        wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel :
+        wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel);
 }
 
 void handle_map_request(WM *wm, XEvent *e)
