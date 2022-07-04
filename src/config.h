@@ -28,67 +28,74 @@
 #define DEFAULT_FIXED_AREA_RATIO 0.15 // 默認的固定區域比例
 #define DEFAULT_N_MAIN_MAX 1 // 默認的主區域最大窗口數量
 #define AUTOSTART "~/.config/gwm/autostart.sh" // 在gwm剛啓動時執行的腳本
-#define FONT_SET "*-24-*" // 本窗口管理器所使用的字符集
 
-#define GREY11 0x1c1c1c         // 灰色的一種
-#define GREY21 0x363636         // 灰色的一種
-#define GREY31 0x4f4f4f         // 灰色的一種
-#define DODGERBLUE 0x1e90ff     // 道奇藍
-#define RED 0xff0000            // 紅色
-#define WHITE 0xffffff          // 白色
-#define ROSYBROWN 0xbc8f8f      // 玫瑰褐
-#define DEEPSKYBLUE4 0x00688b   // 深天藍色的一種
+#define TO_STR(value) _TO_STR(value) // 把數字轉換爲字符串常量
+#define _TO_STR(value) # value 
 
-#define NORMAL_FRAME_COLOR GREY31 // 普通窗口框架的顏色
-#define CURRENT_FRAME_COLOR DODGERBLUE // 當前窗口框架的顏色
-#define NORMAL_BORDER_COLOR GREY31 // 普通窗口边框的顏色
-#define CURRENT_BORDER_COLOR DODGERBLUE// 當前窗口边框的顏色
+#define ROUND(value) ((int)((value)+0.5)) // 把浮點數四舍五入後轉換爲整數
 
-#define NORMAL_TITLE_AREA_COLOR GREY31 // 普通窗口標題區域的顏色
-#define CURRENT_TITLE_AREA_COLOR DODGERBLUE// 當前窗口標題區域的顏色
-#define NORMAL_TITLE_BUTTON_COLOR GREY31 // 普通窗口標題欄按鈕的顏色
-#define CURRENT_TITLE_BUTTON_COLOR DODGERBLUE // 當前窗口標題欄按鈕的顏色
-#define ENTERED_TITLE_BUTTON_COLOR (~DODGERBLUE) // 定位器進入窗口標題欄按鈕時按鈕的顏色
-#define ENTERED_CLOSE_BUTTON_COLOR RED // 定位器進入窗口標題欄關閉按鈕時按鈕的顏色
-#define TITLE_TEXT_COLOR WHITE // 窗口標題欄文字的顏色
-#define TITLE_BUTTON_TEXT_COLOR WHITE // 窗口標題欄按鈕文字的顏色
-
-#define NORMAL_ICON_BORDER_COLOR GREY11 // 普通縮微窗口边框的顏色
-#define CURRENT_ICON_BORDER_COLOR DODGERBLUE// 當前縮微窗口边框的顏色
-#define ICON_BG_COLOR GREY11 // 縮微化窗口的背景色
-#define ICON_CLASS_NAME_FG_COLOR ROSYBROWN // 縮微化窗口類型名文字的前景色
-#define ICON_CLASS_NAME_BG_COLOR GREY11 // 縮微化窗口類型名文字的背景色
-#define ICON_TITLE_TEXT_FG_COLOR WHITE // 縮微化窗口標題文字的前景色
-#define ICON_TITLE_TEXT_BG_COLOR GREY11 // 縮微化窗口標題文字的背景色
-
-#define ICON_AREA_COLOR GREY11 // 任務欄縮微區域的顏色
-#define STATUS_AREA_COLOR GREY21 // 任務欄狀態區域的背景色
-#define STATUS_AREA_TEXT_COLOR WHITE // 任務欄狀態區域的前景色
-#define NORMAL_TASKBAR_BUTTON_COLOR GREY21 // 任務欄普通按鈕的顏色
-#define ENTERED_TASKBAR_BUTTON_COLOR (~DODGERBLUE) // 定位器進入任務欄按鈕時按鈕的顏色
-#define CHECKED_TASKBAR_BUTTON_COLOR DEEPSKYBLUE4 // 選中的任務欄按鈕的顏色
-#define TASKBAR_BUTTON_TEXT_COLOR WHITE  // 任務欄按鈕文字的顏色
-#define CMD_CENTER_COLOR GREY21 // 操作中心的背景顏色
-#define NORMAL_CMD_CENTER_ITEM_COLOR GREY21 // 操作中心普通按鈕的顏色
-#define ENTERED_CMD_CENTER_ITEM_COLOR (~DODGERBLUE) // 定位器進入操作中心按鈕時按鈕的顏色
-#define CMD_CENTER_ITEM_TEXT_COLOR WHITE  // 操作中心按鈕文字的顏色
-
-#define BORDER_WIDTH 4 // 窗口框架边框的宽度，单位为像素
-#define TITLE_BAR_HEIGHT 32 // 窗口標題欄的高度，單位爲像素
+#define DEFAULT_FONT_PIXEL_SIZE 24 // 默認字體大小，單位爲像素
+#define TITLE_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 標題欄的字體大小，單位爲像素
+#define CMD_CENTER_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 操作中心的字體大小，單位爲像素
+#define TASKBAR_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 任務欄的字體大小，單位爲像素
+#define BORDER_WIDTH ROUND(DEFAULT_FONT_PIXEL_SIZE/8.0) // 窗口框架边框的宽度，单位为像素
+#define TITLE_BAR_HEIGHT ROUND(TITLE_FONT_PIXEL_SIZE*4/3.0) // 窗口標題欄的高度，單位爲像素
 #define TITLE_BUTTON_WIDTH TITLE_BAR_HEIGHT // 窗口按鈕的寬度，單位爲像素
-#define TITLE_BUTTON_HEIGHT TITLE_BAR_HEIGHT // 窗口按鈕的高度，單位爲像素
-#define WIN_GAP 4 // 窗口間隔，單位爲像素
-#define ICON_BORDER_WIDTH 1 // 縮微窗口边框的宽度，单位为像素
-#define ICON_HEIGHT 30 // 縮微化窗口的高度，單位爲像素
-#define ICONS_SPACE 16 // 縮微化窗口的間隔，單位爲像素
-#define STATUS_AREA_WIDTH_MAX 640 // 任務欄狀態區域的最大寬度
-#define TASKBAR_HEIGHT 36 // 狀態欄的高度，單位爲像素
-#define TASKBAR_BUTTON_WIDTH 48 // 任務欄按鈕的寬度，單位爲像素
+#define TITLE_BUTTON_HEIGHT TITLE_BUTTON_WIDTH // 窗口按鈕的高度，單位爲像素
+#define WIN_GAP BORDER_WIDTH // 窗口間隔，單位爲像素
+#define STATUS_AREA_WIDTH_MAX TASKBAR_FONT_PIXEL_SIZE*30 // 任務欄狀態區域的最大寬度
+#define TASKBAR_HEIGHT ROUND(TASKBAR_FONT_PIXEL_SIZE*4/3.0) // 狀態欄的高度，單位爲像素
+#define TASKBAR_BUTTON_WIDTH TASKBAR_FONT_PIXEL_SIZE*2 // 任務欄按鈕的寬度，單位爲像素
 #define TASKBAR_BUTTON_HEIGHT TASKBAR_HEIGHT // 任務欄按鈕的高度，單位爲像素
-#define CMD_CENTER_ITEM_WIDTH (24*7) // 操作中心按鈕的寬度，單位爲像素
-#define CMD_CENTER_ITEM_HEIGHT 40 // 操作中心按鈕的高度，單位爲像素
+#define ICON_BORDER_WIDTH ROUND(TASKBAR_FONT_PIXEL_SIZE/32.0) // 縮微窗口边框的宽度，单位为像素
+#define ICON_HEIGHT (TASKBAR_HEIGHT-ICON_BORDER_WIDTH*2) // 縮微化窗口的高度，單位爲像素
+#define ICONS_SPACE ROUND(ICON_HEIGHT/2.0) // 縮微化窗口的間隔，單位爲像素
+#define CMD_CENTER_ITEM_WIDTH (CMD_CENTER_FONT_PIXEL_SIZE*7) // 操作中心按鈕的寬度，單位爲像素
+#define CMD_CENTER_ITEM_HEIGHT ROUND(CMD_CENTER_FONT_PIXEL_SIZE*1.5) // 操作中心按鈕的高度，單位爲像素
 #define CMD_CENTER_COL 4 // 操作中心按鈕列數
-#define MOVE_RESIZE_INC 32 // 移動窗口、調整窗口尺寸的步進值，單位爲像素
+#define MOVE_RESIZE_INC DEFAULT_FONT_PIXEL_SIZE  // 移動窗口、調整窗口尺寸的步進值，單位爲像素
+
+#define DEFAULT_FONT_NAME "monospace:pixelsize="TO_STR(DEFAULT_FONT_PIXEL_SIZE) // 默認字體名
+
+#define FONT_NAME (const char *[]) /* 本窗口管理器所使用的字庫名稱列表 */                       \
+{/* 注意：每增加一種不同的字體，就會增加2M左右的內存佔用 */                                     \
+    [TITLE_AREA_FONT]       = "monospace:pixelsize="TO_STR(TITLE_FONT_PIXEL_SIZE),              \
+    [TITLE_BUTTON_FONT]     = "monospace:pixelsize="TO_STR(TITLE_FONT_PIXEL_SIZE),              \
+    [CMD_CENTER_FONT]       = "monospace:pixelsize="TO_STR(CMD_CENTER_FONT_PIXEL_SIZE),         \
+    [TASKBAR_BUTTON_FONT]   = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
+    [ICON_CLASS_FONT]       = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
+    [ICON_TITLE_FONT]       = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
+    [STATUS_AREA_FONT]      = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
+}
+
+#define WIDGET_COLOR_NAME (const char *[]) /* 構件顏色名 */                        \
+{                                                                                  \
+    [NORMAL_BORDER_COLOR]         = "grey31",       /* 普通邊框的顏色名         */ \
+    [CURRENT_BORDER_COLOR]        = "dodgerblue",   /* 當前邊框的顏色名         */ \
+    [NORMAL_TITLE_AREA_COLOR]     = "grey31",       /* 普通標題區域的顏色名     */ \
+    [CURRENT_TITLE_AREA_COLOR]    = "dodgerblue",   /* 當前標題區域的顏色名     */ \
+    [NORMAL_TITLE_BUTTON_COLOR]   = "grey31",       /* 普通標題按鈕的顏色名     */ \
+    [CURRENT_TITLE_BUTTON_COLOR]  = "dodgerblue",   /* 當前標題按鈕的顏色名     */ \
+    [ENTERED_NORMAL_BUTTON_COLOR] = "darkorange",   /* 所進入的普通按鈕的顏色名 */ \
+    [ENTERED_CLOSE_BUTTON_COLOR]  = "red",          /* 所進入的關閉按鈕的顏色名 */ \
+    [NORMAL_TASKBAR_BUTTON_COLOR] = "grey21",       /* 普通任務欄按鈕的顏色名   */ \
+    [CHOSEN_TASKBAR_BUTTON_COLOR] = "deepskyblue4", /* 選中的任務欄按鈕的顏色名 */ \
+    [CMD_CENTER_COLOR]            = "grey21",       /* 操作中心的顏色名         */ \
+    [ICON_COLOR]                  = "grey11",       /* 圖標的顏色名             */ \
+    [ICON_AREA_COLOR]             = "grey11",       /* 圖標區域的顏色名         */ \
+    [STATUS_AREA_COLOR]           = "grey21",       /* 狀態區域的顏色名         */ \
+}
+
+#define TEXT_COLOR_NAME (const char *[]) /* 文本顏色名 */                        \
+{                                                                                \
+    [TITLE_AREA_TEXT_COLOR]      = "white",     /* 標題區域文本的顏色名       */ \
+    [TITLE_BUTTON_TEXT_COLOR]    = "white",     /* 標題按鈕文本的顏色名       */ \
+    [TASKBAR_BUTTON_TEXT_COLOR]  = "white",     /* 任務欄按鈕文本的顏色名     */ \
+    [STATUS_AREA_TEXT_COLOR]     = "white",     /* 狀態區域文本的顏色名       */ \
+    [ICON_CLASS_TEXT_COLOR]      = "rosybrown", /* 圖標中程序類型文本的顏色名 */ \
+    [ICON_TITLE_TEXT_COLOR]      = "white",     /* 圖標中標題文本的顏色名     */ \
+    [CMD_CENTER_ITEM_TEXT_COLOR] = "white",     /* 操作中心菜單項文本的顏色名 */ \
+}
 
 #define TITLE_BUTTON_TEXT (const char *[]) /* 窗口標題欄按鈕的標籤（從左至右）*/ \
 /* 切換至主區域 切換至次區域 切換至固定區 切換至懸浮態 縮微化 最大化 關閉 */     \
@@ -96,34 +103,34 @@
 
 #define TASKBAR_BUTTON_TEXT (const char *[]) /* 任務欄按鈕的標籤（從左至右） */  \
 {/* 依次爲各虛擬桌面標籤 */ \
-    "主",   "次",   "备",   \
+    "1",   "2",   "3",   \
 /* 切換至全屏模式 切換至概覽模式 切換至堆疊模式 切換至平鋪模式 切換桌面可見性 打開操作中心*/ \
-    "全",           "概",         "堆",          "平",          "■",        "^",    \
+    "□",           "▦",         "▣",          "▥",          "■",        "^",    \
 }
 
 #define CMD_CENTER_ITEM_TEXT (const char *[]) /* 操作中心按鈕的標籤（從左至右，從上至下） */  \
 {\
-    "帮助",         "文件",         "终端模拟器",   "网络浏览器",   \
-    "播放影音",     "切换播放状态", "关闭影音",     "减小音量",     \
-    "增大音量",     "最大音量",     "静音切换",     "暂主区开窗",   \
-    "暂次区开窗",   "暂固定区开窗", "暂悬浮区开窗", "暂缩微区开窗", \
-    "增大主区容量", "减小主区容量", "切换聚焦模式", "退出gwm",      \
-    "注销",         "重启",         "关机",         "运行",         \
+    "幫助",         "文件",         "終端模擬器",   "網絡瀏覽器",   \
+    "播放影音",     "切換播放狀態", "關閉影音",     "减小音量",     \
+    "增大音量",     "最大音量",     "靜音切換",     "暫主區開窗",   \
+    "暫次區開窗",   "暫固定區開窗", "暫懸浮區開窗", "暫縮微區開窗", \
+    "增大主區容量", "减小主區容量", "切換聚焦模式", "退出gwm",      \
+    "注銷",         "重啓",         "關機",         "運行",         \
 }
 
-#define CURSORS_SHAPE (unsigned int []) /* 定位器相關的光標字體 */  \
-{                                                           \
-    /* NO_OP */                  XC_left_ptr,               \
-    /* MOVE */                   XC_fleur,                  \
-    /* TOP_RESIZE */             XC_top_side,               \
-    /* BOTTOM_RESIZE */          XC_bottom_side,            \
-    /* LEFT_RESIZE */            XC_left_side,              \
-    /* RIGHT_RESIZE */           XC_right_side,             \
-    /* TOP_LEFT_RESIZE */        XC_top_left_corner,        \
-    /* TOP_RIGHT_RESIZE */       XC_top_right_corner,       \
-    /* BOTTOM_LEFT_RESIZE */     XC_bottom_left_corner,     \
-    /* BOTTOM_RIGHT_RESIZE */    XC_bottom_right_corner,    \
-    /* ADJUST_LAYOUT_RATIO */    XC_sb_h_double_arrow,      \
+#define CURSOR_SHAPE (unsigned int []) /* 定位器相關的光標字體 */  \
+{                                                     \
+    XC_left_ptr,            /* NO_OP */               \
+    XC_fleur,               /* MOVE */                \
+    XC_top_side,            /* TOP_RESIZE */          \
+    XC_bottom_side,         /* BOTTOM_RESIZE */       \
+    XC_left_side,           /* LEFT_RESIZE */         \
+    XC_right_side,          /* RIGHT_RESIZE */        \
+    XC_top_left_corner,     /* TOP_LEFT_RESIZE */     \
+    XC_top_right_corner,    /* TOP_RIGHT_RESIZE */    \
+    XC_bottom_left_corner,  /* BOTTOM_LEFT_RESIZE */  \
+    XC_bottom_right_corner, /* BOTTOM_RIGHT_RESIZE */ \
+    XC_sb_h_double_arrow,   /* ADJUST_LAYOUT_RATIO */ \
 }
 
 #define HELP "lxterminal -e 'man gwm' || xfce4-terminal -e 'man gwm' || xterm -e 'man gwm'"
@@ -146,7 +153,7 @@
 #define RUN "dmenu_run"
 
 /* 與虛擬桌面相關的按鍵功能綁定。n=0僅作用於attach_to_all_desktops */
-#define DESKTOP_KEYBIND(key, n) \
+#define DESKTOP_KEYBIND(key, n)                                           \
 /*  功能轉換鍵            鍵符號 要綁定的函數(詳見gwm.h) 函數的參數 */    \
     {WM_KEY|ShiftMask,      key, focus_desktop,          {.desktop_n=n}}, \
     {WM_KEY,	            key, move_to_desktop,        {.desktop_n=n}}, \
@@ -157,7 +164,7 @@
     {Mod1Mask|ShiftMask,    key, all_attach_to_desktop,  {.desktop_n=n}}, \
     {ShiftMask|ControlMask, key, attach_to_all_desktops, {.desktop_n=n}}
 
-#define KEYBINDS (Keybind []) /* 按鍵功能綁定 */                                           \
+#define KEYBIND (Keybind []) /* 按鍵功能綁定 */                                            \
 {/* 功能轉換鍵  鍵符號           要綁定的函數(詳見gwm.h)      函數的參數 */                \
     {0, XF86XK_MonBrightnessDown,exec,                        SH_CMD(LIGHT_DOWN)},         \
     {0, XF86XK_MonBrightnessUp,  exec,                        SH_CMD(LIGHT_UP)},           \
@@ -225,7 +232,7 @@
     {WM_KEY,	XK_Page_Down,    next_desktop,                {0}},                        \
     {WM_KEY,	XK_Page_Up,      prev_desktop,                {0}},                        \
     DESKTOP_KEYBIND(XK_0, 0),                                                              \
-    DESKTOP_KEYBIND(XK_9, 1),                                                              \
+    DESKTOP_KEYBIND(XK_1, 1),                                                              \
     DESKTOP_KEYBIND(XK_2, 2),                                                              \
     DESKTOP_KEYBIND(XK_3, 3),                                                              \
 }
@@ -243,7 +250,7 @@
     {DESKTOPN_BUTTON(n),                    0,    Button3, move_to_desktop,        {0}},   \
     {DESKTOPN_BUTTON(n),             Mod1Mask,    Button3, all_move_to_desktop,    {0}}
 
-#define BUTTONBINDS (Buttonbind []) /* 按鈕功能綁定 */                                            \
+#define BUTTONBIND (Buttonbind []) /* 按鈕功能綁定 */                                             \
 {/* 控件類型             能轉換鍵 定位器按鈕 要綁定的函數            函數的參數 */                \
     {FULL_BUTTON,              0, Button1, change_layout,            {.layout=FULL}},             \
     {PREVIEW_BUTTON,           0, Button1, change_layout,            {.layout=PREVIEW}},          \
@@ -302,7 +309,7 @@
     DESKTOP_BUTTONBIND(3),                                                                        \
 }
 
-#define RULES (Rule []) /* 窗口管理器對窗口的管理規則 */                                                          \
+#define RULE (Rule []) /* 窗口管理器對窗口的管理規則 */                                                           \
 {/* 可通過xprop命令查看客戶程序類型和客戶程序名稱。其結果表示爲：                                                 \
         WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"                                                         \
     客戶程序類型           客戶程序名稱          圖標文字  窗口放置位置       標題欄高度        邊框寬度    桌面*/\

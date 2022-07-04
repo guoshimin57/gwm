@@ -26,10 +26,10 @@ void grab_keys(WM *wm)
     unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     KeyCode code;
     XUngrabKey(wm->display, AnyKey, AnyModifier, wm->root_win);
-    for(size_t i=0; i<ARRAY_NUM(KEYBINDS); i++)
-        if((code=XKeysymToKeycode(wm->display, KEYBINDS[i].keysym)))
+    for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++)
+        if((code=XKeysymToKeycode(wm->display, KEYBIND[i].keysym)))
             for(size_t j=0; j<ARRAY_NUM(masks); j++)
-                XGrabKey(wm->display, code, KEYBINDS[i].modifier|masks[j],
+                XGrabKey(wm->display, code, KEYBIND[i].modifier|masks[j],
                     wm->root_win, True, GrabModeAsync, GrabModeAsync);
 }
 
@@ -53,9 +53,9 @@ void grab_buttons(WM *wm, Client *c)
 {
     unsigned int num_lock_mask=get_num_lock_mask(wm),
                  masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
-    Buttonbind *p=BUTTONBINDS;
+    Buttonbind *p=BUTTONBIND;
     XUngrabButton(wm->display, AnyButton, AnyModifier, c->win);
-    for(size_t i=0; i<ARRAY_NUM(BUTTONBINDS); i++, p++)
+    for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++, p++)
     {
         if(p->widget_type == CLIENT_WIN)
         {

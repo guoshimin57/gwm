@@ -9,6 +9,8 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "gwm.h"
 #include "client.h"
 #include "misc.h"
@@ -85,11 +87,12 @@ Widget_type get_widget_type(WM *wm, Window win)
 }
 
 Pointer_act get_resize_act(Client *c, const Move_info *m)
-{
-    int bw=c->border_w, bh=c->title_bar_h, cw=c->w/3, ch=c->h/3, // 窗口角落的寬度和高度
-        // 窗口框架左、右橫坐標和上、下縱坐標
+{   // 窗口角落的寬度、高度以及窗口框架左、右橫坐標和上、下縱坐標
+    int bw=c->border_w, bh=c->title_bar_h, cw =c->w/3, ch=c->h/3,
         lx=c->x-bw, rx=c->x+c->w+bw, ty=c->y-bh-bw, by=c->y+c->h+bw;
 
+    cw = cw > MOVE_RESIZE_INC ? MOVE_RESIZE_INC : cw;
+    ch = ch > MOVE_RESIZE_INC ? MOVE_RESIZE_INC : ch;
     if(m->ox>=lx && m->ox<lx+bw+cw && m->oy>=ty && m->oy<ty+bw+ch)
         return TOP_LEFT_RESIZE;
     else if(m->ox>=rx-bw-cw && m->ox<rx && m->oy>=ty && m->oy<ty+bw+ch)
@@ -114,4 +117,10 @@ void clear_zombies(int unused)
 {
 	while(0 < waitpid(-1, NULL, WNOHANG))
         ;
+}
+
+bool is_chosen_button(WM *wm, Widget_type type)
+{
+    return(type == DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1
+        || type == LAYOUT_BUTTON_BEGIN+DESKTOP(wm).cur_layout);
 }

@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <signal.h>
 #include "config.h"
 #include "gwm.h"
 #include "client.h"
