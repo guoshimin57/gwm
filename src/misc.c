@@ -38,7 +38,7 @@ void exit_with_msg(const char *msg)
 bool is_wm_win(WM *wm, Window win)
 {
     XWindowAttributes attr;
-    return ( win != wm->taskbar.win
+    return ( win != wm->taskbar.win && win!=wm->run_cmd.win
         && XGetWindowAttributes(wm->display, win, &attr)
         && attr.map_state != IsUnmapped
         && !attr.override_redirect);
@@ -59,6 +59,8 @@ Widget_type get_widget_type(WM *wm, Window win)
     Client *c;
     if(win == wm->root_win)
         return ROOT_WIN;
+    if(win == wm->run_cmd.win)
+        return RUN_CMD_ENTRY;
     for(type=TASKBAR_BUTTON_BEGIN; type<=TASKBAR_BUTTON_END; type++)
         if(win == wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)])
             return type;

@@ -12,6 +12,7 @@
 #ifndef GWM_H
 #define GWM_H
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
@@ -69,7 +70,7 @@ typedef enum area_type_tag Area_type;
 
 enum widget_type_tag // 構件類型
 {
-    UNDEFINED, ROOT_WIN, STATUS_AREA,
+    UNDEFINED, ROOT_WIN, STATUS_AREA, RUN_CMD_ENTRY,
     CLIENT_WIN, CLIENT_FRAME, TITLE_AREA, CLIENT_ICON,
 
     MAIN_BUTTON, SECOND_BUTTON, FIXED_BUTTON, FLOAT_BUTTON,
@@ -98,7 +99,7 @@ typedef enum widget_type_tag Widget_type;
 enum font_type_tag // 字體類型, 按字符顯示位置分類
 {
     TITLE_AREA_FONT, TITLE_BUTTON_FONT, CMD_CENTER_FONT,
-    TASKBAR_BUTTON_FONT, ICON_CLASS_FONT, ICON_TITLE_FONT, STATUS_AREA_FONT,
+    TASKBAR_BUTTON_FONT, ICON_CLASS_FONT, ICON_TITLE_FONT, STATUS_AREA_FONT, ENTRY_FONT,
     FONT_N
 };
 typedef enum font_type_tag Font_type;
@@ -192,6 +193,7 @@ enum widget_color_tag // 構件顏色類型
     ENTERED_NORMAL_BUTTON_COLOR, ENTERED_CLOSE_BUTTON_COLOR,
     NORMAL_TASKBAR_BUTTON_COLOR, CHOSEN_TASKBAR_BUTTON_COLOR,
     CMD_CENTER_COLOR, ICON_COLOR, ICON_AREA_COLOR, STATUS_AREA_COLOR,
+    ENTRY_COLOR,
     WIDGET_COLOR_N 
 };
 typedef enum widget_color_tag Widget_color;
@@ -201,10 +203,20 @@ enum text_color_tag // 文本顏色類型
     TITLE_AREA_TEXT_COLOR, TITLE_BUTTON_TEXT_COLOR,
     TASKBAR_BUTTON_TEXT_COLOR, STATUS_AREA_TEXT_COLOR,
     ICON_CLASS_TEXT_COLOR, ICON_TITLE_TEXT_COLOR,
-    CMD_CENTER_ITEM_TEXT_COLOR,
+    CMD_CENTER_ITEM_TEXT_COLOR, ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
     TEXT_COLOR_N 
 };
 typedef enum text_color_tag Text_color;
+
+struct entry_tag
+{
+    Window win;
+    int x, y;
+    unsigned int w, h;
+    char text[BUFSIZ];
+    const char *hint;
+};
+typedef struct entry_tag Entry;
 
 struct wm_tag // 窗口管理器相關信息
 {
@@ -225,6 +237,7 @@ struct wm_tag // 窗口管理器相關信息
     Cursor cursors[POINTER_ACT_N]; // 光標
     Taskbar taskbar; // 任務欄
     Menu cmd_center; // 操作中心
+    Entry run_cmd; // 輸入命令並執行的構件
     XColor widget_color[WIDGET_COLOR_N]; // 構件顏色
     XftColor text_color[TEXT_COLOR_N]; // 文本顏色
 };

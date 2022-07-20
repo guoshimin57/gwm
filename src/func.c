@@ -11,9 +11,11 @@
 
 #include <unistd.h>
 #include "gwm.h"
+#include "font.h"
 #include "func.h"
 #include "client.h"
 #include "desktop.h"
+#include "entry.h"
 #include "grab.h"
 #include "handler.h"
 #include "layout.h"
@@ -92,13 +94,20 @@ static bool is_valid_move_resize(WM *wm, Client *c, Delta_rect *d)
 
 void quit_wm(WM *wm, XEvent *e, Func_arg arg)
 {
+    size_t i, j;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         del_client(wm, c);
     XDestroyWindow(wm->display, wm->taskbar.win);
     free(wm->taskbar.status_text);
-    for(size_t i=0; i<FONT_N; i++)
-        XftFontClose(wm->display, wm->font[i]);
-    for(size_t i=0; i<POINTER_ACT_N; i++)
+    for(i=0; i<FONT_N; i++)
+    {
+        for(j=0; j<i; j++)
+            if(wm->font[i] == wm->font[j])
+                break;
+        if(j == i)
+            XftFontClose(wm->display, wm->font[i]);
+    }
+    for(i=0; i<POINTER_ACT_N; i++)
         XFreeCursor(wm->display, wm->cursors[i]);
     XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
     XClearWindow(wm->display, wm->root_win);
@@ -500,4 +509,9 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
         else
             focus_client(wm, n, wm->desktop[n-1].cur_focus_client);
     }
+}
+
+void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg)
+{
+    show_entry(wm, &wm->run_cmd);
 }

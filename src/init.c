@@ -15,6 +15,7 @@
 #include "client.h"
 #include "color.h"
 #include "desktop.h"
+#include "entry.h"
 #include "font.h"
 #include "func.h"
 #include "grab.h"
@@ -30,6 +31,7 @@ static void create_taskbar_buttons(WM *wm);
 static void create_icon_area(WM *wm);
 static void create_status_area(WM *wm);
 static void create_cmd_center(WM *wm);
+static void create_run_cmd_entry(WM *wm);
 static void print_fatal_msg(Display *display, XErrorEvent *e);
 static void create_clients(WM *wm);
 
@@ -60,6 +62,7 @@ void init_wm(WM *wm)
     create_cursors(wm);
     create_taskbar(wm);
     create_cmd_center(wm);
+    create_run_cmd_entry(wm);
     create_clients(wm);
     update_layout(wm);
     grab_keys(wm);
@@ -151,6 +154,14 @@ static void create_cmd_center(WM *wm)
     int x=TASKBAR_BUTTON_WIDTH*i, y=wm->screen_height-wm->taskbar.h;
     create_menu(wm, &wm->cmd_center, n, col, w, h, wm->widget_color[CMD_CENTER_COLOR].pixel);
     set_menu_pos_for_click(wm, wm->taskbar.buttons[i], x, y, &wm->cmd_center);
+}
+
+static void create_run_cmd_entry(WM *wm)
+{
+    Rect r={(wm->screen_width-RUN_CMD_ENTRY_WIDTH)/2,
+    (wm->screen_height-RUN_CMD_ENTRY_HEIGHT)/2,
+    RUN_CMD_ENTRY_WIDTH, RUN_CMD_ENTRY_HEIGHT};
+    create_entry(wm, &wm->run_cmd, &r, RUN_CMD_ENTRY_HINT);
 }
 
 static void print_fatal_msg(Display *display, XErrorEvent *e)

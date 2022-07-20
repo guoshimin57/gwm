@@ -12,6 +12,7 @@
 #include "gwm.h"
 #include "handler.h"
 #include "client.h"
+#include "entry.h"
 #include "font.h"
 #include "func.h"
 #include "grab.h"
@@ -207,6 +208,8 @@ void handle_expose(WM *wm, XEvent *e)
     else if(IS_TITLE_BUTTON(type))
         update_title_button_text(wm, win_to_client(wm, win),
             TITLE_BUTTON_INDEX(type));
+    else if(type == RUN_CMD_ENTRY)
+        update_entry_text(wm, &wm->run_cmd);
 }
 
 static void update_icon_text(WM *wm, Window win)
@@ -300,16 +303,22 @@ void handle_key_press(WM *wm, XEvent *e)
 {
     int n;
     KeyCode kc=e->xkey.keycode;
-	KeySym *keysym=XGetKeyboardMapping(wm->display, kc, 1, &n);
+	KeySym *ks=XGetKeyboardMapping(wm->display, kc, 1, &n);
     Keybind *p=KEYBIND;
 	for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++, p++)
-		if( *keysym == p->keysym
+		if( *ks == p->keysym
             && is_equal_modifier_mask(wm, p->modifier, e->xkey.state)
             && p->func)
             p->func(wm, e, p->arg);
-    XFree(keysym);
+    if(e->xkey.window == wm->run_cmd.win)
+    {
+        handle_key_press_for_entry(wm, &e->xkey);
+        if(*ks==XK_Return && is_equal_modifier_mask(wm, None, e->xkey.state))
+            exec(wm, e, (Func_arg)SH_CMD(wm->run_cmd.text));
+    }
+    XFree(ks);
 }
- 
+
 void handle_leave_notify(WM *wm, XEvent *e)
 {
     Window win=e->xcrossing.window;

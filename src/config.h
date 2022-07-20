@@ -38,6 +38,7 @@
 #define TITLE_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 標題欄的字體大小，單位爲像素
 #define CMD_CENTER_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 操作中心的字體大小，單位爲像素
 #define TASKBAR_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 任務欄的字體大小，單位爲像素
+#define ENTRY_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 輸入構件的字體大小，單位爲像素
 #define BORDER_WIDTH ROUND(DEFAULT_FONT_PIXEL_SIZE/8.0) // 窗口框架边框的宽度，单位为像素
 #define TITLE_BAR_HEIGHT ROUND(TITLE_FONT_PIXEL_SIZE*4/3.0) // 窗口標題欄的高度，單位爲像素
 #define TITLE_BUTTON_WIDTH TITLE_BAR_HEIGHT // 窗口按鈕的寬度，單位爲像素
@@ -53,8 +54,11 @@
 #define CMD_CENTER_ITEM_WIDTH (CMD_CENTER_FONT_PIXEL_SIZE*7) // 操作中心按鈕的寬度，單位爲像素
 #define CMD_CENTER_ITEM_HEIGHT ROUND(CMD_CENTER_FONT_PIXEL_SIZE*1.5) // 操作中心按鈕的高度，單位爲像素
 #define CMD_CENTER_COL 4 // 操作中心按鈕列數
+#define RUN_CMD_ENTRY_WIDTH ENTRY_FONT_PIXEL_SIZE*15 // 運行命令的輸入構件的寬度，單位爲像素
+#define RUN_CMD_ENTRY_HEIGHT ROUND(ENTRY_FONT_PIXEL_SIZE*4/3.0) // 運行命令的輸入構件的寬度，單位爲像素
 #define MOVE_RESIZE_INC DEFAULT_FONT_PIXEL_SIZE  // 移動窗口、調整窗口尺寸的步進值，單位爲像素
 
+#define RUN_CMD_ENTRY_HINT "請輸入命令，然後按回車執行"
 #define DEFAULT_FONT_NAME "monospace:pixelsize="TO_STR(DEFAULT_FONT_PIXEL_SIZE) // 默認字體名
 
 #define FONT_NAME (const char *[]) /* 本窗口管理器所使用的字庫名稱列表 */                       \
@@ -66,6 +70,7 @@
     [ICON_CLASS_FONT]       = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
     [ICON_TITLE_FONT]       = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
     [STATUS_AREA_FONT]      = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
+    [ENTRY_FONT]            = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
 }
 
 #define WIDGET_COLOR_NAME (const char *[]) /* 構件顏色名 */                        \
@@ -84,6 +89,7 @@
     [ICON_COLOR]                  = "grey11",       /* 圖標的顏色名             */ \
     [ICON_AREA_COLOR]             = "grey11",       /* 圖標區域的顏色名         */ \
     [STATUS_AREA_COLOR]           = "grey21",       /* 狀態區域的顏色名         */ \
+    [ENTRY_COLOR]                 = "white",        /* 單行文本輸入框的顏色名   */ \
 }
 
 #define TEXT_COLOR_NAME (const char *[]) /* 文本顏色名 */                        \
@@ -95,6 +101,8 @@
     [ICON_CLASS_TEXT_COLOR]      = "rosybrown", /* 圖標中程序類型文本的顏色名 */ \
     [ICON_TITLE_TEXT_COLOR]      = "white",     /* 圖標中標題文本的顏色名     */ \
     [CMD_CENTER_ITEM_TEXT_COLOR] = "white",     /* 操作中心菜單項文本的顏色名 */ \
+    [ENTRY_TEXT_COLOR]           = "black",     /* 輸入構件文本的顏色名 */       \
+    [HINT_TEXT_COLOR]            = "grey61",    /* 用於提示的文本的顏色名 */     \
 }
 
 #define TITLE_BUTTON_TEXT (const char *[]) /* 窗口標題欄按鈕的標籤（從左至右）*/ \
@@ -135,6 +143,7 @@
 
 #define HELP "lxterminal -e 'man gwm' || xfce4-terminal -e 'man gwm' || xterm -e 'man gwm'"
 #define FILE_MANAGER "xdg-open ~"
+#define GAME "wesnoth || flatpak run org.wesnoth.Wesnoth"
 #define BROWSER "xdg-open http:"
 #define TERMINAL "lxterminal || xfce4-terminal || gnome-terminal || konsole5 || xterm"
 #define TOGGLE_PROCESS_STATE(process) "{ pid=$(pgrep -f '"process"'); " \
@@ -150,7 +159,6 @@
 #define LIGHT_DOWN "light -U 5"
 #define LIGHT_UP "light -A 5"
 #define LOGOUT "pkill -9 'startgwm|gwm'"
-#define RUN "dmenu_run"
 
 /* 與虛擬桌面相關的按鍵功能綁定。n=0僅作用於attach_to_all_desktops */
 #define DESKTOP_KEYBIND(key, n)                                           \
@@ -170,7 +178,7 @@
     {0, XF86XK_MonBrightnessUp,  exec,                        SH_CMD(LIGHT_UP)},           \
     {0,	        XK_F1,           exec,                        SH_CMD(HELP)},               \
     {CMD_KEY,	XK_f,            exec,                        SH_CMD(FILE_MANAGER)},       \
-    {CMD_KEY,	XK_g,            exec,                        SH_CMD("wesnoth")},          \
+    {CMD_KEY,	XK_g,            exec,                        SH_CMD(GAME)},               \
     {CMD_KEY,	XK_q,            exec,                        SH_CMD("qq")},               \
     {CMD_KEY,	XK_s,            exec,                        SH_CMD("stardict")},         \
     {CMD_KEY,	XK_t,            exec,                        SH_CMD(TERMINAL)},           \
@@ -178,7 +186,7 @@
     {CMD_KEY, 	XK_F1,           exec,                        SH_CMD(PLAY_START)},         \
     {CMD_KEY, 	XK_F2,           exec,                        SH_CMD(PLAY_TOGGLE)},        \
     {CMD_KEY, 	XK_F3,           exec,                        SH_CMD(PLAY_QUIT)},          \
-    {SYS_KEY,	XK_d,            exec,                        SH_CMD(RUN)},                \
+    {SYS_KEY,	XK_d,            enter_and_run_cmd,           {0}},                        \
     {SYS_KEY, 	XK_F1,           exec,                        SH_CMD(VOLUME_DOWN)},        \
     {SYS_KEY, 	XK_F2,           exec,                        SH_CMD(VOLUME_UP)},          \
     {SYS_KEY, 	XK_F3,           exec,                        SH_CMD(VOLUME_MAX)},         \
@@ -303,7 +311,7 @@
     {LOGOUT_BUTTON,            0, Button1, exec,                     SH_CMD(LOGOUT)},             \
     {REBOOT_BUTTON,            0, Button1, exec,                     SH_CMD("reboot")},           \
     {POWEROFF_BUTTON,          0, Button1, exec,                     SH_CMD("poweroff")},         \
-    {RUN_BUTTON,               0, Button1, exec,                     SH_CMD(RUN)},                \
+    {RUN_BUTTON,               0, Button1, enter_and_run_cmd,        {0}},                        \
     DESKTOP_BUTTONBIND(1),                                                                        \
     DESKTOP_BUTTONBIND(2),                                                                        \
     DESKTOP_BUTTONBIND(3),                                                                        \

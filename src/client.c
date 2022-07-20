@@ -192,13 +192,13 @@ void del_client(WM *wm, Client *c)
             del_icon(wm, c);
         del_client_node(c);
         fix_area_type(wm);
+        for(size_t i=1; i<=DESKTOP_N; i++)
+            if(is_on_desktop_n(i, c))
+                focus_client(wm, i, NULL);
         XFree(c->class_hint.res_class);
         XFree(c->class_hint.res_name);
         free(c->title_text);
         free(c);
-        for(size_t i=1; i<=DESKTOP_N; i++)
-            if(is_on_desktop_n(i, c))
-                focus_client(wm, i, NULL);
     }
 }
 
