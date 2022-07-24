@@ -126,3 +126,14 @@ bool is_chosen_button(WM *wm, Widget_type type)
     return(type == DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1
         || type == LAYOUT_BUTTON_BEGIN+DESKTOP(wm).cur_layout);
 }
+
+void set_xic(WM *wm, Window win, XIC *ic)
+{
+    if(wm->xim == NULL)
+        return;
+    if((*ic=XCreateIC(wm->xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing,
+        XNClientWindow, win, NULL)) == NULL)
+        fprintf(stderr, "錯誤：窗口（0x%lx）輸入法設置失敗！", win);
+    else
+        XSetICFocus(*ic), XSelectInput(wm->display, win, KeyPressMask);
+}

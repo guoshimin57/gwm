@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <wchar.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
@@ -40,6 +41,7 @@
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
 #define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 #define ICON_EVENT_MASK (ButtonPressMask|ExposureMask|FocusChangeMask)
+#define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
 
 #define TITLE_BUTTON_INDEX(type) ((type)-TITLE_BUTTON_BEGIN)
 #define IS_TITLE_BUTTON(type) \
@@ -213,8 +215,10 @@ struct entry_tag
     Window win;
     int x, y;
     unsigned int w, h;
-    char text[BUFSIZ];
-    const char *hint;
+    wchar_t text[BUFSIZ];
+    const wchar_t *hint;
+    size_t cursor_offset;
+    XIC xic;
 };
 typedef struct entry_tag Entry;
 
@@ -240,6 +244,7 @@ struct wm_tag // 窗口管理器相關信息
     Entry run_cmd; // 輸入命令並執行的構件
     XColor widget_color[WIDGET_COLOR_N]; // 構件顏色
     XftColor text_color[TEXT_COLOR_N]; // 文本顏色
+    XIM xim;
 };
 typedef struct wm_tag WM;
 

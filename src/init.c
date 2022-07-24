@@ -23,6 +23,7 @@
 #include "menu.h"
 #include "misc.h"
 
+static void set_locale(WM *wm);
 static int x_fatal_handler(Display *display, XErrorEvent *e);
 static void set_icccm_atoms(WM *wm);
 static void create_cursors(WM *wm);
@@ -38,10 +39,9 @@ static void create_clients(WM *wm);
 void init_wm(WM *wm)
 {
     memset(wm, 0, sizeof(WM));
-	if(!setlocale(LC_CTYPE, "") || !XSupportsLocale())
-		fprintf(stderr, "warning: no locale support\n");
 	if(!(wm->display=XOpenDisplay(NULL)))
         exit_with_msg("error: cannot open display");
+    set_locale(wm);
 
     wm->screen=DefaultScreen(wm->display);
     wm->screen_width=DisplayWidth(wm->display, wm->screen);
@@ -67,6 +67,19 @@ void init_wm(WM *wm)
     update_layout(wm);
     grab_keys(wm);
     exec(wm, NULL, (Func_arg)SH_CMD("[ -x "AUTOSTART" ] && "AUTOSTART));
+}
+
+static void set_locale(WM *wm)
+{
+	if(!setlocale(LC_CTYPE, "") || !XSupportsLocale())
+		fprintf(stderr, "warning: no locale support\n");
+    else
+    {
+        char *m=XSetLocaleModifiers("");
+        wm->xim=XOpenIM(wm->display, NULL, NULL, NULL);
+        if(!m || !wm->xim)
+            fprintf(stderr, "錯誤: 不能設置輸入法");
+    }
 }
 
 static int x_fatal_handler(Display *display, XErrorEvent *e)

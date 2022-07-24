@@ -12,9 +12,10 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-void create_entry(WM *wm, Entry *e, Rect *r, char *hint);
+void create_entry(WM *wm, Entry *e, Rect *r, wchar_t *hint);
 void show_entry(WM *wm, Entry *e);
-void handle_key_press_for_entry(WM *wm, XKeyEvent *e);
+int get_entry_cursor_x(WM *wm, Entry *e);
+void handle_key_press_for_entry(WM *wm, Entry *e, KeySym ks, wchar_t *keyname, unsigned int state);
 void update_entry_text(WM *wm, Entry *e);
 
 #endif

@@ -107,8 +107,14 @@ void fix_area_type(WM *wm)
 
 void set_default_rect(WM *wm, Client *c)
 {
-    c->w=wm->screen_width/4, c->h=wm->screen_height/4,
-    c->x=wm->screen_width/2-c->w/2, c->y=wm->screen_height/2-c->h/2;
+    Window r;
+    int x, y;
+    unsigned int w, h, b, d;
+    if(XGetGeometry(wm->display, c->win, &r, &x, &y, &w, &h, &b, &d))
+        c->x=x, c->y=y, c->w=w, c->h=h;
+    else
+        c->w=wm->screen_width/4, c->h=wm->screen_height/4,
+        c->x=wm->screen_width/2-c->w/2, c->y=wm->screen_height/2-c->h/2;
 }
 
 static void frame_client(WM *wm, Client *c)

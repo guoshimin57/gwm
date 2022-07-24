@@ -54,11 +54,12 @@
 #define CMD_CENTER_ITEM_WIDTH (CMD_CENTER_FONT_PIXEL_SIZE*7) // 操作中心按鈕的寬度，單位爲像素
 #define CMD_CENTER_ITEM_HEIGHT ROUND(CMD_CENTER_FONT_PIXEL_SIZE*1.5) // 操作中心按鈕的高度，單位爲像素
 #define CMD_CENTER_COL 4 // 操作中心按鈕列數
-#define RUN_CMD_ENTRY_WIDTH ENTRY_FONT_PIXEL_SIZE*15 // 運行命令的輸入構件的寬度，單位爲像素
+#define ENTRY_TEXT_INDENT ROUND(ENTRY_FONT_PIXEL_SIZE/4.0)
+#define RUN_CMD_ENTRY_WIDTH (ENTRY_FONT_PIXEL_SIZE*15+ENTRY_TEXT_INDENT*2) // 運行命令的輸入構件的寬度，單位爲像素
 #define RUN_CMD_ENTRY_HEIGHT ROUND(ENTRY_FONT_PIXEL_SIZE*4/3.0) // 運行命令的輸入構件的寬度，單位爲像素
 #define MOVE_RESIZE_INC DEFAULT_FONT_PIXEL_SIZE  // 移動窗口、調整窗口尺寸的步進值，單位爲像素
 
-#define RUN_CMD_ENTRY_HINT "請輸入命令，然後按回車執行"
+#define RUN_CMD_ENTRY_HINT L"請輸入命令，然後按回車執行"
 #define DEFAULT_FONT_NAME "monospace:pixelsize="TO_STR(DEFAULT_FONT_PIXEL_SIZE) // 默認字體名
 
 #define FONT_NAME (const char *[]) /* 本窗口管理器所使用的字庫名稱列表 */                       \

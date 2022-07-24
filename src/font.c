@@ -54,6 +54,14 @@ static char *copy_string(const char *s)
     return strcpy(malloc_s(strlen(s)+1), s);
 }
 
+void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f)
+{
+    size_t n=wcslen(wcs)*MB_CUR_MAX+1;
+    char mbs[n];
+    wcstombs(mbs, wcs, n);
+    draw_string(wm, d, mbs, f);
+}
+
 void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
 {
     if(str && str[0]!='\0')

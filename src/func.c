@@ -23,6 +23,7 @@
 #include "misc.h"
 
 static bool is_valid_move_resize(WM *wm, Client *c, Delta_rect *d);
+static void close_font(WM *wm);
 static Delta_rect get_delta_rect(Client *c, const Move_info *m);
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
@@ -94,12 +95,29 @@ static bool is_valid_move_resize(WM *wm, Client *c, Delta_rect *d)
 
 void quit_wm(WM *wm, XEvent *e, Func_arg arg)
 {
-    size_t i, j;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         del_client(wm, c);
     XDestroyWindow(wm->display, wm->taskbar.win);
+    XDestroyWindow(wm->display, wm->cmd_center.win);
+    XDestroyWindow(wm->display, wm->run_cmd.win);
     free(wm->taskbar.status_text);
-    for(i=0; i<FONT_N; i++)
+    XFreeModifiermap(wm->mod_map);
+    for(size_t i=0; i<POINTER_ACT_N; i++)
+        XFreeCursor(wm->display, wm->cursors[i]);
+    XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
+    XDestroyIC(wm->run_cmd.xic);
+    XCloseIM(wm->xim);
+    close_font(wm);
+    XClearWindow(wm->display, wm->root_win);
+    XFlush(wm->display);
+    XCloseDisplay(wm->display);
+    clear_zombies(0);
+    exit(EXIT_SUCCESS);
+}
+
+static void close_font(WM *wm)
+{
+    for(size_t i=0, j=0; i<FONT_N; i++)
     {
         for(j=0; j<i; j++)
             if(wm->font[i] == wm->font[j])
@@ -107,14 +125,6 @@ void quit_wm(WM *wm, XEvent *e, Func_arg arg)
         if(j == i)
             XftFontClose(wm->display, wm->font[i]);
     }
-    for(i=0; i<POINTER_ACT_N; i++)
-        XFreeCursor(wm->display, wm->cursors[i]);
-    XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
-    XClearWindow(wm->display, wm->root_win);
-    XFlush(wm->display);
-    XCloseDisplay(wm->display);
-    clear_zombies(0);
-    exit(EXIT_SUCCESS);
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)

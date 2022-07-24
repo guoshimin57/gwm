@@ -43,7 +43,8 @@ void handle_events(WM *wm)
 	XEvent e;
     XSync(wm->display, False);
 	while(!XNextEvent(wm->display, &e))
-        handle_event(wm, &e);
+        if(!XFilterEvent(&e, None))
+            handle_event(wm, &e);
 }
 
 void handle_event(WM *wm, XEvent *e)
@@ -301,22 +302,27 @@ static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
 
 void handle_key_press(WM *wm, XEvent *e)
 {
-    int n;
-    KeyCode kc=e->xkey.keycode;
-	KeySym *ks=XGetKeyboardMapping(wm->display, kc, 1, &n);
+    wchar_t buf[BUFSIZ]={0};
+    KeySym ks;
+    Entry *r=&wm->run_cmd;
     Keybind *p=KEYBIND;
+
+    XwcLookupString(r->xic, &e->xkey, buf, BUFSIZ, &ks, 0);
 	for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++, p++)
-		if( *ks == p->keysym
+		if( ks == p->keysym
             && is_equal_modifier_mask(wm, p->modifier, e->xkey.state)
             && p->func)
             p->func(wm, e, p->arg);
     if(e->xkey.window == wm->run_cmd.win)
     {
-        handle_key_press_for_entry(wm, &e->xkey);
-        if(*ks==XK_Return && is_equal_modifier_mask(wm, None, e->xkey.state))
-            exec(wm, e, (Func_arg)SH_CMD(wm->run_cmd.text));
+        handle_key_press_for_entry(wm, &wm->run_cmd, ks, buf, e->xkey.state);
+        if(ks==XK_Return && is_equal_modifier_mask(wm, None, e->xkey.state))
+        {
+            char cmd[BUFSIZ]={0};
+            wcstombs(cmd, wm->run_cmd.text, BUFSIZ);
+            exec(wm, e, (Func_arg)SH_CMD(cmd));
+        }
     }
-    XFree(ks);
 }
 
 void handle_leave_notify(WM *wm, XEvent *e)
@@ -392,7 +398,7 @@ void handle_motion_notify(WM *wm, XEvent *e)
 void handle_unmap_notify(WM *wm, XEvent *e)
 {
     Client *c=win_to_client(wm, e->xunmap.window);
-    if(c && e->xunmap.event==c->frame && e->xunmap.window==c->win)
+    if(c && (e->xunmap.event==c->frame || e->xunmap.event==c->win) && e->xunmap.window==c->win)
     {
         XUnmapWindow(wm->display, c->frame);
         del_client(wm, c);
