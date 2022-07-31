@@ -15,6 +15,9 @@
 #include "grab.h"
 #include "misc.h"
 
+static int get_entry_cursor_x(WM *wm, Entry *e);
+static bool close_entry(WM *wm, Entry *e, bool result);
+
 void create_entry(WM *wm, Entry *e, Rect *r, wchar_t *hint)
 {
     XSetWindowAttributes attr={.override_redirect=True};
@@ -38,7 +41,8 @@ void show_entry(WM *wm, Entry *e)
 
 void update_entry_text(WM *wm, Entry *e)
 {
-    String_format f={{ENTRY_TEXT_INDENT, 0, e->w, e->h}, CENTER_LEFT, false, 0,
+    String_format f={{ENTRY_TEXT_INDENT, 0, e->w-2*ENTRY_TEXT_INDENT, e->h},
+        CENTER_LEFT, false, 0,
         e->text[0]==L'\0' ? wm->text_color[HINT_TEXT_COLOR] :
         wm->text_color[ENTRY_TEXT_COLOR]};
     int x=get_entry_cursor_x(wm, e);
@@ -47,60 +51,95 @@ void update_entry_text(WM *wm, Entry *e)
     XDrawLine(wm->display, e->win, wm->gc, x, 0, x, e->h);
 }
 
-int get_entry_cursor_x(WM *wm, Entry *e)
+static int get_entry_cursor_x(WM *wm, Entry *e)
 {
     unsigned int n=e->cursor_offset*MB_CUR_MAX+1, w=0;
     wchar_t wc=e->text[e->cursor_offset]; 
     char mbs[n]; 
     e->text[e->cursor_offset]=L'\0'; 
-    wcstombs(mbs, e->text, n);
-    get_string_size(wm, wm->font[ENTRY_FONT], mbs, &w, NULL);
+    if(wcstombs(mbs, e->text, n) != (size_t)-1)
+        get_string_size(wm, wm->font[ENTRY_FONT], mbs, &w, NULL);
     e->text[e->cursor_offset]=wc; 
     return ENTRY_TEXT_INDENT+w;
 }
 
-void handle_key_press_for_entry(WM *wm, Entry *e, KeySym ks, wchar_t *keyname, unsigned int state)
+bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
 {
-    if(is_equal_modifier_mask(wm, ControlMask, state))
+    size_t *i=&e->cursor_offset, no=wcslen(e->text+*i);
+    wchar_t keyname[BUFSIZ]={0};
+    KeySym ks=look_up_key(e->xic, ke, keyname, BUFSIZ);
+
+    if(is_equal_modifier_mask(wm, ControlMask, ke->state))
     {
         if(ks == XK_u)
-            e->text[e->cursor_offset=0]=L'\0';
+            wmemmove(e->text, e->text+*i, no+1), *i=0;
+        else if(ks == XK_v)
+            return !XConvertSelection(wm->display, XA_PRIMARY, wm->utf8,
+                wm->utf8, e->win, CurrentTime);
     }
-    else if(is_equal_modifier_mask(wm, None, state))
+    else if(is_equal_modifier_mask(wm, None, ke->state))
     {
         size_t n1=wcslen(e->text), n2=wcslen(keyname), n=ARRAY_NUM(e->text);
         switch(ks)
         {
-            case XK_Escape: case XK_Return: case XK_KP_Enter:
-                XUngrabKeyboard(wm->display, CurrentTime);
-                XUnmapWindow(wm->display, e->win);
-                return;
+            case XK_Escape:
+                return close_entry(wm, e, false);
+            case XK_Return: case XK_KP_Enter:
+                return close_entry(wm, e, true);
             case XK_BackSpace:
                 if(n1)
-                    for(wchar_t *p=e->text+e->cursor_offset---1; *p!=L'\0'; p++)
-                        *p=*(p+1);
+                    wmemmove(e->text+*i-1, e->text+*i, no+1), (*i)--;
                 break;
             case XK_Delete: case XK_KP_Delete:
                 if(n1 < n)
-                    for(wchar_t *p=e->text+e->cursor_offset; *p!=L'\0'; p++)
-                        *p=*(p+1);
+                    wmemmove(e->text+*i, e->text+*i+1, no+1);
                 break;
             case XK_Left: case XK_KP_Left:
-                if(e->cursor_offset)
-                    e->cursor_offset--;
+                *i = *i ? *i-1 : *i;
                 break;
             case XK_Right: case XK_KP_Right:
-                if(e->cursor_offset < n1)
-                    e->cursor_offset++;
+                *i = *i<n1 ? *i+1 : *i;
                 break;
-            case XK_Tab: break;
+            case XK_Home:
+                (*i)=0; break;
+            case XK_End:
+                (*i)=n1; break;
+            case XK_Tab:
+                return false;
             default:
-                if(n1+n2 < n)
-                {
-                    wcscpy(e->text+n1, keyname);
-                    e->cursor_offset+=n2;
-                }
+                wcsncpy(e->text+n1, keyname, n-n1-1), (*i)+=n2;
         }
     }
     update_entry_text(wm, e);
+    return false;
+}
+
+static bool close_entry(WM *wm, Entry *e, bool result)
+{
+    XUngrabKeyboard(wm->display, CurrentTime);
+    XUnmapWindow(wm->display, e->win);
+    return result;
+}
+
+void paste_for_entry(WM *wm, Entry *e)
+{
+    char *p;
+    Atom da;
+    int di;
+    unsigned long dl;
+    if(XGetWindowProperty(wm->display, e->win, wm->utf8, 0, BUFSIZ/4, True,
+       wm->utf8, &da, &di, &dl, &dl, (unsigned char **)&p) == Success && p)
+    {
+        wchar_t text[BUFSIZ];
+        int n=mbstowcs(text, p, BUFSIZ);
+        XFree(p);
+        if(n > 0)
+        {
+            wchar_t *src=e->text+e->cursor_offset, *dest=src+n;
+            wmemmove(dest, src, wcslen(e->text)-e->cursor_offset);
+            wcsncpy(src, text, n);
+            e->cursor_offset += n;
+            update_entry_text(wm, e);
+        }
+    }
 }

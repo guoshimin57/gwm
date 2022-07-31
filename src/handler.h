@@ -25,5 +25,6 @@ void handle_map_request(WM *wm, XEvent *e);
 void handle_motion_notify(WM *wm, XEvent *e);
 void handle_unmap_notify(WM *wm, XEvent *e);
 void handle_property_notify(WM *wm, XEvent *e);
+void handle_selection_notify(WM *wm, XEvent *e);
 
 #endif

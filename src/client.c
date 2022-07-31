@@ -70,8 +70,14 @@ static void apply_rules(WM *wm, Client *c)
                 if(r->class_alias)
                     c->class_name=r->class_alias;
             }
+            /*
+            else if(get_transient_for(wm, c->win))
+                c->area_type=FLOATING_AREA;
+                */
         }
     }
+            if(get_transient_for(wm, c->win))
+                c->area_type=FLOATING_AREA;
 }
 
 static bool have_rule(Rule *r, Client *c)

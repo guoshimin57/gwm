@@ -22,5 +22,7 @@ Pointer_act get_resize_act(Client *c, const Move_info *m);
 void clear_zombies(int unused);
 bool is_chosen_button(WM *wm, Widget_type type);
 void set_xic(WM *wm, Window win, XIC *ic);
+Window get_transient_for(WM *wm, Window w);
+KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 
 #endif

@@ -22,7 +22,6 @@ all :
 	do \
 		$(MAKE) -C $$dir all ; \
 	done ;
-	@echo "編譯成功！"
 install :
 	@set -e ;
 	@for dir in $(subdirs) ; \
@@ -31,7 +30,6 @@ install :
 	done ;
 	install -d $(prefix)/share/doc/$(package) ;
 	install -m 644 $(doc) $(prefix)/share/doc/$(package) ;
-	@echo "安裝成功！" ;
 install-strip :
 	@set -e ;
 	@for dir in $(subdirs) ; \
@@ -40,7 +38,6 @@ install-strip :
 	done ;
 	install -d $(prefix)/share/doc/$(package) ;
 	install -m 644 $(doc) $(prefix)/share/doc/$(package) ;
-	@echo "安裝成功！" ;
 uninstall :
 	@for dir in $(subdirs) ; \
 	do \

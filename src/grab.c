@@ -35,18 +35,14 @@ void grab_keys(WM *wm)
 
 static unsigned int get_num_lock_mask(WM *wm)
 {
-    size_t i, j;
 	XModifierKeymap *m=XGetModifierMapping(wm->display);
     KeyCode code=XKeysymToKeycode(wm->display, XK_Num_Lock);
     if(code)
-        for(i=0; i<8; i++)
-            for(j=0; j<m->max_keypermod; j++)
+        for(size_t i=0; i<8; i++)
+            for(size_t j=0; j<m->max_keypermod; j++)
                 if(m->modifiermap[i*m->max_keypermod+j] == code)
-                    break;
-    if(j == m->max_keypermod)
-        return 0;
-    XFreeModifiermap(m);
-    return (1<<i);
+                    { XFreeModifiermap(m); return (1<<i); }
+    return 0;
 }
     
 void grab_buttons(WM *wm, Client *c)

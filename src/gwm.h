@@ -235,6 +235,7 @@ struct wm_tag // 窗口管理器相關信息
     Visual *visual; // 着色類型
     Colormap colormap; // 着色圖
     Atom icccm_atoms[ICCCM_ATOMS_N]; // icccm規範的標識符
+    Atom utf8; // utf8字符编码的標識符
     Client *clients; // 頭結點
     Focus_mode focus_mode; // 窗口聚焦模式
     XftFont *font[FONT_N]; // 窗口管理器用到的字體

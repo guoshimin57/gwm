@@ -25,7 +25,7 @@
 
 static void set_locale(WM *wm);
 static int x_fatal_handler(Display *display, XErrorEvent *e);
-static void set_icccm_atoms(WM *wm);
+static void set_atoms(WM *wm);
 static void create_cursors(WM *wm);
 static void create_taskbar(WM *wm);
 static void create_taskbar_buttons(WM *wm);
@@ -56,7 +56,7 @@ void init_wm(WM *wm)
     init_desktop(wm);
     XSetErrorHandler(x_fatal_handler);
     XSelectInput(wm->display, wm->root_win, ROOT_EVENT_MASK);
-    set_icccm_atoms(wm);
+    set_atoms(wm);
     load_font(wm);
     alloc_color(wm);
     create_cursors(wm);
@@ -76,6 +76,7 @@ static void set_locale(WM *wm)
     else
     {
         char *m=XSetLocaleModifiers("");
+        if(!m)puts("wtf");
         wm->xim=XOpenIM(wm->display, NULL, NULL, NULL);
         if(!m || !wm->xim)
             fprintf(stderr, "錯誤: 不能設置輸入法");
@@ -94,10 +95,11 @@ static int x_fatal_handler(Display *display, XErrorEvent *e)
     return 0;
 }
 
-static void set_icccm_atoms(WM *wm)
+static void set_atoms(WM *wm)
 {
     for(size_t i=0; i<ICCCM_ATOMS_N; i++)
         wm->icccm_atoms[i]=XInternAtom(wm->display, ICCCM_NAMES[i], False);
+    wm->utf8=XInternAtom(wm->display, "UTF8_STRING", False);
 }
 
 static void create_cursors(WM *wm)

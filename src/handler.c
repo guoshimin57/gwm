@@ -34,6 +34,7 @@ static void update_title_area_text(WM *wm, Client *c);
 static void update_title_button_text(WM *wm, Client *c, size_t index);
 static void update_status_area_text(WM *wm);
 static void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
+static void key_run_cmd(WM *wm, XKeyEvent *e);
 static void hint_leave_taskbar_button(WM *wm, Widget_type type);
 static void hint_leave_cmd_center_button(WM *wm, Widget_type type);
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type);
@@ -64,6 +65,7 @@ void handle_event(WM *wm, XEvent *e)
         [MotionNotify]      = handle_motion_notify,
         [UnmapNotify]       = handle_unmap_notify,
         [PropertyNotify]    = handle_property_notify,
+        [SelectionNotify]   = handle_selection_notify,
     };
     if(event_handlers[e->type])
         event_handlers[e->type](wm, e);
@@ -302,26 +304,26 @@ static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
 
 void handle_key_press(WM *wm, XEvent *e)
 {
-    wchar_t buf[BUFSIZ]={0};
-    KeySym ks;
-    Entry *r=&wm->run_cmd;
     Keybind *p=KEYBIND;
+    wchar_t keyname[BUFSIZ]={0};
+    KeySym ks=look_up_key(0, &e->xkey, keyname, BUFSIZ);
 
-    XwcLookupString(r->xic, &e->xkey, buf, BUFSIZ, &ks, 0);
-	for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++, p++)
-		if( ks == p->keysym
+    for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++, p++)
+        if( ks == p->keysym
             && is_equal_modifier_mask(wm, p->modifier, e->xkey.state)
             && p->func)
             p->func(wm, e, p->arg);
     if(e->xkey.window == wm->run_cmd.win)
+        key_run_cmd(wm, &e->xkey);
+}
+
+static void key_run_cmd(WM *wm, XKeyEvent *e)
+{
+    if(input_for_entry(wm, &wm->run_cmd, e))
     {
-        handle_key_press_for_entry(wm, &wm->run_cmd, ks, buf, e->xkey.state);
-        if(ks==XK_Return && is_equal_modifier_mask(wm, None, e->xkey.state))
-        {
-            char cmd[BUFSIZ]={0};
-            wcstombs(cmd, wm->run_cmd.text, BUFSIZ);
-            exec(wm, e, (Func_arg)SH_CMD(cmd));
-        }
+        char cmd[BUFSIZ]={0};
+        wcstombs(cmd, wm->run_cmd.text, BUFSIZ);
+        exec(wm, NULL, (Func_arg)SH_CMD(cmd));
     }
 }
 
@@ -437,4 +439,11 @@ void handle_property_notify(WM *wm, XEvent *e)
             update_status_area_text(wm);
         }
     }
+}
+
+void handle_selection_notify(WM *wm, XEvent *e)
+{
+    Window win=e->xselection.requestor;
+    if(e->xselection.property==wm->utf8 && win==wm->run_cmd.win)
+        paste_for_entry(wm, &wm->run_cmd);
 }

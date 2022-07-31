@@ -135,5 +135,26 @@ void set_xic(WM *wm, Window win, XIC *ic)
         XNClientWindow, win, NULL)) == NULL)
         fprintf(stderr, "錯誤：窗口（0x%lx）輸入法設置失敗！", win);
     else
-        XSetICFocus(*ic), XSelectInput(wm->display, win, KeyPressMask);
+        XSetICFocus(*ic);
 }
+
+Window get_transient_for(WM *wm, Window w)
+{
+    Window pw;
+    return XGetTransientForHint(wm->display, w, &pw) ? pw : None;
+}
+
+KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
+{
+	KeySym ks;
+    if(xic)
+        XwcLookupString(xic, e, keyname, n, &ks, 0);
+    else
+    {
+        char kn[n];
+        XLookupString(e, kn, n, &ks, 0);
+        mbstowcs(keyname, kn, n);
+    }
+    return ks;
+}
+
