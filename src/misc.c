@@ -89,27 +89,26 @@ Widget_type get_widget_type(WM *wm, Window win)
 }
 
 Pointer_act get_resize_act(Client *c, const Move_info *m)
-{   // 窗口角落的寬度、高度以及窗口框架左、右橫坐標和上、下縱坐標
-    int bw=c->border_w, bh=c->title_bar_h, cw =c->w/3, ch=c->h/3,
+{   // 窗口邊框寬度、標題欄調試、可調整尺寸區域的寬度、高度
+    // 以及窗口框架左、右橫坐標和上、下縱坐標
+    int bw=c->border_w, bh=c->title_bar_h, rw=c->w/4, rh=c->h/4,
         lx=c->x-bw, rx=c->x+c->w+bw, ty=c->y-bh-bw, by=c->y+c->h+bw;
 
-    cw = cw > MOVE_RESIZE_INC ? MOVE_RESIZE_INC : cw;
-    ch = ch > MOVE_RESIZE_INC ? MOVE_RESIZE_INC : ch;
-    if(m->ox>=lx && m->ox<lx+bw+cw && m->oy>=ty && m->oy<ty+bw+ch)
+    if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=ty && m->oy<ty+bw+rh)
         return TOP_LEFT_RESIZE;
-    else if(m->ox>=rx-bw-cw && m->ox<rx && m->oy>=ty && m->oy<ty+bw+ch)
+    else if(m->ox>=rx-bw-rw && m->ox<rx && m->oy>=ty && m->oy<ty+bw+rh)
         return TOP_RIGHT_RESIZE;
-    else if(m->ox>=lx && m->ox<lx+bw+cw && m->oy>=by-bw-ch && m->oy<by)
+    else if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=by-bw-rh && m->oy<by)
         return BOTTOM_LEFT_RESIZE;
-    else if(m->ox>=rx-bw-cw && m->ox<rx && m->oy>=by-bw-ch && m->oy<by)
+    else if(m->ox>=rx-bw-rw && m->ox<rx && m->oy>=by-bw-rh && m->oy<by)
         return BOTTOM_RIGHT_RESIZE;
-    else if(m->oy>=ty && m->oy<ty+bw+ch)
+    else if(m->oy>=ty && m->oy<ty+bw+rh)
         return TOP_RESIZE;
-    else if(m->oy>=by-bw-ch && m->oy<by)
+    else if(m->oy>=by-bw-rh && m->oy<by)
         return BOTTOM_RESIZE;
-    else if(m->ox>=lx && m->ox<lx+bw+cw)
+    else if(m->ox>=lx && m->ox<lx+bw+rw)
         return LEFT_RESIZE;
-    else if(m->ox>=rx-bw-cw && m->ox<rx)
+    else if(m->ox>=rx-bw-rw && m->ox<rx)
         return RIGHT_RESIZE;
     else
         return NO_OP;
@@ -157,4 +156,3 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
     }
     return ks;
 }
-

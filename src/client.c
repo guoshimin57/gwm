@@ -48,13 +48,13 @@ void add_client(WM *wm, Window win)
 
 static void apply_rules(WM *wm, Client *c)
 {
-    c->area_type=DESKTOP(wm).default_area_type;
+    c->area_type = get_transient_for(wm, c->win) ?
+        FLOATING_AREA : DESKTOP(wm).default_area_type;
     c->border_w=BORDER_WIDTH;
     c->title_bar_h=TITLE_BAR_HEIGHT;
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);
-    if(!XGetClassHint(wm->display, c->win, &c->class_hint))
-        c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
-    else
+    c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
+    if(XGetClassHint(wm->display, c->win, &c->class_hint))
     {
         Rule *r=RULE;
         c->class_name=c->class_hint.res_class;
@@ -70,14 +70,8 @@ static void apply_rules(WM *wm, Client *c)
                 if(r->class_alias)
                     c->class_name=r->class_alias;
             }
-            /*
-            else if(get_transient_for(wm, c->win))
-                c->area_type=FLOATING_AREA;
-                */
         }
     }
-            if(get_transient_for(wm, c->win))
-                c->area_type=FLOATING_AREA;
 }
 
 static bool have_rule(Rule *r, Client *c)

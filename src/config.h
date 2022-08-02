@@ -153,8 +153,8 @@
 #define PLAY_START "mplayer -shuffle ~/music/*"
 #define PLAY_TOGGLE TOGGLE_PROCESS_STATE(PLAY_START)
 #define PLAY_QUIT "kill -KILL $(pgrep -f '"PLAY_START"')"
-#define VOLUME_DOWN "amixer -q sset Master 5%-"
-#define VOLUME_UP "amixer -q sset Master 5%+"
+#define VOLUME_DOWN "amixer -q sset Master 10%-"
+#define VOLUME_UP "amixer -q sset Master 10%+"
 #define VOLUME_MAX "amixer -q sset Master 100%"
 #define VOLUME_TOGGLE "amixer -q sset Master toggle"
 #define LIGHT_DOWN "light -U 5"

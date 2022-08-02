@@ -102,7 +102,7 @@ bool grab_pointer(WM *wm, XEvent *e)
     {
         if(be->window == c->title_area)
             gc=wm->cursors[MOVE];
-        else if(be->window == c->frame)
+        else if(be->window == c->frame || be->window==c->win)
             gc=wm->cursors[get_resize_act(c, &m)];
     }
     else

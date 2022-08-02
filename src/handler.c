@@ -304,17 +304,22 @@ static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
 
 void handle_key_press(WM *wm, XEvent *e)
 {
-    Keybind *p=KEYBIND;
-    wchar_t keyname[BUFSIZ]={0};
-    KeySym ks=look_up_key(0, &e->xkey, keyname, BUFSIZ);
-
-    for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++, p++)
-        if( ks == p->keysym
-            && is_equal_modifier_mask(wm, p->modifier, e->xkey.state)
-            && p->func)
-            p->func(wm, e, p->arg);
     if(e->xkey.window == wm->run_cmd.win)
         key_run_cmd(wm, &e->xkey);
+    else
+    {
+        int n;
+        KeySym ks=*XGetKeyboardMapping(wm->display, e->xkey.keycode, 1, &n);
+        Keybind *p=KEYBIND;
+
+        for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++, p++)
+        {
+            if( ks == p->keysym
+                && is_equal_modifier_mask(wm, p->modifier, e->xkey.state)
+                && p->func)
+                p->func(wm, e, p->arg);
+        }
+    }
 }
 
 static void key_run_cmd(WM *wm, XKeyEvent *e)
