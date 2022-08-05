@@ -24,5 +24,6 @@ bool is_chosen_button(WM *wm, Widget_type type);
 void set_xic(WM *wm, Window win, XIC *ic);
 Window get_transient_for(WM *wm, Window w);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
+Atom get_atom_prop(WM *wm, Window win, Atom prop);
 
 #endif

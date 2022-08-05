@@ -38,10 +38,14 @@ void exit_with_msg(const char *msg)
 bool is_wm_win(WM *wm, Window win)
 {
     XWindowAttributes attr;
-    return ( win != wm->taskbar.win && win!=wm->run_cmd.win
-        && XGetWindowAttributes(wm->display, win, &attr)
+    Atom type=get_atom_prop(wm, win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE]);
+
+    return (XGetWindowAttributes(wm->display, win, &attr)
         && attr.map_state != IsUnmapped
-        && !attr.override_redirect);
+        && !attr.override_redirect
+        && ( type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_UTILITY]
+            || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG]
+            || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]));
 }
 
 /* 在調用XSetWindowBackground之後，在收到下一個顯露事件或調用XClearWindow
@@ -155,4 +159,17 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
         mbstowcs(keyname, kn, n);
     }
     return ks;
+}
+
+Atom get_atom_prop(WM *wm, Window win, Atom prop)
+{
+	int di;
+	unsigned long dl;
+	unsigned char *p=NULL;
+	Atom da, atom=None;
+
+	if(XGetWindowProperty(wm->display, win, prop, 0L, sizeof(atom), False, XA_ATOM,
+		&da, &di, &dl, &dl, &p) == Success && p)
+		atom=*(Atom *)p, XFree(p);
+	return atom;
 }

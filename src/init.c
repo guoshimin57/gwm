@@ -99,6 +99,8 @@ static void set_atoms(WM *wm)
 {
     for(size_t i=0; i<ICCCM_ATOMS_N; i++)
         wm->icccm_atoms[i]=XInternAtom(wm->display, ICCCM_NAMES[i], False);
+    for(size_t i=0; i<EWMH_ATOM_N; i++)
+        wm->ewmh_atom[i]=XInternAtom(wm->display, EWMH_NAME[i], False);
     wm->utf8=XInternAtom(wm->display, "UTF8_STRING", False);
 }
 

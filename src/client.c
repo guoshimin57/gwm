@@ -48,8 +48,14 @@ void add_client(WM *wm, Window win)
 
 static void apply_rules(WM *wm, Client *c)
 {
-    c->area_type = get_transient_for(wm, c->win) ?
-        FLOATING_AREA : DESKTOP(wm).default_area_type;
+    Atom type=get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE]),
+         state=get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_STATE]);
+    Window tw=get_transient_for(wm, c->win);
+    c->area_type=DESKTOP(wm).default_area_type;
+    if( (tw && tw!=wm->root_win)
+        || type != wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
+        || state == wm->ewmh_atom[_NET_WM_STATE_MODAL])
+        c->area_type=FLOATING_AREA;
     c->border_w=BORDER_WIDTH;
     c->title_bar_h=TITLE_BAR_HEIGHT;
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);

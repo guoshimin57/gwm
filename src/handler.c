@@ -309,16 +309,17 @@ void handle_key_press(WM *wm, XEvent *e)
     else
     {
         int n;
-        KeySym ks=*XGetKeyboardMapping(wm->display, e->xkey.keycode, 1, &n);
+        KeySym *ks=XGetKeyboardMapping(wm->display, e->xkey.keycode, 1, &n);
         Keybind *p=KEYBIND;
 
         for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++, p++)
         {
-            if( ks == p->keysym
+            if( *ks == p->keysym
                 && is_equal_modifier_mask(wm, p->modifier, e->xkey.state)
                 && p->func)
                 p->func(wm, e, p->arg);
         }
+        XFree(ks);
     }
 }
 
@@ -401,11 +402,16 @@ void handle_motion_notify(WM *wm, XEvent *e)
  * 因爲只在接收MapRequest事件時才考慮添加client，而在接受MapNotify事件時沒
  * 考慮，從而保證不會重復添加，所以相應地，重設父窗口產生UnmapNotify事件時
  * ，也不重復刪除client。重設父窗口產生UnmapNotify事件時，xunmap.event等於
- * 原父窗口。銷毀窗口產生UnmapNotify事件時，xunmap.event等於新父窗口。*/
+ * 原父窗口。銷毀窗口產生UnmapNotify事件時，xunmap.event等於新父窗口。若通
+ * 過SendEvent請求來產生UnmapNotify事件（此時xunmap.send_event的值爲true）
+ * ，xunmap.event就有可能是原父窗口、新父窗口、根窗口，等等。*/
 void handle_unmap_notify(WM *wm, XEvent *e)
 {
-    Client *c=win_to_client(wm, e->xunmap.window);
-    if(c && (e->xunmap.event==c->frame || e->xunmap.event==c->win) && e->xunmap.window==c->win)
+    XUnmapEvent *ue=&e->xunmap;
+    Client *c=win_to_client(wm, ue->window);
+
+    if( c && ue->window==c->win
+        && (ue->send_event || ue->event==c->frame || ue->event==c->win))
     {
         XUnmapWindow(wm->display, c->frame);
         del_client(wm, c);

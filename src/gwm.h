@@ -22,6 +22,8 @@
 #include "config.h"
 
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW"}
+#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK", "_NET_WM_WINDOW_TYPE_TOOLBAR", "_NET_WM_WINDOW_TYPE_NENU", "_NET_WM_WINDOW_TYPE_UTILITY", "_NET_WM_WINDOW_TYPE_SPLASH", "_NET_WM_WINDOW_TYPE_DIALOG", "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", "_NET_WM_WINDOW_TYPE_POPUP_MENU", "_NET_WM_WINDOW_TYPE_TOOLTIP", "_NET_WM_WINDOW_TYPE_NOTIFICATION", "_NET_WM_WINDOW_TYPE_COMBO", "_NET_WM_WINDOW_TYPE_DND", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_STATE_STICKY", "_NET_WM_STATE_MAXIMIZED_VERT", "_NET_WM_STATE_MAXIMIZED_HORZ", "_NET_WM_STATE_SHADED", "_NET_WM_STATE_SKIP_TASKBAR", "_NET_WM_STATE_SKIP_PAGER", "_NET_WM_STATE_HIDDEN", "_NET_WM_STATE_FULLSCREEN", "_NET_WM_STATE_ABOVE", "_NET_WM_STATE_BELOW", "_NET_WM_STATE_DEMANDS_ATTENTION", "_NET_WM_STATE_FOCUSED"} 
+
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define FUNC_ARG(var, data) (Func_arg){.var=data}
@@ -168,6 +170,27 @@ enum icccm_atom_tag // icccm規範的標識符
 };
 typedef enum icccm_atom_tag Icccm_atom;
 
+enum ewmh_atom_tag // EWMH規範的標識符
+{
+    _NET_WM_WINDOW_TYPE,
+    _NET_WM_WINDOW_TYPE_DESKTOP, _NET_WM_WINDOW_TYPE_DOCK,
+    _NET_WM_WINDOW_TYPE_TOOLBAR, _NET_WM_WINDOW_TYPE_NENU,
+    _NET_WM_WINDOW_TYPE_UTILITY, _NET_WM_WINDOW_TYPE_SPLASH,
+    _NET_WM_WINDOW_TYPE_DIALOG, _NET_WM_WINDOW_TYPE_DROPDOWN_MENU,
+    _NET_WM_WINDOW_TYPE_POPUP_MENU, _NET_WM_WINDOW_TYPE_TOOLTIP,
+    _NET_WM_WINDOW_TYPE_NOTIFICATION, _NET_WM_WINDOW_TYPE_COMBO,
+    _NET_WM_WINDOW_TYPE_DND, _NET_WM_WINDOW_TYPE_NORMAL,
+
+    _NET_WM_STATE,
+    _NET_WM_STATE_MODAL, _NET_WM_STATE_STICKY, _NET_WM_STATE_MAXIMIZED_VERT,
+    _NET_WM_STATE_MAXIMIZED_HORZ, _NET_WM_STATE_SHADED,
+    _NET_WM_STATE_SKIP_TASKBAR, _NET_WM_STATE_SKIP_PAGER, _NET_WM_STATE_HIDDEN,
+    _NET_WM_STATE_FULLSCREEN, _NET_WM_STATE_ABOVE, _NET_WM_STATE_BELOW,
+    _NET_WM_STATE_DEMANDS_ATTENTION, _NET_WM_STATE_FOCUSED,
+    EWMH_ATOM_N
+};
+typedef enum ewmh_atom_tag Ewmh_atom;
+
 struct desktop_tag // 虛擬桌面相關信息
 {
     int n_main_max; // 主區域可容納的客戶窗口數量
@@ -235,6 +258,7 @@ struct wm_tag // 窗口管理器相關信息
     Visual *visual; // 着色類型
     Colormap colormap; // 着色圖
     Atom icccm_atoms[ICCCM_ATOMS_N]; // icccm規範的標識符
+    Atom ewmh_atom[EWMH_ATOM_N]; // ewmh規範的標識符
     Atom utf8; // utf8字符编码的標識符
     Client *clients; // 頭結點
     Focus_mode focus_mode; // 窗口聚焦模式
