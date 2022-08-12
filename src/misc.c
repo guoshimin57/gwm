@@ -23,6 +23,18 @@ void *malloc_s(size_t size)
     return p;
 }
 
+int x_fatal_handler(Display *display, XErrorEvent *e)
+{
+    unsigned char ec=e->error_code, rc=e->request_code;
+    if(rc==X_ChangeWindowAttributes && ec==BadAccess)
+        exit_with_msg("錯誤：已經有其他窗口管理器在運行！");
+    fprintf(stderr, "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, "
+            "次請求碼=%d\n", e->resourceid, e->serial, ec, rc, e->minor_code);
+	if(ec == BadWindow || (rc==X_ConfigureWindow && ec==BadMatch))
+		return -1;
+    return 0;
+}
+
 void exit_with_perror(const char *s)
 {
     perror(s);
@@ -43,7 +55,7 @@ bool is_wm_win(WM *wm, Window win)
     return (XGetWindowAttributes(wm->display, win, &attr)
         && attr.map_state != IsUnmapped
         && !attr.override_redirect
-        && ( type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_UTILITY]
+        && (type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_UTILITY]
             || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG]
             || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]));
 }
@@ -172,4 +184,10 @@ Atom get_atom_prop(WM *wm, Window win, Atom prop)
 		&da, &di, &dl, &dl, &p) == Success && p)
 		atom=*(Atom *)p, XFree(p);
 	return atom;
+}
+
+void set_override_redirect(WM *wm, Window win)
+{
+    XSetWindowAttributes attr={.override_redirect=True};
+    XChangeWindowAttributes(wm->display, win, CWOverrideRedirect, &attr);
 }

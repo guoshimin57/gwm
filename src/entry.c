@@ -20,12 +20,11 @@ static bool close_entry(WM *wm, Entry *e, bool result);
 
 void create_entry(WM *wm, Entry *e, Rect *r, wchar_t *hint)
 {
-    XSetWindowAttributes attr={.override_redirect=True};
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h;
     e->win=XCreateSimpleWindow(wm->display, wm->root_win,
         e->x, e->y, e->w, e->h,
         0, 0, wm->widget_color[ENTRY_COLOR].pixel);
-    XChangeWindowAttributes(wm->display, e->win, CWOverrideRedirect, &attr);
+    set_override_redirect(wm, e->win);
     XSelectInput(wm->display, e->win, ENTRY_EVENT_MASK);
     e->hint=hint;
     set_xic(wm, e->win, &e->xic);
@@ -75,7 +74,7 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
             wmemmove(e->text, e->text+*i, no+1), *i=0;
         else if(ks == XK_v)
             return !XConvertSelection(wm->display, XA_PRIMARY, wm->utf8,
-                wm->utf8, e->win, CurrentTime);
+                None, e->win, ke->time);
     }
     else if(is_equal_modifier_mask(wm, None, ke->state))
     {

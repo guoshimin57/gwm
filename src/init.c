@@ -24,7 +24,6 @@
 #include "misc.h"
 
 static void set_locale(WM *wm);
-static int x_fatal_handler(Display *display, XErrorEvent *e);
 static void set_atoms(WM *wm);
 static void create_cursors(WM *wm);
 static void create_taskbar(WM *wm);
@@ -33,7 +32,6 @@ static void create_icon_area(WM *wm);
 static void create_status_area(WM *wm);
 static void create_cmd_center(WM *wm);
 static void create_run_cmd_entry(WM *wm);
-static void print_fatal_msg(Display *display, XErrorEvent *e);
 static void create_clients(WM *wm);
 
 void init_wm(WM *wm)
@@ -83,18 +81,6 @@ static void set_locale(WM *wm)
     }
 }
 
-static int x_fatal_handler(Display *display, XErrorEvent *e)
-{
-    if( e->request_code == X_ChangeWindowAttributes
-        && e->error_code == BadAccess)
-        exit_with_msg("錯誤：已經有其他窗口管理器在運行！");
-    print_fatal_msg(display, e);
-	if( e->error_code == BadWindow
-        || (e->request_code==X_ConfigureWindow && e->error_code==BadMatch))
-		return -1;
-    return 0;
-}
-
 static void set_atoms(WM *wm)
 {
     for(size_t i=0; i<ICCCM_ATOMS_N; i++)
@@ -117,6 +103,7 @@ static void create_taskbar(WM *wm)
     b->w=wm->screen_width, b->h=TASKBAR_HEIGHT;
     b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
         b->w, b->h, 0, 0, 0);
+    set_override_redirect(wm, b->win);
     create_taskbar_buttons(wm);
     create_status_area(wm);
     create_icon_area(wm);
@@ -179,13 +166,6 @@ static void create_run_cmd_entry(WM *wm)
     (wm->screen_height-RUN_CMD_ENTRY_HEIGHT)/2,
     RUN_CMD_ENTRY_WIDTH, RUN_CMD_ENTRY_HEIGHT};
     create_entry(wm, &wm->run_cmd, &r, RUN_CMD_ENTRY_HINT);
-}
-
-static void print_fatal_msg(Display *display, XErrorEvent *e)
-{
-    fprintf(stderr, "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, "
-        "主請求碼=%d, 次請求碼=%d\n", e->resourceid, e->serial,
-        e->error_code, e->request_code, e->minor_code);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */

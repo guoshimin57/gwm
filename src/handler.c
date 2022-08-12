@@ -431,6 +431,7 @@ void handle_property_notify(WM *wm, XEvent *e)
             free(c->title_text);
             c->title_text=s;
             update_title_area_text(wm, c);
+            update_frame_prop(wm, c);
         }
         else if(win == wm->root_win)
         {

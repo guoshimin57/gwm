@@ -17,13 +17,11 @@ static void get_win_size(WM *wm, Window win, unsigned int *w, unsigned int *h);
 
 void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg)
 {
-    XSetWindowAttributes attr={.override_redirect=True};
-
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
     menu->w=w, menu->h=h, menu->bg=bg;
     menu->win=XCreateSimpleWindow(wm->display, wm->root_win,
         0, 0, w*col, h*menu->row, 0, 0, bg);
-    XChangeWindowAttributes(wm->display, menu->win, CWOverrideRedirect, &attr);
+    set_override_redirect(wm, menu->win);
 
     menu->items=malloc_s(n*sizeof(Window));
     for(size_t i=0; i<n; i++)

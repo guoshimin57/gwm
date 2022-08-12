@@ -13,6 +13,7 @@
 #define MISC_H
 
 void *malloc_s(size_t size);
+int x_fatal_handler(Display *display, XErrorEvent *e);
 void exit_with_perror(const char *s);
 void exit_with_msg(const char *msg);
 bool is_wm_win(WM *wm, Window win);
@@ -25,5 +26,6 @@ void set_xic(WM *wm, Window win, XIC *ic);
 Window get_transient_for(WM *wm, Window w);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 Atom get_atom_prop(WM *wm, Window win, Atom prop);
+void set_override_redirect(WM *wm, Window win);
 
 #endif

@@ -129,6 +129,7 @@ static void frame_client(WM *wm, Client *c)
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y,
         fr.w, fr.h, c->border_w, wm->widget_color[CURRENT_BORDER_COLOR].pixel, 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
+    update_frame_prop(wm, c);
     if(c->title_bar_h)
         create_title_bar(wm, c);
     XAddToSaveSet(wm->display, c->win);
@@ -136,6 +137,24 @@ static void frame_client(WM *wm, Client *c)
         0, c->title_bar_h);
     XMapWindow(wm->display, c->frame);
     XMapSubwindows(wm->display, c->frame);
+}
+
+void update_frame_prop(WM *wm, Client *c)
+{
+    int n=0;
+    Atom *p=XListProperties(wm->display, c->win, &n);
+    if(p)
+    {
+        Atom type;
+        unsigned long len=(1<<16), total, rest;
+        unsigned char *prop=NULL;
+
+        for(int fmt=0, i=0; i<n; i++, prop && XFree(prop))
+            if( XGetWindowProperty(wm->display, c->win, p[i], 0, len, False,
+                AnyPropertyType, &type, &fmt, &total, &rest, &prop) == Success)
+                XChangeProperty(wm->display, c->frame, p[i], type, fmt,
+                    PropModeReplace, prop, total);
+    }
 }
 
 void create_title_bar(WM *wm, Client *c)

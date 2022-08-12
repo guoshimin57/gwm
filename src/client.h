@@ -15,6 +15,7 @@
 void add_client(WM *wm, Window win);
 void fix_area_type(WM *wm);
 void set_default_rect(WM *wm, Client *c);
+void update_frame_prop(WM *wm, Client *c);
 void create_title_bar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
 unsigned int get_typed_clients_n(WM *wm, Area_type type);
