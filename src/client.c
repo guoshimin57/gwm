@@ -14,13 +14,16 @@
 #include "desktop.h"
 #include "font.h"
 #include "grab.h"
+#include "hint.h"
 #include "layout.h"
 #include "misc.h"
 
 static void apply_rules(WM *wm, Client *c);
 static bool have_rule(Rule *r, Client *c);
+static void set_default_pos(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a);
+static void set_default_size(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a);
 static void frame_client(WM *wm, Client *c);
-static Rect get_button_rect(WM *wm, Client *c, size_t index);
+static Rect get_button_rect(Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
 static void create_icon(WM *wm, Client *c);
 static bool have_same_class_icon_client(WM *wm, Client *c);
@@ -113,28 +116,67 @@ void fix_area_type(WM *wm)
 
 void set_default_rect(WM *wm, Client *c)
 {
-    Window r;
-    int x, y;
-    unsigned int w, h, b, d;
-    if(XGetGeometry(wm->display, c->win, &r, &x, &y, &w, &h, &b, &d))
-        c->x=x, c->y=y, c->w=w, c->h=h;
-    else
-        c->w=wm->screen_width/4, c->h=wm->screen_height/4,
-        c->x=wm->screen_width/2-c->w/2, c->y=wm->screen_height/2-c->h/2;
+    XSizeHints hint=get_fixed_size_hint(wm, c);
+    XWindowAttributes a={0, 0, wm->screen_width/4, wm->screen_height/4};
+    XGetWindowAttributes(wm->display, c->win, &a);
+    set_default_pos(wm, c, &hint, &a);
+    set_default_size(wm, c, &hint, &a);
+}
+
+static void set_default_pos(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a)
+{
+    Rect fr=get_frame_rect(c);
+    c->x=hint->x, c->y=hint->y;
+    if(!(hint->flags & USPosition) && !(hint->flags & PPosition))
+        c->x=a->x, c->y=a->y;
+    if(c->x > wm->screen_width)
+        c->x=wm->screen_width-fr.w;
+    if(c->x+fr.w < 0)
+        c->x=0;
+    if(c->y > wm->screen_height)
+        c->y=wm->screen_height-wm->taskbar.h-fr.h;
+    if(c->y+fr.h < 0)
+        c->y=0;
+    c->x+=c->border_w, c->y+=c->border_w+c->title_bar_h;
+}
+
+static void set_default_size(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a)
+{
+    c->w=hint->width, c->h=hint->height;
+    SET_DEF_VAL(c->w, a->width);
+    SET_DEF_VAL(c->h, a->height);
+    if(hint->min_width && c->w<hint->min_width)
+        c->w=hint->min_width;
+    if(hint->min_height && c->h<hint->min_height)
+        c->h=hint->min_height;
+    if(hint->max_width && c->w>hint->max_width)
+        c->w=hint->max_width;
+    if(hint->max_height && c->h>hint->max_height)
+        c->h=hint->max_height;
+    if(hint->min_aspect.x && hint->min_aspect.y)
+    {
+        float mina=(float)hint->min_aspect.x/hint->min_aspect.y,
+              maxa=(float)hint->max_aspect.x/hint->max_aspect.y;
+        if((float)c->w/c->h < mina)
+            c->h=c->w*mina+0.5;
+        else if((float)c->w/c->h > maxa)
+            c->w=c->h*maxa+0.5;
+    }
+    c->w=hint->base_width+get_client_col(wm, c, hint)*hint->width_inc;
+    c->h=hint->base_height+get_client_row(wm, c, hint)*hint->height_inc;
 }
 
 static void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c);
-    c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y,
-        fr.w, fr.h, c->border_w, wm->widget_color[CURRENT_BORDER_COLOR].pixel, 0);
+    c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y, fr.w,
+        fr.h, c->border_w, wm->widget_color[CURRENT_BORDER_COLOR].pixel, 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
     update_frame_prop(wm, c);
     if(c->title_bar_h)
         create_title_bar(wm, c);
     XAddToSaveSet(wm->display, c->win);
-    XReparentWindow(wm->display, c->win, c->frame,
-        0, c->title_bar_h);
+    XReparentWindow(wm->display, c->win, c->frame, 0, c->title_bar_h);
     XMapWindow(wm->display, c->frame);
     XMapSubwindows(wm->display, c->frame);
 }
@@ -162,7 +204,7 @@ void create_title_bar(WM *wm, Client *c)
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
-        Rect br=get_button_rect(wm, c, i);
+        Rect br=get_button_rect(c, i);
         c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame,
             br.x, br.y, br.w, br.h, 0, 0, wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel);
         XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
@@ -180,12 +222,12 @@ static Rect get_frame_rect(Client *c)
 
 Rect get_title_area_rect(WM *wm, Client *c)
 {
-    int buttons_n[]={[FULL]=0, [PREVIEW]=1, [STACK]=3, [TILE]=7};
-    return (Rect){0, 0, c->w-
-        TITLE_BUTTON_WIDTH*buttons_n[DESKTOP(wm).cur_layout], c->title_bar_h};
+    int buttons_n[]={[FULL]=0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
+        n=buttons_n[DESKTOP(wm).cur_layout];
+    return (Rect){0, 0, c->w-TITLE_BUTTON_WIDTH*n, c->title_bar_h};
 }
 
-static Rect get_button_rect(WM *wm, Client *c, size_t index)
+static Rect get_button_rect(Client *c, size_t index)
 {
     return (Rect){c->w-TITLE_BUTTON_WIDTH*(TITLE_BUTTON_N-index),
         (c->title_bar_h-TITLE_BUTTON_HEIGHT)/2,
@@ -250,7 +292,7 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
         {
-            Rect br=get_button_rect(wm, c, i);
+            Rect br=get_button_rect(c, i);
             XMoveWindow(wm->display, c->buttons[i], br.x, br.y);
         }
         XResizeWindow(wm->display, c->title_area, tr.w, tr.h);
@@ -371,7 +413,8 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     Client *pc=d->cur_focus_client;
 
     if(desktop_n == wm->cur_desktop)
-        XSetInputFocus(wm->display, pc->area_type==ICONIFY_AREA ? pc->icon->win : pc->win, RevertToPointerRoot, CurrentTime);
+        XSetInputFocus(wm->display, pc->area_type==ICONIFY_AREA ?
+            pc->icon->win : pc->win, RevertToPointerRoot, CurrentTime);
     if(pc->area_type!=ICONIFY_AREA || d->cur_layout==PREVIEW)
         raise_client(wm, desktop_n);
 }

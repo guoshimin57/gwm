@@ -50,11 +50,15 @@ void exit_with_msg(const char *msg)
 bool is_wm_win(WM *wm, Window win)
 {
     XWindowAttributes attr;
+    Atom state=get_atom_prop(wm, win, wm->ewmh_atom[_NET_WM_STATE]);
     Atom type=get_atom_prop(wm, win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE]);
 
     return (XGetWindowAttributes(wm->display, win, &attr)
         && attr.map_state != IsUnmapped
         && !attr.override_redirect
+        && state != wm->ewmh_atom[_NET_WM_STATE_SKIP_PAGER]
+        && state != wm->ewmh_atom[_NET_WM_STATE_SKIP_TASKBAR]
+        && state != wm->ewmh_atom[_NET_WM_STATE_SHADED]
         && (type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_UTILITY]
             || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG]
             || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]));

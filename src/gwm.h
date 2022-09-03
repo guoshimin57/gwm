@@ -24,6 +24,7 @@
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW"}
 #define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK", "_NET_WM_WINDOW_TYPE_TOOLBAR", "_NET_WM_WINDOW_TYPE_NENU", "_NET_WM_WINDOW_TYPE_UTILITY", "_NET_WM_WINDOW_TYPE_SPLASH", "_NET_WM_WINDOW_TYPE_DIALOG", "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", "_NET_WM_WINDOW_TYPE_POPUP_MENU", "_NET_WM_WINDOW_TYPE_TOOLTIP", "_NET_WM_WINDOW_TYPE_NOTIFICATION", "_NET_WM_WINDOW_TYPE_COMBO", "_NET_WM_WINDOW_TYPE_DND", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_STATE_STICKY", "_NET_WM_STATE_MAXIMIZED_VERT", "_NET_WM_STATE_MAXIMIZED_HORZ", "_NET_WM_STATE_SHADED", "_NET_WM_STATE_SKIP_TASKBAR", "_NET_WM_STATE_SKIP_PAGER", "_NET_WM_STATE_HIDDEN", "_NET_WM_STATE_FULLSCREEN", "_NET_WM_STATE_ABOVE", "_NET_WM_STATE_BELOW", "_NET_WM_STATE_DEMANDS_ATTENTION", "_NET_WM_STATE_FOCUSED"} 
 
+#define SET_DEF_VAL(var, value) ((var) = (var) ? (var) : (value))
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define FUNC_ARG(var, data) (Func_arg){.var=data}
@@ -103,7 +104,8 @@ typedef enum widget_type_tag Widget_type;
 enum font_type_tag // 字體類型, 按字符顯示位置分類
 {
     TITLE_AREA_FONT, TITLE_BUTTON_FONT, CMD_CENTER_FONT,
-    TASKBAR_BUTTON_FONT, ICON_CLASS_FONT, ICON_TITLE_FONT, STATUS_AREA_FONT, ENTRY_FONT,
+    TASKBAR_BUTTON_FONT, ICON_CLASS_FONT, ICON_TITLE_FONT, STATUS_AREA_FONT,
+    ENTRY_FONT, RESIZE_WIN_FONT,
     FONT_N
 };
 typedef enum font_type_tag Font_type;
@@ -218,7 +220,7 @@ enum widget_color_tag // 構件顏色類型
     ENTERED_NORMAL_BUTTON_COLOR, ENTERED_CLOSE_BUTTON_COLOR,
     NORMAL_TASKBAR_BUTTON_COLOR, CHOSEN_TASKBAR_BUTTON_COLOR,
     CMD_CENTER_COLOR, ICON_COLOR, ICON_AREA_COLOR, STATUS_AREA_COLOR,
-    ENTRY_COLOR,
+    ENTRY_COLOR, RESIZE_WIN_COLOR,
     WIDGET_COLOR_N 
 };
 typedef enum widget_color_tag Widget_color;
@@ -229,6 +231,7 @@ enum text_color_tag // 文本顏色類型
     TASKBAR_BUTTON_TEXT_COLOR, STATUS_AREA_TEXT_COLOR,
     ICON_CLASS_TEXT_COLOR, ICON_TITLE_TEXT_COLOR,
     CMD_CENTER_ITEM_TEXT_COLOR, ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
+    RESIZE_WIN_TEXT_COLOR,
     TEXT_COLOR_N 
 };
 typedef enum text_color_tag Text_color;
@@ -253,7 +256,7 @@ struct wm_tag // 窗口管理器相關信息
     unsigned int cur_desktop; // 當前虛擬桌面編號
     Desktop desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
-    Window root_win; // 根窗口
+    Window root_win, resize_win; // 根窗口、調整尺寸提示窗口
     GC gc; // 窗口管理器的圖形信息
     Visual *visual; // 着色類型
     Colormap colormap; // 着色圖
@@ -291,6 +294,7 @@ typedef enum align_type_tag Align_type;
 
 union func_arg_tag // 函數參數類型
 {
+    bool resize; // 是否調整窗口尺寸
     bool focus; // 是否聚焦的標志
     char *const *cmd; // 命令字符串
     Direction direction; // 方向

@@ -13,6 +13,7 @@
 #define CLIENT_H
 
 void add_client(WM *wm, Window win);
+void map_client(WM *wm, Client *c);
 void fix_area_type(WM *wm);
 void set_default_rect(WM *wm, Client *c);
 void update_frame_prop(WM *wm, Client *c);

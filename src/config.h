@@ -39,6 +39,7 @@
 #define CMD_CENTER_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 操作中心的字體大小，單位爲像素
 #define TASKBAR_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 任務欄的字體大小，單位爲像素
 #define ENTRY_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 輸入構件的字體大小，單位爲像素
+#define RESIZE_WIN_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 調整尺寸的提示窗口的字體大小，單位爲像素
 #define BORDER_WIDTH ROUND(DEFAULT_FONT_PIXEL_SIZE/8.0) // 窗口框架边框的宽度，单位为像素
 #define TITLE_BAR_HEIGHT ROUND(TITLE_FONT_PIXEL_SIZE*4/3.0) // 窗口標題欄的高度，單位爲像素
 #define TITLE_BUTTON_WIDTH TITLE_BAR_HEIGHT // 窗口按鈕的寬度，單位爲像素
@@ -57,7 +58,9 @@
 #define ENTRY_TEXT_INDENT ROUND(ENTRY_FONT_PIXEL_SIZE/4.0)
 #define RUN_CMD_ENTRY_WIDTH (ENTRY_FONT_PIXEL_SIZE*15+ENTRY_TEXT_INDENT*2) // 運行命令的輸入構件的寬度，單位爲像素
 #define RUN_CMD_ENTRY_HEIGHT ROUND(ENTRY_FONT_PIXEL_SIZE*4/3.0) // 運行命令的輸入構件的寬度，單位爲像素
-#define MOVE_RESIZE_INC DEFAULT_FONT_PIXEL_SIZE  // 移動窗口、調整窗口尺寸的步進值，單位爲像素
+#define RESIZE_WIN_WIDTH (RESIZE_WIN_FONT_PIXEL_SIZE*10) // 調整尺寸的提示窗口的寬度，單位爲像素
+#define RESIZE_WIN_HEIGHT ROUND(RESIZE_WIN_FONT_PIXEL_SIZE*4/3.0) // 調整尺寸的提示窗口的高度，單位爲像素
+#define MOVE_RESIZE_INC DEFAULT_FONT_PIXEL_SIZE  // 移動窗口、調整窗口尺寸的步進值，單位爲像素。僅當窗口未有效設置尺寸特性時才使用它。
 
 #define RUN_CMD_ENTRY_HINT L"請輸入命令，然後按回車執行"
 #define DEFAULT_FONT_NAME "monospace:pixelsize="TO_STR(DEFAULT_FONT_PIXEL_SIZE) // 默認字體名
@@ -72,6 +75,7 @@
     [ICON_TITLE_FONT]       = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
     [STATUS_AREA_FONT]      = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
     [ENTRY_FONT]            = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
+    [RESIZE_WIN_FONT]       = "monospace:pixelsize="TO_STR(RESIZE_WIN_FONT_PIXEL_SIZE),         \
 }
 
 #define WIDGET_COLOR_NAME (const char *[]) /* 構件顏色名 */                        \
@@ -91,19 +95,21 @@
     [ICON_AREA_COLOR]             = "grey11",       /* 圖標區域的顏色名         */ \
     [STATUS_AREA_COLOR]           = "grey21",       /* 狀態區域的顏色名         */ \
     [ENTRY_COLOR]                 = "white",        /* 單行文本輸入框的顏色名   */ \
+    [RESIZE_WIN_COLOR]            = "grey21",        /* 調整尺寸提示窗口的顏色名 */ \
 }
 
-#define TEXT_COLOR_NAME (const char *[]) /* 文本顏色名 */                        \
-{                                                                                \
-    [TITLE_AREA_TEXT_COLOR]      = "white",     /* 標題區域文本的顏色名       */ \
-    [TITLE_BUTTON_TEXT_COLOR]    = "white",     /* 標題按鈕文本的顏色名       */ \
-    [TASKBAR_BUTTON_TEXT_COLOR]  = "white",     /* 任務欄按鈕文本的顏色名     */ \
-    [STATUS_AREA_TEXT_COLOR]     = "white",     /* 狀態區域文本的顏色名       */ \
-    [ICON_CLASS_TEXT_COLOR]      = "rosybrown", /* 圖標中程序類型文本的顏色名 */ \
-    [ICON_TITLE_TEXT_COLOR]      = "white",     /* 圖標中標題文本的顏色名     */ \
-    [CMD_CENTER_ITEM_TEXT_COLOR] = "white",     /* 操作中心菜單項文本的顏色名 */ \
-    [ENTRY_TEXT_COLOR]           = "black",     /* 輸入構件文本的顏色名 */       \
-    [HINT_TEXT_COLOR]            = "grey61",    /* 用於提示的文本的顏色名 */     \
+#define TEXT_COLOR_NAME (const char *[]) /* 文本顏色名 */                          \
+{                                                                                  \
+    [TITLE_AREA_TEXT_COLOR]      = "white",     /* 標題區域文本的顏色名       */   \
+    [TITLE_BUTTON_TEXT_COLOR]    = "white",     /* 標題按鈕文本的顏色名       */   \
+    [TASKBAR_BUTTON_TEXT_COLOR]  = "white",     /* 任務欄按鈕文本的顏色名     */   \
+    [STATUS_AREA_TEXT_COLOR]     = "white",     /* 狀態區域文本的顏色名       */   \
+    [ICON_CLASS_TEXT_COLOR]      = "rosybrown", /* 圖標中程序類型文本的顏色名 */   \
+    [ICON_TITLE_TEXT_COLOR]      = "white",     /* 圖標中標題文本的顏色名     */   \
+    [CMD_CENTER_ITEM_TEXT_COLOR] = "white",     /* 操作中心菜單項文本的顏色名 */   \
+    [ENTRY_TEXT_COLOR]           = "black",     /* 輸入構件文本的顏色名 */         \
+    [HINT_TEXT_COLOR]            = "grey61",    /* 用於提示的文本的顏色名 */       \
+    [RESIZE_WIN_TEXT_COLOR]      = "white",     /* 調整尺寸提示窗口文本的顏色名 */ \
 }
 
 #define TITLE_BUTTON_TEXT (const char *[]) /* 窗口標題欄按鈕的標籤（從左至右）*/ \
@@ -173,7 +179,7 @@
     {Mod1Mask|ShiftMask,    key, all_attach_to_desktop,  {.desktop_n=n}}, \
     {ShiftMask|ControlMask, key, attach_to_all_desktops, {.desktop_n=n}}
 
-#define KEYBIND (Keybind []) /* 按鍵功能綁定 */                                            \
+#define KEYBIND (Keybind []) /* 按鍵功能綁定。有的鍵盤同按多鍵會衝突，故組合鍵宜盡量少，*/ \
 {/* 功能轉換鍵  鍵符號           要綁定的函數(詳見gwm.h)      函數的參數 */                \
     {0, XF86XK_MonBrightnessDown,exec,                        SH_CMD(LIGHT_DOWN)},         \
     {0, XF86XK_MonBrightnessUp,  exec,                        SH_CMD(LIGHT_UP)},           \
@@ -241,7 +247,7 @@
     {WM_KEY,	XK_Page_Down,    next_desktop,                {0}},                        \
     {WM_KEY,	XK_Page_Up,      prev_desktop,                {0}},                        \
     DESKTOP_KEYBIND(XK_0, 0),                                                              \
-    DESKTOP_KEYBIND(XK_1, 1),                                                              \
+    DESKTOP_KEYBIND(XK_1, 1), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */          \
     DESKTOP_KEYBIND(XK_2, 2),                                                              \
     DESKTOP_KEYBIND(XK_3, 3),                                                              \
 }
@@ -259,63 +265,63 @@
     {DESKTOPN_BUTTON(n),                    0,    Button3, move_to_desktop,        {0}},   \
     {DESKTOPN_BUTTON(n),             Mod1Mask,    Button3, all_move_to_desktop,    {0}}
 
-#define BUTTONBIND (Buttonbind []) /* 按鈕功能綁定 */                                             \
-{/* 控件類型             能轉換鍵 定位器按鈕 要綁定的函數            函數的參數 */                \
-    {FULL_BUTTON,              0, Button1, change_layout,            {.layout=FULL}},             \
-    {PREVIEW_BUTTON,           0, Button1, change_layout,            {.layout=PREVIEW}},          \
-    {STACK_BUTTON,             0, Button1, change_layout,            {.layout=STACK}},            \
-    {TILE_BUTTON,              0, Button1, change_layout,            {.layout=TILE}},             \
-    {DESKTOP_BUTTON,           0, Button1, iconify_all_clients,      {0}},                        \
-    {TITLE_AREA,               0, Button1, pointer_move_client,      {0}},                        \
-    {MAIN_BUTTON,              0, Button1, change_area,              {.area_type=MAIN_AREA}},     \
-    {SECOND_BUTTON,            0, Button1, change_area,              {.area_type=SECOND_AREA}},   \
-    {FIXED_BUTTON,             0, Button1, change_area,              {.area_type=FIXED_AREA}},    \
-    {FLOAT_BUTTON,             0, Button1, change_area,              {.area_type=FLOATING_AREA}}, \
-    {ICON_BUTTON,              0, Button1, change_area,              {.area_type=ICONIFY_AREA}},  \
-    {MAX_BUTTON,               0, Button1, maximize_client,          {0}},                        \
-    {CLOSE_BUTTON,             0, Button1, close_client,             {0}},                        \
-    {CLIENT_WIN,               0, Button1, choose_client,            {0}},                        \
-    {CLIENT_WIN,          WM_KEY, Button1, pointer_move_client,      {0}},                        \
-    {CLIENT_WIN,         WM_SKEY, Button1, pointer_resize_client,    {0}},                        \
-    {CLIENT_FRAME,             0, Button1, pointer_resize_client,    {0}},                        \
-    {CLIENT_ICON,              0, Button1, change_area,              {.area_type=PREV_AREA}},     \
-    {ROOT_WIN,                 0, Button1, adjust_layout_ratio,      {0}},                        \
-    {DESKTOP_BUTTON,           0, Button2, close_all_clients,        {0}},                        \
-    {TITLE_AREA,               0, Button2, pointer_change_area,      {0}},                        \
-    {CLIENT_WIN,          WM_KEY, Button2, pointer_change_area,      {0}},                        \
-    {CLIENT_ICON,              0, Button2, close_client,             {0}},                        \
-    {DESKTOP_BUTTON,           0, Button3, deiconify_all_clients,    {0}},                        \
-    {TITLE_AREA,               0, Button3, pointer_swap_clients,     {0}},                        \
-    {CLIENT_WIN,               0, Button3, NULL,                     {0}},                        \
-    {CLIENT_WIN,          WM_KEY, Button3, pointer_swap_clients,     {0}},                        \
-    {CMD_CENTER_ITEM,          0, Button1, open_cmd_center,          {0}},                        \
-    {HELP_BUTTON,              0, Button1, exec,                     SH_CMD(HELP)},               \
-    {FILE_BUTTON,              0, Button1, exec,                     SH_CMD(FILE_MANAGER)},       \
-    {TERM_BUTTON,              0, Button1, exec,                     SH_CMD(TERMINAL)},           \
-    {BROWSER_BUTTON,           0, Button1, exec,                     SH_CMD(BROWSER)},            \
-    {PLAY_START_BUTTON,        0, Button1, exec,                     SH_CMD(PLAY_START)},         \
-    {PLAY_TOGGLE_BUTTON,       0, Button1, exec,                     SH_CMD(PLAY_TOGGLE)},        \
-    {PLAY_QUIT_BUTTON,         0, Button1, exec,                     SH_CMD(PLAY_QUIT)},          \
-    {VOLUME_DOWN_BUTTON,       0, Button1, exec,                     SH_CMD(VOLUME_DOWN)},        \
-    {VOLUME_UP_BUTTON,         0, Button1, exec,                     SH_CMD(VOLUME_UP)},          \
-    {VOLUME_MAX_BUTTON,        0, Button1, exec,                     SH_CMD(VOLUME_MAX)},         \
-    {VOLUME_TOGGLE_BUTTON,     0, Button1, exec,                     SH_CMD(VOLUME_TOGGLE)},      \
-    {MAIN_NEW_BUTTON,          0, Button1, change_default_area_type, {.area_type=MAIN_AREA}},     \
-    {SEC_NEW_BUTTON,           0, Button1, change_default_area_type, {.area_type=SECOND_AREA}},   \
-    {FIX_NEW_BUTTON,           0, Button1, change_default_area_type, {.area_type=FIXED_AREA}},    \
-    {FLOAT_NEW_BUTTON,         0, Button1, change_default_area_type, {.area_type=FLOATING_AREA}}, \
-    {ICON_NEW_BUTTON,          0, Button1, change_default_area_type, {.area_type=ICONIFY_AREA}},  \
-    {N_MAIN_UP_BUTTON,         0, Button1, adjust_n_main_max,        {.n=1}},                     \
-    {N_MAIN_DOWN_BUTTON,       0, Button1, adjust_n_main_max,        {.n=-1}},                    \
-    {FOCUS_MODE_BUTTON,        0, Button1, toggle_focus_mode,        {0}},                        \
-    {QUIT_WM_BUTTON,           0, Button1, quit_wm,                  {0}},                        \
-    {LOGOUT_BUTTON,            0, Button1, exec,                     SH_CMD(LOGOUT)},             \
-    {REBOOT_BUTTON,            0, Button1, exec,                     SH_CMD("reboot")},           \
-    {POWEROFF_BUTTON,          0, Button1, exec,                     SH_CMD("poweroff")},         \
-    {RUN_BUTTON,               0, Button1, enter_and_run_cmd,        {0}},                        \
-    DESKTOP_BUTTONBIND(1),                                                                        \
-    DESKTOP_BUTTONBIND(2),                                                                        \
-    DESKTOP_BUTTONBIND(3),                                                                        \
+#define BUTTONBIND (Buttonbind []) /* 按鈕功能綁定 */                                               \
+{/* 控件類型             能轉換鍵 定位器按鈕 要綁定的函數              函數的參數 */                \
+    {FULL_BUTTON,              0, Button1, change_layout,              {.layout=FULL}},             \
+    {PREVIEW_BUTTON,           0, Button1, change_layout,              {.layout=PREVIEW}},          \
+    {STACK_BUTTON,             0, Button1, change_layout,              {.layout=STACK}},            \
+    {TILE_BUTTON,              0, Button1, change_layout,              {.layout=TILE}},             \
+    {DESKTOP_BUTTON,           0, Button1, iconify_all_clients,        {0}},                        \
+    {TITLE_AREA,               0, Button1, pointer_move_resize_client, {.resize=false}},            \
+    {MAIN_BUTTON,              0, Button1, change_area,                {.area_type=MAIN_AREA}},     \
+    {SECOND_BUTTON,            0, Button1, change_area,                {.area_type=SECOND_AREA}},   \
+    {FIXED_BUTTON,             0, Button1, change_area,                {.area_type=FIXED_AREA}},    \
+    {FLOAT_BUTTON,             0, Button1, change_area,                {.area_type=FLOATING_AREA}}, \
+    {ICON_BUTTON,              0, Button1, change_area,                {.area_type=ICONIFY_AREA}},  \
+    {MAX_BUTTON,               0, Button1, maximize_client,            {0}},                        \
+    {CLOSE_BUTTON,             0, Button1, close_client,               {0}},                        \
+    {CLIENT_WIN,               0, Button1, choose_client,              {0}},                        \
+    {CLIENT_WIN,          WM_KEY, Button1, pointer_move_resize_client, {.resize=false}},            \
+    {CLIENT_WIN,         WM_SKEY, Button1, pointer_move_resize_client, {.resize=true}},             \
+    {CLIENT_FRAME,             0, Button1, pointer_move_resize_client, {.resize=true}},             \
+    {CLIENT_ICON,              0, Button1, change_area,                {.area_type=PREV_AREA}},     \
+    {ROOT_WIN,                 0, Button1, adjust_layout_ratio,        {0}},                        \
+    {DESKTOP_BUTTON,           0, Button2, close_all_clients,          {0}},                        \
+    {TITLE_AREA,               0, Button2, pointer_change_area,        {0}},                        \
+    {CLIENT_WIN,          WM_KEY, Button2, pointer_change_area,        {0}},                        \
+    {CLIENT_ICON,              0, Button2, close_client,               {0}},                        \
+    {DESKTOP_BUTTON,           0, Button3, deiconify_all_clients,      {0}},                        \
+    {TITLE_AREA,               0, Button3, pointer_swap_clients,       {0}},                        \
+    {CLIENT_WIN,               0, Button3, NULL,                       {0}},                        \
+    {CLIENT_WIN,          WM_KEY, Button3, pointer_swap_clients,       {0}},                        \
+    {CMD_CENTER_ITEM,          0, Button1, open_cmd_center,            {0}},                        \
+    {HELP_BUTTON,              0, Button1, exec,                       SH_CMD(HELP)},               \
+    {FILE_BUTTON,              0, Button1, exec,                       SH_CMD(FILE_MANAGER)},       \
+    {TERM_BUTTON,              0, Button1, exec,                       SH_CMD(TERMINAL)},           \
+    {BROWSER_BUTTON,           0, Button1, exec,                       SH_CMD(BROWSER)},            \
+    {PLAY_START_BUTTON,        0, Button1, exec,                       SH_CMD(PLAY_START)},         \
+    {PLAY_TOGGLE_BUTTON,       0, Button1, exec,                       SH_CMD(PLAY_TOGGLE)},        \
+    {PLAY_QUIT_BUTTON,         0, Button1, exec,                       SH_CMD(PLAY_QUIT)},          \
+    {VOLUME_DOWN_BUTTON,       0, Button1, exec,                       SH_CMD(VOLUME_DOWN)},        \
+    {VOLUME_UP_BUTTON,         0, Button1, exec,                       SH_CMD(VOLUME_UP)},          \
+    {VOLUME_MAX_BUTTON,        0, Button1, exec,                       SH_CMD(VOLUME_MAX)},         \
+    {VOLUME_TOGGLE_BUTTON,     0, Button1, exec,                       SH_CMD(VOLUME_TOGGLE)},      \
+    {MAIN_NEW_BUTTON,          0, Button1, change_default_area_type,   {.area_type=MAIN_AREA}},     \
+    {SEC_NEW_BUTTON,           0, Button1, change_default_area_type,   {.area_type=SECOND_AREA}},   \
+    {FIX_NEW_BUTTON,           0, Button1, change_default_area_type,   {.area_type=FIXED_AREA}},    \
+    {FLOAT_NEW_BUTTON,         0, Button1, change_default_area_type,   {.area_type=FLOATING_AREA}}, \
+    {ICON_NEW_BUTTON,          0, Button1, change_default_area_type,   {.area_type=ICONIFY_AREA}},  \
+    {N_MAIN_UP_BUTTON,         0, Button1, adjust_n_main_max,          {.n=1}},                     \
+    {N_MAIN_DOWN_BUTTON,       0, Button1, adjust_n_main_max,          {.n=-1}},                    \
+    {FOCUS_MODE_BUTTON,        0, Button1, toggle_focus_mode,          {0}},                        \
+    {QUIT_WM_BUTTON,           0, Button1, quit_wm,                    {0}},                        \
+    {LOGOUT_BUTTON,            0, Button1, exec,                       SH_CMD(LOGOUT)},             \
+    {REBOOT_BUTTON,            0, Button1, exec,                       SH_CMD("reboot")},           \
+    {POWEROFF_BUTTON,          0, Button1, exec,                       SH_CMD("poweroff")},         \
+    {RUN_BUTTON,               0, Button1, enter_and_run_cmd,          {0}},                        \
+    DESKTOP_BUTTONBIND(1),                                                                          \
+    DESKTOP_BUTTONBIND(2),                                                                          \
+    DESKTOP_BUTTONBIND(3),                                                                          \
 }
 
 #define RULE (Rule []) /* 窗口管理器對窗口的管理規則 */                                                           \

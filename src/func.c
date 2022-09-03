@@ -18,13 +18,17 @@
 #include "entry.h"
 #include "grab.h"
 #include "handler.h"
+#include "hint.h"
 #include "layout.h"
 #include "menu.h"
 #include "misc.h"
 
-static bool is_valid_move_resize(WM *wm, Client *c, Delta_rect *d);
+static Delta_rect get_key_delta_rect(Client *c, XSizeHints *hint, Direction dir);
 static void close_font(WM *wm);
-static Delta_rect get_delta_rect(Client *c, const Move_info *m);
+static bool get_valid_move_resize(WM *wm, Client *c, XSizeHints *hint, Delta_rect *d);
+static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
+static void update_resize_win(WM *wm, Client *c, XSizeHints *hint);
+static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act);
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
@@ -56,41 +60,59 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     if(DESKTOP(wm).cur_layout==TILE || DESKTOP(wm).cur_layout==STACK)
     {
-        int s=MOVE_RESIZE_INC;
-        Delta_rect dr[] =
-        {
-            [UP]          = { 0, -s,  0,  0},
-            [DOWN]        = { 0,  s,  0,  0},
-            [LEFT]        = {-s,  0,  0,  0},
-            [RIGHT]       = { s,  0,  0,  0},
-            [LEFT2LEFT]   = {-s,  0,  s,  0},
-            [LEFT2RIGHT]  = { s,  0, -s,  0},
-            [RIGHT2LEFT]  = { 0,  0, -s,  0},
-            [RIGHT2RIGHT] = { 0,  0,  s,  0},
-            [UP2UP]       = { 0, -s,  0,  s},
-            [UP2DOWN]     = { 0,  s,  0, -s},
-            [DOWN2UP]     = { 0,  0,  0, -s},
-            [DOWN2DOWN]   = { 0,  0,  0,  s},
-        };
-        Delta_rect d=dr[arg.direction];
         Client *c=DESKTOP(wm).cur_focus_client;
-        if(DESKTOP(wm).cur_layout == TILE)
+        XSizeHints hint=get_fixed_size_hint(wm, c);
+        Delta_rect d=get_key_delta_rect(c, &hint, arg.direction);
+        if(c->area_type!=FLOATING_AREA && DESKTOP(wm).cur_layout==TILE)
             move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
-        if(is_valid_move_resize(wm, c, &d))
+        if(get_valid_move_resize(wm, c, &hint, &d))
+        {
             move_resize_client(wm, c, &d);
+            update_resize_win(wm, c, &hint);
+            XMaskEvent(wm->display, KeyReleaseMask, e);
+            if(e->type == KeyRelease)
+                XUnmapWindow(wm->display, wm->resize_win);
+        }
     }
 }
 
-/* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外，即是否合法。
+static Delta_rect get_key_delta_rect(Client *c, XSizeHints *hint, Direction dir)
+{
+    int wi=hint->width_inc, hi=hint->height_inc;
+    Delta_rect dr[] =
+    {
+        [UP]          = {  0, -hi,   0,   0},
+        [DOWN]        = {  0,  hi,   0,   0},
+        [LEFT]        = {-wi,   0,   0,   0},
+        [RIGHT]       = { wi,   0,   0,   0},
+        [LEFT2LEFT]   = {-wi,   0,  wi,   0},
+        [LEFT2RIGHT]  = { wi,   0, -wi,   0},
+        [RIGHT2LEFT]  = {  0,   0, -wi,   0},
+        [RIGHT2RIGHT] = {  0,   0,  wi,   0},
+        [UP2UP]       = {  0, -hi,   0,  hi},
+        [UP2DOWN]     = {  0,  hi,   0, -hi},
+        [DOWN2UP]     = {  0,   0,   0, -hi},
+        [DOWN2DOWN]   = {  0,   0,   0,  hi},
+    };
+    return dr[dir];
+}
+
+static bool get_valid_move_resize(WM *wm, Client *c, XSizeHints *hint, Delta_rect *d)
+{
+    return ( ((!d->dw && !d->dh)
+        && is_on_screen(wm, c->x+d->dx, c->y+d->dy, c->w+d->dw, c->h+d->dh))
+        || get_prefer_resize(wm, c, hint, d));
+}
+
+/* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外。
  * 若滿足以下條件，則有交集：窗口與屏幕中心距≤窗口半邊長+屏幕半邊長。
  * 即：|x+w/2-0-sw/2|＜|w/2+sw/2| 且 |y+h/2-0-sh/2|＜|h/2+sh/2|。
  * 兩邊同乘以2，得：|2*x+w-sw|＜|w+sw| 且 |2*y+h-sh|＜|h+sh|。
  */
-static bool is_valid_move_resize(WM *wm, Client *c, Delta_rect *d)
+static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h)
 {
-    int x=c->x+d->dx, y=c->y+d->dy, w=c->w+d->dw, h=c->h+d->dh,
-        sw=wm->screen_width, sh=wm->screen_height, s=MOVE_RESIZE_INC;
-    return w>=s && h>=s && abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
+    unsigned int sw=wm->screen_width, sh=wm->screen_height;
+    return abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
 }
 
 void quit_wm(WM *wm, XEvent *e, Func_arg arg)
@@ -242,79 +264,79 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     }
 }
 
-void pointer_move_client(WM *wm, XEvent *e, Func_arg arg)
+void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Layout layout=DESKTOP(wm).cur_layout;
     if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, e))
         return;
-    XEvent ev;
-    Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
-    Delta_rect d={0, 0, 0, 0};
-    Client *c=DESKTOP(wm).cur_focus_client;
 
-    do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
-    {
-        XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
-        if(ev.type == MotionNotify)
-        {
-            m.nx=ev.xmotion.x, m.ny=ev.xmotion.y, d.dx=m.nx-m.ox, d.dy=m.ny-m.oy;
-            if(c->area_type!=FLOATING_AREA && layout==TILE)
-                move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
-            move_resize_client(wm, c, &d);
-            m.ox=m.nx, m.oy=m.ny;
-        }
-        else
-            handle_event(wm, &ev);
-    }while(!(ev.type==ButtonRelease && ev.xbutton.button==e->xbutton.button));
-    XUngrabPointer(wm->display, CurrentTime);
-}
-
-void pointer_resize_client(WM *wm, XEvent *e, Func_arg arg)
-{
-    Layout layout=DESKTOP(wm).cur_layout;
-    if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, e))
-        return;
     XEvent ev;
-    Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
     Delta_rect d;
+    Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
     Client *c=DESKTOP(wm).cur_focus_client;
+    Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
+    XSizeHints hint=get_fixed_size_hint(wm, c);
+
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
         XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
         if(ev.type == MotionNotify)
         {
+            /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             if(c->area_type!=FLOATING_AREA && layout==TILE)
                 move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
-            d=get_delta_rect(c, &m);
-            if(is_valid_move_resize(wm, c, &d))
+            d=get_pointer_delta_rect(c, &m, act);
+            if(get_valid_move_resize(wm, c, &hint, &d))
             {
                 move_resize_client(wm, c, &d);
-                m.ox=m.nx, m.oy=m.ny;
+                update_resize_win(wm, c, &hint);
+                if(arg.resize)
+                {
+                    if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
+                        m.ox = d.dx ? m.ox-d.dw : m.ox+d.dw;
+                    if(d.dh) // dy爲0表示定位器從窗口下邊調整尺寸，非0則表示上邊調整
+                        m.oy = d.dy ? m.oy-d.dh : m.oy+d.dh;
+                }
+                else
+                    m.ox=m.nx, m.oy=m.ny;
             }
         }
         else
             handle_event(wm, &ev);
     }while(!(ev.type==ButtonRelease && ev.xbutton.button==e->xbutton.button));
     XUngrabPointer(wm->display, CurrentTime);
+    XUnmapWindow(wm->display, wm->resize_win);
 }
 
-static Delta_rect get_delta_rect(Client *c, const Move_info *m)
+static void update_resize_win(WM *wm, Client *c, XSizeHints *hint)
+{
+    char str[BUFSIZ];
+    String_format f={{0, 0, RESIZE_WIN_WIDTH, RESIZE_WIN_HEIGHT}, CENTER,
+        false, 0, wm->text_color[RESIZE_WIN_TEXT_COLOR], RESIZE_WIN_FONT};
+    unsigned int w=get_client_col(wm, c, hint), h=get_client_row(wm, c, hint);
+    sprintf(str, "(%d, %d) %ux%u", c->x, c->y, w, h);
+    XMapRaised(wm->display, wm->resize_win);
+    draw_string(wm, wm->resize_win, str, &f);
+}
+
+static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act)
 {
     int dx=m->nx-m->ox, dy=m->ny-m->oy;
     Delta_rect dr[] =
     {
-        [TOP_LEFT_RESIZE]     = {dx, dy, -dx, -dy},
-        [TOP_RIGHT_RESIZE]    = { 0, dy,  dx, -dy},
-        [BOTTOM_LEFT_RESIZE]  = {dx,  0, -dx,  dy},
-        [BOTTOM_RIGHT_RESIZE] = { 0,  0,  dx,  dy},
+        [NO_OP]               = { 0,  0,   0,   0},
+        [MOVE]                = {dx, dy,   0,   0},
         [TOP_RESIZE]          = { 0, dy,   0, -dy},
         [BOTTOM_RESIZE]       = { 0,  0,   0,  dy},
         [LEFT_RESIZE]         = {dx,  0, -dx,   0},
         [RIGHT_RESIZE]        = { 0,  0,  dx,   0},
-        [NO_OP]               = { 0,  0,   0,   0},
+        [TOP_LEFT_RESIZE]     = {dx, dy, -dx, -dy},
+        [TOP_RIGHT_RESIZE]    = { 0, dy,  dx, -dy},
+        [BOTTOM_LEFT_RESIZE]  = {dx,  0, -dx,  dy},
+        [BOTTOM_RIGHT_RESIZE] = { 0,  0,  dx,  dy},
     };
-    return dr[get_resize_act(c, m)];
+    return dr[act];
 }
 
 void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
@@ -430,8 +452,6 @@ void toggle_title_bar_visibility(WM *wm, XEvent *e, Func_arg arg)
 
 void focus_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(e->type==KeyPress)
-        puts(__func__);
     focus_desktop_n(wm, get_desktop_n(wm, e, arg));
 }
 
