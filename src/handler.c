@@ -229,7 +229,7 @@ static void update_icon_text(WM *wm, Window win)
         {
             String_format f={{w, 0, c->icon->w-w, c->icon->h}, CENTER, false,
                 0, wm->text_color[ICON_TITLE_TEXT_COLOR], ICON_TITLE_FONT};
-            draw_string(wm, c->icon->win, c->title_text, &f);
+            draw_string(wm, c->icon->win, c->icon->title_text, &f);
         }
     }
 }

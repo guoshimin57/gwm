@@ -129,15 +129,14 @@ static void set_default_pos(WM *wm, Client *c, XSizeHints *hint, XWindowAttribut
     c->x=hint->x, c->y=hint->y;
     if(!(hint->flags & USPosition) && !(hint->flags & PPosition))
         c->x=a->x, c->y=a->y;
-    if(c->x > wm->screen_width)
-        c->x=wm->screen_width-fr.w;
-    if(c->x+fr.w < 0)
-        c->x=0;
-    if(c->y > wm->screen_height)
-        c->y=wm->screen_height-wm->taskbar.h-fr.h;
-    if(c->y+fr.h < 0)
-        c->y=0;
-    c->x+=c->border_w, c->y+=c->border_w+c->title_bar_h;
+    if(c->x >= wm->screen_width)
+        c->x=wm->screen_width-fr.w+c->border_w;
+    if(c->x+c->w < 0)
+        c->x=c->border_w;
+    if(c->y >= wm->screen_height)
+        c->y=wm->screen_height-wm->taskbar.h-fr.h+c->border_w;
+    if(c->y+c->h < 0)
+        c->y=c->border_w;
 }
 
 static void set_default_size(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a)
@@ -335,14 +334,14 @@ void iconify(WM *wm, Client *c)
 static void create_icon(WM *wm, Client *c)
 {
     Icon *p=c->icon=malloc_s(sizeof(Icon));
-    c->icon->w=1, c->icon->h=ICON_HEIGHT;
-    c->icon->y=wm->taskbar.h/2-c->icon->h/2-ICON_BORDER_WIDTH;
+    p->w=1, p->h=ICON_HEIGHT, p->y=wm->taskbar.h/2-p->h/2-ICON_BORDER_WIDTH;
     p->area_type=c->area_type==ICONIFY_AREA ? DEFAULT_AREA_TYPE : c->area_type;
     c->area_type=ICONIFY_AREA;
     p->win=XCreateSimpleWindow(wm->display, wm->taskbar.icon_area, p->x, p->y,
         p->w, p->h, ICON_BORDER_WIDTH,
         wm->widget_color[NORMAL_BORDER_COLOR].pixel,
         wm->widget_color[ICON_COLOR].pixel);
+    p->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
     update_icon_area(wm);
 }
 
@@ -366,7 +365,7 @@ void update_icon_area(WM *wm)
             get_string_size(wm, wm->font[ICON_CLASS_FONT], c->class_name, &i->w, NULL);
             if(have_same_class_icon_client(wm, c))
             {
-                get_string_size(wm, wm->font[ICON_TITLE_FONT], c->title_text, &w, NULL);
+                get_string_size(wm, wm->font[ICON_TITLE_FONT], i->title_text, &w, NULL);
                 i->w+=w;
                 i->is_short_text=false;
             }
@@ -401,6 +400,7 @@ void del_icon(WM *wm, Client *c)
 {
     XDestroyWindow(wm->display, c->icon->win);
     c->area_type=c->icon->area_type;
+    free(c->icon->title_text);
     free(c->icon);
     update_icon_area(wm);
 }

@@ -60,7 +60,7 @@
 #define RUN_CMD_ENTRY_HEIGHT ROUND(ENTRY_FONT_PIXEL_SIZE*4/3.0) // 運行命令的輸入構件的寬度，單位爲像素
 #define RESIZE_WIN_WIDTH (RESIZE_WIN_FONT_PIXEL_SIZE*10) // 調整尺寸的提示窗口的寬度，單位爲像素
 #define RESIZE_WIN_HEIGHT ROUND(RESIZE_WIN_FONT_PIXEL_SIZE*4/3.0) // 調整尺寸的提示窗口的高度，單位爲像素
-#define MOVE_RESIZE_INC DEFAULT_FONT_PIXEL_SIZE  // 移動窗口、調整窗口尺寸的步進值，單位爲像素。僅當窗口未有效設置尺寸特性時才使用它。
+#define MOVE_RESIZE_INC 8 // 移動窗口、調整窗口尺寸的步進值，單位爲像素。僅當窗口未有效設置尺寸特性時才使用它。
 
 #define RUN_CMD_ENTRY_HINT L"請輸入命令，然後按回車執行"
 #define DEFAULT_FONT_NAME "monospace:pixelsize="TO_STR(DEFAULT_FONT_PIXEL_SIZE) // 默認字體名
@@ -327,7 +327,7 @@
 #define RULE (Rule []) /* 窗口管理器對窗口的管理規則 */                                                           \
 {/* 可通過xprop命令查看客戶程序類型和客戶程序名稱。其結果表示爲：                                                 \
         WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"                                                         \
-    客戶程序類型           客戶程序名稱          圖標文字  窗口放置位置       標題欄高度        邊框寬度    桌面*/\
+    客戶程序類型           客戶程序名稱 客戶程序的類型別名 窗口放置位置       標題欄高度        邊框寬度    桌面*/\
     {"Qq",                 "qq",                 "QQ",     FIXED_AREA,        0,                0,            0}, \
     {"explorer.exe",       "explorer.exe",       NULL,     FLOATING_AREA,     0,                0,            0}, \
     {"Thunder.exe",        "Thunder.exe",        NULL,     FLOATING_AREA,     TITLE_BAR_HEIGHT, BORDER_WIDTH, 0}, \

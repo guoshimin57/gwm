@@ -124,6 +124,7 @@ struct icon_tag // 縮微窗口相關信息
     unsigned int w, h; // 無邊框時縮微窗口的尺寸
     Area_type area_type; // 窗口微縮之前的區域類型
     bool is_short_text; // 是否只爲縮微窗口顯示簡短的文字
+    char *title_text; // 縮微窗口標題文字，即XA_WM_ICON_NAME，理論上應比XA_WM_NAME簡短，實際上很多客戶窗口的都是與它一模一樣。
 };
 typedef struct icon_tag Icon;
 

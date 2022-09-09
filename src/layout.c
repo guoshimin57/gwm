@@ -19,6 +19,7 @@ static void set_full_layout(WM *wm);
 static void set_preview_layout(WM *wm);
 static unsigned int get_clients_n(WM *wm);
 static void set_tile_layout(WM *wm);
+static void get_area_size(WM *wm, unsigned int *mw, unsigned int *mh, unsigned int *sw, unsigned int *sh, unsigned int *fw, unsigned int *fh);
 static void fix_win_rect_for_frame(WM *wm);
 static bool should_fix_win_rect(WM *wm, Client *c);
 static void fix_cur_focus_client_rect(WM *wm);
@@ -110,29 +111,15 @@ static unsigned int get_clients_n(WM *wm)
 
 /* 平鋪布局模式的空間布置如下：
  *     1、屏幕從左至右分別布置次要區域、主要區域、固定區域；
- *     2、同一區域內的窗口均分本區域空間，窗口間隔設置在前窗尾部；
+ *     2、同一區域內的窗口均分本區域空間（末尾窗口取餘量），窗口間隔設置在前窗尾部；
  *     3、在次要區域內設置其與主區域的窗口間隔；
  *     4、在固定區域內設置其與主區域的窗口間隔。 */
 static void set_tile_layout(WM *wm)
 {
-    unsigned int n1, n2, n3, i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, h, g=WIN_GAP;
+    unsigned int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=WIN_GAP;
 
-    n1=get_typed_clients_n(wm, MAIN_AREA),
-    n2=get_typed_clients_n(wm, SECOND_AREA),
-    n3=get_typed_clients_n(wm, FIXED_AREA),
-    mw=DESKTOP(wm).main_area_ratio*wm->screen_width;
-    fw=wm->screen_width*DESKTOP(wm).fixed_area_ratio;
-    sw=wm->screen_width-fw-mw;
-    h=wm->screen_height-wm->taskbar.h;
-    mh=n1 ? h/n1 : h;
-    fh=n3 ? h/n3 : h;
-    sh=n2 ? h/n2 : h;
-    if(n3 == 0)
-        mw+=fw, fw=0;
-    if(n2 == 0)
-        mw+=sw, sw=0;
-
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    get_area_size(wm, &mw, &mh, &sw, &sh, &fw, &fh);
+    for(Client *next, *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         if(is_on_cur_desktop(wm, c))
         {
@@ -142,8 +129,26 @@ static void set_tile_layout(WM *wm)
                 c->x=sw, c->y=j++*mh, c->w=mw, c->h=mh-g;
             else if(c->area_type == SECOND_AREA)
                 c->x=0, c->y=k++*sh, c->w=sw-g, c->h=sh-g;
+            next=get_next_client(wm, c);
+            if(!next || c->area_type!=next->area_type) // 區末窗口取餘量
+                c->h+=(wm->screen_height-wm->taskbar.h)%(c->h+g);
         }
     }
+}
+
+static void get_area_size(WM *wm, unsigned int *mw, unsigned int *mh, unsigned int *sw, unsigned int *sh, unsigned int *fw, unsigned int *fh)
+{
+    double mr=DESKTOP(wm).main_area_ratio, fr=DESKTOP(wm).fixed_area_ratio;
+    unsigned int n1, n2, n3, h, scrw=wm->screen_width, scrh=wm->screen_height;
+    n1=get_typed_clients_n(wm, MAIN_AREA),
+    n2=get_typed_clients_n(wm, SECOND_AREA),
+    n3=get_typed_clients_n(wm, FIXED_AREA),
+    *mw=mr*scrw, *fw=scrw*fr, *sw=scrw-*fw-*mw, h=scrh-wm->taskbar.h;
+    *mh = n1 ? h/n1 : h, *fh = n3 ? h/n3 : h, *sh = n2 ? h/n2 : h;
+    if(n3 == 0)
+        *mw+=*fw, *fw=0;
+    if(n2 == 0)
+        *mw+=*sw, *sw=0;
 }
 
 static void fix_win_rect_for_frame(WM *wm)
