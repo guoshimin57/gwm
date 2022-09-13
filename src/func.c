@@ -154,14 +154,14 @@ void close_client(WM *wm, XEvent *e, Func_arg arg)
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
     Client *c=DESKTOP(wm).cur_focus_client;
     if( c != wm->clients
-        && !send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], c))
+        && !send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], c->win))
         XDestroyWindow(wm->display, c->win);
 }
 
 void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(!send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], c))
+        if(!send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], c->win))
             XDestroyWindow(wm->display, c->win);
 }
 

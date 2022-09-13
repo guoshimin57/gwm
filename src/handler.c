@@ -33,7 +33,6 @@ static void update_cmd_center_button_text(WM *wm, size_t index);
 static void update_title_area_text(WM *wm, Client *c);
 static void update_title_button_text(WM *wm, Client *c, size_t index);
 static void update_status_area_text(WM *wm);
-static void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
 static void key_run_cmd(WM *wm, XKeyEvent *e);
 static void hint_leave_taskbar_button(WM *wm, Widget_type type);
 static void hint_leave_cmd_center_button(WM *wm, Widget_type type);
@@ -57,8 +56,6 @@ void handle_event(WM *wm, XEvent *e)
         [ConfigureRequest]  = handle_config_request,
         [EnterNotify]       = handle_enter_notify,
         [Expose]            = handle_expose,
-        [FocusIn]           = handle_focus_change,
-        [FocusOut]          = handle_focus_change,
         [KeyPress]          = handle_key_press,
         [LeaveNotify]       = handle_leave_notify,
         [MapRequest]        = handle_map_request,
@@ -277,29 +274,6 @@ static void update_status_area_text(WM *wm)
     String_format f={{0, 0, b->status_area_w, b->h}, CENTER_RIGHT, false, 0,
         wm->text_color[STATUS_AREA_TEXT_COLOR], STATUS_AREA_FONT};
     draw_string(wm, b->status_area, b->status_text, &f);
-}
-
-void handle_focus_change(WM *wm, XEvent *e)
-{
-    Client *c=win_to_client(wm, e->xfocus.window);
-    if(!c)
-        c=win_to_iconic_state_client(wm, e->xfocus.window);
-    if(c)
-        update_client_look(wm, wm->cur_desktop, c);
-}
-
-static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
-{
-    if(c && c!=wm->clients)
-    {
-        Desktop *d=wm->desktop+desktop_n-1;
-        if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
-            XSetWindowBorder(wm->display, c->icon->win, c==d->cur_focus_client ?
-                wm->widget_color[CURRENT_BORDER_COLOR].pixel :
-                wm->widget_color[NORMAL_BORDER_COLOR].pixel);
-        else
-            update_frame(wm, desktop_n,  c);
-    }
 }
 
 void handle_key_press(WM *wm, XEvent *e)

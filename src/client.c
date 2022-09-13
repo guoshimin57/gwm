@@ -413,8 +413,18 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     Client *pc=d->cur_focus_client;
 
     if(desktop_n == wm->cur_desktop)
-        XSetInputFocus(wm->display, pc->area_type==ICONIFY_AREA ?
-            pc->icon->win : pc->win, RevertToPointerRoot, CurrentTime);
+    {
+        Window win = pc->area_type==ICONIFY_AREA ? pc->icon->win : pc->win;
+        XWMHints *h=XGetWMHints(wm->display, win);
+        if(h && (h->flags & InputHint) && h->input)
+        {
+            XFree(h);
+            XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
+        }
+        send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
+        update_client_look(wm, desktop_n, pc);
+        update_client_look(wm, desktop_n, d->prev_focus_client);
+    }
     if(pc->area_type!=ICONIFY_AREA || d->cur_layout==PREVIEW)
         raise_client(wm, desktop_n);
 }
@@ -441,6 +451,21 @@ static bool is_normal_client(WM *wm, unsigned int desktop_n, Client *c)
             return true;
     return false;
 }
+
+void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
+{
+    if(c && c!=wm->clients)
+    {
+        Desktop *d=wm->desktop+desktop_n-1;
+        if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
+            XSetWindowBorder(wm->display, c->icon->win, c==d->cur_focus_client ?
+                wm->widget_color[CURRENT_BORDER_COLOR].pixel :
+                wm->widget_color[NORMAL_BORDER_COLOR].pixel);
+        else
+            update_frame(wm, desktop_n,  c);
+    }
+}
+
 /* 僅在移動窗口、聚焦窗口時才有可能需要提升 */
 void raise_client(WM *wm, unsigned int desktop_n)
 {
@@ -524,12 +549,12 @@ int compare_client_order(WM *wm, Client *c1, Client *c2)
     return 1;
 }
 
-bool send_event(WM *wm, Atom protocol, Client *c)
+bool send_event(WM *wm, Atom protocol, Window win)
 {
 	int i, n;
 	Atom *protocols;
 
-	if(XGetWMProtocols(wm->display, c->win, &protocols, &n))
+	if(XGetWMProtocols(wm->display, win, &protocols, &n))
     {
         XEvent event;
         for(i=0; i<n && protocols[i]!=protocol; i++)
@@ -538,12 +563,12 @@ bool send_event(WM *wm, Atom protocol, Client *c)
         if(i < n)
         {
             event.type=ClientMessage;
-            event.xclient.window=c->win;
+            event.xclient.window=win;
             event.xclient.message_type=wm->icccm_atoms[WM_PROTOCOLS];
             event.xclient.format=32;
             event.xclient.data.l[0]=protocol;
             event.xclient.data.l[1]=CurrentTime;
-            XSendEvent(wm->display, c->win, False, NoEventMask, &event);
+            XSendEvent(wm->display, win, False, NoEventMask, &event);
         }
         return i<n;
 	}

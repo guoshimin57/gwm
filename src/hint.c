@@ -116,7 +116,7 @@ unsigned int get_client_row(WM *wm, Client *c, XSizeHints *hint)
 XSizeHints get_fixed_size_hint(WM *wm, Client *c)
 {
     long flags;
-    XSizeHints hint={0};
+    XSizeHints hint={.width_inc=MOVE_RESIZE_INC, .height_inc=MOVE_RESIZE_INC};
 
     if(XGetWMNormalHints(wm->display, c->win, &hint, &flags))
     {
@@ -126,17 +126,17 @@ XSizeHints get_fixed_size_hint(WM *wm, Client *c)
         if(hint.flags & PMinSize)
             minw=hint.min_width, minh=hint.min_height;
         if(!basew && minw)
-            hint.base_width=minw, hint.flags|=PBaseSize;
+            hint.base_width=minw;
         if(!baseh && minh)
-            hint.base_height=minh, hint.flags|=PBaseSize;
+            hint.base_height=minh;
         if(!minw && basew)
-            hint.min_width=basew, hint.flags|=PMinSize;
+            hint.min_width=basew;
         if(!minh && baseh)
-            hint.min_height=baseh, hint.flags|=PMinSize;
+            hint.min_height=baseh;
         if(!hint.width_inc)
-            hint.width_inc=MOVE_RESIZE_INC, hint.flags|=PResizeInc;
+            hint.width_inc=MOVE_RESIZE_INC;
         if(!hint.height_inc)
-            hint.height_inc=MOVE_RESIZE_INC, hint.flags|=PResizeInc;
+            hint.height_inc=MOVE_RESIZE_INC;
     }
     return hint;
 }
