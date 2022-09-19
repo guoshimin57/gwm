@@ -49,7 +49,6 @@ void handle_events(WM *wm)
 
 void handle_event(WM *wm, XEvent *e)
 {
-
     static void (*event_handlers[])(WM *, XEvent *)=
     {
         [ButtonPress]       = handle_button_press,

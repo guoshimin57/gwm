@@ -119,31 +119,32 @@ void set_default_rect(WM *wm, Client *c)
     XSizeHints hint=get_fixed_size_hint(wm, c);
     XWindowAttributes a={0, 0, wm->screen_width/4, wm->screen_height/4};
     XGetWindowAttributes(wm->display, c->win, &a);
-    set_default_pos(wm, c, &hint, &a);
     set_default_size(wm, c, &hint, &a);
+    set_default_pos(wm, c, &hint, &a);
 }
 
 static void set_default_pos(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a)
 {
-    Rect fr=get_frame_rect(c);
     c->x=hint->x, c->y=hint->y;
     if(!(hint->flags & USPosition) && !(hint->flags & PPosition))
         c->x=a->x, c->y=a->y;
-    if(c->x >= wm->screen_width)
-        c->x=wm->screen_width-fr.w+c->border_w;
-    if(c->x+c->w < 0)
+    if(c->x>0 && c->x>=wm->screen_width)
+        c->x=wm->screen_width-c->w+2*c->border_w;
+    if(c->x<0 || c->x<c->w)
         c->x=c->border_w;
-    if(c->y >= wm->screen_height)
-        c->y=wm->screen_height-wm->taskbar.h-fr.h+c->border_w;
-    if(c->y+c->h < 0)
-        c->y=c->border_w;
+    if(c->y>0 && c->y>=wm->screen_height-wm->taskbar.h)
+        c->y=wm->screen_height-wm->taskbar.h-c->h-c->border_w;
+    if(c->y<0 || c->y < c->border_w+c->title_bar_h)
+        c->y=c->border_w+c->title_bar_h;
 }
 
 static void set_default_size(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a)
 {
     c->w=hint->width, c->h=hint->height;
-    SET_DEF_VAL(c->w, a->width);
-    SET_DEF_VAL(c->h, a->height);
+    SET_DEF_VAL(c->w, hint->base_width), SET_DEF_VAL(c->h, hint->base_height);
+    c->w=hint->base_width+get_client_col(wm, c, hint)*hint->width_inc;
+    c->h=hint->base_height+get_client_row(wm, c, hint)*hint->height_inc;
+    SET_DEF_VAL(c->w, a->width), SET_DEF_VAL(c->h, a->height);
     if(hint->min_width && c->w<hint->min_width)
         c->w=hint->min_width;
     if(hint->min_height && c->h<hint->min_height)
@@ -161,8 +162,6 @@ static void set_default_size(WM *wm, Client *c, XSizeHints *hint, XWindowAttribu
         else if((float)c->w/c->h > maxa)
             c->w=c->h*maxa+0.5;
     }
-    c->w=hint->base_width+get_client_col(wm, c, hint)*hint->width_inc;
-    c->h=hint->base_height+get_client_row(wm, c, hint)*hint->height_inc;
 }
 
 static void frame_client(WM *wm, Client *c)
@@ -421,7 +420,8 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
             XFree(h);
             XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
         }
-        send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
+        if(!send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win))
+            XSetInputFocus(wm->display, PointerRoot, RevertToPointerRoot, CurrentTime);
         update_client_look(wm, desktop_n, pc);
         update_client_look(wm, desktop_n, d->prev_focus_client);
     }

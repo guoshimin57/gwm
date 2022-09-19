@@ -123,15 +123,17 @@ static void set_tile_layout(WM *wm)
     {
         if(is_on_cur_desktop(wm, c))
         {
-            if(c->area_type == FIXED_AREA)
+            Area_type type=c->area_type;
+            if(type == FIXED_AREA)
                 c->x=mw+sw+g, c->y=i++*fh, c->w=fw-g, c->h=fh-g;
-            else if(c->area_type == MAIN_AREA)
+            else if(type == MAIN_AREA)
                 c->x=sw, c->y=j++*mh, c->w=mw, c->h=mh-g;
-            else if(c->area_type == SECOND_AREA)
+            else if(type == SECOND_AREA)
                 c->x=0, c->y=k++*sh, c->w=sw-g, c->h=sh-g;
-            next=get_next_client(wm, c);
-            if(!next || c->area_type!=next->area_type) // 區末窗口取餘量
-                c->h+=(wm->screen_height-wm->taskbar.h)%(c->h+g);
+            // 區末窗口取餘量
+            if( (type==MAIN_AREA || type==SECOND_AREA || type==FIXED_AREA)
+                && (!(next=get_next_client(wm, c)) || type!=next->area_type))
+                    c->h+=(wm->screen_height-wm->taskbar.h)%(c->h+g);
         }
     }
 }

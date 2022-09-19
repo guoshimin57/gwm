@@ -51,8 +51,7 @@ bool is_wm_win(WM *wm, Window win)
 {
     XWindowAttributes attr;
     return (XGetWindowAttributes(wm->display, win, &attr)
-        && attr.map_state != IsUnmapped
-        && !attr.override_redirect);
+        && attr.map_state!=IsUnmapped && !attr.override_redirect);
 }
 
 /* 在調用XSetWindowBackground之後，在收到下一個顯露事件或調用XClearWindow
@@ -170,15 +169,17 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
 
 Atom get_atom_prop(WM *wm, Window win, Atom prop)
 {
-	int di;
-	unsigned long dl;
-	unsigned char *p=NULL;
-	Atom da, atom=None;
+    int fmt;
+    unsigned long n, rest;
+    unsigned char *p=NULL;
+    Atom type, atom=None;
 
-	if(XGetWindowProperty(wm->display, win, prop, 0L, sizeof(atom), False, XA_ATOM,
-		&da, &di, &dl, &dl, &p) == Success && p)
-		atom=*(Atom *)p, XFree(p);
-	return atom;
+    /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
+     * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
+    if( XGetWindowProperty(wm->display, win, prop, 0, ~0, False,
+        XA_ATOM, &type, &fmt, &n, &rest, &p) == Success && p)
+        atom=*(Atom *)p, XFree(p);
+    return atom;
 }
 
 void set_override_redirect(WM *wm, Window win)
