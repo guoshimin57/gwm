@@ -17,7 +17,6 @@
 #include <wchar.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
-#include <X11/cursorfont.h>
 #include <X11/Xft/Xft.h>
 #include "config.h"
 
@@ -38,7 +37,7 @@
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
 #define CROSSING_MASK (EnterWindowMask|LeaveWindowMask)
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
-    PropertyChangeMask|POINTER_MASK|PointerMotionMask|ExposureMask|CROSSING_MASK)
+    PropertyChangeMask|ButtonPressMask|ExposureMask|CROSSING_MASK)
 #define BUTTON_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
@@ -151,9 +150,9 @@ typedef enum layout_tag Layout;
 
 enum pointer_act_tag // 定位器操作類型
 {
-    NO_OP, MOVE, TOP_RESIZE, BOTTOM_RESIZE, LEFT_RESIZE, RIGHT_RESIZE,
-    TOP_LEFT_RESIZE, TOP_RIGHT_RESIZE, BOTTOM_LEFT_RESIZE, BOTTOM_RIGHT_RESIZE,
-    ADJUST_LAYOUT_RATIO, POINTER_ACT_N
+    NO_OP, MOVE, SWAP, CHANGE, TOP_RESIZE, BOTTOM_RESIZE, LEFT_RESIZE,
+    RIGHT_RESIZE, TOP_LEFT_RESIZE, TOP_RIGHT_RESIZE, BOTTOM_LEFT_RESIZE,
+    BOTTOM_RIGHT_RESIZE, ADJUST_LAYOUT_RATIO, POINTER_ACT_N
 };
 typedef enum pointer_act_tag Pointer_act;
 

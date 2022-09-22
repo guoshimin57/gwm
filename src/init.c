@@ -38,14 +38,14 @@ static void create_clients(WM *wm);
 void init_wm(WM *wm)
 {
     memset(wm, 0, sizeof(WM));
-	if(!(wm->display=XOpenDisplay(NULL)))
+    if(!(wm->display=XOpenDisplay(NULL)))
         exit_with_msg("error: cannot open display");
     set_locale(wm);
 
     wm->screen=DefaultScreen(wm->display);
     wm->screen_width=DisplayWidth(wm->display, wm->screen);
     wm->screen_height=DisplayHeight(wm->display, wm->screen);
-	wm->mod_map=XGetModifierMapping(wm->display);
+    wm->mod_map=XGetModifierMapping(wm->display);
     wm->root_win=RootWindow(wm->display, wm->screen);
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
     wm->visual=DefaultVisual(wm->display, wm->screen);
@@ -59,6 +59,7 @@ void init_wm(WM *wm)
     load_font(wm);
     alloc_color(wm);
     create_cursors(wm);
+    XDefineCursor(wm->display, wm->root_win, wm->cursors[NO_OP]);
     create_taskbar(wm);
     create_cmd_center(wm);
     create_run_cmd_entry(wm);
@@ -105,6 +106,7 @@ static void create_taskbar(WM *wm)
     b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
         b->w, b->h, 0, 0, 0);
     set_override_redirect(wm, b->win);
+    XSelectInput(wm->display, b->win, CROSSING_MASK);
     create_taskbar_buttons(wm);
     create_status_area(wm);
     create_icon_area(wm);
@@ -133,7 +135,7 @@ static void create_icon_area(WM *wm)
     Taskbar *b=&wm->taskbar;
     unsigned int bw=TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N,
         w=b->w-bw-b->status_area_w;
-    wm->taskbar.icon_area=XCreateSimpleWindow(wm->display, b->win,
+    b->icon_area=XCreateSimpleWindow(wm->display, b->win,
         bw, 0, w, b->h, 0, 0, wm->widget_color[ICON_AREA_COLOR].pixel);
 }
 static void create_status_area(WM *wm)

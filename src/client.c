@@ -46,6 +46,7 @@ void add_client(WM *wm, Window win)
     else
         focus_client(wm, wm->cur_desktop, c);
     grab_buttons(wm, c);
+    XDefineCursor(wm->display, c->win, wm->cursors[NO_OP]);
     XSelectInput(wm->display, win, PropertyChangeMask);
 }
 
@@ -420,8 +421,10 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
             XFree(h);
             XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
         }
-        if(!send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win))
+        if(win == wm->root_win)
             XSetInputFocus(wm->display, PointerRoot, RevertToPointerRoot, CurrentTime);
+        else if(win == pc->win)
+            send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
         update_client_look(wm, desktop_n, pc);
         update_client_look(wm, desktop_n, d->prev_focus_client);
     }

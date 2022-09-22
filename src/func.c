@@ -234,11 +234,12 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     XEvent ev;
     Client *from=DESKTOP(wm).cur_focus_client, *to;
-    if(DESKTOP(wm).cur_layout!=TILE || from==wm->clients || !grab_pointer(wm, e))
+    if( DESKTOP(wm).cur_layout!=TILE || from==wm->clients
+        || !grab_pointer(wm, SWAP))
         return;
     do
     {
-        XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
+        XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         handle_event(wm, &ev);
     }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
     XUngrabPointer(wm->display, CurrentTime);
@@ -267,19 +268,19 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
 void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Layout layout=DESKTOP(wm).cur_layout;
-    if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, e))
+    Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
+    Client *c=DESKTOP(wm).cur_focus_client;
+    Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
+    if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, act))
         return;
 
     XEvent ev;
     Delta_rect d;
-    Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
-    Client *c=DESKTOP(wm).cur_focus_client;
-    Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
     XSizeHints hint=get_fixed_size_hint(wm, c);
 
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
-        XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
+        XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
@@ -341,47 +342,48 @@ static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_
 
 void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
 {
+    XEvent ev;
     Client *from=DESKTOP(wm).cur_focus_client, *to;
-    if(DESKTOP(wm).cur_layout==TILE && from!=wm->clients && grab_pointer(wm, e))
-    {
-        XEvent ev;
-        do
-        {
-            XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
-            handle_event(wm, &ev);
-        }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
-        XUngrabPointer(wm->display, CurrentTime);
+    if( DESKTOP(wm).cur_layout!=TILE || from==wm->clients
+        || !grab_pointer(wm, CHANGE))
+        return;
 
-        /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
-         * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
-        Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
-        to=win_to_client(wm, subw);
-        if(ev.xbutton.x == 0)
-            move_client(wm, from, get_area_head(wm, SECOND_AREA), SECOND_AREA);
-        else if(ev.xbutton.x == wm->screen_width-1)
-            move_client(wm, from, get_area_head(wm, FIXED_AREA), FIXED_AREA);
-        else if(ev.xbutton.y == 0)
-            maximize_client(wm, NULL, arg);
-        else if(subw == wm->taskbar.win)
-            move_client(wm, from, get_area_head(wm, ICONIFY_AREA), ICONIFY_AREA);
-        else if(to)
-            move_client(wm, from, to, to->area_type);
-        else if(win==wm->root_win && subw==None)
-            move_client(wm, from, get_area_head(wm, MAIN_AREA), MAIN_AREA);
-    }
+    do
+    {
+        XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
+        handle_event(wm, &ev);
+    }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
+    XUngrabPointer(wm->display, CurrentTime);
+
+    /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
+     * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
+    Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
+    to=win_to_client(wm, subw);
+    if(ev.xbutton.x == 0)
+        move_client(wm, from, get_area_head(wm, SECOND_AREA), SECOND_AREA);
+    else if(ev.xbutton.x == wm->screen_width-1)
+        move_client(wm, from, get_area_head(wm, FIXED_AREA), FIXED_AREA);
+    else if(ev.xbutton.y == 0)
+        maximize_client(wm, NULL, arg);
+    else if(subw == wm->taskbar.win)
+        move_client(wm, from, get_area_head(wm, ICONIFY_AREA), ICONIFY_AREA);
+    else if(to)
+        move_client(wm, from, to, to->area_type);
+    else if(win==wm->root_win && subw==None)
+        move_client(wm, from, get_area_head(wm, MAIN_AREA), MAIN_AREA);
 }
 
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     if( DESKTOP(wm).cur_layout!=TILE
         || !is_layout_adjust_area(wm, e->xbutton.window, e->xbutton.x_root)
-        || !grab_pointer(wm, e))
+        || !grab_pointer(wm, ADJUST_LAYOUT_RATIO))
         return;
     int ox=e->xbutton.x_root, nx, dx;
     XEvent ev;
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
-        XMaskEvent(wm->display, ROOT_EVENT_MASK, &ev);
+        XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
             nx=ev.xmotion.x, dx=nx-ox;

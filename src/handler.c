@@ -58,7 +58,6 @@ void handle_event(WM *wm, XEvent *e)
         [KeyPress]          = handle_key_press,
         [LeaveNotify]       = handle_leave_notify,
         [MapRequest]        = handle_map_request,
-        [MotionNotify]      = handle_motion_notify,
         [UnmapNotify]       = handle_unmap_notify,
         [PropertyNotify]    = handle_property_notify,
         [SelectionNotify]   = handle_selection_notify,
@@ -143,10 +142,6 @@ void handle_enter_notify(WM *wm, XEvent *e)
         focus_client(wm, wm->cur_desktop, c);
     if(is_layout_adjust_area(wm, win, x))
         XDefineCursor(wm->display, win, wm->cursors[ADJUST_LAYOUT_RATIO]);
-    else if(type == ROOT_WIN)
-        XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
-    else if(type == STATUS_AREA)
-        XDefineCursor(wm->display, wm->taskbar.status_area, wm->cursors[NO_OP]);
     else if(IS_TASKBAR_BUTTON(type))
         hint_enter_taskbar_button(wm, type);
     else if(IS_CMD_CENTER_ITEM(type))
@@ -157,26 +152,25 @@ void handle_enter_notify(WM *wm, XEvent *e)
         XDefineCursor(wm->display, c->title_area, wm->cursors[MOVE]);
     else if(IS_TITLE_BUTTON(type))
         hint_enter_title_button(wm, c, type);
+    else
+        XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
 
 static void hint_enter_taskbar_button(WM *wm, Widget_type type)
 {
     Window win=wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)];
-    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
     update_win_background(wm, win, wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
 }
 
 static void hint_enter_cmd_center_button(WM *wm, Widget_type type)
 {
     Window win=wm->cmd_center.items[CMD_CENTER_ITEM_INDEX(type)];
-    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
     update_win_background(wm, win, wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
 }
 
 static void hint_enter_title_button(WM *wm, Client *c, Widget_type type)
 {
     Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
-    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
     update_win_background(wm, win, type==CLOSE_BUTTON ?
         wm->widget_color[ENTERED_CLOSE_BUTTON_COLOR].pixel :
         wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
@@ -316,7 +310,6 @@ void handle_leave_notify(WM *wm, XEvent *e)
         hint_leave_cmd_center_button(wm, type);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
-    XUndefineCursor(wm->display, win);
 }
 
 static void hint_leave_taskbar_button(WM *wm, Widget_type type)
@@ -351,18 +344,6 @@ void handle_map_request(WM *wm, XEvent *e)
         add_client(wm, win);
         update_layout(wm);
         DESKTOP(wm).default_area_type=DEFAULT_AREA_TYPE;
-    }
-}
-
-void handle_motion_notify(WM *wm, XEvent *e)
-{
-    Window win=e->xmotion.window;
-    if(win==wm->root_win)
-    {
-        if(is_layout_adjust_area(wm, win, e->xmotion.x))
-            XDefineCursor(wm->display, win, wm->cursors[ADJUST_LAYOUT_RATIO]);
-        else
-            XUndefineCursor(wm->display, win);
     }
 }
 

@@ -12,6 +12,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <X11/cursorfont.h>
 #include <X11/keysymdef.h>
 #include <X11/XF86keysym.h>
 
@@ -137,6 +138,8 @@
 {                                                     \
     XC_left_ptr,            /* NO_OP */               \
     XC_fleur,               /* MOVE */                \
+    XC_exchange,            /* SWAP */                \
+    XC_target,              /* CHANGE */              \
     XC_top_side,            /* TOP_RESIZE */          \
     XC_bottom_side,         /* BOTTOM_RESIZE */       \
     XC_left_side,           /* LEFT_RESIZE */         \

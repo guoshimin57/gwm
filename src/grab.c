@@ -90,23 +90,9 @@ static unsigned int get_modifier_mask(WM *wm, KeySym key_sym)
     return 0;
 }
 
-bool grab_pointer(WM *wm, XEvent *e)
+bool grab_pointer(WM *wm, Pointer_act act)
 {
-    Cursor gc;
-    XButtonEvent *be=&e->xbutton;
-    Client *c=win_to_client(wm, be->window);
-    Move_info m={be->x_root, be->y_root, 0, 0};
-    if(DESKTOP(wm).cur_layout==TILE && be->window==wm->root_win)
-        gc=wm->cursors[ADJUST_LAYOUT_RATIO];
-    else if(c)
-    {
-        if(be->window == c->title_area)
-            gc=wm->cursors[MOVE];
-        else if(be->window == c->frame || be->window==c->win)
-            gc=wm->cursors[get_resize_act(c, &m)];
-    }
-    else
-        return false;
     return XGrabPointer(wm->display, wm->root_win, False, POINTER_MASK,
-        GrabModeAsync, GrabModeAsync, None, gc, CurrentTime) == GrabSuccess;
+        GrabModeAsync, GrabModeAsync, None, wm->cursors[act], CurrentTime)
+        == GrabSuccess;
 }
