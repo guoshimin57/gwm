@@ -310,6 +310,8 @@ void handle_leave_notify(WM *wm, XEvent *e)
         hint_leave_cmd_center_button(wm, type);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
+    else if(type==ROOT_WIN || type==CLIENT_FRAME) // 以免影響子窗口光標
+        XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
 
 static void hint_leave_taskbar_button(WM *wm, Widget_type type)

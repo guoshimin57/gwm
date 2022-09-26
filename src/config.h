@@ -289,10 +289,11 @@
     {CLIENT_FRAME,             0, Button1, pointer_move_resize_client, {.resize=true}},             \
     {CLIENT_ICON,              0, Button1, change_area,                {.area_type=PREV_AREA}},     \
     {ROOT_WIN,                 0, Button1, adjust_layout_ratio,        {0}},                        \
-    {DESKTOP_BUTTON,           0, Button2, close_all_clients,          {0}},                        \
+    {DESKTOP_BUTTON,      WM_KEY, Button2, close_all_clients,          {0}},                        \
     {TITLE_AREA,               0, Button2, pointer_change_area,        {0}},                        \
     {CLIENT_WIN,          WM_KEY, Button2, pointer_change_area,        {0}},                        \
-    {CLIENT_ICON,              0, Button2, close_client,               {0}},                        \
+    {CLIENT_ICON,              0, Button2, pointer_change_area,        {0}},                        \
+    {CLIENT_ICON,         WM_KEY, Button2, close_client,               {0}},                        \
     {DESKTOP_BUTTON,           0, Button3, deiconify_all_clients,      {0}},                        \
     {TITLE_AREA,               0, Button3, pointer_swap_clients,       {0}},                        \
     {CLIENT_WIN,               0, Button3, NULL,                       {0}},                        \

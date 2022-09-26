@@ -226,7 +226,8 @@ void change_area(WM *wm, XEvent *e, Func_arg arg)
     Client *c=DESKTOP(wm).cur_focus_client;
     Layout l=DESKTOP(wm).cur_layout;
     Area_type t=arg.area_type==PREV_AREA ? c->icon->area_type : arg.area_type;
-    if(c!=wm->clients && (l==TILE || (l==STACK && t==ICONIFY_AREA)))
+    if( c!=wm->clients && (l==TILE || (l==STACK
+        && (c->area_type==ICONIFY_AREA || t==ICONIFY_AREA))))
         move_client(wm, c, get_area_head(wm, t), t);
 }
 
@@ -359,6 +360,8 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(wm, subw);
+    if(!to)
+        to=win_to_iconic_state_client(wm, subw);
     if(ev.xbutton.x == 0)
         move_client(wm, from, get_area_head(wm, SECOND_AREA), SECOND_AREA);
     else if(ev.xbutton.x == wm->screen_width-1)
@@ -367,10 +370,10 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
         maximize_client(wm, NULL, arg);
     else if(subw == wm->taskbar.win)
         move_client(wm, from, get_area_head(wm, ICONIFY_AREA), ICONIFY_AREA);
-    else if(to)
-        move_client(wm, from, to, to->area_type);
     else if(win==wm->root_win && subw==None)
         move_client(wm, from, get_area_head(wm, MAIN_AREA), MAIN_AREA);
+    else if(to)
+        move_client(wm, from, to, to->area_type);
 }
 
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
