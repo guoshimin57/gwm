@@ -106,3 +106,15 @@ void get_string_size(WM *wm, XftFont *font, const char *str, unsigned int *w, un
     if(h)
         *h=font->height;
 }
+
+void close_fonts(WM *wm)
+{
+    for(size_t i=0, j=0; i<FONT_N; i++)
+    {
+        for(j=0; j<i; j++)
+            if(wm->font[i] == wm->font[j])
+                break;
+        if(j == i)
+            XftFontClose(wm->display, wm->font[i]);
+    }
+}

@@ -13,6 +13,7 @@
 #include <sys/wait.h>
 #include "gwm.h"
 #include "client.h"
+#include "font.h"
 #include "misc.h"
 
 void *malloc_s(size_t size)
@@ -186,4 +187,26 @@ void set_override_redirect(WM *wm, Window win)
 {
     XSetWindowAttributes attr={.override_redirect=True};
     XChangeWindowAttributes(wm->display, win, CWOverrideRedirect, &attr);
+}
+
+void clear_wm(WM *wm)
+{
+    for(Client *next=NULL, *c=wm->clients->next; c!=wm->clients; c=next)
+        next=c->next, free_client(wm, c);
+    XDestroyWindow(wm->display, wm->taskbar.win);
+    free(wm->taskbar.status_text);
+    XDestroyWindow(wm->display, wm->cmd_center.win);
+    XDestroyWindow(wm->display, wm->run_cmd.win);
+    XDestroyWindow(wm->display, wm->resize_win);
+    XFreeModifiermap(wm->mod_map);
+    for(size_t i=0; i<POINTER_ACT_N; i++)
+        XFreeCursor(wm->display, wm->cursors[i]);
+    XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
+    XDestroyIC(wm->run_cmd.xic);
+    XCloseIM(wm->xim);
+    close_fonts(wm);
+    XClearWindow(wm->display, wm->root_win);
+    XFlush(wm->display);
+    XCloseDisplay(wm->display);
+    clear_zombies(0);
 }

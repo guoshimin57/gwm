@@ -13,7 +13,7 @@
 #define CLIENT_H
 
 void add_client(WM *wm, Window win);
-void map_client(WM *wm, Client *c);
+void add_client_node(Client *head, Client *c);
 void fix_area_type(WM *wm);
 void set_default_rect(WM *wm, Client *c);
 void update_frame_prop(WM *wm, Client *c);
@@ -23,7 +23,7 @@ unsigned int get_typed_clients_n(WM *wm, Area_type type);
 Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c);
 void del_client_node(Client *c);
-void add_client_node(Client *head, Client *c);
+void free_client(WM *wm, Client *c);
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
 void update_frame(WM *wm, unsigned int desktop_n, Client *c);
 void iconify(WM *wm, Client *c);

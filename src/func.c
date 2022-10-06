@@ -24,7 +24,6 @@
 #include "misc.h"
 
 static Delta_rect get_key_delta_rect(Client *c, XSizeHints *hint, Direction dir);
-static void close_font(WM *wm);
 static bool get_valid_move_resize(WM *wm, Client *c, XSizeHints *hint, Delta_rect *d);
 static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
 static void update_resize_win(WM *wm, Client *c, XSizeHints *hint);
@@ -48,12 +47,12 @@ void exec(WM *wm, XEvent *e, Func_arg arg)
 		if(wm->display)
             close(ConnectionNumber(wm->display));
 		if(!setsid())
-            perror("未能成功地爲命令創建新會話：");
+            perror("未能成功地爲命令創建新會話");
 		if(execvp(arg.cmd[0], arg.cmd) == -1)
-            exit_with_perror("命令執行錯誤：");
+            exit_with_perror("命令執行錯誤");
     }
     else if(pid == -1)
-        perror("未能成功地爲命令創建新進程：");
+        perror("未能成功地爲命令創建新進程");
 }
 
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
@@ -69,9 +68,19 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         {
             move_resize_client(wm, c, &d);
             update_resize_win(wm, c, &hint);
-            XMaskEvent(wm->display, KeyReleaseMask, e);
-            if(e->type == KeyRelease)
-                XUnmapWindow(wm->display, wm->resize_win);
+            while(1)
+            {
+                XEvent ev;
+                XMaskEvent(wm->display, ROOT_EVENT_MASK|KeyReleaseMask, &ev);
+                if( ev.type==KeyRelease && ev.xkey.state==e->xkey.state
+                    && ev.xkey.keycode==e->xkey.keycode)
+                {
+                    XUnmapWindow(wm->display, wm->resize_win);
+                    break;
+                }
+                else
+                    handle_event(wm, &ev);
+            }
         }
     }
 }
@@ -117,36 +126,8 @@ static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h)
 
 void quit_wm(WM *wm, XEvent *e, Func_arg arg)
 {
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        del_client(wm, c);
-    XDestroyWindow(wm->display, wm->taskbar.win);
-    XDestroyWindow(wm->display, wm->cmd_center.win);
-    XDestroyWindow(wm->display, wm->run_cmd.win);
-    free(wm->taskbar.status_text);
-    XFreeModifiermap(wm->mod_map);
-    for(size_t i=0; i<POINTER_ACT_N; i++)
-        XFreeCursor(wm->display, wm->cursors[i]);
-    XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
-    XDestroyIC(wm->run_cmd.xic);
-    XCloseIM(wm->xim);
-    close_font(wm);
-    XClearWindow(wm->display, wm->root_win);
-    XFlush(wm->display);
-    XCloseDisplay(wm->display);
-    clear_zombies(0);
+    clear_wm(wm);
     exit(EXIT_SUCCESS);
-}
-
-static void close_font(WM *wm)
-{
-    for(size_t i=0, j=0; i<FONT_N; i++)
-    {
-        for(j=0; j<i; j++)
-            if(wm->font[i] == wm->font[j])
-                break;
-        if(j == i)
-            XftFontClose(wm->display, wm->font[i]);
-    }
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)
@@ -234,7 +215,7 @@ void change_area(WM *wm, XEvent *e, Func_arg arg)
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     XEvent ev;
-    Client *from=DESKTOP(wm).cur_focus_client, *to;
+    Client *from=DESKTOP(wm).cur_focus_client, *to=NULL;
     if( DESKTOP(wm).cur_layout!=TILE || from==wm->clients
         || !grab_pointer(wm, SWAP))
         return;
@@ -247,7 +228,13 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
-    if((to=win_to_client(wm, ev.xbutton.subwindow)))
+    int x=ev.xbutton.x-TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N;
+    if((to=win_to_client(wm, ev.xbutton.subwindow)) == NULL)
+        for(Client *c=wm->clients->next; c!=wm->clients && !to; c=c->next)
+            if( c!=from && c->area_type==ICONIFY_AREA
+                && x>=c->icon->x && x<c->icon->x+c->icon->w)
+                to=c;
+    if(to) 
         swap_clients(wm, from, to);
 }
 

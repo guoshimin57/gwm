@@ -96,7 +96,7 @@
     [ICON_AREA_COLOR]             = "grey11",       /* 圖標區域的顏色名         */ \
     [STATUS_AREA_COLOR]           = "grey21",       /* 狀態區域的顏色名         */ \
     [ENTRY_COLOR]                 = "white",        /* 單行文本輸入框的顏色名   */ \
-    [RESIZE_WIN_COLOR]            = "grey21",        /* 調整尺寸提示窗口的顏色名 */ \
+    [RESIZE_WIN_COLOR]            = "grey21",       /* 調整尺寸提示窗口的顏色名 */ \
 }
 
 #define TEXT_COLOR_NAME (const char *[]) /* 文本顏色名 */                          \
@@ -151,17 +151,18 @@
     XC_sb_h_double_arrow,   /* ADJUST_LAYOUT_RATIO */ \
 }
 
-#define HELP "lxterminal -e 'man gwm' || xfce4-terminal -e 'man gwm' || xterm -e 'man gwm'"
-#define FILE_MANAGER "xdg-open ~"
 #define GAME "wesnoth || flatpak run org.wesnoth.Wesnoth"
-#define BROWSER "xdg-open http:"
-#define TERMINAL "lxterminal || xfce4-terminal || gnome-terminal || konsole5 || xterm"
-#define TOGGLE_PROCESS_STATE(process) "{ pid=$(pgrep -f '"process"'); " \
-    "ps -o stat $pid | tail -n +2 | grep T > /dev/null ; } " \
+#define TOGGLE_PROCESS_STATE(process) "{ pid=$(ps -C '"process"' -o pid=); " \
+    "ps -o stat= $pid | head -n1 | grep T > /dev/null ; } " \
     "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
 #define PLAY_START "mplayer -shuffle ~/music/*"
 #define PLAY_TOGGLE TOGGLE_PROCESS_STATE(PLAY_START)
-#define PLAY_QUIT "kill -KILL $(pgrep -f '"PLAY_START"')"
+#define PLAY_QUIT "kill -KILL $(ps -C '"PLAY_START"' -o pid=)"
+
+#define HELP "lxterminal -e 'man gwm' || xfce4-terminal -e 'man gwm' || xterm -e 'man gwm'"
+#define FILE_MANAGER "xdg-open ~"
+#define BROWSER "xdg-open http:"
+#define TERMINAL "lxterminal || xfce4-terminal || gnome-terminal || konsole5 || xterm"
 #define VOLUME_DOWN "amixer -q sset Master 10%-"
 #define VOLUME_UP "amixer -q sset Master 10%+"
 #define VOLUME_MAX "amixer -q sset Master 100%"
@@ -270,34 +271,16 @@
 
 #define BUTTONBIND (Buttonbind []) /* 按鈕功能綁定 */                                               \
 {/* 控件類型             能轉換鍵 定位器按鈕 要綁定的函數              函數的參數 */                \
+    DESKTOP_BUTTONBIND(1),                                                                          \
+    DESKTOP_BUTTONBIND(2),                                                                          \
+    DESKTOP_BUTTONBIND(3),                                                                          \
     {FULL_BUTTON,              0, Button1, change_layout,              {.layout=FULL}},             \
     {PREVIEW_BUTTON,           0, Button1, change_layout,              {.layout=PREVIEW}},          \
     {STACK_BUTTON,             0, Button1, change_layout,              {.layout=STACK}},            \
     {TILE_BUTTON,              0, Button1, change_layout,              {.layout=TILE}},             \
     {DESKTOP_BUTTON,           0, Button1, iconify_all_clients,        {0}},                        \
-    {TITLE_AREA,               0, Button1, pointer_move_resize_client, {.resize=false}},            \
-    {MAIN_BUTTON,              0, Button1, change_area,                {.area_type=MAIN_AREA}},     \
-    {SECOND_BUTTON,            0, Button1, change_area,                {.area_type=SECOND_AREA}},   \
-    {FIXED_BUTTON,             0, Button1, change_area,                {.area_type=FIXED_AREA}},    \
-    {FLOAT_BUTTON,             0, Button1, change_area,                {.area_type=FLOATING_AREA}}, \
-    {ICON_BUTTON,              0, Button1, change_area,                {.area_type=ICONIFY_AREA}},  \
-    {MAX_BUTTON,               0, Button1, maximize_client,            {0}},                        \
-    {CLOSE_BUTTON,             0, Button1, close_client,               {0}},                        \
-    {CLIENT_WIN,               0, Button1, choose_client,              {0}},                        \
-    {CLIENT_WIN,          WM_KEY, Button1, pointer_move_resize_client, {.resize=false}},            \
-    {CLIENT_WIN,         WM_SKEY, Button1, pointer_move_resize_client, {.resize=true}},             \
-    {CLIENT_FRAME,             0, Button1, pointer_move_resize_client, {.resize=true}},             \
-    {CLIENT_ICON,              0, Button1, change_area,                {.area_type=PREV_AREA}},     \
-    {ROOT_WIN,                 0, Button1, adjust_layout_ratio,        {0}},                        \
     {DESKTOP_BUTTON,      WM_KEY, Button2, close_all_clients,          {0}},                        \
-    {TITLE_AREA,               0, Button2, pointer_change_area,        {0}},                        \
-    {CLIENT_WIN,          WM_KEY, Button2, pointer_change_area,        {0}},                        \
-    {CLIENT_ICON,              0, Button2, pointer_change_area,        {0}},                        \
-    {CLIENT_ICON,         WM_KEY, Button2, close_client,               {0}},                        \
     {DESKTOP_BUTTON,           0, Button3, deiconify_all_clients,      {0}},                        \
-    {TITLE_AREA,               0, Button3, pointer_swap_clients,       {0}},                        \
-    {CLIENT_WIN,               0, Button3, NULL,                       {0}},                        \
-    {CLIENT_WIN,          WM_KEY, Button3, pointer_swap_clients,       {0}},                        \
     {CMD_CENTER_ITEM,          0, Button1, open_cmd_center,            {0}},                        \
     {HELP_BUTTON,              0, Button1, exec,                       SH_CMD(HELP)},               \
     {FILE_BUTTON,              0, Button1, exec,                       SH_CMD(FILE_MANAGER)},       \
@@ -323,9 +306,28 @@
     {REBOOT_BUTTON,            0, Button1, exec,                       SH_CMD("reboot")},           \
     {POWEROFF_BUTTON,          0, Button1, exec,                       SH_CMD("poweroff")},         \
     {RUN_BUTTON,               0, Button1, enter_and_run_cmd,          {0}},                        \
-    DESKTOP_BUTTONBIND(1),                                                                          \
-    DESKTOP_BUTTONBIND(2),                                                                          \
-    DESKTOP_BUTTONBIND(3),                                                                          \
+    {ROOT_WIN,                 0, Button1, adjust_layout_ratio,        {0}},                        \
+    {MAIN_BUTTON,              0, Button1, change_area,                {.area_type=MAIN_AREA}},     \
+    {SECOND_BUTTON,            0, Button1, change_area,                {.area_type=SECOND_AREA}},   \
+    {FIXED_BUTTON,             0, Button1, change_area,                {.area_type=FIXED_AREA}},    \
+    {FLOAT_BUTTON,             0, Button1, change_area,                {.area_type=FLOATING_AREA}}, \
+    {ICON_BUTTON,              0, Button1, change_area,                {.area_type=ICONIFY_AREA}},  \
+    {MAX_BUTTON,               0, Button1, maximize_client,            {0}},                        \
+    {CLOSE_BUTTON,             0, Button1, close_client,               {0}},                        \
+    {TITLE_AREA,               0, Button1, pointer_move_resize_client, {.resize=false}},            \
+    {TITLE_AREA,               0, Button2, pointer_change_area,        {0}},                        \
+    {TITLE_AREA,               0, Button3, pointer_swap_clients,       {0}},                        \
+    {CLIENT_WIN,               0, Button1, choose_client,              {0}},                        \
+    {CLIENT_WIN,          WM_KEY, Button1, pointer_move_resize_client, {.resize=false}},            \
+    {CLIENT_WIN,         WM_SKEY, Button1, pointer_move_resize_client, {.resize=true}},             \
+    {CLIENT_WIN,          WM_KEY, Button2, pointer_change_area,        {0}},                        \
+    {CLIENT_WIN,          WM_KEY, Button3, pointer_swap_clients,       {0}},                        \
+    {CLIENT_WIN,               0, Button3, choose_client,                       {0}},                        \
+    {CLIENT_FRAME,             0, Button1, pointer_move_resize_client, {.resize=true}},             \
+    {CLIENT_ICON,              0, Button1, change_area,                {.area_type=PREV_AREA}},     \
+    {CLIENT_ICON,              0, Button2, pointer_change_area,        {0}},                        \
+    {CLIENT_ICON,         WM_KEY, Button2, close_client,               {0}},                        \
+    {CLIENT_ICON,              0, Button3, pointer_swap_clients,       {0}},                        \
 }
 
 #define RULE (Rule []) /* 窗口管理器對窗口的管理規則 */                                                           \

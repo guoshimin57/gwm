@@ -200,16 +200,18 @@ void update_frame_prop(WM *wm, Client *c)
 
 void create_title_bar(WM *wm, Client *c)
 {
+    unsigned long bc=wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel,
+                  ac=wm->widget_color[CURRENT_TITLE_AREA_COLOR].pixel;
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(c, i);
         c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame,
-            br.x, br.y, br.w, br.h, 0, 0, wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel);
+            br.x, br.y, br.w, br.h, 0, 0, bc);
         XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
     }
     c->title_area=XCreateSimpleWindow(wm->display, c->frame,
-        tr.x, tr.y, tr.w, tr.h, 0, 0, wm->widget_color[CURRENT_TITLE_AREA_COLOR].pixel);
+        tr.x, tr.y, tr.w, tr.h, 0, 0, ac);
     XSelectInput(wm->display, c->title_area, TITLE_AREA_EVENT_MASK);
 }
 
@@ -278,6 +280,20 @@ void del_client_node(Client *c)
 {
     c->prev->next=c->next;
     c->next->prev=c->prev;
+}
+
+void free_client(WM *wm, Client *c)
+{
+    if(c->area_type == ICONIFY_AREA)
+    {
+        XDestroyWindow(wm->display, c->icon->win);
+        free(c->icon->title_text);
+        free(c->icon);
+    }
+    XFree(c->class_hint.res_class);
+    XFree(c->class_hint.res_name);
+    free(c->title_text);
+    free(c);
 }
 
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
@@ -533,10 +549,27 @@ void swap_clients(WM *wm, Client *a, Client *b)
     {
         Client *aprev=a->prev, *bprev=b->prev;
         Area_type atype=a->area_type, btype=b->area_type;
-        del_client_node(a), add_client_node(compare_client_order(wm, a, b)==-1 ? b : bprev, a);
+
+        del_client_node(a);
+        add_client_node(compare_client_order(wm, a, b)==-1 ? b : bprev, a);
         if(aprev!=b && bprev!=a) //不相邻
             del_client_node(b), add_client_node(aprev, b);
-        a->area_type=btype, b->area_type=atype;
+
+        a->area_type=btype;
+        if(atype!=ICONIFY_AREA && a->area_type==ICONIFY_AREA)
+            iconify(wm, a);
+        else if(atype==ICONIFY_AREA && a->area_type!=ICONIFY_AREA)
+            a->icon->area_type=btype, deiconify(wm, a);
+
+        b->area_type=atype;
+        if(btype!=ICONIFY_AREA && b->area_type==ICONIFY_AREA)
+            iconify(wm, b);
+        else if(btype==ICONIFY_AREA && b->area_type!=ICONIFY_AREA)
+            b->icon->area_type=atype, deiconify(wm, b);
+
+        if(atype==ICONIFY_AREA && btype==ICONIFY_AREA)
+            update_icon_area(wm);
+
         raise_client(wm, wm->cur_desktop);
         update_layout(wm);
     }

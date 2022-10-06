@@ -9,7 +9,6 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <signal.h>
 #include "config.h"
 #include "gwm.h"
 #include "client.h"
@@ -23,6 +22,9 @@
 #include "misc.h"
 
 static void set_signals(void);
+static void ready_to_quit(int unused);
+
+sig_atomic_t run_flag=1;
 
 int main(int argc, char *argv[])
 {
@@ -31,11 +33,23 @@ int main(int argc, char *argv[])
     clear_zombies(0);
     init_wm(&wm);
     handle_events(&wm);
+    clear_wm(&wm);
     return EXIT_SUCCESS;
 }
 
 static void set_signals(void)
 {
 	if(signal(SIGCHLD, clear_zombies) == SIG_ERR)
-    exit_with_perror("不能安裝SIGCHLD信號處理函數");
+        perror("不能安裝SIGCHLD信號處理函數");
+	if(signal(SIGINT, ready_to_quit) == SIG_ERR)
+        perror("不能安裝SIGINT信號處理函數");
+	if(signal(SIGTERM, ready_to_quit) == SIG_ERR)
+        perror("不能安裝SIGTERM信號處理函數");
+	if(signal(SIGQUIT, ready_to_quit) == SIG_ERR)
+        perror("不能安裝SIGQUIT信號處理函數");
+}
+
+static void ready_to_quit(int unused)
+{
+    run_flag=0;
 }

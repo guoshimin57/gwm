@@ -26,7 +26,6 @@ static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 static void hint_enter_taskbar_button(WM *wm, Widget_type type);
 static void hint_enter_cmd_center_button(WM *wm, Widget_type type);
 static void hint_enter_title_button(WM *wm, Client *c, Widget_type type);
-static void hint_resize_client(WM *wm, Client *c, int x, int y);
 static void update_icon_text(WM *wm, Window win);
 static void update_taskbar_button_text(WM *wm, size_t index);
 static void update_cmd_center_button_text(WM *wm, size_t index);
@@ -42,7 +41,7 @@ void handle_events(WM *wm)
 {
 	XEvent e;
     XSync(wm->display, False);
-	while(!XNextEvent(wm->display, &e))
+	while(run_flag && !XNextEvent(wm->display, &e))
         if(!XFilterEvent(&e, None))
             handle_event(wm, &e);
 }
@@ -138,48 +137,46 @@ void handle_enter_notify(WM *wm, XEvent *e)
     Window win=e->xcrossing.window;
     Client *c=win_to_client(wm, win);
     Widget_type type=get_widget_type(wm, win);
+    Pointer_act act=NO_OP;
+    Move_info m={x, y, 0, 0};
+
     if(wm->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
     if(is_layout_adjust_area(wm, win, x))
-        XDefineCursor(wm->display, win, wm->cursors[ADJUST_LAYOUT_RATIO]);
+        act=ADJUST_LAYOUT_RATIO;
     else if(IS_TASKBAR_BUTTON(type))
         hint_enter_taskbar_button(wm, type);
     else if(IS_CMD_CENTER_ITEM(type))
         hint_enter_cmd_center_button(wm, type);
     else if(type == CLIENT_FRAME)
-        hint_resize_client(wm, c, x, y);
+        act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
-        XDefineCursor(wm->display, c->title_area, wm->cursors[MOVE]);
+        act=MOVE;
     else if(IS_TITLE_BUTTON(type))
         hint_enter_title_button(wm, c, type);
-    else
-        XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+    XDefineCursor(wm->display, win, wm->cursors[act]);
 }
 
 static void hint_enter_taskbar_button(WM *wm, Widget_type type)
 {
+    unsigned long color=wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel;
     Window win=wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)];
-    update_win_background(wm, win, wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
+    update_win_background(wm, win, color);
 }
 
 static void hint_enter_cmd_center_button(WM *wm, Widget_type type)
 {
+    unsigned long color=wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel;
     Window win=wm->cmd_center.items[CMD_CENTER_ITEM_INDEX(type)];
-    update_win_background(wm, win, wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
+    update_win_background(wm, win, color);
 }
 
 static void hint_enter_title_button(WM *wm, Client *c, Widget_type type)
 {
+    unsigned long ccolor=wm->widget_color[ENTERED_CLOSE_BUTTON_COLOR].pixel,
+                  ncolor=wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel;
     Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
-    update_win_background(wm, win, type==CLOSE_BUTTON ?
-        wm->widget_color[ENTERED_CLOSE_BUTTON_COLOR].pixel :
-        wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
-}
-
-static void hint_resize_client(WM *wm, Client *c, int x, int y)
-{
-    Move_info m={x, y, 0, 0};
-    XDefineCursor(wm->display, c->frame, wm->cursors[get_resize_act(c, &m)]);
+    update_win_background(wm, win, type==CLOSE_BUTTON ? ccolor : ncolor);
 }
 
 void handle_expose(WM *wm, XEvent *e)
@@ -310,8 +307,7 @@ void handle_leave_notify(WM *wm, XEvent *e)
         hint_leave_cmd_center_button(wm, type);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
-    else if(type==ROOT_WIN || type==CLIENT_FRAME) // 以免影響子窗口光標
-        XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
 
 static void hint_leave_taskbar_button(WM *wm, Widget_type type)

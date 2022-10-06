@@ -27,5 +27,6 @@ Window get_transient_for(WM *wm, Window w);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 Atom get_atom_prop(WM *wm, Window win, Atom prop);
 void set_override_redirect(WM *wm, Window win);
+void clear_wm(WM *wm);
 
 #endif

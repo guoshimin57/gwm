@@ -12,6 +12,7 @@
 #ifndef GWM_H
 #define GWM_H
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <wchar.h>
@@ -343,5 +344,7 @@ struct string_format_tag // 字符串格式
     Font_type font_type; // 字體類型
 };
 typedef struct string_format_tag String_format;
+
+extern sig_atomic_t run_flag; // 程序運行標志
 
 #endif
