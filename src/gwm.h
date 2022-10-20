@@ -22,8 +22,9 @@
 #include "config.h"
 
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_TAKE_FOCUS"}
-#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_STATE", "_NET_WM_STATE_MODAL"} 
+#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
 
+#define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define SET_DEF_VAL(var, value) ((var) = (var) ? (var) : (value))
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
@@ -117,6 +118,7 @@ struct rectangle_tag // 矩形窗口的坐標和尺寸
 };
 typedef struct rectangle_tag Rect;
 
+#include<Imlib2.h>
 struct icon_tag // 縮微窗口相關信息
 {
     Window win; // 縮微窗口
@@ -176,7 +178,7 @@ typedef enum icccm_atom_tag Icccm_atom;
 enum ewmh_atom_tag // EWMH規範的標識符
 {
     _NET_WM_WINDOW_TYPE, _NET_WM_WINDOW_TYPE_NORMAL,
-    _NET_WM_STATE, _NET_WM_STATE_MODAL, EWMH_ATOM_N
+    _NET_WM_STATE, _NET_WM_STATE_MODAL, _NET_WM_ICON, EWMH_ATOM_N
 };
 typedef enum ewmh_atom_tag Ewmh_atom;
 

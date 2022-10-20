@@ -11,6 +11,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <stdarg.h>
 #include "gwm.h"
 #include "client.h"
 #include "font.h"
@@ -170,17 +171,25 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
 
 Atom get_atom_prop(WM *wm, Window win, Atom prop)
 {
+    unsigned char *p=get_prop(wm, win, prop, NULL);
+    return p ? *(Atom *)p : None;
+}
+
+/* 調用此函數時需要注意：若返回的特性數據的實際格式是32位的話，
+ * 則特性數據存儲於long型數組中。當long是64位時，前4字節會會填充0。 */
+unsigned char *get_prop(WM *wm, Window win, Atom prop, unsigned long *n)
+{
     int fmt;
-    unsigned long n, rest;
+    unsigned long nitems, rest;
     unsigned char *p=NULL;
-    Atom type, atom=None;
+    Atom type;
 
     /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
      * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
-    if( XGetWindowProperty(wm->display, win, prop, 0, ~0, False,
-        XA_ATOM, &type, &fmt, &n, &rest, &p) == Success && p)
-        atom=*(Atom *)p, XFree(p);
-    return atom;
+    if( XGetWindowProperty(wm->display, win, prop, 0, ~0L, False,
+        AnyPropertyType, &type, &fmt, n ? n : &nitems, &rest, &p)==Success && p)
+        return p;
+    return NULL;
 }
 
 void set_override_redirect(WM *wm, Window win)
@@ -209,4 +218,40 @@ void clear_wm(WM *wm)
     XFlush(wm->display);
     XCloseDisplay(wm->display);
     clear_zombies(0);
+}
+
+void get_drawable_size(WM *wm, Drawable drw, unsigned int *w, unsigned int *h)
+{
+    Window r;
+    int xt, yt;
+    unsigned int bw, d;
+    if(!XGetGeometry(wm->display, drw, &r, &xt, &yt, w, h, &bw, &d))
+        *w=*h=0;
+}
+
+char *copy_string(const char *s)
+{
+    return strcpy(malloc_s(strlen(s)+1), s);
+}
+
+char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
+{
+    if(!s)
+        return NULL;
+
+    char *result=NULL, *p=NULL;
+    size_t len=strlen(s);
+    va_list ap;
+    va_start(ap, s);
+    while((p=va_arg(ap, char *)))
+        len+=strlen(p);
+    va_end(ap);
+    if((result=malloc(len+1)) == NULL)
+        return NULL;
+    strcpy(result, s);
+    va_start(ap, s);
+    while((p=va_arg(ap, char *)))
+        strcat(result, p);
+    va_end(ap);
+    return result;
 }

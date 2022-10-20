@@ -19,6 +19,7 @@
 #include "grab.h"
 #include "handler.h"
 #include "hint.h"
+#include "icon.h"
 #include "layout.h"
 #include "menu.h"
 #include "misc.h"

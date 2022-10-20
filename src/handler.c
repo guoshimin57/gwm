@@ -208,15 +208,17 @@ static void update_icon_text(WM *wm, Window win)
     if(c)
     {
         unsigned int w;
+        Icon *i=c->icon;
         get_string_size(wm, wm->font[ICON_CLASS_FONT], c->class_name, &w, NULL);
-        String_format f={{0, 0, w, c->icon->h}, CENTER, false, 0,
+        String_format f={{ICON_SIZE, 0, w, i->h}, CENTER, false, 0,
             wm->text_color[ICON_CLASS_TEXT_COLOR], ICON_CLASS_FONT};
-        draw_string(wm, c->icon->win, c->class_name, &f);
-        if(!c->icon->is_short_text)
+        draw_string(wm, i->win, c->class_name, &f);
+        if(!i->is_short_text && (w+=ICON_SIZE)<ICON_WIN_WIDTH_MAX)
         {
-            String_format f={{w, 0, c->icon->w-w, c->icon->h}, CENTER, false,
-                0, wm->text_color[ICON_TITLE_TEXT_COLOR], ICON_TITLE_FONT};
-            draw_string(wm, c->icon->win, c->icon->title_text, &f);
+            String_format f={{w, 0, MIN(i->w, ICON_WIN_WIDTH_MAX)-w, i->h},
+                CENTER_LEFT, false, 0,
+                wm->text_color[ICON_TITLE_TEXT_COLOR], ICON_TITLE_FONT};
+            draw_string(wm, i->win, i->title_text, &f);
         }
     }
 }

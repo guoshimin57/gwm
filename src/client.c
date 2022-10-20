@@ -15,6 +15,7 @@
 #include "font.h"
 #include "grab.h"
 #include "hint.h"
+#include "icon.h"
 #include "layout.h"
 #include "misc.h"
 
@@ -25,8 +26,6 @@ static void set_default_size(WM *wm, Client *c, XSizeHints *hint, XWindowAttribu
 static void frame_client(WM *wm, Client *c);
 static Rect get_button_rect(Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
-static void create_icon(WM *wm, Client *c);
-static bool have_same_class_icon_client(WM *wm, Client *c);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_normal_client(WM *wm, unsigned int desktop_n, Client *c);
 static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type);
@@ -54,6 +53,7 @@ static void apply_rules(WM *wm, Client *c)
 {
     Atom type=get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE]),
          state=get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_STATE]);
+
     Window tw=get_transient_for(wm, c->win);
     c->area_type=DESKTOP(wm).default_area_type;
     if( (tw && tw!=wm->root_win)
@@ -182,6 +182,7 @@ static void frame_client(WM *wm, Client *c)
 
 void update_frame_prop(WM *wm, Client *c)
 {
+#if SET_FRAME_PROP
     int n=0;
     Atom *p=XListProperties(wm->display, c->win, &n);
     if(p)
@@ -195,7 +196,9 @@ void update_frame_prop(WM *wm, Client *c)
                 AnyPropertyType, &type, &fmt, &total, &rest, &prop) == Success)
                 XChangeProperty(wm->display, c->frame, p[i], type, fmt,
                     PropModeReplace, prop, total);
+        XFree(p);
     }
+#endif
 }
 
 void create_title_bar(WM *wm, Client *c)
@@ -334,91 +337,12 @@ void update_frame(WM *wm, unsigned int desktop_n, Client *c)
     }
 }
 
-void iconify(WM *wm, Client *c)
-{
-    create_icon(wm, c);
-    XSelectInput(wm->display, c->icon->win, ICON_EVENT_MASK);
-    XMapWindow(wm->display, c->icon->win);
-    XUnmapWindow(wm->display, c->frame);
-    if(c == DESKTOP(wm).cur_focus_client)
-    {
-        focus_client(wm, wm->cur_desktop, NULL);
-        update_frame(wm, wm->cur_desktop, c);
-    }
-}
-
-static void create_icon(WM *wm, Client *c)
-{
-    Icon *p=c->icon=malloc_s(sizeof(Icon));
-    p->w=1, p->h=ICON_HEIGHT, p->y=wm->taskbar.h/2-p->h/2-ICON_BORDER_WIDTH;
-    p->area_type=c->area_type==ICONIFY_AREA ? DEFAULT_AREA_TYPE : c->area_type;
-    c->area_type=ICONIFY_AREA;
-    p->win=XCreateSimpleWindow(wm->display, wm->taskbar.icon_area, p->x, p->y,
-        p->w, p->h, ICON_BORDER_WIDTH,
-        wm->widget_color[NORMAL_BORDER_COLOR].pixel,
-        wm->widget_color[ICON_COLOR].pixel);
-    p->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
-    update_icon_area(wm);
-}
-
-static bool have_same_class_icon_client(WM *wm, Client *c)
-{
-    for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
-        if( p!=c && is_on_cur_desktop(wm, p) && p->area_type==ICONIFY_AREA
-            && !strcmp(p->class_hint.res_class, c->class_hint.res_class))
-            return true;
-    return false;
-}
-
-void update_icon_area(WM *wm)
-{
-    unsigned int x=0, w=0;
-    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-    {
-        if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
-        {
-            Icon *i=c->icon;
-            get_string_size(wm, wm->font[ICON_CLASS_FONT], c->class_name, &i->w, NULL);
-            if(have_same_class_icon_client(wm, c))
-            {
-                get_string_size(wm, wm->font[ICON_TITLE_FONT], i->title_text, &w, NULL);
-                i->w+=w;
-                i->is_short_text=false;
-            }
-            else
-                i->is_short_text=true;
-            i->x=x;
-            x+=i->w+ICONS_SPACE;
-            XMoveResizeWindow(wm->display, i->win, i->x, i->y, i->w, i->h); 
-        }
-    }
-}
-
 Client *win_to_iconic_state_client(WM *wm, Window win)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(c->area_type==ICONIFY_AREA && c->icon->win==win)
             return c;
     return NULL;
-}
-
-void deiconify(WM *wm, Client *c)
-{
-    if(c)
-    {
-        XMapWindow(wm->display, c->frame);
-        del_icon(wm, c);
-        focus_client(wm, wm->cur_desktop, c);
-    }
-}
-
-void del_icon(WM *wm, Client *c)
-{
-    XDestroyWindow(wm->display, c->icon->win);
-    c->area_type=c->icon->area_type;
-    free(c->icon->title_text);
-    free(c->icon);
-    update_icon_area(wm);
 }
 
 void focus_client(WM *wm, unsigned int desktop_n, Client *c)

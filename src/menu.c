@@ -13,8 +13,6 @@
 #include "menu.h"
 #include "misc.h"
 
-static void get_win_size(WM *wm, Window win, unsigned int *w, unsigned int *h);
-
 void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg)
 {
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
@@ -49,21 +47,12 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
     menu->x=ox, menu->y=oy;
 }
 
-static void get_win_size(WM *wm, Window win, unsigned int *w, unsigned int *h)
-{
-    Window r;
-    int xt, yt;
-    unsigned int bw, d;
-    if(!XGetGeometry(wm->display, win, &r, &xt, &yt, w, h, &bw, &d))
-        *w=*h=0;
-}
-
 void set_menu_pos_for_click(WM *wm, Window win, int x, int y, Menu *menu)
 {
     unsigned int mh=menu->h*menu->row, mw=menu->w*menu->col,
                  sw=wm->screen_width, w, h;
 
-    get_win_size(wm, win, &w, &h);
+    get_drawable_size(wm, win, &w, &h);
 
     if(x < 0) // win左邊出屏
         w=x+w, x=0;

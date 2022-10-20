@@ -12,6 +12,7 @@
 #include "gwm.h"
 #include "desktop.h"
 #include "client.h"
+#include "icon.h"
 #include "layout.h"
 #include "misc.h"
 

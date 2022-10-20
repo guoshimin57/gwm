@@ -13,9 +13,10 @@
     1. 此程序使用xrdb、xsetroot、acpi、amixer來合並X資源文件、設置桌面背景和
        狀態欄信息。應按自身需求來確定是否要安裝它們。
     2. 此程序的按鈕功能綁定涉及lxterminal、xfce4-terminal、gnome-terminal、
-       konsole5、xterm、xdg-open、mplayer、light、wesnoth、qq、 stardict。
+       konsole5、xterm、xdg-open、mplayer、light、wesnoth、qq、stardict。
        應按自身需求來確定是否要安裝它們。
-    3. 此程序依賴C標準庫、libX11和libXft開發庫。必須安裝它們才能編譯此程序。
+    3. 此程序依賴C標準庫、libX11、libXft和Imlib2開發庫。必須安裝它們才能編譯
+       此程序。
 
 二、安裝此程序的步驟為：
     1. cd gwm；

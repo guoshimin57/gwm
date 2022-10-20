@@ -26,7 +26,11 @@ void set_xic(WM *wm, Window win, XIC *ic);
 Window get_transient_for(WM *wm, Window w);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 Atom get_atom_prop(WM *wm, Window win, Atom prop);
+unsigned char *get_prop(WM *wm, Window win, Atom prop, unsigned long *n);
 void set_override_redirect(WM *wm, Window win);
 void clear_wm(WM *wm);
+void get_drawable_size(WM *wm, Drawable drw, unsigned int *w, unsigned int *h);
+char *copy_string(const char *s);
+char *copy_strings(const char *s, ...);
 
 #endif

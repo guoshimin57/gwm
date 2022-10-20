@@ -14,8 +14,6 @@
 #include "font.h"
 #include "misc.h"
 
-static char *copy_string(const char *s);
-
 void load_font(WM *wm)
 {
     for(size_t i=0; i<FONT_N; i++)
@@ -47,11 +45,6 @@ char *get_text_prop(WM *wm, Window win, Atom atom)
     else
         result=copy_string(win==wm->taskbar.win ? "gwm" : "");
     return result;
-}
-
-static char *copy_string(const char *s)
-{
-    return strcpy(malloc_s(strlen(s)+1), s);
 }
 
 void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f)

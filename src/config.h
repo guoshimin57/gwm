@@ -21,6 +21,9 @@
 #define CMD_KEY (WM_KEY|Mod1Mask) // 與系統命令相關功能的轉換鍵
 #define SYS_KEY (WM_KEY|ControlMask) // 與系統相關的功能轉換鍵
 
+#define SET_FRAME_PROP 0 // 1表示把窗口特性復制到窗口框架（代價是每個窗口可能要多消耗幾十到幾百KB內存），0表示不復制
+#define USE_IMAGE_ICON 1 // 1表示使用圖像形式的圖標，0表示使用文字形式的圖標
+#define CUR_ICON_THEME "default"
 #define DEFAULT_CUR_DESKTOP 1 // 默認的當前桌面
 #define DEFAULT_FOCUS_MODE CLICK_FOCUS // 默認的聚焦模式
 #define DEFAULT_LAYOUT TILE // 默認的窗口布局模式
@@ -51,8 +54,9 @@
 #define TASKBAR_BUTTON_WIDTH TASKBAR_FONT_PIXEL_SIZE*2 // 任務欄按鈕的寬度，單位爲像素
 #define TASKBAR_BUTTON_HEIGHT TASKBAR_HEIGHT // 任務欄按鈕的高度，單位爲像素
 #define ICON_BORDER_WIDTH ROUND(TASKBAR_FONT_PIXEL_SIZE/32.0) // 縮微窗口边框的宽度，单位为像素
-#define ICON_HEIGHT (TASKBAR_HEIGHT-ICON_BORDER_WIDTH*2) // 縮微化窗口的高度，單位爲像素
-#define ICONS_SPACE ROUND(ICON_HEIGHT/2.0) // 縮微化窗口的間隔，單位爲像素
+#define ICON_SIZE (TASKBAR_HEIGHT-ICON_BORDER_WIDTH*2) // 圖標的尺寸，單位爲像素
+#define ICON_WIN_WIDTH_MAX (TASKBAR_HEIGHT*10) // 縮微窗口的最大寬度，單位爲像素
+#define ICONS_SPACE ROUND(TASKBAR_HEIGHT/2.0) // 縮微化窗口的間隔，單位爲像素
 #define CMD_CENTER_ITEM_WIDTH (CMD_CENTER_FONT_PIXEL_SIZE*7) // 操作中心按鈕的寬度，單位爲像素
 #define CMD_CENTER_ITEM_HEIGHT ROUND(CMD_CENTER_FONT_PIXEL_SIZE*1.5) // 操作中心按鈕的高度，單位爲像素
 #define CMD_CENTER_COL 4 // 操作中心按鈕列數
