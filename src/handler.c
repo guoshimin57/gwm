@@ -16,6 +16,8 @@
 #include "font.h"
 #include "func.h"
 #include "grab.h"
+#include "hint.h"
+#include "icon.h"
 #include "layout.h"
 #include "misc.h"
 
@@ -36,6 +38,10 @@ static void key_run_cmd(WM *wm, XKeyEvent *e);
 static void hint_leave_taskbar_button(WM *wm, Widget_type type);
 static void hint_leave_cmd_center_button(WM *wm, Widget_type type);
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type);
+static void update_status_area(WM *wm);
+static void handle_wm_icon_name_notify(WM *wm, Client *c, Window win);
+static void handle_wm_name_notify(WM *wm, Client *c, Window win);
+static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win);
 
 void handle_events(WM *wm)
 {
@@ -376,33 +382,76 @@ void handle_unmap_notify(WM *wm, XEvent *e)
 void handle_property_notify(WM *wm, XEvent *e)
 {
     Window win=e->xproperty.window;
-    char *s;
-    if(e->xproperty.atom==XA_WM_NAME && (s=get_text_prop(wm, win, XA_WM_NAME)))
+    Client *c=win_to_client(wm, win);
+    if(c)
+        update_frame_prop(wm, c);
+    switch(e->xproperty.atom)
     {
-        Client *c;
-        if((c=win_to_client(wm, win)) && win==c->win)
+        case XA_WM_ICON_NAME:
+            handle_wm_icon_name_notify(wm, c, win); break;
+        case XA_WM_NAME:
+            handle_wm_name_notify(wm, c, win); break;
+        case XA_WM_NORMAL_HINTS:
+            handle_wm_normal_hints_notify(wm, c, win); break;
+        default: break; // 或許其他的情況也應考慮，但暫時還沒遇到必要的情況
+    }
+}
+
+static void handle_wm_icon_name_notify(WM *wm, Client *c, Window win)
+{
+    if(c && c->win==win && c->area_type==ICONIFY_AREA)
+    {
+        free(c->icon->title_text);
+        c->icon->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
+        update_icon_area(wm);
+    }
+}
+
+static void handle_wm_name_notify(WM *wm, Client *c, Window win)
+{
+    char *s=get_text_prop(wm, win, XA_WM_NAME);
+    if(s)
+    {
+        if(c && c->win==win)
         {
             free(c->title_text);
             c->title_text=s;
             update_title_area_text(wm, c);
-            update_frame_prop(wm, c);
         }
         else if(win == wm->root_win)
         {
-            unsigned int w, bw=TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N;
-            Taskbar *b=&wm->taskbar;
-            free(b->status_text);
-            get_string_size(wm, wm->font[STATUS_AREA_FONT], s, &w, NULL);
-            if(w > STATUS_AREA_WIDTH_MAX)
-                w=STATUS_AREA_WIDTH_MAX;
-            if(w != b->status_area_w)
-            {
-                XMoveResizeWindow(wm->display, b->status_area, b->w-w, 0, w, b->h);
-                XMoveResizeWindow(wm->display, b->icon_area, bw, 0, b->w-bw-w, b->h);
-            }
-            b->status_text=s;
-            b->status_area_w=w;
-            update_status_area_text(wm);
+            free(wm->taskbar.status_text);
+            wm->taskbar.status_text=s;
+            update_status_area(wm);
+        }
+    }
+}
+
+static void update_status_area(WM *wm)
+{
+    unsigned int w, bw=TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N;
+    Taskbar *b=&wm->taskbar;
+    get_string_size(wm, wm->font[STATUS_AREA_FONT], b->status_text, &w, NULL);
+    if(w > STATUS_AREA_WIDTH_MAX)
+        w=STATUS_AREA_WIDTH_MAX;
+    if(w != b->status_area_w)
+    {
+        XMoveResizeWindow(wm->display, b->status_area, b->w-w, 0, w, b->h);
+        XMoveResizeWindow(wm->display, b->icon_area, bw, 0, b->w-bw-w, b->h);
+    }
+    b->status_area_w=w;
+    update_status_area_text(wm);
+}
+
+static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win)
+{
+    if(c && c->win==win)
+    {
+        update_size_hint(wm, c);
+        if(c->area_type == FLOATING_AREA)
+        {
+            set_default_rect(wm, c);
+            move_resize_client(wm, c, NULL);
         }
     }
 }

@@ -21,8 +21,8 @@
 
 static void apply_rules(WM *wm, Client *c);
 static bool have_rule(Rule *r, Client *c);
-static void set_default_pos(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a);
-static void set_default_size(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a);
+static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a);
+static void set_default_size(WM *wm, Client *c, XWindowAttributes *a);
 static void frame_client(WM *wm, Client *c);
 static Rect get_button_rect(Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
@@ -35,6 +35,7 @@ void add_client(WM *wm, Window win)
     Client *c=malloc_s(sizeof(Client));
     c->win=win;
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
+    update_size_hint(wm, c);
     apply_rules(wm, c);
     add_client_node(get_area_head(wm, c->area_type), c);
     fix_area_type(wm);
@@ -117,17 +118,17 @@ void fix_area_type(WM *wm)
 
 void set_default_rect(WM *wm, Client *c)
 {
-    XSizeHints hint=get_fixed_size_hint(wm, c);
     XWindowAttributes a={0, 0, wm->screen_width/4, wm->screen_height/4};
     XGetWindowAttributes(wm->display, c->win, &a);
-    set_default_size(wm, c, &hint, &a);
-    set_default_pos(wm, c, &hint, &a);
+    set_default_size(wm, c, &a);
+    set_default_pos(wm, c, &a);
 }
 
-static void set_default_pos(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a)
+static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a)
 {
-    c->x=hint->x, c->y=hint->y;
-    if(!(hint->flags & USPosition) && !(hint->flags & PPosition))
+    XSizeHints *p=&c->size_hint;
+    c->x=p->x, c->y=p->y;
+    if(!(p->flags & USPosition) && !(p->flags & PPosition))
         c->x=a->x, c->y=a->y;
     if(c->x>0 && c->x>=wm->screen_width)
         c->x=wm->screen_width-c->w+2*c->border_w;
@@ -139,25 +140,26 @@ static void set_default_pos(WM *wm, Client *c, XSizeHints *hint, XWindowAttribut
         c->y=c->border_w+c->title_bar_h;
 }
 
-static void set_default_size(WM *wm, Client *c, XSizeHints *hint, XWindowAttributes *a)
+static void set_default_size(WM *wm, Client *c, XWindowAttributes *a)
 {
-    c->w=hint->width, c->h=hint->height;
-    SET_DEF_VAL(c->w, hint->base_width), SET_DEF_VAL(c->h, hint->base_height);
-    c->w=hint->base_width+get_client_col(wm, c, hint)*hint->width_inc;
-    c->h=hint->base_height+get_client_row(wm, c, hint)*hint->height_inc;
+    XSizeHints *p=&c->size_hint;
+    c->w=p->width, c->h=p->height;
+    SET_DEF_VAL(c->w, p->base_width), SET_DEF_VAL(c->h, p->base_height);
+    c->w=p->base_width+get_client_col(wm, c)*p->width_inc;
+    c->h=p->base_height+get_client_row(wm, c)*p->height_inc;
     SET_DEF_VAL(c->w, a->width), SET_DEF_VAL(c->h, a->height);
-    if(hint->min_width && c->w<hint->min_width)
-        c->w=hint->min_width;
-    if(hint->min_height && c->h<hint->min_height)
-        c->h=hint->min_height;
-    if(hint->max_width && c->w>hint->max_width)
-        c->w=hint->max_width;
-    if(hint->max_height && c->h>hint->max_height)
-        c->h=hint->max_height;
-    if(hint->min_aspect.x && hint->min_aspect.y)
+    if(p->min_width && c->w<p->min_width)
+        c->w=p->min_width;
+    if(p->min_height && c->h<p->min_height)
+        c->h=p->min_height;
+    if(p->max_width && c->w>p->max_width)
+        c->w=p->max_width;
+    if(p->max_height && c->h>p->max_height)
+        c->h=p->max_height;
+    if(p->min_aspect.x && p->min_aspect.y)
     {
-        float mina=(float)hint->min_aspect.x/hint->min_aspect.y,
-              maxa=(float)hint->max_aspect.x/hint->max_aspect.y;
+        float mina=(float)p->min_aspect.x/p->min_aspect.y,
+              maxa=(float)p->max_aspect.x/p->max_aspect.y;
         if((float)c->w/c->h < mina)
             c->h=c->w*mina+0.5;
         else if((float)c->w/c->h > maxa)

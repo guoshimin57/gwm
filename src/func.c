@@ -24,10 +24,10 @@
 #include "menu.h"
 #include "misc.h"
 
-static Delta_rect get_key_delta_rect(Client *c, XSizeHints *hint, Direction dir);
-static bool get_valid_move_resize(WM *wm, Client *c, XSizeHints *hint, Delta_rect *d);
+static Delta_rect get_key_delta_rect(Client *c, Direction dir);
+static bool get_valid_move_resize(WM *wm, Client *c, Delta_rect *d);
 static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
-static void update_resize_win(WM *wm, Client *c, XSizeHints *hint);
+static void update_resize_win(WM *wm, Client *c);
 static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act);
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
@@ -61,14 +61,13 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     if(DESKTOP(wm).cur_layout==TILE || DESKTOP(wm).cur_layout==STACK)
     {
         Client *c=DESKTOP(wm).cur_focus_client;
-        XSizeHints hint=get_fixed_size_hint(wm, c);
-        Delta_rect d=get_key_delta_rect(c, &hint, arg.direction);
+        Delta_rect d=get_key_delta_rect(c, arg.direction);
         if(c->area_type!=FLOATING_AREA && DESKTOP(wm).cur_layout==TILE)
             move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
-        if(get_valid_move_resize(wm, c, &hint, &d))
+        if(get_valid_move_resize(wm, c, &d))
         {
             move_resize_client(wm, c, &d);
-            update_resize_win(wm, c, &hint);
+            update_resize_win(wm, c);
             while(1)
             {
                 XEvent ev;
@@ -86,9 +85,9 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     }
 }
 
-static Delta_rect get_key_delta_rect(Client *c, XSizeHints *hint, Direction dir)
+static Delta_rect get_key_delta_rect(Client *c, Direction dir)
 {
-    int wi=hint->width_inc, hi=hint->height_inc;
+    int wi=c->size_hint.width_inc, hi=c->size_hint.height_inc;
     Delta_rect dr[] =
     {
         [UP]          = {  0, -hi,   0,   0},
@@ -107,11 +106,11 @@ static Delta_rect get_key_delta_rect(Client *c, XSizeHints *hint, Direction dir)
     return dr[dir];
 }
 
-static bool get_valid_move_resize(WM *wm, Client *c, XSizeHints *hint, Delta_rect *d)
+static bool get_valid_move_resize(WM *wm, Client *c, Delta_rect *d)
 {
     return ( ((!d->dw && !d->dh)
         && is_on_screen(wm, c->x+d->dx, c->y+d->dy, c->w+d->dw, c->h+d->dh))
-        || get_prefer_resize(wm, c, hint, d));
+        || get_prefer_resize(wm, c, d));
 }
 
 /* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外。
@@ -265,7 +264,6 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 
     XEvent ev;
     Delta_rect d;
-    XSizeHints hint=get_fixed_size_hint(wm, c);
 
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
@@ -277,10 +275,10 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
                 move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             d=get_pointer_delta_rect(c, &m, act);
-            if(get_valid_move_resize(wm, c, &hint, &d))
+            if(get_valid_move_resize(wm, c, &d))
             {
                 move_resize_client(wm, c, &d);
-                update_resize_win(wm, c, &hint);
+                update_resize_win(wm, c);
                 if(arg.resize)
                 {
                     if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
@@ -299,12 +297,12 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     XUnmapWindow(wm->display, wm->resize_win);
 }
 
-static void update_resize_win(WM *wm, Client *c, XSizeHints *hint)
+static void update_resize_win(WM *wm, Client *c)
 {
     char str[BUFSIZ];
     String_format f={{0, 0, RESIZE_WIN_WIDTH, RESIZE_WIN_HEIGHT}, CENTER,
         false, 0, wm->text_color[RESIZE_WIN_TEXT_COLOR], RESIZE_WIN_FONT};
-    unsigned int w=get_client_col(wm, c, hint), h=get_client_row(wm, c, hint);
+    unsigned int w=get_client_col(wm, c), h=get_client_row(wm, c);
     sprintf(str, "(%d, %d) %ux%u", c->x, c->y, w, h);
     XMapRaised(wm->display, wm->resize_win);
     draw_string(wm, wm->resize_win, str, &f);
