@@ -39,6 +39,7 @@ static void hint_leave_taskbar_button(WM *wm, Widget_type type);
 static void hint_leave_cmd_center_button(WM *wm, Widget_type type);
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type);
 static void update_status_area(WM *wm);
+static void handle_wm_hints_notify(WM *wm, Client *c, Window win);
 static void handle_wm_icon_name_notify(WM *wm, Client *c, Window win);
 static void handle_wm_name_notify(WM *wm, Client *c, Window win);
 static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win);
@@ -387,6 +388,8 @@ void handle_property_notify(WM *wm, XEvent *e)
         update_frame_prop(wm, c);
     switch(e->xproperty.atom)
     {
+        case XA_WM_HINTS:
+            handle_wm_hints_notify(wm, c, win); break;
         case XA_WM_ICON_NAME:
             handle_wm_icon_name_notify(wm, c, win); break;
         case XA_WM_NAME:
@@ -395,6 +398,14 @@ void handle_property_notify(WM *wm, XEvent *e)
             handle_wm_normal_hints_notify(wm, c, win); break;
         default: break; // 或許其他的情況也應考慮，但暫時還沒遇到必要的情況
     }
+}
+
+static void handle_wm_hints_notify(WM *wm, Client *c, Window win)
+{
+    XWMHints *hint=XGetWMHints(wm->display, win);
+    if(c && c->win==win && hint)
+        XFree(c->wm_hint), c->wm_hint=hint;
+    set_input_focus(wm, hint, win);
 }
 
 static void handle_wm_icon_name_notify(WM *wm, Client *c, Window win)

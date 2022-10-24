@@ -88,12 +88,11 @@ static Imlib_Image get_icon_image(WM *wm, Client *c)
 
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
 {
-    XWMHints *hints=XGetWMHints(wm->display, c->win);
-    if(hints && (hints->flags & IconPixmapHint))
+    if(c->wm_hint && (c->wm_hint->flags & IconPixmapHint))
     {
         unsigned int w, h;
-        Pixmap pixmap=hints->icon_pixmap, mask=hints->icon_mask;
-        XFree(hints);
+        Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
+        XFree(c->wm_hint);
         get_drawable_size(wm, pixmap, &w, &h);
         imlib_context_set_drawable(pixmap);   
         return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);

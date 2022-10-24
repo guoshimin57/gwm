@@ -9,12 +9,11 @@
 # <http://www.gnu.org/licenses/>。
 # *************************************************************************
 
-CC := gcc
-#DEBUG=-ggdb3
-CFLAGS := -std=c17 -Wall -pedantic-errors $(DEBUG) `pkg-config --cflags --libs x11 xft imlib2`
+CC ?= gcc
+CFLAGS ?= -std=c17 -Wall -pedantic-errors $(DEBUG) `pkg-config --cflags --libs x11 xft imlib2`
 
-CTAGS := ctags
-tag := tags
+CTAGS ?= ctags
+tag ?= tags
 backup := $(wildcard *~)
 srcs := $(wildcard *.c)
 objs := $(srcs:.c=.o)
@@ -24,8 +23,8 @@ exec := gwm
 .PHONY : all install install-strip uninstall clean
 all : $(exec)
 $(exec) : $(objs)
+	@$(CTAGS) *.[ch] 2> /dev/null ; \
 	$(CC) $(objs) -o $@ $(CFLAGS)
-	$(CTAGS) *.[ch]
 install :
 	install -d $(prefix)/bin ;
 	install -m 755 $(exec) $(prefix)/bin ;

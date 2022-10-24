@@ -35,6 +35,7 @@ void add_client(WM *wm, Window win)
     Client *c=malloc_s(sizeof(Client));
     c->win=win;
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
+    c->wm_hint=NULL;
     update_size_hint(wm, c);
     apply_rules(wm, c);
     add_client_node(get_area_head(wm, c->area_type), c);
@@ -276,6 +277,7 @@ void del_client(WM *wm, Client *c)
                 focus_client(wm, i, NULL);
         XFree(c->class_hint.res_class);
         XFree(c->class_hint.res_name);
+        XFree(c->wm_hint);
         free(c->title_text);
         free(c);
     }
@@ -297,6 +299,7 @@ void free_client(WM *wm, Client *c)
     }
     XFree(c->class_hint.res_class);
     XFree(c->class_hint.res_name);
+    XFree(c->wm_hint);
     free(c->title_text);
     free(c);
 }
@@ -356,17 +359,10 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 
     if(desktop_n == wm->cur_desktop)
     {
-        Window win = pc->area_type==ICONIFY_AREA ? pc->icon->win : pc->win;
-        XWMHints *h=XGetWMHints(wm->display, win);
-        if(h && (h->flags & InputHint) && h->input)
-        {
-            XFree(h);
-            XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
-        }
-        if(win == wm->root_win)
-            XSetInputFocus(wm->display, PointerRoot, RevertToPointerRoot, CurrentTime);
-        else if(win == pc->win)
-            send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
+        if(pc->win == wm->root_win)
+            XSetInputFocus(wm->display, pc->win, RevertToPointerRoot, CurrentTime);
+        else if(pc->area_type != ICONIFY_AREA)
+            set_input_focus(wm, pc->wm_hint, pc->win);
         update_client_look(wm, desktop_n, pc);
         update_client_look(wm, desktop_n, d->prev_focus_client);
     }

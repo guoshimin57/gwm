@@ -142,6 +142,7 @@ struct client_tag // 客戶窗口相關信息
     const char *class_name; // 客戶窗口的程序類型名
     XClassHint class_hint; // 客戶窗口的程序類型特性提示
     XSizeHints size_hint; // 客戶窗口的窗口尺寸條件特性提示
+    XWMHints *wm_hint; // 客戶窗口的窗口管理程序條件特性提示
     struct client_tag *prev, *next; // 分別爲前、後節點
 };
 typedef struct client_tag Client;
