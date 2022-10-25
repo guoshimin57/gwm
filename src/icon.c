@@ -26,8 +26,8 @@ struct icon_dir_info_tag
 };
 typedef struct icon_dir_info_tag Icon_dir_info;
 
-static Pixmap get_icon_pixmap(WM *wm, Client *c);
-static Imlib_Image get_icon_image(WM *wm, Client *c);
+static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h);
+static void set_icon_image(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_file(WM *wm, Client *c);
@@ -49,41 +49,30 @@ static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
 static bool is_accessible(const char *filename);
 
-static Pixmap get_icon_pixmap(WM *wm, Client *c)
+void draw_icon_image(WM *wm, Client *c)
 {
-    Icon *i=c->icon;
-    Pixmap icon_pixmap;
-    unsigned int d=DefaultDepth(wm->display, wm->screen);
-    if(!(icon_pixmap=XCreatePixmap(wm->display, i->win, i->w, i->h, d)))
-        return None;
+    if(c && c->icon && c->image)
+        draw_image(wm, c->image, c->icon->win, 0, 0, ICON_SIZE, ICON_SIZE);
+}
 
-    /* imlib2設置mask後不知道爲何沒效果，故此填充顏色代替 */
-    XSetForeground(wm->display, wm->gc, wm->widget_color[ICON_COLOR].pixel);
-    XFillRectangle(wm->display, icon_pixmap, wm->gc, 0, 0, i->w, i->h);
-
-    Imlib_Image image;
+static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h)
+{
     imlib_context_set_dither(1);
     imlib_context_set_display(wm->display);
     imlib_context_set_visual(DefaultVisual(wm->display, wm->screen));
-    if(!(image=get_icon_image(wm, c)))
-        return None;
-
     imlib_context_set_image(image);
-    imlib_context_set_drawable(icon_pixmap);   
-    imlib_render_image_on_drawable_at_size(0, 0, ICON_SIZE, ICON_SIZE);
-    imlib_free_image_and_decache();
-    return icon_pixmap;
+    imlib_context_set_drawable(d);   
+    imlib_render_image_on_drawable_at_size(x, y, w, h);
 }
 
-static Imlib_Image get_icon_image(WM *wm, Client *c)
+static void set_icon_image(WM *wm, Client *c)
 {
     /* 根據加載效率依次嘗試 */
-    Imlib_Image image=NULL;
-    if( !( (image=get_icon_image_from_hint(wm, c))
-        || (image=get_icon_image_from_prop(wm, c))
-        || (image=get_icon_image_from_file(wm, c))))
-        return NULL;
-    return image;
+    if( c && !c->image
+        && !( (c->image=get_icon_image_from_hint(wm, c))
+        || (c->image=get_icon_image_from_prop(wm, c))
+        || (c->image=get_icon_image_from_file(wm, c))))
+        c->image=NULL;
 }
 
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
@@ -104,6 +93,8 @@ static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 {
     unsigned long i, n=0, w=0, h=0, *data=NULL;
     unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[_NET_WM_ICON], &n);
+    if(!p)
+        return NULL;
     
     data=(unsigned long *)p;
     w=data[0], h=data[1], data+=2;
@@ -126,7 +117,7 @@ static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 static Imlib_Image get_icon_image_from_file(WM *wm, Client *c)
 {
     char *filename=find_icon(c->class_hint.res_name, ICON_SIZE, 1, "apps");
-    return imlib_load_image(filename);
+    return filename ? imlib_load_image(filename) : NULL;
 }
 
 /* 根據圖標名稱、尺寸、縮放比例和規範中context對應的目錄名來搜索圖標文件全名。
@@ -429,8 +420,7 @@ void iconify(WM *wm, Client *c)
 static void create_icon(WM *wm, Client *c)
 {
     Icon *p=c->icon=malloc_s(sizeof(Icon));
-    p->w=wm->taskbar.w; // 寬度設置大一點然後按需縮小，以免圖標鋪貼背景
-    p->h=ICON_SIZE;
+    p->w=p->h=ICON_SIZE;
     p->x=0, p->y=wm->taskbar.h/2-p->h/2-ICON_BORDER_WIDTH;
     p->area_type=c->area_type==ICONIFY_AREA ? DEFAULT_AREA_TYPE : c->area_type;
     c->area_type=ICONIFY_AREA;
@@ -439,9 +429,7 @@ static void create_icon(WM *wm, Client *c)
         wm->widget_color[NORMAL_BORDER_COLOR].pixel,
         wm->widget_color[ICON_COLOR].pixel);
 #if USE_IMAGE_ICON
-    Pixmap pixmap=get_icon_pixmap(wm, c);
-    XSetWindowBackgroundPixmap(wm->display, p->win, pixmap);
-    XFreePixmap(wm->display, pixmap);
+    set_icon_image(wm, c);
 #endif
     p->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
     update_icon_area(wm);
@@ -455,9 +443,7 @@ void update_icon_area(WM *wm)
         if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
         {
             Icon *i=c->icon;
-            get_string_size(wm, wm->font[ICON_CLASS_FONT], c->class_name, &w, NULL);
-            i->w=MIN(ICON_SIZE+w, ICON_WIN_WIDTH_MAX);
-
+            i->w=MIN(get_icon_draw_width(wm, c), ICON_WIN_WIDTH_MAX);
             if(have_same_class_icon_client(wm, c))
             {
                 get_string_size(wm, wm->font[ICON_TITLE_FONT], i->title_text, &w, NULL);
@@ -473,11 +459,39 @@ void update_icon_area(WM *wm)
     }
 }
 
+unsigned int get_icon_draw_width(WM *wm, Client *c)
+{
+#if USE_IMAGE_ICON
+    return ICON_SIZE;
+#else
+    unsigned int w=0;
+    get_string_size(wm, wm->font[ICON_CLASS_FONT], c->class_name, &w, NULL);
+    return w;
+#endif
+}
+
+unsigned int draw_icon(WM *wm, Client *c)
+{
+    unsigned int w=MIN(get_icon_draw_width(wm, c), ICON_WIN_WIDTH_MAX);
+    Icon *i=c->icon;
+    String_format f={{0, 0, w, i->h}, CENTER, false, 0,
+        wm->text_color[ICON_CLASS_TEXT_COLOR], ICON_CLASS_FONT};
+#if USE_IMAGE_ICON
+    if(c->image)
+        draw_icon_image(wm, c);
+    else
+        draw_string(wm, i->win, c->class_name, &f);
+#else
+    draw_string(wm, i->win, c->class_name, &f);
+#endif
+    return w;
+}
+
 static bool have_same_class_icon_client(WM *wm, Client *c)
 {
     for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
         if( p!=c && is_on_cur_desktop(wm, p) && p->area_type==ICONIFY_AREA
-            && !strcmp(p->class_hint.res_class, c->class_hint.res_class))
+            && !strcmp(c->class_name, p->class_name))
             return true;
     return false;
 }

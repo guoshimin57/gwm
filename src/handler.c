@@ -214,13 +214,9 @@ static void update_icon_text(WM *wm, Window win)
     Client *c=win_to_iconic_state_client(wm, win);
     if(c)
     {
-        unsigned int w;
         Icon *i=c->icon;
-        get_string_size(wm, wm->font[ICON_CLASS_FONT], c->class_name, &w, NULL);
-        String_format f={{ICON_SIZE, 0, w, i->h}, CENTER, false, 0,
-            wm->text_color[ICON_CLASS_TEXT_COLOR], ICON_CLASS_FONT};
-        draw_string(wm, i->win, c->class_name, &f);
-        if(!i->is_short_text && (w+=ICON_SIZE)<ICON_WIN_WIDTH_MAX)
+        unsigned int w=draw_icon(wm, c);
+        if(!i->is_short_text)
         {
             String_format f={{w, 0, MIN(i->w, ICON_WIN_WIDTH_MAX)-w, i->h},
                 CENTER_LEFT, false, 0,

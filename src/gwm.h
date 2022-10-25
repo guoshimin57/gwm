@@ -139,6 +139,7 @@ struct client_tag // 客戶窗口相關信息
     Area_type area_type; // 區域類型
     char *title_text; // 標題的文字
     Icon *icon; // 圖符信息
+    Imlib_Image image; // 圖符的圖像
     const char *class_name; // 客戶窗口的程序類型名
     XClassHint class_hint; // 客戶窗口的程序類型特性提示
     XSizeHints size_hint; // 客戶窗口的窗口尺寸條件特性提示

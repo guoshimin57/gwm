@@ -33,9 +33,9 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type);
 void add_client(WM *wm, Window win)
 {
     Client *c=malloc_s(sizeof(Client));
+    memset(c, 0, sizeof(Client));
     c->win=win;
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
-    c->wm_hint=NULL;
     update_size_hint(wm, c);
     apply_rules(wm, c);
     add_client_node(get_area_head(wm, c->area_type), c);
@@ -88,9 +88,10 @@ static void apply_rules(WM *wm, Client *c)
 
 static bool have_rule(Rule *r, Client *c)
 {
-    const char *pc=r->app_class, *pn=r->app_name;
-    return ((pc && (strstr(c->class_hint.res_class, pc) || strcmp(pc, "*")==0))
-        || ((pn && (strstr(c->class_hint.res_name, pn) || strcmp(pc, "*")==0))));
+    const char *pc=r->app_class, *pn=r->app_name,
+        *class=c->class_hint.res_class, *name=c->class_hint.res_name;
+    return ((pc && ((class && strstr(class, pc)) || strcmp(pc, "*")==0))
+        || ((pn && ((name && strstr(name, pn)) || strcmp(pc, "*")==0))));
 }
 
 void add_client_node(Client *head, Client *c)
@@ -270,6 +271,13 @@ void del_client(WM *wm, Client *c)
     {
         if(c->area_type == ICONIFY_AREA)
             del_icon(wm, c);
+#if USE_IMAGE_ICON
+        if(c->image)
+        {
+            imlib_context_set_image(c->image);
+            imlib_free_image();
+        }
+#endif
         del_client_node(c);
         fix_area_type(wm);
         for(size_t i=1; i<=DESKTOP_N; i++)

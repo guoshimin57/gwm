@@ -11,7 +11,6 @@
 
 CC ?= gcc
 CFLAGS ?= -std=c17 -Wall -pedantic-errors $(DEBUG) `pkg-config --cflags --libs x11 xft imlib2`
-
 CTAGS ?= ctags
 tag ?= tags
 backup := $(wildcard *~)
