@@ -265,12 +265,18 @@ Client *win_to_client(WM *wm, Window win)
     return NULL;
 }
 
-void del_client(WM *wm, Client *c)
+void del_client(WM *wm, Client *c, bool change_focus)
 {
     if(c)
     {
         if(c->area_type == ICONIFY_AREA)
             del_icon(wm, c);
+        del_client_node(c);
+        fix_area_type(wm);
+        if(change_focus)
+            for(size_t i=1; i<=DESKTOP_N; i++)
+                if(is_on_desktop_n(i, c))
+                    focus_client(wm, i, NULL);
 #if USE_IMAGE_ICON
         if(c->image)
         {
@@ -278,11 +284,6 @@ void del_client(WM *wm, Client *c)
             imlib_free_image();
         }
 #endif
-        del_client_node(c);
-        fix_area_type(wm);
-        for(size_t i=1; i<=DESKTOP_N; i++)
-            if(is_on_desktop_n(i, c))
-                focus_client(wm, i, NULL);
         XFree(c->class_hint.res_class);
         XFree(c->class_hint.res_name);
         XFree(c->wm_hint);
@@ -295,21 +296,6 @@ void del_client_node(Client *c)
 {
     c->prev->next=c->next;
     c->next->prev=c->prev;
-}
-
-void free_client(WM *wm, Client *c)
-{
-    if(c->area_type == ICONIFY_AREA)
-    {
-        XDestroyWindow(wm->display, c->icon->win);
-        free(c->icon->title_text);
-        free(c->icon);
-    }
-    XFree(c->class_hint.res_class);
-    XFree(c->class_hint.res_name);
-    XFree(c->wm_hint);
-    free(c->title_text);
-    free(c);
 }
 
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
@@ -368,7 +354,7 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     if(desktop_n == wm->cur_desktop)
     {
         if(pc->win == wm->root_win)
-            XSetInputFocus(wm->display, pc->win, RevertToPointerRoot, CurrentTime);
+            XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
         else if(pc->area_type != ICONIFY_AREA)
             set_input_focus(wm, pc->wm_hint, pc->win);
         update_client_look(wm, desktop_n, pc);

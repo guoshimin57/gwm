@@ -12,14 +12,10 @@
 #ifndef ICON_H
 #define ICON_H
 
-#if USE_IMAGE_ICON
-void draw_icon_image(WM *wm, Client *c);
-#endif
-
 void iconify(WM *wm, Client *c);
 void update_icon_area(WM *wm);
 unsigned int get_icon_draw_width(WM *wm, Client *c);
-unsigned int draw_icon(WM *wm, Client *c);
+void draw_icon(WM *wm, Client *c);
 void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);
 

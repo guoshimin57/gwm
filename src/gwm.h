@@ -44,7 +44,6 @@
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
 #define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
-#define ICON_EVENT_MASK (ButtonPressMask|ExposureMask|FocusChangeMask)
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
 
 #define TITLE_BUTTON_INDEX(type) ((type)-TITLE_BUTTON_BEGIN)

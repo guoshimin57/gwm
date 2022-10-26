@@ -98,7 +98,6 @@ void get_string_size(WM *wm, XftFont *font, const char *str, unsigned int *w, un
         *w=e.xOff;
     if(h)
         *h=font->height;
-    if(strlen(str)==0)printf("think %u\n", e.xOff);
 }
 
 void close_fonts(WM *wm)

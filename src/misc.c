@@ -200,8 +200,8 @@ void set_override_redirect(WM *wm, Window win)
 
 void clear_wm(WM *wm)
 {
-    for(Client *next=NULL, *c=wm->clients->next; c!=wm->clients; c=next)
-        next=c->next, free_client(wm, c);
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        del_client(wm, c, false);
     XDestroyWindow(wm->display, wm->taskbar.win);
     free(wm->taskbar.status_text);
     XDestroyWindow(wm->display, wm->cmd_center.win);

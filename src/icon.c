@@ -26,6 +26,7 @@ struct icon_dir_info_tag
 };
 typedef struct icon_dir_info_tag Icon_dir_info;
 
+static void draw_icon_image(WM *wm, Client *c);
 static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h);
 static void set_icon_image(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c);
@@ -49,7 +50,7 @@ static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
 static bool is_accessible(const char *filename);
 
-void draw_icon_image(WM *wm, Client *c)
+static void draw_icon_image(WM *wm, Client *c)
 {
     if(c && c->icon && c->image)
         draw_image(wm, c->image, c->icon->win, 0, 0, ICON_SIZE, ICON_SIZE);
@@ -59,7 +60,7 @@ static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsi
 {
     imlib_context_set_dither(1);
     imlib_context_set_display(wm->display);
-    imlib_context_set_visual(DefaultVisual(wm->display, wm->screen));
+    imlib_context_set_visual(wm->visual);
     imlib_context_set_image(image);
     imlib_context_set_drawable(d);   
     imlib_render_image_on_drawable_at_size(x, y, w, h);
@@ -81,7 +82,6 @@ static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
     {
         unsigned int w, h;
         Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
-        XFree(c->wm_hint);
         get_drawable_size(wm, pixmap, &w, &h);
         imlib_context_set_drawable(pixmap);   
         return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
@@ -407,7 +407,6 @@ static bool have_same_class_icon_client(WM *wm, Client *c);
 void iconify(WM *wm, Client *c)
 {
     create_icon(wm, c);
-    XSelectInput(wm->display, c->icon->win, ICON_EVENT_MASK);
     XMapWindow(wm->display, c->icon->win);
     XUnmapWindow(wm->display, c->frame);
     if(c == DESKTOP(wm).cur_focus_client)
@@ -428,6 +427,7 @@ static void create_icon(WM *wm, Client *c)
         p->w, p->h, ICON_BORDER_WIDTH,
         wm->widget_color[NORMAL_BORDER_COLOR].pixel,
         wm->widget_color[ICON_COLOR].pixel);
+    XSelectInput(wm->display, c->icon->win, BUTTON_EVENT_MASK);
 #if USE_IMAGE_ICON
     set_icon_image(wm, c);
 #endif
@@ -470,21 +470,19 @@ unsigned int get_icon_draw_width(WM *wm, Client *c)
 #endif
 }
 
-unsigned int draw_icon(WM *wm, Client *c)
+void draw_icon(WM *wm, Client *c)
 {
-    unsigned int w=MIN(get_icon_draw_width(wm, c), ICON_WIN_WIDTH_MAX);
     Icon *i=c->icon;
-    String_format f={{0, 0, w, i->h}, CENTER, false, 0,
+    String_format f={{0, 0, i->w, i->h}, CENTER_LEFT, false, 0,
         wm->text_color[ICON_CLASS_TEXT_COLOR], ICON_CLASS_FONT};
 #if USE_IMAGE_ICON
     if(c->image)
-        draw_icon_image(wm, c);
+        draw_string(wm, i->win, "", &f), draw_icon_image(wm, c);
     else
         draw_string(wm, i->win, c->class_name, &f);
 #else
     draw_string(wm, i->win, c->class_name, &f);
 #endif
-    return w;
 }
 
 static bool have_same_class_icon_client(WM *wm, Client *c)
