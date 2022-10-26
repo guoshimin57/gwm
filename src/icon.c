@@ -58,9 +58,6 @@ static void draw_icon_image(WM *wm, Client *c)
 
 static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h)
 {
-    imlib_context_set_dither(1);
-    imlib_context_set_display(wm->display);
-    imlib_context_set_visual(wm->visual);
     imlib_context_set_image(image);
     imlib_context_set_drawable(d);   
     imlib_render_image_on_drawable_at_size(x, y, w, h);
@@ -68,6 +65,9 @@ static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsi
 
 static void set_icon_image(WM *wm, Client *c)
 {
+    imlib_context_set_dither(1);
+    imlib_context_set_display(wm->display);
+    imlib_context_set_visual(wm->visual);
     /* 根據加載效率依次嘗試 */
     if( c && !c->image
         && !( (c->image=get_icon_image_from_hint(wm, c))
