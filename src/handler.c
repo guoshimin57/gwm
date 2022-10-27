@@ -21,6 +21,16 @@
 #include "layout.h"
 #include "misc.h"
 
+static void handle_button_press(WM *wm, XEvent *e);
+static void handle_config_request(WM *wm, XEvent *e);
+static void handle_destroy_notify(WM *wm, XEvent *e);
+static void handle_enter_notify(WM *wm, XEvent *e);
+static void handle_expose(WM *wm, XEvent *e);
+static void handle_key_press(WM *wm, XEvent *e);
+static void handle_leave_notify(WM *wm, XEvent *e);
+static void handle_map_request(WM *wm, XEvent *e);
+static void handle_property_notify(WM *wm, XEvent *e);
+static void handle_selection_notify(WM *wm, XEvent *e);
 static bool is_func_click(WM *wm, Widget_type type, Buttonbind *b, XEvent *e);
 static void focus_clicked_client(WM *wm, Window win);
 static void config_managed_client(WM *wm, Client *c);
@@ -55,12 +65,12 @@ void handle_event(WM *wm, XEvent *e)
     {
         [ButtonPress]       = handle_button_press,
         [ConfigureRequest]  = handle_config_request,
+        [DestroyNotify]     = handle_destroy_notify,
         [EnterNotify]       = handle_enter_notify,
         [Expose]            = handle_expose,
         [KeyPress]          = handle_key_press,
         [LeaveNotify]       = handle_leave_notify,
         [MapRequest]        = handle_map_request,
-        [UnmapNotify]       = handle_unmap_notify,
         [PropertyNotify]    = handle_property_notify,
         [SelectionNotify]   = handle_selection_notify,
     };
@@ -68,7 +78,7 @@ void handle_event(WM *wm, XEvent *e)
         event_handlers[e->type](wm, e);
 }
 
-void handle_button_press(WM *wm, XEvent *e)
+static void handle_button_press(WM *wm, XEvent *e)
 {
     Buttonbind *b=BUTTONBIND;
     Widget_type type=get_widget_type(wm, e->xbutton.window);
@@ -102,7 +112,7 @@ static void focus_clicked_client(WM *wm, Window win)
         focus_client(wm, wm->cur_desktop, c);
 }
 
-void handle_config_request(WM *wm, XEvent *e)
+static void handle_config_request(WM *wm, XEvent *e)
 {
     XConfigureRequestEvent cr=e->xconfigurerequest;
     Client *c=win_to_client(wm, cr.window);
@@ -134,7 +144,7 @@ static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e)
     XConfigureWindow(wm->display, e->window, e->value_mask, &wc);
 }
 
-void handle_enter_notify(WM *wm, XEvent *e)
+static void handle_enter_notify(WM *wm, XEvent *e)
 {
     int x=e->xcrossing.x_root, y=e->xcrossing.y_root;
     Window win=e->xcrossing.window;
@@ -167,7 +177,7 @@ void handle_enter_notify(WM *wm, XEvent *e)
     XDefineCursor(wm->display, win, wm->cursors[act]);
 }
 
-void handle_expose(WM *wm, XEvent *e)
+static void handle_expose(WM *wm, XEvent *e)
 {
     if(e->xexpose.count)
         return;
@@ -252,7 +262,7 @@ static void update_status_area_text(WM *wm)
     draw_string(wm, b->status_area, b->status_text, &f);
 }
 
-void handle_key_press(WM *wm, XEvent *e)
+static void handle_key_press(WM *wm, XEvent *e)
 {
     if(e->xkey.window == wm->run_cmd.win)
         key_run_cmd(wm, &e->xkey);
@@ -283,7 +293,7 @@ static void key_run_cmd(WM *wm, XKeyEvent *e)
     }
 }
 
-void handle_leave_notify(WM *wm, XEvent *e)
+static void handle_leave_notify(WM *wm, XEvent *e)
 {
     Window win=e->xcrossing.window;
     Widget_type type=get_widget_type(wm, win);
@@ -295,7 +305,6 @@ void handle_leave_notify(WM *wm, XEvent *e)
         update_win_background(wm, win, wm->widget_color[CMD_CENTER_COLOR].pixel);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
-    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
 
 static void hint_leave_taskbar_button(WM *wm, Widget_type type)
@@ -315,7 +324,7 @@ static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
         wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel);
 }
 
-void handle_map_request(WM *wm, XEvent *e)
+static void handle_map_request(WM *wm, XEvent *e)
 {
     Window win=e->xmaprequest.window;
     XMapWindow(wm->display, win);
@@ -339,7 +348,10 @@ void handle_map_request(WM *wm, XEvent *e)
  * 原父窗口。銷毀窗口產生UnmapNotify事件時，xunmap.event等於新父窗口。若通
  * 過SendEvent請求來產生UnmapNotify事件（此時xunmap.send_event的值爲true）
  * ，xunmap.event就有可能是原父窗口、新父窗口、根窗口，等等。*/
-void handle_unmap_notify(WM *wm, XEvent *e)
+
+/* 現在用不上了，改用handle_destroy_notify代替，但先保留着吧。若以後需要在
+ * UnmapNotify與DestroyNotify之間需要處理事務，則再使用這個函數。
+static void handle_unmap_notify(WM *wm, XEvent *e)
 {
     XUnmapEvent *ue=&e->xunmap;
     Client *c=win_to_client(wm, ue->window);
@@ -351,13 +363,26 @@ void handle_unmap_notify(WM *wm, XEvent *e)
         update_layout(wm);
     }
 }
+*/
 
-void handle_property_notify(WM *wm, XEvent *e)
+static void handle_destroy_notify(WM *wm, XEvent *e)
+{
+    Client *c=win_to_client(wm, e->xdestroywindow.window);
+    if(c)
+    {
+        del_client(wm, c, true);
+        update_layout(wm);
+    }
+}
+
+static void handle_property_notify(WM *wm, XEvent *e)
 {
     Window win=e->xproperty.window;
     Client *c=win_to_client(wm, win);
+#if SET_FRAME_PROP
     if(c)
         update_frame_prop(wm, c);
+#endif
     switch(e->xproperty.atom)
     {
         case XA_WM_HINTS:
@@ -439,7 +464,7 @@ static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win)
     }
 }
 
-void handle_selection_notify(WM *wm, XEvent *e)
+static void handle_selection_notify(WM *wm, XEvent *e)
 {
     Window win=e->xselection.requestor;
     if(e->xselection.property==wm->utf8 && win==wm->run_cmd.win)

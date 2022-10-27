@@ -14,15 +14,5 @@
 
 void handle_events(WM *wm);
 void handle_event(WM *wm, XEvent *e);
-void handle_button_press(WM *wm, XEvent *e);
-void handle_config_request(WM *wm, XEvent *e);
-void handle_enter_notify(WM *wm, XEvent *e);
-void handle_expose(WM *wm, XEvent *e);
-void handle_key_press(WM *wm, XEvent *e);
-void handle_leave_notify(WM *wm, XEvent *e);
-void handle_map_request(WM *wm, XEvent *e);
-void handle_unmap_notify(WM *wm, XEvent *e);
-void handle_property_notify(WM *wm, XEvent *e);
-void handle_selection_notify(WM *wm, XEvent *e);
 
 #endif

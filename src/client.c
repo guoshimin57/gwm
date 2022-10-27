@@ -186,7 +186,6 @@ static void frame_client(WM *wm, Client *c)
 
 void update_frame_prop(WM *wm, Client *c)
 {
-#if SET_FRAME_PROP
     int n=0;
     Atom *p=XListProperties(wm->display, c->win, &n);
     if(p)
@@ -202,7 +201,6 @@ void update_frame_prop(WM *wm, Client *c)
                     PropModeReplace, prop, total);
         XFree(p);
     }
-#endif
 }
 
 void create_title_bar(WM *wm, Client *c)
@@ -269,6 +267,7 @@ void del_client(WM *wm, Client *c, bool change_focus)
 {
     if(c)
     {
+        XDestroyWindow(wm->display, c->frame);
         if(c->area_type == ICONIFY_AREA)
             del_icon(wm, c);
         del_client_node(c);
