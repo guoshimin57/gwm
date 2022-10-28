@@ -34,46 +34,14 @@ void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned 
 
 void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
 {
-    int ox=menu->x, oy=menu->y;
     if(e->type == ButtonPress)
     {
         XButtonEvent *b=&e->xbutton;
         int x=b->x_root-b->x, y=b->y_root-b->y;
-        set_menu_pos_for_click(wm, bind, x, y, menu);
+        set_pos_for_click(wm, bind, x, y, &menu->x, &menu->y,
+            menu->w*menu->col, menu->h*menu->row);
     }
     XMoveWindow(wm->display, menu->win, menu->x, menu->y);
     XMapRaised(wm->display, menu->win);
     XMapWindow(wm->display, menu->win);
-    menu->x=ox, menu->y=oy;
-}
-
-void set_menu_pos_for_click(WM *wm, Window win, int x, int y, Menu *menu)
-{
-    unsigned int mh=menu->h*menu->row, mw=menu->w*menu->col,
-                 sw=wm->screen_width, w, h;
-
-    get_drawable_size(wm, win, &w, &h);
-
-    if(x < 0) // win左邊出屏
-        w=x+w, x=0;
-    if(x+w > sw) // win右邊出屏
-        w=sw-x;
-
-    if(x+mw <= wm->screen_width) // 在win的右邊能顯示完整的菜單
-        menu->x=x;
-    else if(x+w >= mw) // 在win的左邊能顯示完整的菜單
-        menu->x=x+w-mw;
-    else if(x+w/2 <= wm->screen_width/2) // win在屏幕的左半部
-        menu->x=wm->screen_width-mw;
-    else // win在屏幕的右半部
-        menu->x=0;
-
-    if(y+h+mh <= wm->screen_height) // 在win下能顯示完整的菜單
-        menu->y=y+h;
-    else if(y >= mh) // 在win上能顯示完整的菜單
-        menu->y=y-mh;
-    else if(y+h/2 <= wm->screen_height/2) // win在屏幕的上半部
-        menu->y=wm->screen_height-mh;
-    else // win在屏幕的下半部
-        menu->y=0;
 }

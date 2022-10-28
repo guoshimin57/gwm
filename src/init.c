@@ -156,11 +156,10 @@ static void create_status_area(WM *wm)
 static void create_cmd_center(WM *wm)
 {
     unsigned int n=CMD_CENTER_ITEM_N, col=CMD_CENTER_COL,
-                 w=CMD_CENTER_ITEM_WIDTH, h=CMD_CENTER_ITEM_HEIGHT,
-                 i=TASKBAR_BUTTON_INDEX(CMD_CENTER_ITEM);
-    int x=TASKBAR_BUTTON_WIDTH*i, y=wm->screen_height-wm->taskbar.h;
-    create_menu(wm, &wm->cmd_center, n, col, w, h, wm->widget_color[CMD_CENTER_COLOR].pixel);
-    set_menu_pos_for_click(wm, wm->taskbar.buttons[i], x, y, &wm->cmd_center);
+        w=CMD_CENTER_ITEM_WIDTH, h=CMD_CENTER_ITEM_HEIGHT;
+    unsigned long color=wm->widget_color[CMD_CENTER_COLOR].pixel;
+
+    create_menu(wm, &wm->cmd_center, n, col, w, h, color);
 }
 
 static void create_run_cmd_entry(WM *wm)

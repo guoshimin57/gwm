@@ -79,8 +79,12 @@ Widget_type get_widget_type(WM *wm, Window win)
     if(win == wm->taskbar.status_area)
         return STATUS_AREA;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
         if(c->area_type==ICONIFY_AREA && win==c->icon->win)
             return CLIENT_ICON;
+        else if(win == c->hint_win)
+            return CLIENT_HINT_WIN;
+    }
     for(type=CMD_CENTER_ITEM_BEGIN; type<=CMD_CENTER_ITEM_END; type++)
         if(win == wm->cmd_center.items[CMD_CENTER_ITEM_INDEX(type)])
             return type;
@@ -257,4 +261,35 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
         strcat(result, p);
     va_end(ap);
     return result;
+}
+
+/* 坐標均對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
+void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph)
+{
+    unsigned int cw, ch, sw=wm->screen_width, sh=wm->screen_height;
+
+    get_drawable_size(wm, click, &cw, &ch);
+
+    if(cx < 0) // 窗口click左邊出屏
+        cw=cx+pw, cx=0;
+    if(cx+cw > sw) // 窗口click右邊出屏
+        cw=sw-cx;
+
+    if(cx+pw <= sw) // 在窗口click的右邊能顯示完整的菜單
+        *px=cx;
+    else if(cx+cw >= pw) // 在窗口click的左邊能顯示完整的菜單
+        *px=cx+cw-pw;
+    else if(cx+cw/2 <= sw/2) // 窗口click在屏幕的左半部
+        *px=sw-pw;
+    else // 窗口click在屏幕的右半部
+        *px=0;
+
+    if(cy+ch+ph <= sh) // 在窗口click下能顯示完整的菜單
+        *py=cy+ch;
+    else if(cy >= ph) // 在窗口click上能顯示完整的菜單
+        *py=cy-ph;
+    else if(cy+ch/2 <= sh/2) // 窗口click在屏幕的上半部
+        *py=sh-ph;
+    else // 窗口click在屏幕的下半部
+        *py=0;
 }

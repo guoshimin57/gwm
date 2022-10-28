@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <time.h>
 #include "gwm.h"
 #include "handler.h"
 #include "client.h"
@@ -25,6 +26,9 @@ static void handle_button_press(WM *wm, XEvent *e);
 static void handle_config_request(WM *wm, XEvent *e);
 static void handle_destroy_notify(WM *wm, XEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
+static void handle_pointer_hovers(WM *wm, Window hover, Widget_type type);
+static void handle_pointer_hover(WM *wm, Window hover, Window *hint, void (*handler)(WM *, Window));
+static void handle_pointer_hover_for_icon(WM *wm, Window win);
 static void handle_expose(WM *wm, XEvent *e);
 static void handle_key_press(WM *wm, XEvent *e);
 static void handle_leave_notify(WM *wm, XEvent *e);
@@ -36,6 +40,7 @@ static void focus_clicked_client(WM *wm, Window win);
 static void config_managed_client(WM *wm, Client *c);
 static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 static void update_icon_text(WM *wm, Window win);
+static void update_client_hint_win_text(WM *wm, Window win);
 static void update_taskbar_button_text(WM *wm, size_t index);
 static void update_cmd_center_button_text(WM *wm, size_t index);
 static void update_title_area_text(WM *wm, Client *c);
@@ -148,8 +153,8 @@ static void handle_enter_notify(WM *wm, XEvent *e)
 {
     int x=e->xcrossing.x_root, y=e->xcrossing.y_root;
     Window win=e->xcrossing.window;
-    Client *c=win_to_client(wm, win);
     Widget_type type=get_widget_type(wm, win);
+    Client *c=win_to_client(wm, win);
     Pointer_act act=NO_OP;
     Move_info m={x, y, 0, 0};
 
@@ -175,6 +180,67 @@ static void handle_enter_notify(WM *wm, XEvent *e)
             wm->widget_color[ENTERED_CLOSE_BUTTON_COLOR].pixel :
             wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
     XDefineCursor(wm->display, win, wm->cursors[act]);
+    handle_pointer_hovers(wm, win, type);
+}
+
+static void handle_pointer_hovers(WM *wm, Window hover, Widget_type type)
+{
+    if(type == CLIENT_ICON)
+    {
+        Client *c=win_to_iconic_state_client(wm, hover);
+        handle_pointer_hover(wm, hover, &c->hint_win, handle_pointer_hover_for_icon);
+    }
+}
+
+static void handle_pointer_hover(WM *wm, Window hover, Window *hint, void (*handler)(WM *, Window))
+{
+    XEvent ev;
+    bool pause=false;
+    unsigned int diff_time; // 單位爲分秒，即十分之一秒
+    clock_t last_time=clock();
+    while(1)
+    {
+        if(XCheckMaskEvent(wm->display, ROOT_EVENT_MASK|PointerMotionMask, &ev))
+        {
+            handle_event(wm, &ev);
+            if(ev.type == MotionNotify && ev.xmotion.window==hover)
+            {
+                last_time=clock();
+                pause=false;
+                if(*hint)
+                    XDestroyWindow(wm->display, *hint), *hint=None;
+            }
+            else if(ev.type==LeaveNotify && ev.xcrossing.window==hover)
+            {
+                if(*hint)
+                    XDestroyWindow(wm->display, *hint), *hint=None;
+                break;
+            }
+        }
+        diff_time=10*(clock()-last_time)/CLOCKS_PER_SEC;
+        if(!pause && diff_time>=HOVER_TIME)
+            handler(wm, hover), pause=true;
+    }
+}
+
+static void handle_pointer_hover_for_icon(WM *wm, Window win)
+{
+    Client *c=win_to_iconic_state_client(wm, win);
+    if(c)
+    {
+        Window root, child;
+        unsigned int cw, tw, mask, h=CLIENT_HINT_WIN_HEIGHT;
+        int x=c->icon->x+c->icon->w, y=c->icon->y+c->icon->h, rx, ry, wx, wy;
+        get_string_size(wm, wm->font[HINT_FONT], c->class_name, &cw, NULL);
+        get_string_size(wm, wm->font[HINT_FONT], c->icon->title_text, &tw, NULL);
+        if(XQueryPointer(wm->display, win, &root, &child, &rx, &ry, &wx, &wy, &mask))
+            set_pos_for_click(wm, win, rx, ry, &x, &y, cw+tw, CLIENT_HINT_WIN_HEIGHT);
+        c->hint_win=XCreateSimpleWindow(wm->display, wm->root_win, x, y, cw+tw,
+            h, 0, 0, wm->widget_color[HINT_WIN_COLOR].pixel);
+        set_override_redirect(wm, c->hint_win);
+        XSelectInput(wm->display, c->hint_win, ExposureMask);
+        XMapWindow(wm->display, c->hint_win);
+    }
 }
 
 static void handle_expose(WM *wm, XEvent *e)
@@ -185,6 +251,8 @@ static void handle_expose(WM *wm, XEvent *e)
     Widget_type type=get_widget_type(wm, win);
     if(type == CLIENT_ICON)
         update_icon_text(wm, win);
+    else if(type == CLIENT_HINT_WIN)
+        update_client_hint_win_text(wm, win);
     else if(IS_TASKBAR_BUTTON(type))
         update_taskbar_button_text(wm, TASKBAR_BUTTON_INDEX(type));
     else if(IS_CMD_CENTER_ITEM(type))
@@ -211,8 +279,27 @@ static void update_icon_text(WM *wm, Window win)
         if(!i->is_short_text)
         {
             String_format f={{w, 0, i->w, i->h}, CENTER_LEFT, false, 0,
-                wm->text_color[ICON_TITLE_TEXT_COLOR], ICON_TITLE_FONT};
+                wm->text_color[TITLE_TEXT_COLOR], TITLE_FONT};
             draw_string(wm, i->win, i->title_text, &f);
+        }
+    }
+}
+
+static void update_client_hint_win_text(WM *wm, Window win)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        if(c->hint_win == win)
+        {
+            unsigned int cw, tw;
+            get_string_size(wm, wm->font[HINT_FONT], c->class_name, &cw, NULL);
+            get_string_size(wm, wm->font[HINT_FONT], c->icon->title_text, &tw, NULL);
+            String_format f={{0, 0, cw, CLIENT_HINT_WIN_HEIGHT}, CENTER,
+                false, 0, wm->text_color[CLASS_TEXT_COLOR], HINT_FONT};
+            draw_string(wm, win, c->class_name, &f);
+            f.r.x=cw, f.r.w=tw, f.fg=wm->text_color[TITLE_TEXT_COLOR];
+            draw_string(wm, win, c->icon->title_text, &f);
+            break;
         }
     }
 }

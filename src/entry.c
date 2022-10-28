@@ -43,7 +43,7 @@ void update_entry_text(WM *wm, Entry *e)
     String_format f={{ENTRY_TEXT_INDENT, 0, e->w-2*ENTRY_TEXT_INDENT, e->h},
         CENTER_LEFT, false, 0,
         e->text[0]==L'\0' ? wm->text_color[HINT_TEXT_COLOR] :
-        wm->text_color[ENTRY_TEXT_COLOR]};
+        wm->text_color[ENTRY_TEXT_COLOR], ENTRY_FONT};
     int x=get_entry_cursor_x(wm, e);
     XClearArea(wm->display, e->win, 0, 0, e->w, e->h, False); 
     draw_wcs(wm, e->win, e->text[0]==L'\0' ? e->hint : e->text, &f);

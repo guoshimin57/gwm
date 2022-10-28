@@ -427,7 +427,7 @@ static void create_icon(WM *wm, Client *c)
         p->w, p->h, ICON_BORDER_WIDTH,
         wm->widget_color[NORMAL_BORDER_COLOR].pixel,
         wm->widget_color[ICON_COLOR].pixel);
-    XSelectInput(wm->display, c->icon->win, BUTTON_EVENT_MASK);
+    XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
 #if USE_IMAGE_ICON
     set_icon_image(wm, c);
 #endif
@@ -446,7 +446,7 @@ void update_icon_area(WM *wm)
             i->w=MIN(get_icon_draw_width(wm, c), ICON_WIN_WIDTH_MAX);
             if(have_same_class_icon_client(wm, c))
             {
-                get_string_size(wm, wm->font[ICON_TITLE_FONT], i->title_text, &w, NULL);
+                get_string_size(wm, wm->font[TITLE_FONT], i->title_text, &w, NULL);
                 i->w=MIN(i->w+w, ICON_WIN_WIDTH_MAX);
                 i->is_short_text=false;
             }
@@ -474,7 +474,7 @@ void draw_icon(WM *wm, Client *c)
 {
     Icon *i=c->icon;
     String_format f={{0, 0, i->w, i->h}, CENTER_LEFT, false, 0,
-        wm->text_color[ICON_CLASS_TEXT_COLOR], ICON_CLASS_FONT};
+        wm->text_color[CLASS_TEXT_COLOR], CLASS_FONT};
 #if USE_IMAGE_ICON
     if(c->image)
         draw_string(wm, i->win, "", &f), draw_icon_image(wm, c);
