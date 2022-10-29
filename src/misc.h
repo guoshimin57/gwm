@@ -33,5 +33,6 @@ void get_drawable_size(WM *wm, Drawable drw, unsigned int *w, unsigned int *h);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
 void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph);
+bool is_win_exist(WM *wm, Window win, Window parent);
 
 #endif

@@ -16,6 +16,10 @@
 #include <X11/keysymdef.h>
 #include <X11/XF86keysym.h>
 
+#define TO_STR(value) _TO_STR(value) // 把數字轉換爲字符串常量
+#define _TO_STR(value) # value 
+#define ROUND(value) ((int)((value)+0.5)) // 把浮點數四舍五入後轉換爲整數
+
 #define WM_KEY Mod4Mask // 窗口管理器的基本功能轉換鍵
 #define WM_SKEY (WM_KEY|ShiftMask) // 與WM_KEY功能相關功能轉換鍵，通常表示相反
 #define CMD_KEY (WM_KEY|Mod1Mask) // 與系統命令相關功能的轉換鍵
@@ -33,19 +37,17 @@
 #define DEFAULT_FIXED_AREA_RATIO 0.15 // 默認的固定區域比例
 #define DEFAULT_N_MAIN_MAX 1 // 默認的主區域最大窗口數量
 #define AUTOSTART "~/.config/gwm/autostart.sh" // 在gwm剛啓動時執行的腳本
-
-#define TO_STR(value) _TO_STR(value) // 把數字轉換爲字符串常量
-#define _TO_STR(value) # value 
-
-#define ROUND(value) ((int)((value)+0.5)) // 把浮點數四舍五入後轉換爲整數
+#define CMD_CENTER_COL 4 // 操作中心按鈕列數
+#define MOVE_RESIZE_INC 8 // 移動窗口、調整窗口尺寸的步進值，單位爲像素。僅當窗口未有效設置尺寸特性時才使用它。
 
 #define DEFAULT_FONT_PIXEL_SIZE 24 // 默認字體大小，單位爲像素
 #define TITLE_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 標題欄的字體大小，單位爲像素
 #define CMD_CENTER_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 操作中心的字體大小，單位爲像素
 #define TASKBAR_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 任務欄的字體大小，單位爲像素
 #define ENTRY_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 輸入構件的字體大小，單位爲像素
-#define RESIZE_WIN_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 調整尺寸的提示窗口的字體大小，單位爲像素
 #define HINT_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 用於提示的字體大小，單位爲像素
+
+/* 以下尺寸根據相應字體來確定就有不錯的效果 */
 #define BORDER_WIDTH ROUND(DEFAULT_FONT_PIXEL_SIZE/8.0) // 窗口框架边框的宽度，单位为像素
 #define TITLE_BAR_HEIGHT ROUND(TITLE_FONT_PIXEL_SIZE*4/3.0) // 窗口標題欄的高度，單位爲像素
 #define TITLE_BUTTON_WIDTH TITLE_BAR_HEIGHT // 窗口按鈕的寬度，單位爲像素
@@ -61,14 +63,10 @@
 #define ICONS_SPACE ROUND(TASKBAR_HEIGHT/2.0) // 縮微化窗口的間隔，單位爲像素
 #define CMD_CENTER_ITEM_WIDTH (CMD_CENTER_FONT_PIXEL_SIZE*7) // 操作中心按鈕的寬度，單位爲像素
 #define CMD_CENTER_ITEM_HEIGHT ROUND(CMD_CENTER_FONT_PIXEL_SIZE*1.5) // 操作中心按鈕的高度，單位爲像素
-#define CMD_CENTER_COL 4 // 操作中心按鈕列數
 #define ENTRY_TEXT_INDENT ROUND(ENTRY_FONT_PIXEL_SIZE/4.0)
 #define RUN_CMD_ENTRY_WIDTH (ENTRY_FONT_PIXEL_SIZE*15+ENTRY_TEXT_INDENT*2) // 運行命令的輸入構件的寬度，單位爲像素
 #define RUN_CMD_ENTRY_HEIGHT ROUND(ENTRY_FONT_PIXEL_SIZE*4/3.0) // 運行命令的輸入構件的寬度，單位爲像素
-#define RESIZE_WIN_WIDTH (RESIZE_WIN_FONT_PIXEL_SIZE*10) // 調整尺寸的提示窗口的寬度，單位爲像素
-#define RESIZE_WIN_HEIGHT ROUND(RESIZE_WIN_FONT_PIXEL_SIZE*4/3.0) // 調整尺寸的提示窗口的高度，單位爲像素
-#define CLIENT_HINT_WIN_HEIGHT ROUND(HINT_FONT_PIXEL_SIZE*4/3.0) // 與客戶窗口相應的提示窗口的高度，單位爲像素
-#define MOVE_RESIZE_INC 8 // 移動窗口、調整窗口尺寸的步進值，單位爲像素。僅當窗口未有效設置尺寸特性時才使用它。
+#define HINT_WIN_HEIGHT ROUND(HINT_FONT_PIXEL_SIZE*4/3.0) // 提示窗口的高度，單位爲像素
 
 #define RUN_CMD_ENTRY_HINT L"請輸入命令，然後按回車執行"
 #define DEFAULT_FONT_NAME "monospace:pixelsize="TO_STR(DEFAULT_FONT_PIXEL_SIZE) // 默認字體名
@@ -83,7 +81,6 @@
     [TITLE_FONT]            = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
     [STATUS_AREA_FONT]      = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
     [ENTRY_FONT]            = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
-    [RESIZE_WIN_FONT]       = "monospace:pixelsize="TO_STR(RESIZE_WIN_FONT_PIXEL_SIZE),         \
     [HINT_FONT]             = "monospace:pixelsize="TO_STR(HINT_FONT_PIXEL_SIZE),         \
 }
 
@@ -104,8 +101,7 @@
     [ICON_AREA_COLOR]             = "grey11",       /* 圖標區域的顏色名         */ \
     [STATUS_AREA_COLOR]           = "grey21",       /* 狀態區域的顏色名         */ \
     [ENTRY_COLOR]                 = "white",        /* 單行文本輸入框的顏色名   */ \
-    [RESIZE_WIN_COLOR]            = "grey21",       /* 調整尺寸提示窗口的顏色名 */ \
-    [HINT_WIN_COLOR]              = "grey21",       /* 提示窗口的顏色名 */ \
+    [HINT_WIN_COLOR]              = "grey21",       /* 提示窗口的顏色名 */         \
 }
 
 #define TEXT_COLOR_NAME (const char *[]) /* 文本顏色名 */                          \
@@ -119,7 +115,6 @@
     [CMD_CENTER_ITEM_TEXT_COLOR] = "white",     /* 操作中心菜單項文本的顏色名 */   \
     [ENTRY_TEXT_COLOR]           = "black",     /* 輸入構件文本的顏色名 */         \
     [HINT_TEXT_COLOR]            = "grey61",    /* 用於提示的文本的顏色名 */       \
-    [RESIZE_WIN_TEXT_COLOR]      = "white",     /* 調整尺寸提示窗口文本的顏色名 */ \
 }
 
 #define TITLE_BUTTON_TEXT (const char *[]) /* 窗口標題欄按鈕的標籤（從左至右）*/ \

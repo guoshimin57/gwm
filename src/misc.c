@@ -73,18 +73,16 @@ Widget_type get_widget_type(WM *wm, Window win)
         return ROOT_WIN;
     if(win == wm->run_cmd.win)
         return RUN_CMD_ENTRY;
+    if(win == wm->hint_win)
+        return HINT_WIN;
     for(type=TASKBAR_BUTTON_BEGIN; type<=TASKBAR_BUTTON_END; type++)
         if(win == wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)])
             return type;
     if(win == wm->taskbar.status_area)
         return STATUS_AREA;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-    {
         if(c->area_type==ICONIFY_AREA && win==c->icon->win)
             return CLIENT_ICON;
-        else if(win == c->hint_win)
-            return CLIENT_HINT_WIN;
-    }
     for(type=CMD_CENTER_ITEM_BEGIN; type<=CMD_CENTER_ITEM_END; type++)
         if(win == wm->cmd_center.items[CMD_CENTER_ITEM_INDEX(type)])
             return type;
@@ -213,7 +211,7 @@ void clear_wm(WM *wm)
     free(wm->taskbar.status_text);
     XDestroyWindow(wm->display, wm->cmd_center.win);
     XDestroyWindow(wm->display, wm->run_cmd.win);
-    XDestroyWindow(wm->display, wm->resize_win);
+    XDestroyWindow(wm->display, wm->hint_win);
     XFreeModifiermap(wm->mod_map);
     for(size_t i=0; i<POINTER_ACT_N; i++)
         XFreeCursor(wm->display, wm->cursors[i]);
@@ -292,4 +290,15 @@ void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, u
         *py=sh-ph;
     else // 窗口click在屏幕的下半部
         *py=0;
+}
+
+bool is_win_exist(WM *wm, Window win, Window parent)
+{
+    Window root, pwin, *child=NULL;
+    unsigned int n;
+    if(XQueryTree(wm->display, parent, &root, &pwin, &child, &n))
+        for(size_t i=0; i<n; i++)
+            if(win == child[i])
+                { XFree(child); return true; }
+    return false;
 }

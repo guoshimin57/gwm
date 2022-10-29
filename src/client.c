@@ -28,6 +28,7 @@ static Rect get_button_rect(Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_normal_client(WM *wm, unsigned int desktop_n, Client *c);
+static void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
 static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type);
 
 void add_client(WM *wm, Window win)
@@ -267,7 +268,12 @@ void del_client(WM *wm, Client *c, bool change_focus)
 {
     if(c)
     {
+        if(is_win_exist(wm, c->win, c->frame))
+            XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
         XDestroyWindow(wm->display, c->frame);
+        /* XDestroyWindow可能觸發EnterNotify事件，但此時frame已經銷毀了，
+           因而會觸發X錯誤事件，應忽略這些錯誤事件。 */
+        XSync(wm->display, True);
         if(c->area_type == ICONIFY_AREA)
             del_icon(wm, c);
         del_client_node(c);
@@ -386,15 +392,15 @@ static bool is_normal_client(WM *wm, unsigned int desktop_n, Client *c)
     return false;
 }
 
-void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
+static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
 {
     if(c && c!=wm->clients)
     {
         Desktop *d=wm->desktop+desktop_n-1;
         if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
-            XSetWindowBorder(wm->display, c->icon->win, c==d->cur_focus_client ?
-                wm->widget_color[CURRENT_BORDER_COLOR].pixel :
-                wm->widget_color[NORMAL_BORDER_COLOR].pixel);
+            update_win_background(wm, c->icon->win, c==d->cur_focus_client ?
+                wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel :
+                wm->widget_color[ICON_AREA_COLOR].pixel);
         else
             update_frame(wm, desktop_n,  c);
     }

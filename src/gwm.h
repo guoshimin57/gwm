@@ -77,7 +77,7 @@ typedef enum area_type_tag Area_type;
 enum widget_type_tag // 構件類型
 {
     UNDEFINED, ROOT_WIN, STATUS_AREA, RUN_CMD_ENTRY,
-    CLIENT_WIN, CLIENT_FRAME, TITLE_AREA, CLIENT_HINT_WIN, CLIENT_ICON,
+    CLIENT_WIN, CLIENT_FRAME, TITLE_AREA, HINT_WIN, CLIENT_ICON,
 
     MAIN_BUTTON, SECOND_BUTTON, FIXED_BUTTON, FLOAT_BUTTON,
     ICON_BUTTON, MAX_BUTTON, CLOSE_BUTTON,
@@ -106,7 +106,7 @@ enum font_type_tag // 字體類型, 按字符顯示位置分類
 {
     TITLE_AREA_FONT, TITLE_BUTTON_FONT, CMD_CENTER_FONT,
     TASKBAR_BUTTON_FONT, CLASS_FONT, TITLE_FONT, STATUS_AREA_FONT,
-    ENTRY_FONT, RESIZE_WIN_FONT, HINT_FONT,
+    ENTRY_FONT, HINT_FONT,
     FONT_N
 };
 typedef enum font_type_tag Font_type;
@@ -131,8 +131,8 @@ struct icon_tag // 縮微窗口相關信息
 typedef struct icon_tag Icon;
 
 struct client_tag // 客戶窗口相關信息
-{   /* 分別爲客戶窗口、父窗口、標題區、標題區按鈕、提示窗口 */
-    Window win, frame, title_area, buttons[TITLE_BUTTON_N], hint_win;
+{   /* 分別爲客戶窗口、父窗口、標題區、標題區按鈕 */
+    Window win, frame, title_area, buttons[TITLE_BUTTON_N];
     int x, y; // win的橫、縱坐標
     /* win的寬、高、標題欄高、邊框寬、所属虚拟桌面的掩碼 */
     unsigned int w, h, title_bar_h, border_w, desktop_mask;
@@ -212,7 +212,7 @@ enum widget_color_tag // 構件顏色類型
     ENTERED_NORMAL_BUTTON_COLOR, ENTERED_CLOSE_BUTTON_COLOR,
     NORMAL_TASKBAR_BUTTON_COLOR, CHOSEN_TASKBAR_BUTTON_COLOR,
     CMD_CENTER_COLOR, ICON_COLOR, ICON_AREA_COLOR, STATUS_AREA_COLOR,
-    ENTRY_COLOR, RESIZE_WIN_COLOR, HINT_WIN_COLOR,
+    ENTRY_COLOR, HINT_WIN_COLOR,
     WIDGET_COLOR_N 
 };
 typedef enum widget_color_tag Widget_color;
@@ -223,7 +223,6 @@ enum text_color_tag // 文本顏色類型
     TASKBAR_BUTTON_TEXT_COLOR, STATUS_AREA_TEXT_COLOR,
     CLASS_TEXT_COLOR, TITLE_TEXT_COLOR,
     CMD_CENTER_ITEM_TEXT_COLOR, ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
-    RESIZE_WIN_TEXT_COLOR,
     TEXT_COLOR_N 
 };
 typedef enum text_color_tag Text_color;
@@ -248,7 +247,7 @@ struct wm_tag // 窗口管理器相關信息
     unsigned int cur_desktop; // 當前虛擬桌面編號
     Desktop desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
-    Window root_win, resize_win; // 根窗口、調整尺寸提示窗口
+    Window root_win, resize_win, hint_win; // 根窗口、調整尺寸提示窗口、提示窗口
     GC gc; // 窗口管理器的圖形信息
     Visual *visual; // 着色類型
     Colormap colormap; // 着色圖

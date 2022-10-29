@@ -27,7 +27,6 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
 void update_frame(WM *wm, unsigned int desktop_n, Client *c);
 Client *win_to_iconic_state_client(WM *wm, Window win);
 void focus_client(WM *wm, unsigned int desktop_n, Client *c);
-void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
 void raise_client(WM *wm, unsigned int desktop_n);
 void move_client(WM *wm, Client *from, Client *to, Area_type type);
 void swap_clients(WM *wm, Client *a, Client *b);

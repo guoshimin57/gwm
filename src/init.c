@@ -32,7 +32,7 @@ static void create_icon_area(WM *wm);
 static void create_status_area(WM *wm);
 static void create_cmd_center(WM *wm);
 static void create_run_cmd_entry(WM *wm);
-static void create_resize_win(WM *wm);
+static void create_hint_win(WM *wm);
 static void create_clients(WM *wm);
 
 void init_wm(WM *wm)
@@ -63,7 +63,7 @@ void init_wm(WM *wm)
     create_taskbar(wm);
     create_cmd_center(wm);
     create_run_cmd_entry(wm);
-    create_resize_win(wm);
+    create_hint_win(wm);
     create_clients(wm);
     update_layout(wm);
     grab_keys(wm);
@@ -170,15 +170,12 @@ static void create_run_cmd_entry(WM *wm)
     create_entry(wm, &wm->run_cmd, &r, RUN_CMD_ENTRY_HINT);
 }
 
-static void create_resize_win(WM *wm)
+static void create_hint_win(WM *wm)
 {
-    wm->resize_win=XCreateSimpleWindow(wm->display, wm->root_win,
-        (wm->screen_width-RESIZE_WIN_WIDTH)/2,
-        (wm->screen_height-RESIZE_WIN_HEIGHT)/2,
-        RESIZE_WIN_WIDTH, RESIZE_WIN_HEIGHT,
-        0, 0, wm->widget_color[RESIZE_WIN_COLOR].pixel);
-    set_override_redirect(wm, wm->resize_win);
-    XSelectInput(wm->display, wm->resize_win, ExposureMask);
+    wm->hint_win=XCreateSimpleWindow(wm->display, wm->root_win, 0, 0, 1,
+        1, 0, 0, wm->widget_color[HINT_WIN_COLOR].pixel);
+    set_override_redirect(wm, wm->hint_win);
+    XSelectInput(wm->display, wm->hint_win, ExposureMask);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */

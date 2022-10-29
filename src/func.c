@@ -27,7 +27,7 @@
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
 static bool get_valid_move_resize(WM *wm, Client *c, Delta_rect *d);
 static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
-static void update_resize_win(WM *wm, Client *c);
+static void update_hint_win_for_resize(WM *wm, Client *c);
 static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act);
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
@@ -67,7 +67,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         if(get_valid_move_resize(wm, c, &d))
         {
             move_resize_client(wm, c, &d);
-            update_resize_win(wm, c);
+            update_hint_win_for_resize(wm, c);
             while(1)
             {
                 XEvent ev;
@@ -75,7 +75,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
                 if( ev.type==KeyRelease && ev.xkey.state==e->xkey.state
                     && ev.xkey.keycode==e->xkey.keycode)
                 {
-                    XUnmapWindow(wm->display, wm->resize_win);
+                    XUnmapWindow(wm->display, wm->hint_win);
                     break;
                 }
                 else
@@ -278,7 +278,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
             if(get_valid_move_resize(wm, c, &d))
             {
                 move_resize_client(wm, c, &d);
-                update_resize_win(wm, c);
+                update_hint_win_for_resize(wm, c);
                 if(arg.resize)
                 {
                     if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
@@ -294,18 +294,21 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
             handle_event(wm, &ev);
     }while(!(ev.type==ButtonRelease && ev.xbutton.button==e->xbutton.button));
     XUngrabPointer(wm->display, CurrentTime);
-    XUnmapWindow(wm->display, wm->resize_win);
+    XUnmapWindow(wm->display, wm->hint_win);
 }
 
-static void update_resize_win(WM *wm, Client *c)
+static void update_hint_win_for_resize(WM *wm, Client *c)
 {
     char str[BUFSIZ];
-    String_format f={{0, 0, RESIZE_WIN_WIDTH, RESIZE_WIN_HEIGHT}, CENTER,
-        false, 0, wm->text_color[RESIZE_WIN_TEXT_COLOR], RESIZE_WIN_FONT};
     unsigned int w=get_client_col(wm, c), h=get_client_row(wm, c);
     sprintf(str, "(%d, %d) %ux%u", c->x, c->y, w, h);
-    XMapRaised(wm->display, wm->resize_win);
-    draw_string(wm, wm->resize_win, str, &f);
+    get_string_size(wm, wm->font[HINT_FONT], str, &w, NULL);
+    int x=(wm->screen_width-w)/2, y=(wm->screen_height-HINT_WIN_HEIGHT)/2;
+    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, HINT_WIN_HEIGHT);
+    XMapRaised(wm->display, wm->hint_win);
+    String_format f={{0, 0, w, HINT_WIN_HEIGHT}, CENTER,
+        false, 0, wm->text_color[HINT_TEXT_COLOR], HINT_FONT};
+    draw_string(wm, wm->hint_win, str, &f);
 }
 
 static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act)
