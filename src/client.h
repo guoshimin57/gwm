@@ -28,12 +28,13 @@ void update_frame(WM *wm, unsigned int desktop_n, Client *c);
 Client *win_to_iconic_state_client(WM *wm, Window win);
 void focus_client(WM *wm, unsigned int desktop_n, Client *c);
 void raise_client(WM *wm, unsigned int desktop_n);
+Client *get_next_client(WM *wm, Client *c);
+Client *get_prev_client(WM *wm, Client *c);
 void move_client(WM *wm, Client *from, Client *to, Area_type type);
 void swap_clients(WM *wm, Client *a, Client *b);
 int compare_client_order(WM *wm, Client *c1, Client *c2);
 bool send_event(WM *wm, Atom protocol, Window win);
-Client *get_next_client(WM *wm, Client *c);
-Client *get_prev_client(WM *wm, Client *c);
+bool is_last_typed_client(WM *wm, Client *c, Area_type type);
 Client *get_area_head(WM *wm, Area_type type);
 
 #endif

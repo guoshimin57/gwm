@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <wchar.h>
+#include <Imlib2.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 #include <X11/Xft/Xft.h>
@@ -118,7 +119,6 @@ struct rectangle_tag // 矩形窗口的坐標和尺寸
 };
 typedef struct rectangle_tag Rect;
 
-#include<Imlib2.h>
 struct icon_tag // 縮微窗口相關信息
 {
     Window win; // 縮微窗口
@@ -131,8 +131,8 @@ struct icon_tag // 縮微窗口相關信息
 typedef struct icon_tag Icon;
 
 struct client_tag // 客戶窗口相關信息
-{   /* 分別爲客戶窗口、父窗口、標題區、標題區按鈕 */
-    Window win, frame, title_area, buttons[TITLE_BUTTON_N];
+{   /* 分別爲客戶窗口、父窗口、標題區、標題區按鈕、臨時窗口對應的主窗口 */
+    Window win, frame, title_area, buttons[TITLE_BUTTON_N], owner;
     int x, y; // win的橫、縱坐標
     /* win的寬、高、標題欄高、邊框寬、所属虚拟桌面的掩碼 */
     unsigned int w, h, title_bar_h, border_w, desktop_mask;

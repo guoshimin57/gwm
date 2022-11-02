@@ -119,11 +119,12 @@ static void set_tile_layout(WM *wm)
     unsigned int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=WIN_GAP;
 
     get_area_size(wm, &mw, &mh, &sw, &sh, &fw, &fh);
-    for(Client *next, *c=wm->clients->next; c!=wm->clients; c=c->next)
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        if(is_on_cur_desktop(wm, c))
+        Area_type type=c->area_type;
+        if( is_on_cur_desktop(wm, c)
+            && (type==MAIN_AREA || type==SECOND_AREA || type==FIXED_AREA))
         {
-            Area_type type=c->area_type;
             if(type == FIXED_AREA)
                 c->x=mw+sw+g, c->y=i++*fh, c->w=fw-g, c->h=fh-g;
             else if(type == MAIN_AREA)
@@ -131,9 +132,8 @@ static void set_tile_layout(WM *wm)
             else if(type == SECOND_AREA)
                 c->x=0, c->y=k++*sh, c->w=sw-g, c->h=sh-g;
             // 區末窗口取餘量
-            if( (type==MAIN_AREA || type==SECOND_AREA || type==FIXED_AREA)
-                && (!(next=get_next_client(wm, c)) || type!=next->area_type))
-                    c->h+=(wm->screen_height-wm->taskbar.h)%(c->h+g);
+            if(is_last_typed_client(wm, c, type))
+                c->h+=(wm->screen_height-wm->taskbar.h)%(c->h+g);
         }
     }
 }

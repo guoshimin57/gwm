@@ -17,6 +17,9 @@
        應按自身需求來確定是否要安裝它們。
     3. 此程序依賴C標準庫、libX11、libXft和Imlib2開發庫。必須安裝它們才能編譯
        此程序。
+    4. 此程序需要必要的字體，默認爲需要中文等寬字體，如wqy-zenhei-fonts，可用
+       如下命令檢測是否已經安裝了該種字體：fc-match :lang=zh:monospace。可修
+       改config.h的FONT_NAME定義來改變字體。
 
 二、安裝此程序的步驟為：
     1. cd gwm；

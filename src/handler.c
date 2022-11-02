@@ -34,6 +34,7 @@ static void handle_leave_notify(WM *wm, XEvent *e);
 static void handle_map_request(WM *wm, XEvent *e);
 static void handle_unmap_notify(WM *wm, XEvent *e);
 static void handle_property_notify(WM *wm, XEvent *e);
+static void handle_wm_transient_for_notify(WM *wm, Client *c, Window win);
 static void handle_selection_notify(WM *wm, XEvent *e);
 static bool is_func_click(WM *wm, Widget_type type, Buttonbind *b, XEvent *e);
 static void focus_clicked_client(WM *wm, Window win);
@@ -441,6 +442,8 @@ static void handle_property_notify(WM *wm, XEvent *e)
             handle_wm_name_notify(wm, c, win); break;
         case XA_WM_NORMAL_HINTS:
             handle_wm_normal_hints_notify(wm, c, win); break;
+        case XA_WM_TRANSIENT_FOR:
+            handle_wm_transient_for_notify(wm, c, win); break;
         default: break; // 或許其他的情況也應考慮，但暫時還沒遇到必要的情況
     }
 }
@@ -504,11 +507,21 @@ static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win)
     if(c && c->win==win)
     {
         update_size_hint(wm, c);
-        if(c->area_type == FLOATING_AREA)
+        if( c->area_type==FLOATING_AREA || c->area_type==ICONIFY_AREA
+            || DESKTOP(wm).cur_layout==STACK)
         {
             set_default_rect(wm, c);
             move_resize_client(wm, c, NULL);
         }
+    }
+}
+
+static void handle_wm_transient_for_notify(WM *wm, Client *c, Window win)
+{
+    if(c && c->win==win)
+    {
+        c->owner=get_transient_for(wm, win);
+        printf("tran: %s\n", c->class_name);
     }
 }
 

@@ -27,19 +27,24 @@ static void frame_client(WM *wm, Client *c);
 static Rect get_button_rect(Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
-static bool is_normal_client(WM *wm, unsigned int desktop_n, Client *c);
+static bool is_exist_client(WM *wm, Client *c);
+static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
+static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
 static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type);
 
 void add_client(WM *wm, Window win)
 {
-    Client *c=malloc_s(sizeof(Client));
+    Client *head=wm->clients, *c=malloc_s(sizeof(Client));
     memset(c, 0, sizeof(Client));
     c->win=win;
+    c->owner=get_transient_for(wm, win);
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
     update_size_hint(wm, c);
     apply_rules(wm, c);
-    add_client_node(get_area_head(wm, c->area_type), c);
+    if(c->area_type == SECOND_AREA)
+        head=get_area_head(wm, SECOND_AREA);
+    add_client_node(head, c);
     fix_area_type(wm);
     set_default_rect(wm, c);
     frame_client(wm, c);
@@ -48,8 +53,7 @@ void add_client(WM *wm, Window win)
     else
         focus_client(wm, wm->cur_desktop, c);
     grab_buttons(wm, c);
-    XDefineCursor(wm->display, c->win, wm->cursors[NO_OP]);
-    XSelectInput(wm->display, win, PropertyChangeMask);
+    XSelectInput(wm->display, win, EnterWindowMask|PropertyChangeMask);
 }
 
 static void apply_rules(WM *wm, Client *c)
@@ -110,10 +114,9 @@ void fix_area_type(WM *wm)
     {
         if(is_on_cur_desktop(wm, c))
         {
-            n++;
-            if(c->area_type==MAIN_AREA && n>m)
+            if(c->area_type==MAIN_AREA && ++n>m)
                 c->area_type=SECOND_AREA;
-            else if(c->area_type==SECOND_AREA && n<=m)
+            else if(c->area_type==SECOND_AREA && ++n<=m)
                 c->area_type=MAIN_AREA;
         }
     }
@@ -176,7 +179,9 @@ static void frame_client(WM *wm, Client *c)
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y, fr.w,
         fr.h, c->border_w, wm->widget_color[CURRENT_BORDER_COLOR].pixel, 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
+#if SET_FRAME_PROP
     update_frame_prop(wm, c);
+#endif
     if(c->title_bar_h)
         create_title_bar(wm, c);
     XAddToSaveSet(wm->display, c->win);
@@ -373,23 +378,45 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
 {
     Desktop *desktop=wm->desktop+desktop_n-1;
     Client **pp=&desktop->prev_focus_client, **pc=&desktop->cur_focus_client;
+    bool del_pc=!is_exist_client(wm, *pc), del_pp=!is_exist_client(wm, *pp);
     if(!c)
     {
-        if(!is_normal_client(wm, desktop_n, *pp))
+        if(del_pc)
+            *pc = (*pc=win_to_client(wm, (*pc)->owner)) ? *pc : *pp;
+        if( (del_pc || del_pp) &&
+            !(((*pp=win_to_client(wm, (*pp)->owner)) && (*pp != *pc))
+            || (*pp=get_prev_map_client(wm, desktop_n, *pc))
+            || (*pp=get_next_map_client(wm, desktop_n, *pc))))
             *pp=wm->clients;
-        if(!is_normal_client(wm, desktop_n, *pc))
-            *pc=*pp;
     }
     else if(c != *pc)
         *pp=*pc, *pc=c;
 }
 
-static bool is_normal_client(WM *wm, unsigned int desktop_n, Client *c)
+static bool is_exist_client(WM *wm, Client *c)
 {
     for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
-        if(p==c && p->area_type!=ICONIFY_AREA && is_on_desktop_n(desktop_n, p))
+        if(p == c)
             return true;
     return false;
+}
+
+/* 取得存儲結構意義上的下一個處於映射狀態的客戶窗口 */
+static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c)
+{
+    for(Client *p=c->next; p!=wm->clients; p=p->next)
+        if(p->area_type!=ICONIFY_AREA && is_on_desktop_n(desktop_n, p))
+            return p;
+    return NULL;
+}
+
+/* 取得存儲結構意義上的上一個處於映射狀態的客戶窗口 */
+static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c)
+{
+    for(Client *p=c->prev; p!=wm->clients; p=p->prev)
+        if(p->area_type!=ICONIFY_AREA && is_on_desktop_n(desktop_n, p))
+            return p;
+    return NULL;
 }
 
 static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
@@ -418,6 +445,24 @@ void raise_client(WM *wm, unsigned int desktop_n)
         else
             XRestackWindows(wm->display, wins, ARRAY_NUM(wins));
     }
+}
+
+/* 取得存儲結構意義上的下一個客戶窗口 */
+Client *get_next_client(WM *wm, Client *c)
+{
+    for(Client *p=c->next; p!=wm->clients; p=p->next)
+        if(is_on_cur_desktop(wm, p))
+            return p;
+    return NULL;
+}
+
+/* 取得存儲結構意義上的上一個客戶窗口 */
+Client *get_prev_client(WM *wm, Client *c)
+{
+    for(Client *p=c->prev; p!=wm->clients; p=p->prev)
+        if(is_on_cur_desktop(wm, p))
+            return p;
+    return NULL;
 }
 
 void move_client(WM *wm, Client *from, Client *to, Area_type type)
@@ -532,22 +577,12 @@ bool send_event(WM *wm, Atom protocol, Window win)
     return false;
 }
 
-/* 取得存儲結構意義上的下一個客戶窗口 */
-Client *get_next_client(WM *wm, Client *c)
+bool is_last_typed_client(WM *wm, Client *c, Area_type type)
 {
-    for(Client *p=c->next; p!=wm->clients; p=p->next)
-        if(is_on_cur_desktop(wm, p))
-            return p;
-    return NULL;
-}
-
-/* 取得存儲結構意義上的上一個客戶窗口 */
-Client *get_prev_client(WM *wm, Client *c)
-{
-    for(Client *p=c->prev; p!=wm->clients; p=p->prev)
-        if(is_on_cur_desktop(wm, p))
-            return p;
-    return NULL;
+    for(Client *p=wm->clients->prev; p!=c; p=p->prev)
+        if(p->area_type == type)
+            return false;
+    return true;
 }
 
 Client *get_area_head(WM *wm, Area_type type)

@@ -81,7 +81,7 @@
     [TITLE_FONT]            = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
     [STATUS_AREA_FONT]      = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
     [ENTRY_FONT]            = "monospace:pixelsize="TO_STR(TASKBAR_FONT_PIXEL_SIZE),            \
-    [HINT_FONT]             = "monospace:pixelsize="TO_STR(HINT_FONT_PIXEL_SIZE),         \
+    [HINT_FONT]             = "monospace:pixelsize="TO_STR(HINT_FONT_PIXEL_SIZE),               \
 }
 
 #define WIDGET_COLOR_NAME (const char *[]) /* 構件顏色名 */                        \
