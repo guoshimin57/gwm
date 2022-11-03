@@ -35,16 +35,14 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type);
 
 void add_client(WM *wm, Window win)
 {
-    Client *head=wm->clients, *c=malloc_s(sizeof(Client));
+    Client *c=malloc_s(sizeof(Client));
     memset(c, 0, sizeof(Client));
     c->win=win;
     c->owner=get_transient_for(wm, win);
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
     update_size_hint(wm, c);
     apply_rules(wm, c);
-    if(c->area_type == SECOND_AREA)
-        head=get_area_head(wm, SECOND_AREA);
-    add_client_node(head, c);
+    add_client_node(get_area_head(wm, c->area_type), c);
     fix_area_type(wm);
     set_default_rect(wm, c);
     frame_client(wm, c);
@@ -338,11 +336,11 @@ void update_frame(WM *wm, unsigned int desktop_n, Client *c)
     {
         update_win_background(wm, c->title_area, flag ?
             wm->widget_color[CURRENT_TITLE_AREA_COLOR].pixel :
-            wm->widget_color[NORMAL_TITLE_AREA_COLOR].pixel);
+            wm->widget_color[NORMAL_TITLE_AREA_COLOR].pixel, None);
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             update_win_background(wm, c->buttons[i], flag ?
                 wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel :
-                wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel);
+                wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel, None);
     }
 }
 
@@ -379,11 +377,13 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
     Desktop *desktop=wm->desktop+desktop_n-1;
     Client **pp=&desktop->prev_focus_client, **pc=&desktop->cur_focus_client;
     bool del_pc=!is_exist_client(wm, *pc), del_pp=!is_exist_client(wm, *pp);
-    if(!c)
+    if(!c) // c爲NULL時，既有可能是c被刪除了，也可能是被縮微化了
     {
-        if(del_pc)
+        if(del_pc) // c被刪除
             *pc = (*pc=win_to_client(wm, (*pc)->owner)) ? *pc : *pp;
-        if( (del_pc || del_pp) &&
+        else // c被縮微化
+            *pc=*pp;
+        if( (*pp != wm->clients) && (del_pc || del_pp) &&
             !(((*pp=win_to_client(wm, (*pp)->owner)) && (*pp != *pc))
             || (*pp=get_prev_map_client(wm, desktop_n, *pc))
             || (*pp=get_next_map_client(wm, desktop_n, *pc))))
@@ -427,7 +427,7 @@ static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
         if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
             update_win_background(wm, c->icon->win, c==d->cur_focus_client ?
                 wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel :
-                wm->widget_color[ICON_AREA_COLOR].pixel);
+                wm->widget_color[ICON_AREA_COLOR].pixel, None);
         else
             update_frame(wm, desktop_n,  c);
     }
@@ -484,8 +484,8 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type)
 {
     Client *head;
     Area_type ft=from->area_type, tt=to->area_type;
-    if( from==wm->clients || (from==to && tt==type)
-        || (ft==MAIN_AREA && type==SECOND_AREA && !get_typed_clients_n(wm, SECOND_AREA)))
+    if( from==wm->clients || (from==to && tt==type) || (ft==MAIN_AREA
+        && type==SECOND_AREA && !get_typed_clients_n(wm, SECOND_AREA)))
         return false;
     del_client_node(from);
     if(tt == type)
@@ -594,7 +594,7 @@ Client *get_area_head(WM *wm, Area_type type)
     for(Client *c=head->next; c!=wm->clients; c=c->next)
         if(c->area_type == type)
             return c->prev;
-    for(Client *c=head->next; c!=wm->clients; c=c->next)
+    for(Client *c=head->prev; c!=wm->clients; c=c->prev)
         if(c->area_type < type)
             head=c;
     return head;

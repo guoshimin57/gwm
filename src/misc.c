@@ -56,13 +56,53 @@ bool is_wm_win(WM *wm, Window win)
         && attr.map_state!=IsUnmapped && !attr.override_redirect);
 }
 
-/* 在調用XSetWindowBackground之後，在收到下一個顯露事件或調用XClearWindow
- * 之前，背景不變。此處用發送顯露事件的方式使背景設置立即生效。*/
-void update_win_background(WM *wm, Window win, unsigned long color)
+void update_root_win_background(WM *wm)
 {
-    XEvent event={.xexpose={.type=Expose, .window=win}};
-    XSetWindowBackground(wm->display, win, color);
-    XSendEvent(wm->display, win, False, NoEventMask, &event);
+    unsigned long color=wm->widget_color[ROOT_WIN_COLOR].pixel;
+    Pixmap pixmap=None;
+#ifdef WALLPAPER_FILENAME
+    pixmap=create_pixmap_from_file(wm, wm->root_win, WALLPAPER_FILENAME);
+#endif
+    update_win_background(wm, wm->root_win, color, pixmap);
+#ifdef WALLPAPER_FILENAME
+    if(pixmap)
+        XFreePixmap(wm->display, pixmap);
+#endif
+}
+
+void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap)
+{
+    if(pixmap)
+    {
+        /* 在調用XSetWindowBackgroundPixmap之後，在調用XClearWindow之
+         * 前，背景不變。*/
+        XSetWindowBackgroundPixmap(wm->display, win, pixmap);
+        XClearWindow(wm->display, wm->root_win);
+    }
+    else
+    {
+        /* 在調用XSetWindowBackground之後，在收到下一個顯露事件或調用
+         * XClearWindow之前，背景不變。*/
+        XEvent event={.xexpose={.type=Expose, .window=win}};
+        XSetWindowBackground(wm->display, win, color);
+        XSendEvent(wm->display, win, False, NoEventMask, &event);
+    }
+}
+
+Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
+{
+    unsigned int w, h, d;
+    Imlib_Image image=imlib_load_image(filename);
+    if(image && get_geometry(wm, win, &w, &h, &d))
+    {
+        Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
+        imlib_context_set_image(image);
+        imlib_context_set_drawable(bg);   
+        imlib_render_image_on_drawable_at_size(0, 0, w, h);
+        imlib_free_image();
+        return bg;
+    }
+    return None;
 }
 
 Widget_type get_widget_type(WM *wm, Window win)
@@ -225,13 +265,12 @@ void clear_wm(WM *wm)
     clear_zombies(0);
 }
 
-void get_drawable_size(WM *wm, Drawable drw, unsigned int *w, unsigned int *h)
+bool get_geometry(WM *wm, Drawable drw, unsigned int *w, unsigned int *h, unsigned int *depth)
 {
     Window r;
     int xt, yt;
-    unsigned int bw, d;
-    if(!XGetGeometry(wm->display, drw, &r, &xt, &yt, w, h, &bw, &d))
-        *w=*h=0;
+    unsigned int bw;
+    return XGetGeometry(wm->display, drw, &r, &xt, &yt, w, h, &bw, depth);
 }
 
 char *copy_string(const char *s)
@@ -264,9 +303,9 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
 /* 坐標均對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
 void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph)
 {
-    unsigned int cw, ch, sw=wm->screen_width, sh=wm->screen_height;
+    unsigned int cw=0, ch=0, d, sw=wm->screen_width, sh=wm->screen_height;
 
-    get_drawable_size(wm, click, &cw, &ch);
+    get_geometry(wm, click, &cw, &ch, &d);
 
     if(cx < 0) // 窗口click左邊出屏
         cw=cx+pw, cx=0;

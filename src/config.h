@@ -37,6 +37,7 @@
 #define DEFAULT_FIXED_AREA_RATIO 0.15 // 默認的固定區域比例
 #define DEFAULT_N_MAIN_MAX 1 // 默認的主區域最大窗口數量
 #define AUTOSTART "~/.config/gwm/autostart.sh" // 在gwm剛啓動時執行的腳本
+#define WALLPAPER_FILENAME "/usr/share/backgrounds/default.png" // 壁紙文件名。若刪除本行或文件不能訪問，則用設置純色背景。
 #define CMD_CENTER_COL 4 // 操作中心按鈕列數
 #define MOVE_RESIZE_INC 8 // 移動窗口、調整窗口尺寸的步進值，單位爲像素。僅當窗口未有效設置尺寸特性時才使用它。
 
@@ -101,7 +102,8 @@
     [ICON_AREA_COLOR]             = "grey11",       /* 圖標區域的顏色名         */ \
     [STATUS_AREA_COLOR]           = "grey21",       /* 狀態區域的顏色名         */ \
     [ENTRY_COLOR]                 = "white",        /* 單行文本輸入框的顏色名   */ \
-    [HINT_WIN_COLOR]              = "grey21",       /* 提示窗口的顏色名 */         \
+    [HINT_WIN_COLOR]              = "grey21",       /* 提示窗口的顏色名         */ \
+    [ROOT_WIN_COLOR]              = "black",        /* 根窗口的顏色名           */ \
 }
 
 #define TEXT_COLOR_NAME (const char *[]) /* 文本顏色名 */                          \

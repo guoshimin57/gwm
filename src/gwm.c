@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
     set_signals();
     clear_zombies(0);
     init_wm(&wm);
+    init_imlib(&wm);
+    update_root_win_background(&wm);
     handle_events(&wm);
     clear_wm(&wm);
     return EXIT_SUCCESS;

@@ -65,9 +65,6 @@ static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsi
 
 static void set_icon_image(WM *wm, Client *c)
 {
-    imlib_context_set_dither(1);
-    imlib_context_set_display(wm->display);
-    imlib_context_set_visual(wm->visual);
     /* 根據加載效率依次嘗試 */
     if( c && !c->image
         && !( (c->image=get_icon_image_from_hint(wm, c))
@@ -80,9 +77,10 @@ static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
 {
     if(c->wm_hint && (c->wm_hint->flags & IconPixmapHint))
     {
-        unsigned int w, h;
+        unsigned int w, h, d;
         Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
-        get_drawable_size(wm, pixmap, &w, &h);
+        if(!get_geometry(wm, pixmap, &w, &h, &d))
+            return NULL;
         imlib_context_set_drawable(pixmap);   
         return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
     }

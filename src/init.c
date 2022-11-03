@@ -199,3 +199,10 @@ static void create_clients(WM *wm)
             add_client(wm, child[i]);
     XFree(child);
 }
+
+void init_imlib(WM *wm)
+{
+    imlib_context_set_dither(1);
+    imlib_context_set_display(wm->display);
+    imlib_context_set_visual(wm->visual);
+}

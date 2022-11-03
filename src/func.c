@@ -34,7 +34,7 @@ void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=DESKTOP(wm).cur_focus_client;
     if(c->area_type == ICONIFY_AREA)
-        move_client(wm, c, wm->clients, c->icon->area_type);
+        move_client(wm, c, get_area_head(wm, c->icon->area_type), c->icon->area_type);
     if(DESKTOP(wm).cur_layout == PREVIEW)
         change_layout(wm, e, (Func_arg){.layout=DESKTOP(wm).prev_layout});
 }
@@ -62,7 +62,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         Client *c=DESKTOP(wm).cur_focus_client;
         Delta_rect d=get_key_delta_rect(c, arg.direction);
         if(c->area_type!=FLOATING_AREA && DESKTOP(wm).cur_layout==TILE)
-            move_client(wm, c, wm->clients, FLOATING_AREA);
+            move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
         if(get_valid_move_resize(wm, c, &d))
         {
             move_resize_client(wm, c, &d);
@@ -208,7 +208,7 @@ void change_area(WM *wm, XEvent *e, Func_arg arg)
     Area_type t=arg.area_type==PREV_AREA ? c->icon->area_type : arg.area_type;
     if( c!=wm->clients && (l==TILE || (l==STACK
         && (c->area_type==ICONIFY_AREA || t==ICONIFY_AREA))))
-        move_client(wm, c, wm->clients, t);
+        move_client(wm, c, get_area_head(wm, t), t);
 }
 
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
@@ -247,7 +247,7 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
         c->w=wm->screen_width-2*bw;
         c->h=wm->screen_height-2*bw-th-wm->taskbar.h;
         if(DESKTOP(wm).cur_layout == TILE)
-            move_client(wm, c, wm->clients, FLOATING_AREA);
+            move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
         move_resize_client(wm, c, NULL);
     }
 }
@@ -271,7 +271,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         {
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             if(c->area_type!=FLOATING_AREA && layout==TILE)
-                move_client(wm, c, wm->clients, FLOATING_AREA);
+                move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             d=get_pointer_delta_rect(c, &m, act);
             if(get_valid_move_resize(wm, c, &d))
@@ -351,15 +351,15 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
     if(!to)
         to=win_to_iconic_state_client(wm, subw);
     if(ev.xbutton.x == 0)
-        move_client(wm, from, wm->clients, SECOND_AREA);
+        move_client(wm, from, get_area_head(wm, SECOND_AREA), SECOND_AREA);
     else if(ev.xbutton.x == wm->screen_width-1)
-        move_client(wm, from, wm->clients, FIXED_AREA);
+        move_client(wm, from, get_area_head(wm, FIXED_AREA), FIXED_AREA);
     else if(ev.xbutton.y == 0)
         maximize_client(wm, NULL, arg);
     else if(subw == wm->taskbar.win)
-        move_client(wm, from, wm->clients, ICONIFY_AREA);
+        move_client(wm, from, get_area_head(wm, ICONIFY_AREA), ICONIFY_AREA);
     else if(win==wm->root_win && subw==None)
-        move_client(wm, from, wm->clients, MAIN_AREA);
+        move_client(wm, from, get_area_head(wm, MAIN_AREA), MAIN_AREA);
     else if(to)
         move_client(wm, from, to, to->area_type);
 }

@@ -164,13 +164,13 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_TASKBAR_BUTTON(type))
         update_win_background(wm, win,
-            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
+            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     else if(type == CLIENT_ICON)
         update_win_background(wm, win,
-            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
+            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     else if(IS_CMD_CENTER_ITEM(type))
         update_win_background(wm, win,
-            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
+            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     else if(type == CLIENT_FRAME)
         act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
@@ -178,7 +178,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     else if(IS_TITLE_BUTTON(type))
         update_win_background(wm, win, type==CLOSE_BUTTON ?
             wm->widget_color[ENTERED_CLOSE_BUTTON_COLOR].pixel :
-            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel);
+            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     XDefineCursor(wm->display, win, wm->cursors[act]);
     handle_pointer_hovers(wm, win, type);
 }
@@ -363,9 +363,9 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     if(IS_TASKBAR_BUTTON(type))
         hint_leave_taskbar_button(wm, type);
     else if(type == CLIENT_ICON)
-        update_win_background(wm, win, wm->widget_color[ICON_AREA_COLOR].pixel);
+        update_win_background(wm, win, wm->widget_color[ICON_AREA_COLOR].pixel, None);
     else if(IS_CMD_CENTER_ITEM(type))
-        update_win_background(wm, win, wm->widget_color[CMD_CENTER_COLOR].pixel);
+        update_win_background(wm, win, wm->widget_color[CMD_CENTER_COLOR].pixel, None);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
 }
@@ -376,7 +376,7 @@ static void hint_leave_taskbar_button(WM *wm, Widget_type type)
         wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
         wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel ;
     Window win=wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)];
-    update_win_background(wm, win, color);
+    update_win_background(wm, win, color, None);
 }
 
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
@@ -384,7 +384,7 @@ static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
     Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
     update_win_background(wm, win, c==DESKTOP(wm).cur_focus_client ?
         wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel :
-        wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel);
+        wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel, None);
 }
 
 static void handle_map_request(WM *wm, XEvent *e)
@@ -519,10 +519,7 @@ static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win)
 static void handle_wm_transient_for_notify(WM *wm, Client *c, Window win)
 {
     if(c && c->win==win)
-    {
         c->owner=get_transient_for(wm, win);
-        printf("tran: %s\n", c->class_name);
-    }
 }
 
 static void handle_selection_notify(WM *wm, XEvent *e)

@@ -13,5 +13,6 @@
 #define INIT_H
 
 void init_wm(WM *wm);
+void init_imlib(WM *wm);
 
 #endif
