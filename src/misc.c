@@ -11,11 +11,16 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <dirent.h>
 #include <stdarg.h>
 #include "gwm.h"
 #include "client.h"
 #include "font.h"
 #include "misc.h"
+
+static void get_files_in_dir(const char *path, const char *exts[], size_t n, File *head, Order order, bool is_fullname);
+static int str_cmp_basename(const char *s1, const char *s2);
+static void create_file_node(File *head, const char *path, char *filename, bool is_fullname);
 
 void *malloc_s(size_t size)
 {
@@ -56,20 +61,6 @@ bool is_wm_win(WM *wm, Window win)
         && attr.map_state!=IsUnmapped && !attr.override_redirect);
 }
 
-void update_root_win_background(WM *wm)
-{
-    unsigned long color=wm->widget_color[ROOT_WIN_COLOR].pixel;
-    Pixmap pixmap=None;
-#ifdef WALLPAPER_FILENAME
-    pixmap=create_pixmap_from_file(wm, wm->root_win, WALLPAPER_FILENAME);
-#endif
-    update_win_background(wm, wm->root_win, color, pixmap);
-#ifdef WALLPAPER_FILENAME
-    if(pixmap)
-        XFreePixmap(wm->display, pixmap);
-#endif
-}
-
 void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap)
 {
     if(pixmap)
@@ -77,7 +68,7 @@ void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixma
         /* 在調用XSetWindowBackgroundPixmap之後，在調用XClearWindow之
          * 前，背景不變。*/
         XSetWindowBackgroundPixmap(wm->display, win, pixmap);
-        XClearWindow(wm->display, wm->root_win);
+        XClearWindow(wm->display, win);
     }
     else
     {
@@ -340,4 +331,43 @@ bool is_win_exist(WM *wm, Window win, Window parent)
             if(win == child[i])
                 { XFree(child); return true; }
     return false;
+}
+
+File *get_files_in_dirs(const char *paths[], size_t n, const char *exts[], size_t m, Order order, bool is_fullname)
+{
+    File *head=malloc_s(sizeof(File));
+    head->next=NULL, head->name=NULL;
+    for(size_t i=0; i<n; i++)
+        get_files_in_dir(paths[i], exts, m, head, order, is_fullname);
+    return head;
+}
+
+static void get_files_in_dir(const char *path, const char *exts[], size_t n, File *head, Order order, bool is_fullname)
+{
+    char *p, *fn;
+    DIR *dir=opendir(path);
+    for(struct dirent *d=NULL; dir && (d=readdir(dir)); )
+        if((fn=d->d_name) && strncmp(".", fn, 2) && strncmp("..", fn, 3))
+            for(size_t i=0; i<n; i++)
+                if(exts[i][0]=='\0' || ((p=strrchr(fn, '.')) && !strcmp(p+1, exts[i])))
+                    for(File *f=head; f; f=f->next)
+                        if(!order || !f->next || str_cmp_basename(fn, f->next->name)/order>0)
+                            { create_file_node(f, path, fn, is_fullname), i=n; break; }
+    if(dir)
+        closedir(dir);
+}
+
+static int str_cmp_basename(const char *s1, const char *s2)
+{
+    const char *p1=strrchr(s1, '/'), *p2=strrchr(s2, '/');
+    p1=(p1 ? p1+1 : s1), p2=(p2 ? p2+1 : s2);
+    return strcmp(p1, p2);
+}
+
+static void create_file_node(File *head, const char *path, char *filename, bool is_fullname)
+{
+    File *file=malloc_s(sizeof(File));
+    file->name = is_fullname ? copy_strings(path, "/", filename, NULL) : copy_string(filename);
+    file->next=head->next;
+    head->next=file;
 }

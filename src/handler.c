@@ -59,7 +59,7 @@ void handle_events(WM *wm)
 {
 	XEvent e;
     XSync(wm->display, False);
-	while(run_flag && !XNextEvent(wm->display, &e))
+    while(run_flag && !XNextEvent(wm->display, &e))
         if(!XFilterEvent(&e, None))
             handle_event(wm, &e);
 }

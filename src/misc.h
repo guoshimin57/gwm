@@ -17,7 +17,6 @@ int x_fatal_handler(Display *display, XErrorEvent *e);
 void exit_with_perror(const char *s);
 void exit_with_msg(const char *msg);
 bool is_wm_win(WM *wm, Window win);
-void update_root_win_background(WM *wm);
 void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap);
 Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename);
 Widget_type get_widget_type(WM *wm, Window win);
@@ -36,5 +35,6 @@ char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
 void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph);
 bool is_win_exist(WM *wm, Window win, Window parent);
+File *get_files_in_dirs(const char *paths[], size_t n, const char *exts[], size_t m, Order order, bool is_fullname);
 
 #endif

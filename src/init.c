@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include <locale.h>
+#include <sys/types.h>
 #include "gwm.h"
 #include "init.h"
 #include "client.h"
@@ -34,6 +35,7 @@ static void create_cmd_center(WM *wm);
 static void create_run_cmd_entry(WM *wm);
 static void create_hint_win(WM *wm);
 static void create_clients(WM *wm);
+static void init_wallpaper_files(WM *wm);
 
 void init_wm(WM *wm)
 {
@@ -52,6 +54,9 @@ void init_wm(WM *wm)
     wm->colormap=DefaultColormap(wm->display, wm->screen);
     wm->focus_mode=DEFAULT_FOCUS_MODE;
 
+#ifdef WALLPAPER_PATHS
+    init_wallpaper_files(wm);
+#endif
     init_desktop(wm);
     XSetErrorHandler(x_fatal_handler);
     XSelectInput(wm->display, wm->root_win, ROOT_EVENT_MASK);
@@ -205,4 +210,26 @@ void init_imlib(WM *wm)
     imlib_context_set_dither(1);
     imlib_context_set_display(wm->display);
     imlib_context_set_visual(wm->visual);
+}
+
+static void init_wallpaper_files(WM *wm)
+{
+    const char *exts[]={"png", "jpg"};
+    size_t n=ARRAY_NUM(WALLPAPER_PATHS);
+    wm->wallpapers=get_files_in_dirs(WALLPAPER_PATHS, n, exts, 2, NOSORT, true);
+    wm->cur_wallpaper=wm->wallpapers->next;
+}
+
+void init_root_win_background(WM *wm)
+{
+    unsigned long color=wm->widget_color[ROOT_WIN_COLOR].pixel;
+    Pixmap pixmap=None;
+#ifdef WALLPAPER_FILENAME
+    pixmap=create_pixmap_from_file(wm, wm->root_win, WALLPAPER_FILENAME);
+#endif
+    update_win_background(wm, wm->root_win, color, pixmap);
+#ifdef WALLPAPER_FILENAME
+    if(pixmap)
+        XFreePixmap(wm->display, pixmap);
+#endif
 }

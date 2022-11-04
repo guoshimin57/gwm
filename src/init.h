@@ -14,5 +14,6 @@
 
 void init_wm(WM *wm);
 void init_imlib(WM *wm);
+void init_root_win_background(WM *wm);
 
 #endif

@@ -62,6 +62,19 @@
 
 #define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
 
+enum order_tag // 文件名排序类型
+{
+    RISE=-1, NOSORT=0, FALL=1 // 依次为升序、不排序、降序
+};
+typedef enum order_tag Order;
+
+struct file_tag
+{
+    char *name;
+    struct file_tag *next;
+};
+typedef struct file_tag File;
+
 enum focus_mode_tag // 窗口聚焦模式
 {
     ENTER_FOCUS, CLICK_FOCUS,
@@ -257,6 +270,7 @@ struct wm_tag // 窗口管理器相關信息
     Client *clients; // 頭結點
     Focus_mode focus_mode; // 窗口聚焦模式
     XftFont *font[FONT_N]; // 窗口管理器用到的字體
+    File *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
     Cursor cursors[POINTER_ACT_N]; // 光標
     Taskbar taskbar; // 任務欄
     Menu cmd_center; // 操作中心

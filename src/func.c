@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <time.h>
 #include <unistd.h>
 #include "gwm.h"
 #include "font.h"
@@ -537,4 +538,28 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg)
 {
     show_entry(wm, &wm->run_cmd);
+}
+
+void change_wallpaper(WM *wm, XEvent *e, Func_arg arg)
+{
+    srand((unsigned int)time(NULL));
+    unsigned long r1=rand(), r2=rand(), color=(r1<<32)|r2;
+    Pixmap pixmap=None;
+#ifdef WALLPAPER_PATHS
+    File *f;
+    for(f=wm->wallpapers->next; f; f=f->next)
+        if(!strcmp(f->name, wm->cur_wallpaper->name))
+            break;
+    if(!f || !f->next)
+        f=wm->wallpapers;
+    wm->cur_wallpaper=f=f->next;
+    if(f)
+        pixmap=create_pixmap_from_file(wm, wm->root_win, f->name);
+#endif
+    update_win_background(wm, wm->root_win, color, pixmap);
+#ifdef WALLPAPER_FILENAME
+    if(pixmap)
+        XFreePixmap(wm->display, pixmap);
+#endif
+    XClearWindow(wm->display, wm->root_win);
 }

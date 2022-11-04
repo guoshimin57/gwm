@@ -37,7 +37,6 @@
 #define DEFAULT_FIXED_AREA_RATIO 0.15 // 默認的固定區域比例
 #define DEFAULT_N_MAIN_MAX 1 // 默認的主區域最大窗口數量
 #define AUTOSTART "~/.config/gwm/autostart.sh" // 在gwm剛啓動時執行的腳本
-#define WALLPAPER_FILENAME "/usr/share/backgrounds/default.png" // 壁紙文件名。若刪除本行或文件不能訪問，則用設置純色背景。
 #define CMD_CENTER_COL 4 // 操作中心按鈕列數
 #define MOVE_RESIZE_INC 8 // 移動窗口、調整窗口尺寸的步進值，單位爲像素。僅當窗口未有效設置尺寸特性時才使用它。
 
@@ -103,7 +102,7 @@
     [STATUS_AREA_COLOR]           = "grey21",       /* 狀態區域的顏色名         */ \
     [ENTRY_COLOR]                 = "white",        /* 單行文本輸入框的顏色名   */ \
     [HINT_WIN_COLOR]              = "grey21",       /* 提示窗口的顏色名         */ \
-    [ROOT_WIN_COLOR]              = "black",        /* 根窗口的顏色名           */ \
+    [ROOT_WIN_COLOR]              = "black",        /* 根窗口的顏色名。无图时用 */ \
 }
 
 #define TEXT_COLOR_NAME (const char *[]) /* 文本顏色名 */                          \
@@ -118,6 +117,10 @@
     [ENTRY_TEXT_COLOR]           = "black",     /* 輸入構件文本的顏色名 */         \
     [HINT_TEXT_COLOR]            = "grey61",    /* 用於提示的文本的顏色名 */       \
 }
+
+#define WALLPAPER_FILENAME "/usr/share/backgrounds/gwm.png" // 壁紙文件名。若刪除本行或文件不能訪問，則使用純色背景。
+#define WALLPAPER_PATHS (const char *[]) /* 壁紙目錄列表，如取消此宏定义或目录为空或不能访问，则切换绝壁时使用纯色 */ \
+{   "/usr/share/wallpapers", "/usr/share/backgrounds",   }
 
 #define TITLE_BUTTON_TEXT (const char *[]) /* 窗口標題欄按鈕的標籤（從左至右）*/ \
 /* 切換至主區域 切換至次區域 切換至固定區 切換至懸浮態 縮微化 最大化 關閉 */     \
@@ -254,6 +257,7 @@
     {WM_SKEY,	XK_m,            adjust_main_area_ratio,      {.change_ratio=-0.01}},      \
     {WM_KEY, 	XK_x,            adjust_fixed_area_ratio,     {.change_ratio=0.01}},       \
     {WM_SKEY,	XK_x,            adjust_fixed_area_ratio,     {.change_ratio=-0.01}},      \
+    {WM_KEY, 	XK_w,            change_wallpaper,            {0}},                        \
     {WM_KEY,	XK_Page_Down,    next_desktop,                {0}},                        \
     {WM_KEY,	XK_Page_Up,      prev_desktop,                {0}},                        \
     DESKTOP_KEYBIND(XK_0, 0),                                                              \
