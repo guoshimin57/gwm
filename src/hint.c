@@ -11,13 +11,12 @@
 
 #include "gwm.h"
 #include "client.h"
+#include "hint.h"
 
 static bool is_prefer_width_inc(unsigned int w, int dw, XSizeHints *hint);
 static bool is_prefer_height_inc(unsigned int h, int dh, XSizeHints *hint);
 static int get_fixed_width_inc(unsigned int w, XSizeHints *hint);
 static int get_fixed_height_inc(unsigned int h, XSizeHints *hint);
-static bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint);
-static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint);
 
 unsigned int get_client_col(WM *wm, Client *c)
 {
@@ -64,41 +63,13 @@ void update_size_hint(WM *wm, Client *c)
     SET_DEF_VAL(c->size_hint.height_inc, MOVE_RESIZE_INC);
 }
 
-bool get_prefer_resize(WM *wm, Client *c, Delta_rect *d)
+bool is_prefer_resize(WM *wm, Client *c, Delta_rect *d)
 {
     XSizeHints *p=&c->size_hint;
-    int dx=0, dy=0, dw=0, dh=0;
-    if((c->area_type==FLOATING_AREA || DESKTOP(wm).cur_layout==STACK) && p->flags)
-    {
-        unsigned int w=c->w, h=c->h, wi=p->width_inc, hi=p->height_inc;
-        int sdw=(d->dw>=0 ? 1 : -1), sdh=(d->dh>=0 ? 1 : -1);
-        bool flag, flag1, flag2, flag3, wflag, hflag;
-        if(wi)
-            dw=(abs(d->dw)<=wi ? d->dw : sdw*wi), w+=dw;
-        if(hi)
-            dh=(abs(d->dh)<=hi ? d->dh : sdh*hi), h+=dh;
-        wflag=is_prefer_width_inc(c->w, dw, p);
-        hflag=is_prefer_height_inc(c->h, dh, p);
-        flag1=(is_prefer_size(w, h, p) && is_prefer_aspect(w, h, p));
-        flag2=(is_prefer_size(w, c->h, p) && is_prefer_aspect(w, c->h, p));
-        flag3=(is_prefer_size(c->w, h, p) && is_prefer_aspect(c->w, h, p));
-        flag=flag1 || flag2 || flag3;
-        if(flag && (wflag || hflag))
-        {
-            if(wflag && (flag1 || flag2))
-                dx = (d->dx && d->dw) ? -dw : 0;
-            else
-                dx=0, dw=0;
-            if(hflag && (flag1 || flag3))
-                dy = (d->dy && d->dh) ? -dh : 0;
-            else
-                dy=0, dh=0;
-        }
-        else
-            dx=0, dy=0, dw=0, dh=0;
-    }
-    d->dx=dx, d->dy=dy, d->dw=dw, d->dh=dh;
-    return d->dw || d->dh;
+    return ( (is_prefer_width_inc(c->w, d->dw, p)
+        || is_prefer_height_inc(c->h, d->dh, p) )
+        && is_prefer_size(c->w+d->dw, c->h+d->dh, p)
+        && is_prefer_aspect(c->w+d->dw, c->h+d->dh, p));
 }
 
 static bool is_prefer_width_inc(unsigned int w, int dw, XSizeHints *hint)
@@ -131,7 +102,7 @@ static int get_fixed_height_inc(unsigned int h, XSizeHints *hint)
     return inc ? inc : hint->height_inc;
 }
 
-static bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint)
+bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint)
 {
     return (!hint->min_width || w>=hint->min_width)
         && (!hint->min_height || h>=hint->min_height)
@@ -139,7 +110,7 @@ static bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint)
         && (!hint->max_height || h<=hint->max_height);
 }
 
-static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)
+bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)
 {
     return (!hint->min_aspect.x || !hint->min_aspect.y
         || !hint->max_aspect.x || !hint->max_aspect.y

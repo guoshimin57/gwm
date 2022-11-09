@@ -132,16 +132,25 @@ static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a)
 {
     XSizeHints *p=&c->size_hint;
     c->x=p->x, c->y=p->y;
-    if(!(p->flags & USPosition) && !(p->flags & PPosition))
+    if((p->flags & USPosition))
+        return;
+
+    Client *oc;
+    // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
+    long w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h, ow, oh,
+         sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar.h;
+    if(!(p->flags & PPosition))
         c->x=a->x, c->y=a->y;
-    if(c->x>0 && c->x>=wm->screen_width)
-        c->x=wm->screen_width-c->w+2*c->border_w;
-    if(c->x<0 || c->x<c->w)
-        c->x=c->border_w;
-    if(c->y>0 && c->y>=wm->screen_height-wm->taskbar.h)
-        c->y=wm->screen_height-wm->taskbar.h-c->h-c->border_w;
-    if(c->y<0 || c->y < c->border_w+c->title_bar_h)
-        c->y=c->border_w+c->title_bar_h;
+    if((oc=win_to_client(wm, get_transient_for(wm, c->win))))
+        ow=oc->w, oh=oc->h, c->x=oc->x+(ow-w)/2, c->y=oc->y+(oh-h)/2;
+    if(c->x >= sw-w-bw)
+        c->x=sw-w-bw;
+    if(c->x < bw)
+        c->x=bw;
+    if(c->y >= sh-th-bw-h)
+        c->y=sh-th-bw-h;
+    if(c->y < bw+bh)
+        c->y=bw+bh;
 }
 
 static void set_default_size(WM *wm, Client *c, XWindowAttributes *a)
@@ -255,7 +264,8 @@ unsigned int get_typed_clients_n(WM *wm, Area_type type)
 
 Client *win_to_client(WM *wm, Window win)
 {
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    // 當隱藏標題欄時，標題區和按鈕的窗口ID爲0。故win爲0時，不應視爲找到
+    for(Client *c=wm->clients->next; win && c!=wm->clients; c=c->next)
     {
         if(win==c->win || win==c->frame || win==c->title_area)
             return c;

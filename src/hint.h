@@ -15,7 +15,9 @@
 unsigned int get_client_col(WM *wm, Client *c);
 unsigned int get_client_row(WM *wm, Client *c);
 void update_size_hint(WM *wm, Client *c);
-bool get_prefer_resize(WM *wm, Client *c, Delta_rect *d);
+bool is_prefer_resize(WM *wm, Client *c, Delta_rect *d);
+bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint);
+bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint);
 void set_input_focus(WM *wm, XWMHints *hint, Window win);
 
 #endif

@@ -26,6 +26,7 @@
 #define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
 
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
+#define MAX(a, b) ((a)>(b) ? (a) : (b))
 #define SET_DEF_VAL(var, value) ((var) = (var) ? (var) : (value))
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}

@@ -505,15 +505,7 @@ static void update_status_area(WM *wm)
 static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win)
 {
     if(c && c->win==win)
-    {
         update_size_hint(wm, c);
-        if( c->area_type==FLOATING_AREA || c->area_type==ICONIFY_AREA
-            || DESKTOP(wm).cur_layout==STACK)
-        {
-            set_default_rect(wm, c);
-            move_resize_client(wm, c, NULL);
-        }
-    }
 }
 
 static void handle_wm_transient_for_notify(WM *wm, Client *c, Window win)

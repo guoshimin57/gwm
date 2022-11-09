@@ -26,8 +26,10 @@
 #include "misc.h"
 
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
-static bool get_valid_move_resize(WM *wm, Client *c, Delta_rect *d);
+static bool is_prefer_move_resize(WM *wm, Client *c, Delta_rect *d);
 static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
+static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d);
+static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act, bool is_resize);
 static void update_hint_win_for_resize(WM *wm, Client *c);
 static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act);
 
@@ -64,7 +66,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         Delta_rect d=get_key_delta_rect(c, arg.direction);
         if(c->area_type!=FLOATING_AREA && DESKTOP(wm).cur_layout==TILE)
             move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
-        if(get_valid_move_resize(wm, c, &d))
+        if(is_prefer_move_resize(wm, c, &d) || fix_move_resize(wm, c, &d))
         {
             move_resize_client(wm, c, &d);
             update_hint_win_for_resize(wm, c);
@@ -106,11 +108,11 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
     return dr[dir];
 }
 
-static bool get_valid_move_resize(WM *wm, Client *c, Delta_rect *d)
+static bool is_prefer_move_resize(WM *wm, Client *c, Delta_rect *d)
 {
     return ( ((!d->dw && !d->dh)
         && is_on_screen(wm, c->x+d->dx, c->y+d->dy, c->w+d->dw, c->h+d->dh))
-        || get_prefer_resize(wm, c, d));
+        || is_prefer_resize(wm, c, d));
 }
 
 /* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外。
@@ -122,6 +124,37 @@ static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h)
 {
     unsigned int sw=wm->screen_width, sh=wm->screen_height;
     return abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
+}
+
+static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d)
+{
+    XSizeHints *p=&c->size_hint;
+    unsigned int w, h, cw=c->w, ch=c->h;
+    if( (d->dw || d->dh)
+        && (!is_prefer_size(cw, ch, p) || !is_prefer_aspect(cw, ch, p)))
+    {
+        if(p->min_width)
+            w=cw=MAX(cw, p->min_width);
+        if(p->min_height)
+            h=ch=MAX(ch, p->min_height);
+        if(p->max_width)
+            w=cw=MIN(cw, p->max_width);
+        if(p->max_height)
+            h=ch=MIN(ch, p->max_height);
+        if(d->dw)
+            for(w=(int)p->base_width; ;w+=(int)p->width_inc)
+                if(is_prefer_size(w, ch, p) && is_prefer_aspect(w, ch, p))
+                    break;
+        if(d->dh)
+            for(h=p->base_height; ;h+=p->height_inc)
+                if(is_prefer_size(w, h, p) && is_prefer_aspect(w, h, p))
+                    break;
+        d->dw=(int)w-(int)c->w, d->dh=(int)h-(int)c->h;
+        // 修正尺寸時，應確保尺寸變化方向上鄰近光標的邊與光標的間距基本不變
+        d->dx = d->dx ? d->dx : -d->dw, d->dy = d->dy ? d->dy : -d->dh;
+        return true;
+    }
+    return false;
 }
 
 void quit_wm(WM *wm, XEvent *e, Func_arg arg)
@@ -263,38 +296,42 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         return;
 
     XEvent ev;
-    Delta_rect d;
-
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
         XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             if(c->area_type!=FLOATING_AREA && layout==TILE)
                 move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
+            /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
-            d=get_pointer_delta_rect(c, &m, act);
-            if(get_valid_move_resize(wm, c, &d))
-            {
-                move_resize_client(wm, c, &d);
-                update_hint_win_for_resize(wm, c);
-                if(arg.resize)
-                {
-                    if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
-                        m.ox = d.dx ? m.ox-d.dw : m.ox+d.dw;
-                    if(d.dh) // dy爲0表示定位器從窗口下邊調整尺寸，非0則表示上邊調整
-                        m.oy = d.dy ? m.oy-d.dh : m.oy+d.dh;
-                }
-                else
-                    m.ox=m.nx, m.oy=m.ny;
-            }
+            do_valid_pointer_move_resize(wm, c, &m, act, arg.resize);
         }
         else
             handle_event(wm, &ev);
     }while(!(ev.type==ButtonRelease && ev.xbutton.button==e->xbutton.button));
     XUngrabPointer(wm->display, CurrentTime);
     XUnmapWindow(wm->display, wm->hint_win);
+}
+
+static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act, bool is_resize)
+{
+    bool fix;
+    Delta_rect d=get_pointer_delta_rect(c, m, act);
+    if(is_prefer_move_resize(wm, c, &d) || (fix=fix_move_resize(wm, c, &d)))
+    {
+        move_resize_client(wm, c, &d);
+        update_hint_win_for_resize(wm, c);
+        if(is_resize)
+        {
+            if(!fix && d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
+                m->ox = d.dx ? m->ox-d.dw : m->ox+d.dw;
+            if(!fix && d.dh) // dy爲0表示定位器從窗口下邊調整尺寸，非0則表示上邊調整
+                m->oy = d.dy ? m->oy-d.dh : m->oy+d.dh;
+        }
+        else
+            m->ox=m->nx, m->oy=m->ny;
+    }
 }
 
 static void update_hint_win_for_resize(WM *wm, Client *c)
