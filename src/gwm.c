@@ -34,6 +34,8 @@ int main(int argc, char *argv[])
     init_wm(&wm);
     init_imlib(&wm);
     init_root_win_background(&wm);
+    XSetScreenSaver(wm.display, SCREEN_SAVER_TIME_OUT, SCREEN_SAVER_INTERVAL,
+        PreferBlanking, AllowExposures);
     handle_events(&wm);
     clear_wm(&wm);
     return EXIT_SUCCESS;

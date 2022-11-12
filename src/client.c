@@ -384,8 +384,8 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
 {
-    Desktop *desktop=wm->desktop+desktop_n-1;
-    Client **pp=&desktop->prev_focus_client, **pc=&desktop->cur_focus_client;
+    Desktop *d=wm->desktop+desktop_n-1;
+    Client **pp=&d->prev_focus_client, **pc=&d->cur_focus_client;
     bool del_pc=!is_exist_client(wm, *pc), del_pp=!is_exist_client(wm, *pp);
     if(!c) // c爲NULL時，既有可能是c被刪除了，也可能是被縮微化了
     {
@@ -393,6 +393,10 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
             *pc = (*pc=win_to_client(wm, (*pc)->owner)) ? *pc : *pp;
         else // c被縮微化
             *pc=*pp;
+        if( (  (*pc)->area_type==ICONIFY_AREA || (del_pp && *pc==*pp))
+            && !(*pc=get_prev_map_client(wm, desktop_n, *pp))
+            && !(*pc=get_next_map_client(wm, desktop_n, *pp)))
+            *pc=wm->clients;
         if( (*pp != wm->clients) && (del_pc || del_pp) &&
             !(((*pp=win_to_client(wm, (*pp)->owner)) && (*pp != *pc))
             || (*pp=get_prev_map_client(wm, desktop_n, *pc))

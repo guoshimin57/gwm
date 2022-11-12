@@ -25,6 +25,10 @@
 #define CMD_KEY (WM_KEY|Mod1Mask) // 與系統命令相關功能的轉換鍵
 #define SYS_KEY (WM_KEY|ControlMask) // 與系統相關的功能轉換鍵
 
+/* 屏幕保護程序的行爲取決於X服務器，可能顯示移動的圖像，可能只是黑屏。*/
+#define SCREEN_SAVER_TIME_OUT 600 // 激活內置屏幕之前的空閒時間，單位爲秒。當值爲0時表示禁用屏保，爲-1時恢復缺省值。
+#define SCREEN_SAVER_INTERVAL 600 // 內置屏保周期性變化的時間間隔，單位爲秒。當值爲0時表示禁止周期性變化。
+
 #define HOVER_TIME 3 // 定位器懸停的判定時間界限，單位爲分秒，即十分之一秒
 #define SET_FRAME_PROP 0 // 1表示把窗口特性復制到窗口框架（代價是每個窗口可能要多消耗幾十到幾百KB內存），0表示不復制
 #define USE_IMAGE_ICON 1 // 1表示使用圖像形式的圖標，0表示使用文字形式的圖標
