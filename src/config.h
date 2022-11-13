@@ -25,6 +25,9 @@
 #define CMD_KEY (WM_KEY|Mod1Mask) // 與系統命令相關功能的轉換鍵
 #define SYS_KEY (WM_KEY|ControlMask) // 與系統相關的功能轉換鍵
 
+#define SCREENSHOT_PATH "/home/gsm" //屏幕截圖的文件保存格式
+#define SCREENSHOT_FORMAT "png" // 屏幕截圖的文件保存格式
+
 /* 屏幕保護程序的行爲取決於X服務器，可能顯示移動的圖像，可能只是黑屏。*/
 #define SCREEN_SAVER_TIME_OUT 600 // 激活內置屏幕之前的空閒時間，單位爲秒。當值爲0時表示禁用屏保，爲-1時恢復缺省值。
 #define SCREEN_SAVER_INTERVAL 600 // 內置屏保周期性變化的時間間隔，單位爲秒。當值爲0時表示禁止周期性變化。
@@ -264,6 +267,8 @@
     {WM_KEY, 	XK_w,            change_wallpaper,            {0}},                        \
     {WM_KEY,	XK_Page_Down,    next_desktop,                {0}},                        \
     {WM_KEY,	XK_Page_Up,      prev_desktop,                {0}},                        \
+    {0,	        XK_Print,        print_screen,                {0}},                        \
+    {WM_KEY,	XK_Print,        print_win,                   {0}},                        \
     DESKTOP_KEYBIND(XK_0, 0),                                                              \
     DESKTOP_KEYBIND(XK_1, 1), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */          \
     DESKTOP_KEYBIND(XK_2, 2),                                                              \

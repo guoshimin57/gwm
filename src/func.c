@@ -29,9 +29,12 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir);
 static bool is_prefer_move_resize(WM *wm, Client *c, Delta_rect *d);
 static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
 static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d);
+static bool is_match_click(WM *wm, XEvent *oe, XEvent *ne);
+static bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne);
 static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act, bool is_resize);
 static void update_hint_win_for_resize(WM *wm, Client *c);
 static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act);
+static void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h);
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
@@ -245,25 +248,40 @@ void change_area(WM *wm, XEvent *e, Func_arg arg)
         move_client(wm, c, get_area_head(wm, t), t);
 }
 
+static bool is_match_click(WM *wm, XEvent *oe, XEvent *ne)
+{
+    return (ne->type==ButtonRelease && ne->xbutton.button==oe->xbutton.button);
+}
+
+static bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
+{
+    if(act==NO_OP || grab_pointer(wm, act))
+    {
+        do
+        {
+            XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, ne);
+            handle_event(wm, ne);
+        }while(!is_match_click(wm, oe, ne));
+        if(act != NO_OP)
+            XUngrabPointer(wm->display, CurrentTime);
+        return true;
+    }
+    return false;
+}
+
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     XEvent ev;
-    Client *from=DESKTOP(wm).cur_focus_client, *to=NULL;
-    if( DESKTOP(wm).cur_layout!=TILE || from==wm->clients
-        || !grab_pointer(wm, SWAP))
+    Layout layout=DESKTOP(wm).cur_layout;
+    Client *from=DESKTOP(wm).cur_focus_client, *to=NULL, *head=wm->clients;
+    if(layout!=TILE || from==head || !get_valid_click(wm, SWAP, e, &ev))
         return;
-    do
-    {
-        XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
-        handle_event(wm, &ev);
-    }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
-    XUngrabPointer(wm->display, CurrentTime);
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
     int x=ev.xbutton.x-TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N;
     if((to=win_to_client(wm, ev.xbutton.subwindow)) == NULL)
-        for(Client *c=wm->clients->next; c!=wm->clients && !to; c=c->next)
+        for(Client *c=head->next; c!=head && !to; c=c->next)
             if( c!=from && c->area_type==ICONIFY_AREA
                 && x>=c->icon->x && x<c->icon->x+c->icon->w)
                 to=c;
@@ -309,7 +327,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         }
         else
             handle_event(wm, &ev);
-    }while(!(ev.type==ButtonRelease && ev.xbutton.button==e->xbutton.button));
+    }while(!is_match_click(wm, e, &ev));
     XUngrabPointer(wm->display, CurrentTime);
     XUnmapWindow(wm->display, wm->hint_win);
 }
@@ -372,15 +390,8 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
     XEvent ev;
     Client *from=DESKTOP(wm).cur_focus_client, *to;
     if( DESKTOP(wm).cur_layout!=TILE || from==wm->clients
-        || !grab_pointer(wm, CHANGE))
+        || !get_valid_click(wm, CHANGE, e, &ev))
         return;
-
-    do
-    {
-        XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
-        handle_event(wm, &ev);
-    }while((ev.type!=ButtonRelease || ev.xbutton.button!=e->xbutton.button));
-    XUngrabPointer(wm->display, CurrentTime);
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
@@ -421,7 +432,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
         }
         else
             handle_event(wm, &ev);
-    }while(!(ev.type==ButtonRelease && ev.xbutton.button==e->xbutton.button));
+    }while(!is_match_click(wm, e, &ev));
     XUngrabPointer(wm->display, CurrentTime);
 }
 
@@ -599,4 +610,35 @@ void change_wallpaper(WM *wm, XEvent *e, Func_arg arg)
         XFreePixmap(wm->display, pixmap);
 #endif
     XClearWindow(wm->display, wm->root_win);
+}
+
+void print_screen(WM *wm, XEvent *e, Func_arg arg)
+{
+    print_area(wm->root_win, 0, 0, wm->screen_width, wm->screen_height);
+}
+
+void print_win(WM *wm, XEvent *e, Func_arg arg)
+{
+    Client *c=DESKTOP(wm).cur_focus_client;
+    if(c != wm->clients)
+        print_area(c->frame, 0, 0, c->w, c->h);
+}
+
+static void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h)
+{
+    imlib_context_set_drawable(d);
+    Imlib_Image image=imlib_create_image_from_drawable(None, x, y, w, h, 0);
+    if(image)
+    {
+        time_t timer=time(NULL), err=-1;
+        char name[FILENAME_MAX];
+        sprintf(name, "%s/gwm-", SCREENSHOT_PATH);
+        if(timer != err)
+            strftime(name+strlen(name), FILENAME_MAX, "%Y-%m-%d-%H:%M:%S", localtime(&timer));
+        imlib_context_set_image(image);
+        imlib_image_set_format(SCREENSHOT_FORMAT);
+        sprintf(name+strlen(name), ".%s", SCREENSHOT_FORMAT);
+        imlib_save_image(name);
+        imlib_free_image();
+    }
 }

@@ -48,5 +48,7 @@ void attach_to_all_desktops(WM *wm, XEvent *e, Func_arg arg);
 void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg);
 void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg);
 void change_wallpaper(WM *wm, XEvent *e, Func_arg arg);
+void print_screen(WM *wm, XEvent *e, Func_arg arg);
+void print_win(WM *wm, XEvent *e, Func_arg arg);
 
 #endif
