@@ -30,7 +30,7 @@ Atom get_atom_prop(WM *wm, Window win, Atom prop);
 unsigned char *get_prop(WM *wm, Window win, Atom prop, unsigned long *n);
 void set_override_redirect(WM *wm, Window win);
 void clear_wm(WM *wm);
-bool get_geometry(WM *wm, Drawable drw, unsigned int *w, unsigned int *h, unsigned int *depth);
+bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigned int *h, unsigned int *depth);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
 void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph);

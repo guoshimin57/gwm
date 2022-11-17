@@ -87,10 +87,10 @@ static void handle_button_press(WM *wm, XEvent *e)
 {
     Buttonbind *b=BUTTONBIND;
     Widget_type type=get_widget_type(wm, e->xbutton.window);
-    XUnmapWindow(wm->display, wm->cmd_center.win);
     for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++, b++)
     {
-        if(is_func_click(wm, type, b, e))
+        if( is_func_click(wm, type, b, e) && (is_act_grab_pointer_func(b->func)
+            || get_valid_click(wm, NO_OP, e, NULL)))
         {
             focus_clicked_client(wm, e->xbutton.window);
             if(b->func)
@@ -99,6 +99,8 @@ static void handle_button_press(WM *wm, XEvent *e)
                 XAllowEvents(wm->display, ReplayPointer, CurrentTime);
         }
     }
+    if(type != CMD_CENTER_ITEM)
+        XUnmapWindow(wm->display, wm->cmd_center.win);
 }
  
 static bool is_func_click(WM *wm, Widget_type type, Buttonbind *b, XEvent *e)

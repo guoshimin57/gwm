@@ -84,7 +84,7 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
 {
     unsigned int w, h, d;
     Imlib_Image image=imlib_load_image(filename);
-    if(image && get_geometry(wm, win, &w, &h, &d))
+    if(image && get_geometry(wm, win, NULL, NULL, &w, &h, &d))
     {
         Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
         imlib_context_set_image(image);
@@ -256,12 +256,13 @@ void clear_wm(WM *wm)
     clear_zombies(0);
 }
 
-bool get_geometry(WM *wm, Drawable drw, unsigned int *w, unsigned int *h, unsigned int *depth)
+bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigned int *h, unsigned int *depth)
 {
     Window r;
     int xt, yt;
-    unsigned int bw;
-    return XGetGeometry(wm->display, drw, &r, &xt, &yt, w, h, &bw, depth);
+    unsigned int wt, ht, bw, dt;
+    return XGetGeometry(wm->display, drw, &r, x ? x : &xt, y ? y : &yt,
+        w ? w : &wt, h ? h : &ht, &bw, depth ? depth : &dt);
 }
 
 char *copy_string(const char *s)
@@ -294,9 +295,9 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
 /* 坐標均對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
 void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph)
 {
-    unsigned int cw=0, ch=0, d, sw=wm->screen_width, sh=wm->screen_height;
+    unsigned int cw=0, ch=0, sw=wm->screen_width, sh=wm->screen_height;
 
-    get_geometry(wm, click, &cw, &ch, &d);
+    get_geometry(wm, click, NULL, NULL, &cw, &ch, NULL);
 
     if(cx < 0) // 窗口click左邊出屏
         cw=cx+pw, cx=0;

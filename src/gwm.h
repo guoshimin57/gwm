@@ -42,7 +42,7 @@
 #define CROSSING_MASK (EnterWindowMask|LeaveWindowMask)
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     PropertyChangeMask|ButtonPressMask|CROSSING_MASK|ExposureMask|KeyPressMask)
-#define BUTTON_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
+#define BUTTON_EVENT_MASK (BUTTON_MASK|ExposureMask|CROSSING_MASK)
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
 #define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)

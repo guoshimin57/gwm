@@ -77,9 +77,9 @@ static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
 {
     if(c->wm_hint && (c->wm_hint->flags & IconPixmapHint))
     {
-        unsigned int w, h, d;
+        unsigned int w, h;
         Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
-        if(!get_geometry(wm, pixmap, &w, &h, &d))
+        if(!get_geometry(wm, pixmap, NULL, NULL, &w, &h, NULL))
             return NULL;
         imlib_context_set_drawable(pixmap);   
         return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);

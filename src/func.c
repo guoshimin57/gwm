@@ -25,16 +25,65 @@
 #include "menu.h"
 #include "misc.h"
 
+static bool is_match_button_release(WM *wm, XEvent *oe, XEvent *ne);
+static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne);
+static bool is_pointer_on_win(WM *wm, Window win);
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
 static bool is_prefer_move_resize(WM *wm, Client *c, Delta_rect *d);
 static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
 static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d);
-static bool is_match_click(WM *wm, XEvent *oe, XEvent *ne);
-static bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne);
 static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act, bool is_resize);
 static void update_hint_win_for_resize(WM *wm, Client *c);
 static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act);
 static void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h);
+
+bool is_act_grab_pointer_func(void (*func)(WM *, XEvent *, Func_arg arg))
+{
+    return func == pointer_swap_clients
+        || func == pointer_move_resize_client
+        || func == pointer_change_area
+        || func == adjust_layout_ratio
+        || func == choose_client; // add_client時已經調用XGrabButton
+}
+
+bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
+{
+    if(act==NO_OP || grab_pointer(wm, act))
+    {
+        XEvent e, *p=(ne ? ne : &e);
+        do
+        {
+            XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, p);
+            handle_event(wm, p);
+        }while(!is_match_button_release(wm, oe, p));
+        if(act != NO_OP)
+            XUngrabPointer(wm->display, CurrentTime);
+        return is_valid_click(wm, oe, p);
+    }
+    return false;
+}
+
+static bool is_match_button_release(WM *wm, XEvent *oe, XEvent *ne)
+{
+    return (ne->type==ButtonRelease && ne->xbutton.button==oe->xbutton.button);
+}
+
+static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne)
+{
+    return is_equal_modifier_mask(wm, oe->xbutton.state, ne->xbutton.state)
+        && is_pointer_on_win(wm, ne->xbutton.window);
+}
+
+static bool is_pointer_on_win(WM *wm, Window win)
+{
+    Window r, c;
+    int rx, ry, x, y;
+    unsigned int w, h, state;
+    
+    return get_geometry(wm, win, NULL, NULL, &w, &h, NULL)
+        && XQueryPointer(wm->display, win, &r, &c, &rx, &ry, &x, &y, &state)
+        && x>=0 && x<w && y>=0 && y<h;
+}
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
@@ -248,27 +297,6 @@ void change_area(WM *wm, XEvent *e, Func_arg arg)
         move_client(wm, c, get_area_head(wm, t), t);
 }
 
-static bool is_match_click(WM *wm, XEvent *oe, XEvent *ne)
-{
-    return (ne->type==ButtonRelease && ne->xbutton.button==oe->xbutton.button);
-}
-
-static bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
-{
-    if(act==NO_OP || grab_pointer(wm, act))
-    {
-        do
-        {
-            XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, ne);
-            handle_event(wm, ne);
-        }while(!is_match_click(wm, oe, ne));
-        if(act != NO_OP)
-            XUngrabPointer(wm->display, CurrentTime);
-        return true;
-    }
-    return false;
-}
-
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     XEvent ev;
@@ -327,7 +355,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         }
         else
             handle_event(wm, &ev);
-    }while(!is_match_click(wm, e, &ev));
+    }while(!is_match_button_release(wm, e, &ev));
     XUngrabPointer(wm->display, CurrentTime);
     XUnmapWindow(wm->display, wm->hint_win);
 }
@@ -432,7 +460,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
         }
         else
             handle_event(wm, &ev);
-    }while(!is_match_click(wm, e, &ev));
+    }while(!is_match_button_release(wm, e, &ev));
     XUngrabPointer(wm->display, CurrentTime);
 }
 
@@ -632,7 +660,10 @@ static void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h)
     {
         time_t timer=time(NULL), err=-1;
         char name[FILENAME_MAX];
-        sprintf(name, "%s/gwm-", SCREENSHOT_PATH);
+        if(*SCREENSHOT_PATH == '~')
+            sprintf(name, "%s%s/gwm-", getenv("HOME"), SCREENSHOT_PATH+1);
+        else
+            sprintf(name, "%s/gwm-", SCREENSHOT_PATH);
         if(timer != err)
             strftime(name+strlen(name), FILENAME_MAX, "%Y-%m-%d-%H:%M:%S", localtime(&timer));
         imlib_context_set_image(image);

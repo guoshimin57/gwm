@@ -25,7 +25,7 @@
 #define CMD_KEY (WM_KEY|Mod1Mask) // 與系統命令相關功能的轉換鍵
 #define SYS_KEY (WM_KEY|ControlMask) // 與系統相關的功能轉換鍵
 
-#define SCREENSHOT_PATH "/home/gsm" //屏幕截圖的文件保存格式
+#define SCREENSHOT_PATH "~" //屏幕截圖的文件保存路徑，請自行確保路徑存在
 #define SCREENSHOT_FORMAT "png" // 屏幕截圖的文件保存格式
 
 /* 屏幕保護程序的行爲取決於X服務器，可能顯示移動的圖像，可能只是黑屏。*/
@@ -183,6 +183,7 @@
 #define VOLUME_UP "amixer -q sset Master 10%+"
 #define VOLUME_MAX "amixer -q sset Master 100%"
 #define VOLUME_TOGGLE "amixer -q sset Master toggle"
+// 對於臺式機顯示器，應使用“xrandr --output HDMI-0 --brightness 0.5”之類的命令代替以下亮度調節命令
 #define LIGHT_DOWN "light -U 5"
 #define LIGHT_UP "light -A 5"
 #define LOGOUT "pkill -9 'startgwm|gwm'"
@@ -341,7 +342,7 @@
     {CLIENT_WIN,         WM_SKEY, Button1, pointer_move_resize_client, {.resize=true}},             \
     {CLIENT_WIN,          WM_KEY, Button2, pointer_change_area,        {0}},                        \
     {CLIENT_WIN,          WM_KEY, Button3, pointer_swap_clients,       {0}},                        \
-    {CLIENT_WIN,               0, Button3, choose_client,                       {0}},                        \
+    {CLIENT_WIN,               0, Button3, choose_client,              {0}},                        \
     {CLIENT_FRAME,             0, Button1, pointer_move_resize_client, {.resize=true}},             \
     {CLIENT_ICON,              0, Button1, change_area,                {.area_type=PREV_AREA}},     \
     {CLIENT_ICON,              0, Button2, pointer_change_area,        {0}},                        \
