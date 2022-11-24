@@ -386,10 +386,10 @@ static void update_hint_win_for_resize(WM *wm, Client *c)
     unsigned int w=get_client_col(wm, c), h=get_client_row(wm, c);
     sprintf(str, "(%d, %d) %ux%u", c->x, c->y, w, h);
     get_string_size(wm, wm->font[HINT_FONT], str, &w, NULL);
-    int x=(wm->screen_width-w)/2, y=(wm->screen_height-HINT_WIN_HEIGHT)/2;
-    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, HINT_WIN_HEIGHT);
+    int x=(wm->screen_width-w)/2, y=(wm->screen_height-HINT_WIN_LINE_HEIGHT)/2;
+    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, HINT_WIN_LINE_HEIGHT);
     XMapRaised(wm->display, wm->hint_win);
-    String_format f={{0, 0, w, HINT_WIN_HEIGHT}, CENTER,
+    String_format f={{0, 0, w, HINT_WIN_LINE_HEIGHT}, CENTER,
         false, 0, wm->text_color[HINT_TEXT_COLOR], HINT_FONT};
     draw_string(wm, wm->hint_win, str, &f);
 }
@@ -622,22 +622,16 @@ void change_wallpaper(WM *wm, XEvent *e, Func_arg arg)
     unsigned long r1=rand(), r2=rand(), color=(r1<<32)|r2;
     Pixmap pixmap=None;
 #ifdef WALLPAPER_PATHS
-    File *f;
-    for(f=wm->wallpapers->next; f; f=f->next)
-        if(!strcmp(f->name, wm->cur_wallpaper->name))
-            break;
-    if(!f || !f->next)
-        f=wm->wallpapers;
-    wm->cur_wallpaper=f=f->next;
+    File *f=wm->cur_wallpaper;
     if(f)
+    {
+        f=wm->cur_wallpaper=(f->next ? f->next : wm->wallpapers->next);
         pixmap=create_pixmap_from_file(wm, wm->root_win, f->name);
+    }
 #endif
     update_win_background(wm, wm->root_win, color, pixmap);
-#ifdef WALLPAPER_FILENAME
     if(pixmap)
         XFreePixmap(wm->display, pixmap);
-#endif
-    XClearWindow(wm->display, wm->root_win);
 }
 
 void print_screen(WM *wm, XEvent *e, Func_arg arg)

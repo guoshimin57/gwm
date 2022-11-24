@@ -261,7 +261,7 @@ struct wm_tag // 窗口管理器相關信息
     unsigned int cur_desktop; // 當前虛擬桌面編號
     Desktop desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
-    Window root_win, resize_win, hint_win; // 根窗口、調整尺寸提示窗口、提示窗口
+    Window root_win, hint_win; // 根窗口、提示窗口
     GC gc; // 窗口管理器的圖形信息
     Visual *visual; // 着色類型
     Colormap colormap; // 着色圖

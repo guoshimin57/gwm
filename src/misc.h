@@ -35,6 +35,8 @@ char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
 void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph);
 bool is_win_exist(WM *wm, Window win, Window parent);
-File *get_files_in_dirs(const char *paths[], size_t n, const char *exts[], size_t m, Order order, bool is_fullname);
+File *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, size_t *n);
+void free_files(File *head);
+bool regcmp(const char *s, const char *regex);
 
 #endif

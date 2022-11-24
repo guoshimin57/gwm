@@ -101,6 +101,8 @@ static void handle_button_press(WM *wm, XEvent *e)
     }
     if(type != CMD_CENTER_ITEM)
         XUnmapWindow(wm->display, wm->cmd_center.win);
+    if(type != RUN_CMD_ENTRY)
+        XUnmapWindow(wm->display, wm->run_cmd.win);
 }
  
 static bool is_func_click(WM *wm, Widget_type type, Buttonbind *b, XEvent *e)
@@ -226,7 +228,7 @@ static void update_hint_win_for_icon(WM *wm, Window hover)
     if(c)
     {
         Window root, child;
-        unsigned int cw, tw, mask, h=HINT_WIN_HEIGHT;
+        unsigned int cw, tw, mask, h=HINT_WIN_LINE_HEIGHT;
         int x=c->icon->x+c->icon->w, y=c->icon->y+c->icon->h, rx, ry, wx, wy;
         get_string_size(wm, wm->font[HINT_FONT], c->class_name, &cw, NULL);
         get_string_size(wm, wm->font[HINT_FONT], c->icon->title_text, &tw, NULL);
@@ -234,7 +236,7 @@ static void update_hint_win_for_icon(WM *wm, Window hover)
             set_pos_for_click(wm, hover, rx, ry, &x, &y, cw+tw, h);
         XMoveResizeWindow(wm->display, wm->hint_win, x, y, cw+tw, h);
         XMapRaised(wm->display, wm->hint_win);
-        String_format f={{0, 0, cw, HINT_WIN_HEIGHT}, CENTER,
+        String_format f={{0, 0, cw, HINT_WIN_LINE_HEIGHT}, CENTER,
             false, 0, wm->text_color[CLASS_TEXT_COLOR], HINT_FONT};
         draw_string(wm, wm->hint_win, c->class_name, &f);
         f.r.x=cw, f.r.w=tw, f.fg=wm->text_color[TITLE_TEXT_COLOR];
@@ -370,6 +372,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
         update_win_background(wm, win, wm->widget_color[CMD_CENTER_COLOR].pixel, None);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
+    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
 
 static void hint_leave_taskbar_button(WM *wm, Widget_type type)

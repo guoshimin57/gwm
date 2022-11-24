@@ -214,9 +214,7 @@ void init_imlib(WM *wm)
 
 static void init_wallpaper_files(WM *wm)
 {
-    const char *exts[]={"png", "jpg"};
-    size_t n=ARRAY_NUM(WALLPAPER_PATHS);
-    wm->wallpapers=get_files_in_dirs(WALLPAPER_PATHS, n, exts, 2, NOSORT, true);
+    wm->wallpapers=get_files_in_paths(WALLPAPER_PATHS, "*.png|*.jpg", NOSORT, true, NULL);
     wm->cur_wallpaper=wm->wallpapers->next;
 }
 

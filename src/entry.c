@@ -16,6 +16,7 @@
 #include "misc.h"
 
 static int get_entry_cursor_x(WM *wm, Entry *e);
+static void complete_cmd_for_entry(WM *wm, Entry *e);
 static bool close_entry(WM *wm, Entry *e, bool result);
 
 void create_entry(WM *wm, Entry *e, Rect *r, wchar_t *hint)
@@ -62,61 +63,110 @@ static int get_entry_cursor_x(WM *wm, Entry *e)
     return ENTRY_TEXT_INDENT+w;
 }
 
+void hint_for_run_cmd_entry(WM *wm, const char *pattern)
+{
+    Window win=wm->hint_win;
+    char *paths=getenv("PATH");
+    if(paths && pattern && *pattern)
+    {
+        unsigned int w=RUN_CMD_ENTRY_WIDTH, h=HINT_WIN_LINE_HEIGHT;
+        String_format fmt={{0, 0, w, h}, CENTER_LEFT,
+            false, 0, wm->text_color[HINT_TEXT_COLOR], HINT_FONT};
+        int x=(wm->screen_width-w)/2,
+            y=(wm->screen_height+RUN_CMD_ENTRY_HEIGHT)/2, *py=&fmt.r.y;
+        size_t i, n, max=(wm->screen_height-wm->taskbar.h-y)/h;
+        const char *reg=copy_strings(pattern, "*", NULL);
+        File *f, *files=get_files_in_paths(paths, reg, RISE, false, &n);
+        if(n)
+        {
+            XMoveResizeWindow(wm->display, win, x, y, w, MIN(n, max)*h);
+            XMapWindow(wm->display, win);
+            XClearWindow(wm->display, win);
+            for(i=0, f=files->next; f && i<max; f=f->next, i++)
+                draw_string(wm, win, i<max-1 ? f->name : "...", &fmt), *py+=h;
+            free_files(files);
+            return;
+        }
+    }
+    XUnmapWindow(wm->display, win);
+}
+
+char *get_match_cmd(WM *wm, const char *pattern)
+{
+    char *cmd=NULL, *paths=getenv("PATH");
+    if(paths)
+    {
+        char *reg=copy_strings(pattern, "*", NULL);
+        File *files=get_files_in_paths(paths, reg, RISE, false, NULL);
+        if(files->next)
+            cmd=copy_string(files->next->name), free_files(files);
+    }
+    return cmd;
+}
+
 bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
 {
     size_t *i=&e->cursor_offset, no=wcslen(e->text+*i);
-    wchar_t keyname[BUFSIZ]={0};
-    KeySym ks=look_up_key(e->xic, ke, keyname, BUFSIZ);
+    wchar_t keyname[FILENAME_MAX]={0};
+    KeySym ks=look_up_key(e->xic, ke, keyname, FILENAME_MAX);
+    size_t n1=wcslen(e->text), n2=wcslen(keyname), n=ARRAY_NUM(e->text);
 
     if(is_equal_modifier_mask(wm, ControlMask, ke->state))
     {
         if(ks == XK_u)
             wmemmove(e->text, e->text+*i, no+1), *i=0;
         else if(ks == XK_v)
-            return !XConvertSelection(wm->display, XA_PRIMARY, wm->utf8,
+            XConvertSelection(wm->display, XA_PRIMARY, wm->utf8,
                 None, e->win, ke->time);
     }
     else if(is_equal_modifier_mask(wm, None, ke->state))
     {
-        size_t n1=wcslen(e->text), n2=wcslen(keyname), n=ARRAY_NUM(e->text);
         switch(ks)
         {
-            case XK_Escape:
-                return close_entry(wm, e, false);
-            case XK_Return: case XK_KP_Enter:
-                return close_entry(wm, e, true);
+            case XK_Escape:     return close_entry(wm, e, false);
+            case XK_Return:
+            case XK_KP_Enter:   return close_entry(wm, e, true);
             case XK_BackSpace:
                 if(n1)
                     wmemmove(e->text+*i-1, e->text+*i, no+1), (*i)--;
                 break;
-            case XK_Delete: case XK_KP_Delete:
+            case XK_Delete:
+            case XK_KP_Delete:
                 if(n1 < n)
                     wmemmove(e->text+*i, e->text+*i+1, no+1);
                 break;
-            case XK_Left: case XK_KP_Left:
-                *i = *i ? *i-1 : *i;
-                break;
-            case XK_Right: case XK_KP_Right:
-                *i = *i<n1 ? *i+1 : *i;
-                break;
-            case XK_Home:
-                (*i)=0; break;
-            case XK_End:
-                (*i)=n1; break;
-            case XK_Tab:
-                return false;
-            default:
-                wcsncpy(e->text+n1, keyname, n-n1-1), (*i)+=n2;
+            case XK_Left:
+            case XK_KP_Left:    *i = *i ? *i-1 : *i; break;
+            case XK_Right:
+            case XK_KP_Right:   *i = *i<n1 ? *i+1 : *i; break;
+            case XK_Home:       (*i)=0; break;
+            case XK_End:        (*i)=n1; break;
+            case XK_Tab:        complete_cmd_for_entry(wm, e); break;
+            default:            wcsncpy(e->text+n1, keyname, n-n1-1), (*i)+=n2;
         }
     }
+    else if(is_equal_modifier_mask(wm, ShiftMask, ke->state))
+        wcsncpy(e->text+n1, keyname, n-n1-1), (*i)+=n2;
+    char pattern[FILENAME_MAX]={0};
+    wcstombs(pattern, e->text, FILENAME_MAX);
+    hint_for_run_cmd_entry(wm, pattern);
     update_entry_text(wm, e);
     return false;
+}
+
+static void complete_cmd_for_entry(WM *wm, Entry *e)
+{
+    char *cmd, pattern[FILENAME_MAX]={0};
+    wcstombs(pattern, e->text, FILENAME_MAX);
+    if((cmd=get_match_cmd(wm, pattern)))
+        mbstowcs(e->text, cmd, FILENAME_MAX), e->cursor_offset=wcslen(e->text);
 }
 
 static bool close_entry(WM *wm, Entry *e, bool result)
 {
     XUngrabKeyboard(wm->display, CurrentTime);
     XUnmapWindow(wm->display, e->win);
+    XUnmapWindow(wm->display, wm->hint_win);
     return result;
 }
 

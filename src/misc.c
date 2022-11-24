@@ -18,8 +18,9 @@
 #include "font.h"
 #include "misc.h"
 
-static void get_files_in_dir(const char *path, const char *exts[], size_t n, File *head, Order order, bool is_fullname);
-static int str_cmp_basename(const char *s1, const char *s2);
+static size_t get_files_in_path(const char *path, const char *regex, File *head, Order order, bool is_fullname);
+static bool match(const char *s, const char *r, const char *os);
+static int cmp_basename(const char *s1, const char *s2);
 static void create_file_node(File *head, const char *path, char *filename, bool is_fullname);
 
 void *malloc_s(size_t size)
@@ -63,21 +64,17 @@ bool is_wm_win(WM *wm, Window win)
 
 void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap)
 {
+    XEvent event={.xexpose={.type=Expose, .window=win}};
     if(pixmap)
-    {
-        /* 在調用XSetWindowBackgroundPixmap之後，在調用XClearWindow之
-         * 前，背景不變。*/
         XSetWindowBackgroundPixmap(wm->display, win, pixmap);
-        XClearWindow(wm->display, win);
-    }
     else
-    {
-        /* 在調用XSetWindowBackground之後，在收到下一個顯露事件或調用
-         * XClearWindow之前，背景不變。*/
-        XEvent event={.xexpose={.type=Expose, .window=win}};
         XSetWindowBackground(wm->display, win, color);
+    /* XSetWindowBackgroundPixmap或XSetWindowBackground不改變窗口當前內容，
+       應通過發送顯露事件或調用XClearWindow來立即改變背景。*/
+    if(pixmap || win==wm->root_win)
+        XClearWindow(wm->display, win);
+    else
         XSendEvent(wm->display, win, False, NoEventMask, &event);
-    }
 }
 
 Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
@@ -243,6 +240,7 @@ void clear_wm(WM *wm)
     XDestroyWindow(wm->display, wm->cmd_center.win);
     XDestroyWindow(wm->display, wm->run_cmd.win);
     XDestroyWindow(wm->display, wm->hint_win);
+    XFreeGC(wm->display, wm->gc);
     XFreeModifiermap(wm->mod_map);
     for(size_t i=0; i<POINTER_ACT_N; i++)
         XFreeCursor(wm->display, wm->cursors[i]);
@@ -250,6 +248,7 @@ void clear_wm(WM *wm)
     XDestroyIC(wm->run_cmd.xic);
     XCloseIM(wm->xim);
     close_fonts(wm);
+    free_files(wm->wallpapers);
     XClearWindow(wm->display, wm->root_win);
     XFlush(wm->display);
     XCloseDisplay(wm->display);
@@ -334,31 +333,62 @@ bool is_win_exist(WM *wm, Window win, Window parent)
     return false;
 }
 
-File *get_files_in_dirs(const char *paths[], size_t n, const char *exts[], size_t m, Order order, bool is_fullname)
+File *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, size_t *n)
 {
+    size_t sum=0;
+    char *p, *ps=copy_string(paths);
     File *head=malloc_s(sizeof(File));
     head->next=NULL, head->name=NULL;
-    for(size_t i=0; i<n; i++)
-        get_files_in_dir(paths[i], exts, m, head, order, is_fullname);
+    for(p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
+        sum+=get_files_in_path(p, regex, head, order, is_fullname);
+    free(ps);
+    if(n)
+        *n=sum;
     return head;
 }
 
-static void get_files_in_dir(const char *path, const char *exts[], size_t n, File *head, Order order, bool is_fullname)
+static size_t get_files_in_path(const char *path, const char *regex, File *head, Order order, bool is_fullname)
 {
-    char *p, *fn;
+    size_t n=0;
+    char *fn;
     DIR *dir=opendir(path);
-    for(struct dirent *d=NULL; dir && (d=readdir(dir)); )
-        if((fn=d->d_name) && strncmp(".", fn, 2) && strncmp("..", fn, 3))
-            for(size_t i=0; i<n; i++)
-                if(exts[i][0]=='\0' || ((p=strrchr(fn, '.')) && !strcmp(p+1, exts[i])))
-                    for(File *f=head; f; f=f->next)
-                        if(!order || !f->next || str_cmp_basename(fn, f->next->name)/order>0)
-                            { create_file_node(f, path, fn, is_fullname), i=n; break; }
+    for(struct dirent *d=NULL; dir && (d=readdir(dir));)
+        if(strcmp(".", fn=d->d_name) && strcmp("..", fn) && regcmp(fn, regex))
+            for(File *f=head; f; f=f->next)
+                if(!order || !f->next || cmp_basename(fn, f->next->name)/order>0)
+                    { create_file_node(f, path, fn, is_fullname); n++; break; }
     if(dir)
         closedir(dir);
+    return n;
 }
 
-static int str_cmp_basename(const char *s1, const char *s2)
+void free_files(File *head)
+{
+    for(File *f=head; f; f=head)
+        head=f->next, free(f->name), free(f);
+}
+
+// *匹配>=0個字符，.匹配一個字符，|匹配其兩側的表達式
+static bool match(const char *s, const char *r, const char *os)
+{
+    char *p=NULL;
+    switch(*r)
+    {
+        case '\0':  return !*s;
+        case '*':   return match(s, r+1, os) || (*s && match(s+1, r, os));
+        case '.':   return *s && match(s+1, r+1, os);
+        case '|':   return (!*(r+1) && !*s) || (*(r+1) && match(os, r+1, os));
+        default:    return (*r==*s && match(s+1, r+1, os))
+                        || ((p=strchr(r, '|')) && match(os, p+1, os));
+    }
+}
+
+bool regcmp(const char *s, const char *regex) // 簡單的全文(即整個s)正則表達式匹配
+{
+    return match(s, regex, s);
+}
+
+static int cmp_basename(const char *s1, const char *s2)
 {
     const char *p1=strrchr(s1, '/'), *p2=strrchr(s2, '/');
     p1=(p1 ? p1+1 : s1), p2=(p2 ? p2+1 : s2);

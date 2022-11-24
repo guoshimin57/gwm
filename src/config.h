@@ -73,7 +73,7 @@
 #define ENTRY_TEXT_INDENT ROUND(ENTRY_FONT_PIXEL_SIZE/4.0)
 #define RUN_CMD_ENTRY_WIDTH (ENTRY_FONT_PIXEL_SIZE*15+ENTRY_TEXT_INDENT*2) // 運行命令的輸入構件的寬度，單位爲像素
 #define RUN_CMD_ENTRY_HEIGHT ROUND(ENTRY_FONT_PIXEL_SIZE*4/3.0) // 運行命令的輸入構件的寬度，單位爲像素
-#define HINT_WIN_HEIGHT ROUND(HINT_FONT_PIXEL_SIZE*4/3.0) // 提示窗口的高度，單位爲像素
+#define HINT_WIN_LINE_HEIGHT ROUND(HINT_FONT_PIXEL_SIZE*4/3.0) // 提示窗口的行高度，單位爲像素
 
 #define RUN_CMD_ENTRY_HINT L"請輸入命令，然後按回車執行"
 #define DEFAULT_FONT_NAME "monospace:pixelsize="TO_STR(DEFAULT_FONT_PIXEL_SIZE) // 默認字體名
@@ -125,9 +125,10 @@
     [HINT_TEXT_COLOR]            = "grey61",    /* 用於提示的文本的顏色名 */       \
 }
 
-#define WALLPAPER_FILENAME "/usr/share/backgrounds/gwm.png" // 壁紙文件名。若刪除本行或文件不能訪問，則使用純色背景。
-#define WALLPAPER_PATHS (const char *[]) /* 壁紙目錄列表，如取消此宏定义或目录为空或不能访问，则切换绝壁时使用纯色 */ \
-{   "/usr/share/wallpapers", "/usr/share/backgrounds",   }
+// 壁紙文件名。若刪除本行或文件不能訪問，則使用純色背景。
+#define WALLPAPER_FILENAME "/usr/share/backgrounds/gwm.png"
+// 壁紙目錄列表，如取消此宏定义或目录为空或不能访问，则切换绝壁时使用纯色
+#define WALLPAPER_PATHS "/usr/share/backgrounds/fedora-workstation:/usr/share/wallpapers"
 
 #define TITLE_BUTTON_TEXT (const char *[]) /* 窗口標題欄按鈕的標籤（從左至右）*/ \
 /* 切換至主區域 切換至次區域 切換至固定區 切換至懸浮態 縮微化 最大化 關閉 */     \
