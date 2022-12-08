@@ -15,6 +15,7 @@
 #include "init.h"
 #include "client.h"
 #include "color.h"
+#include "drawable.h"
 #include "desktop.h"
 #include "entry.h"
 #include "font.h"

@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "client.h"
+#include "drawable.h"
 #include "hint.h"
 
 static bool is_prefer_width_inc(unsigned int w, int dw, XSizeHints *hint);
@@ -66,10 +67,10 @@ void update_size_hint(WM *wm, Client *c)
 bool is_prefer_resize(WM *wm, Client *c, Delta_rect *d)
 {
     XSizeHints *p=&c->size_hint;
-    return ( (is_prefer_width_inc(c->w, d->dw, p)
-        || is_prefer_height_inc(c->h, d->dh, p) )
-        && is_prefer_size(c->w+d->dw, c->h+d->dh, p)
-        && is_prefer_aspect(c->w+d->dw, c->h+d->dh, p));
+    long cw=c->w, ch=c->h, dw=d->dw, dh=d->dh, w=cw+dw, h=ch+dh;
+    return (w>=MOVE_RESIZE_INC && h>=MOVE_RESIZE_INC
+        && (is_prefer_width_inc(cw, dw, p) || is_prefer_height_inc(ch, dh, p))
+        && is_prefer_size(w, h, p) && is_prefer_aspect(w, h, p));
 }
 
 static bool is_prefer_width_inc(unsigned int w, int dw, XSizeHints *hint)

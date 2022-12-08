@@ -11,6 +11,7 @@
 
 #include <time.h>
 #include "gwm.h"
+#include "drawable.h"
 #include "handler.h"
 #include "client.h"
 #include "entry.h"
@@ -183,7 +184,8 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         update_win_background(wm, win, type==CLOSE_BUTTON ?
             wm->widget_color[ENTERED_CLOSE_BUTTON_COLOR].pixel :
             wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
-    XDefineCursor(wm->display, win, wm->cursors[act]);
+    if(type != UNDEFINED)
+        XDefineCursor(wm->display, win, wm->cursors[act]);
     handle_pointer_hovers(wm, win, type);
 }
 
@@ -372,7 +374,8 @@ static void handle_leave_notify(WM *wm, XEvent *e)
         update_win_background(wm, win, wm->widget_color[CMD_CENTER_COLOR].pixel, None);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
-    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+    if(type != UNDEFINED)
+        XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
 
 static void hint_leave_taskbar_button(WM *wm, Widget_type type)
@@ -435,7 +438,7 @@ static void handle_property_notify(WM *wm, XEvent *e)
     Client *c=win_to_client(wm, win);
 #if SET_FRAME_PROP
     if(c)
-        update_frame_prop(wm, c);
+        copy_prop(wm, c->frame, c->win);
 #endif
     switch(e->xproperty.atom)
     {

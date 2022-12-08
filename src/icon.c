@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "client.h"
+#include "drawable.h"
 #include "desktop.h"
 #include "font.h"
 #include "icon.h"

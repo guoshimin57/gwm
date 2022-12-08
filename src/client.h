@@ -16,7 +16,6 @@ void add_client(WM *wm, Window win);
 void add_client_node(Client *head, Client *c);
 void fix_area_type(WM *wm);
 void set_default_rect(WM *wm, Client *c);
-void update_frame_prop(WM *wm, Client *c);
 void create_title_bar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
 unsigned int get_typed_clients_n(WM *wm, Area_type type);
@@ -33,7 +32,6 @@ Client *get_prev_client(WM *wm, Client *c);
 void move_client(WM *wm, Client *from, Client *to, Area_type type);
 void swap_clients(WM *wm, Client *a, Client *b);
 int compare_client_order(WM *wm, Client *c1, Client *c2);
-bool send_event(WM *wm, Atom protocol, Window win);
 bool is_last_typed_client(WM *wm, Client *c, Area_type type);
 Client *get_area_head(WM *wm, Area_type type);
 

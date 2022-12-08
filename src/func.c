@@ -12,6 +12,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "gwm.h"
+#include "drawable.h"
 #include "font.h"
 #include "func.h"
 #include "client.h"
@@ -27,15 +28,12 @@
 
 static bool is_match_button_release(WM *wm, XEvent *oe, XEvent *ne);
 static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne);
-static bool is_pointer_on_win(WM *wm, Window win);
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
 static bool is_prefer_move_resize(WM *wm, Client *c, Delta_rect *d);
-static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
 static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d);
 static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act, bool is_resize);
 static void update_hint_win_for_resize(WM *wm, Client *c);
-static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act);
-static void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h);
+static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
 
 bool is_act_grab_pointer_func(void (*func)(WM *, XEvent *, Func_arg arg))
 {
@@ -72,17 +70,6 @@ static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne)
 {
     return is_equal_modifier_mask(wm, oe->xbutton.state, ne->xbutton.state)
         && is_pointer_on_win(wm, ne->xbutton.window);
-}
-
-static bool is_pointer_on_win(WM *wm, Window win)
-{
-    Window r, c;
-    int rx, ry, x, y;
-    unsigned int w, h, state;
-    
-    return get_geometry(wm, win, NULL, NULL, &w, &h, NULL)
-        && XQueryPointer(wm->display, win, &r, &c, &rx, &ry, &x, &y, &state)
-        && x>=0 && x<w && y>=0 && y<h;
 }
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
@@ -167,23 +154,11 @@ static bool is_prefer_move_resize(WM *wm, Client *c, Delta_rect *d)
         || is_prefer_resize(wm, c, d));
 }
 
-/* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外。
- * 若滿足以下條件，則有交集：窗口與屏幕中心距≤窗口半邊長+屏幕半邊長。
- * 即：|x+w/2-0-sw/2|＜|w/2+sw/2| 且 |y+h/2-0-sh/2|＜|h/2+sh/2|。
- * 兩邊同乘以2，得：|2*x+w-sw|＜|w+sw| 且 |2*y+h-sh|＜|h+sh|。
- */
-static bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h)
-{
-    unsigned int sw=wm->screen_width, sh=wm->screen_height;
-    return abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
-}
-
 static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d)
 {
     XSizeHints *p=&c->size_hint;
-    unsigned int w, h, cw=c->w, ch=c->h;
-    if( (d->dw || d->dh)
-        && (!is_prefer_size(cw, ch, p) || !is_prefer_aspect(cw, ch, p)))
+    long w=c->w, h=c->h, cw=w, ch=h, dw=d->dw, dh=d->dh;
+    if((dw || dh) && (!is_prefer_size(w, h, p) || !is_prefer_aspect(w, h, p)))
     {
         if(p->min_width)
             w=cw=MAX(cw, p->min_width);
@@ -193,15 +168,15 @@ static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d)
             w=cw=MIN(cw, p->max_width);
         if(p->max_height)
             h=ch=MIN(ch, p->max_height);
-        if(d->dw)
-            for(w=(int)p->base_width; ;w+=(int)p->width_inc)
+        if(dw)
+            for(w=p->base_width; ;w+=p->width_inc)
                 if(is_prefer_size(w, ch, p) && is_prefer_aspect(w, ch, p))
                     break;
-        if(d->dh)
+        if(dh)
             for(h=p->base_height; ;h+=p->height_inc)
                 if(is_prefer_size(w, h, p) && is_prefer_aspect(w, h, p))
                     break;
-        d->dw=(int)w-(int)c->w, d->dh=(int)h-(int)c->h;
+        d->dw=w-cw, d->dh=h-ch;
         // 修正尺寸時，應確保尺寸變化方向上鄰近光標的邊與光標的間距基本不變
         d->dx = d->dx ? d->dx : -d->dw, d->dy = d->dy ? d->dy : -d->dh;
         return true;
@@ -363,7 +338,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act, bool is_resize)
 {
     bool fix;
-    Delta_rect d=get_pointer_delta_rect(c, m, act);
+    Delta_rect d=get_pointer_delta_rect(m, act);
     if(is_prefer_move_resize(wm, c, &d) || (fix=fix_move_resize(wm, c, &d)))
     {
         move_resize_client(wm, c, &d);
@@ -394,7 +369,7 @@ static void update_hint_win_for_resize(WM *wm, Client *c)
     draw_string(wm, wm->hint_win, str, &f);
 }
 
-static Delta_rect get_pointer_delta_rect(Client *c, const Move_info *m, Pointer_act act)
+static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act)
 {
     int dx=m->nx-m->ox, dy=m->ny-m->oy;
     Delta_rect dr[] =
@@ -644,26 +619,4 @@ void print_win(WM *wm, XEvent *e, Func_arg arg)
     Client *c=DESKTOP(wm).cur_focus_client;
     if(c != wm->clients)
         print_area(c->frame, 0, 0, c->w, c->h);
-}
-
-static void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h)
-{
-    imlib_context_set_drawable(d);
-    Imlib_Image image=imlib_create_image_from_drawable(None, x, y, w, h, 0);
-    if(image)
-    {
-        time_t timer=time(NULL), err=-1;
-        char name[FILENAME_MAX];
-        if(*SCREENSHOT_PATH == '~')
-            sprintf(name, "%s%s/gwm-", getenv("HOME"), SCREENSHOT_PATH+1);
-        else
-            sprintf(name, "%s/gwm-", SCREENSHOT_PATH);
-        if(timer != err)
-            strftime(name+strlen(name), FILENAME_MAX, "%Y-%m-%d-%H:%M:%S", localtime(&timer));
-        imlib_context_set_image(image);
-        imlib_image_set_format(SCREENSHOT_FORMAT);
-        sprintf(name+strlen(name), ".%s", SCREENSHOT_FORMAT);
-        imlib_save_image(name);
-        imlib_free_image();
-    }
 }

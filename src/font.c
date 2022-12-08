@@ -29,24 +29,6 @@ void load_font(WM *wm)
     }
 }
 
-char *get_text_prop(WM *wm, Window win, Atom atom)
-{
-    int n;
-    char **list=NULL, *result=NULL;
-    XTextProperty name;
-    if(XGetTextProperty(wm->display, win, &name, atom))
-    {
-        if(name.encoding == XA_STRING)
-            result=copy_string((char *)name.value);
-        else if(Xutf8TextPropertyToTextList(wm->display, &name, &list, &n) == Success)
-            result=copy_string(*list), XFreeStringList(list);
-        XFree(name.value);
-    }
-    if(!result)
-        result=copy_string(win==wm->taskbar.win ? "gwm" : "");
-    return result;
-}
-
 void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f)
 {
     size_t n=wcslen(wcs)*MB_CUR_MAX+1;

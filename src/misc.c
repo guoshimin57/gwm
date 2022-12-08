@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include "gwm.h"
 #include "client.h"
+#include "drawable.h"
 #include "font.h"
 #include "misc.h"
 
@@ -53,44 +54,6 @@ void exit_with_msg(const char *msg)
 {
     fprintf(stderr, "%s\n", msg);
     exit(EXIT_FAILURE);
-}
-
-bool is_wm_win(WM *wm, Window win)
-{
-    XWindowAttributes attr;
-    return (XGetWindowAttributes(wm->display, win, &attr)
-        && attr.map_state!=IsUnmapped && !attr.override_redirect);
-}
-
-void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap)
-{
-    XEvent event={.xexpose={.type=Expose, .window=win}};
-    if(pixmap)
-        XSetWindowBackgroundPixmap(wm->display, win, pixmap);
-    else
-        XSetWindowBackground(wm->display, win, color);
-    /* XSetWindowBackgroundPixmap或XSetWindowBackground不改變窗口當前內容，
-       應通過發送顯露事件或調用XClearWindow來立即改變背景。*/
-    if(pixmap || win==wm->root_win)
-        XClearWindow(wm->display, win);
-    else
-        XSendEvent(wm->display, win, False, NoEventMask, &event);
-}
-
-Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
-{
-    unsigned int w, h, d;
-    Imlib_Image image=imlib_load_image(filename);
-    if(image && get_geometry(wm, win, NULL, NULL, &w, &h, &d))
-    {
-        Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
-        imlib_context_set_image(image);
-        imlib_context_set_drawable(bg);   
-        imlib_render_image_on_drawable_at_size(0, 0, w, h);
-        imlib_free_image();
-        return bg;
-    }
-    return None;
 }
 
 Widget_type get_widget_type(WM *wm, Window win)
@@ -179,12 +142,6 @@ void set_xic(WM *wm, Window win, XIC *ic)
         XSetICFocus(*ic);
 }
 
-Window get_transient_for(WM *wm, Window w)
-{
-    Window pw;
-    return XGetTransientForHint(wm->display, w, &pw) ? pw : None;
-}
-
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
 {
 	KeySym ks;
@@ -197,35 +154,6 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
         mbstowcs(keyname, kn, n);
     }
     return ks;
-}
-
-Atom get_atom_prop(WM *wm, Window win, Atom prop)
-{
-    unsigned char *p=get_prop(wm, win, prop, NULL);
-    return p ? *(Atom *)p : None;
-}
-
-/* 調用此函數時需要注意：若返回的特性數據的實際格式是32位的話，
- * 則特性數據存儲於long型數組中。當long是64位時，前4字節會會填充0。 */
-unsigned char *get_prop(WM *wm, Window win, Atom prop, unsigned long *n)
-{
-    int fmt;
-    unsigned long nitems, rest;
-    unsigned char *p=NULL;
-    Atom type;
-
-    /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
-     * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
-    if( XGetWindowProperty(wm->display, win, prop, 0, ~0L, False,
-        AnyPropertyType, &type, &fmt, n ? n : &nitems, &rest, &p)==Success && p)
-        return p;
-    return NULL;
-}
-
-void set_override_redirect(WM *wm, Window win)
-{
-    XSetWindowAttributes attr={.override_redirect=True};
-    XChangeWindowAttributes(wm->display, win, CWOverrideRedirect, &attr);
 }
 
 void clear_wm(WM *wm)
@@ -255,15 +183,6 @@ void clear_wm(WM *wm)
     clear_zombies(0);
 }
 
-bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigned int *h, unsigned int *depth)
-{
-    Window r;
-    int xt, yt;
-    unsigned int wt, ht, bw, dt;
-    return XGetGeometry(wm->display, drw, &r, x ? x : &xt, y ? y : &yt,
-        w ? w : &wt, h ? h : &ht, &bw, depth ? depth : &dt);
-}
-
 char *copy_string(const char *s)
 {
     return strcpy(malloc_s(strlen(s)+1), s);
@@ -289,48 +208,6 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
         strcat(result, p);
     va_end(ap);
     return result;
-}
-
-/* 坐標均對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
-void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph)
-{
-    unsigned int cw=0, ch=0, sw=wm->screen_width, sh=wm->screen_height;
-
-    get_geometry(wm, click, NULL, NULL, &cw, &ch, NULL);
-
-    if(cx < 0) // 窗口click左邊出屏
-        cw=cx+pw, cx=0;
-    if(cx+cw > sw) // 窗口click右邊出屏
-        cw=sw-cx;
-
-    if(cx+pw <= sw) // 在窗口click的右邊能顯示完整的菜單
-        *px=cx;
-    else if(cx+cw >= pw) // 在窗口click的左邊能顯示完整的菜單
-        *px=cx+cw-pw;
-    else if(cx+cw/2 <= sw/2) // 窗口click在屏幕的左半部
-        *px=sw-pw;
-    else // 窗口click在屏幕的右半部
-        *px=0;
-
-    if(cy+ch+ph <= sh) // 在窗口click下能顯示完整的菜單
-        *py=cy+ch;
-    else if(cy >= ph) // 在窗口click上能顯示完整的菜單
-        *py=cy-ph;
-    else if(cy+ch/2 <= sh/2) // 窗口click在屏幕的上半部
-        *py=sh-ph;
-    else // 窗口click在屏幕的下半部
-        *py=0;
-}
-
-bool is_win_exist(WM *wm, Window win, Window parent)
-{
-    Window root, pwin, *child=NULL;
-    unsigned int n;
-    if(XQueryTree(wm->display, parent, &root, &pwin, &child, &n))
-        for(size_t i=0; i<n; i++)
-            if(win == child[i])
-                { XFree(child); return true; }
-    return false;
 }
 
 File *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, size_t *n)

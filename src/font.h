@@ -13,7 +13,6 @@
 #define FONT_H
 
 void load_font(WM *wm);
-char *get_text_prop(WM *wm, Window win, Atom atom);
 void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f);
 void draw_string(WM *wm, Drawable d, const char *str, const String_format *f);
 void get_string_size(WM *wm, XftFont *font, const char *str, unsigned int *w, unsigned int *h);

@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "menu.h"
+#include "drawable.h"
 #include "misc.h"
 
 void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg)

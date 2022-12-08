@@ -23,7 +23,7 @@
 #include "config.h"
 
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_TAKE_FOCUS"}
-#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
+#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
 
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define MAX(a, b) ((a)>(b) ? (a) : (b))
@@ -194,7 +194,7 @@ typedef enum icccm_atom_tag Icccm_atom;
 
 enum ewmh_atom_tag // EWMH規範的標識符
 {
-    _NET_WM_WINDOW_TYPE, _NET_WM_WINDOW_TYPE_NORMAL,
+    _NET_WM_WINDOW_TYPE, _NET_WM_WINDOW_TYPE_NORMAL, _NET_WM_WINDOW_TYPE_DIALOG,
     _NET_WM_STATE, _NET_WM_STATE_MODAL, _NET_WM_ICON, EWMH_ATOM_N
 };
 typedef enum ewmh_atom_tag Ewmh_atom;

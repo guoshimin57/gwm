@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "client.h"
+#include "drawable.h"
 #include "desktop.h"
 #include "font.h"
 #include "grab.h"
@@ -23,6 +24,7 @@ static void apply_rules(WM *wm, Client *c);
 static bool have_rule(Rule *r, Client *c);
 static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a);
 static void set_default_size(WM *wm, Client *c, XWindowAttributes *a);
+static void fix_size_by_hint(Client *c);
 static void frame_client(WM *wm, Client *c);
 static Rect get_button_rect(Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
@@ -40,6 +42,7 @@ void add_client(WM *wm, Window win)
     c->win=win;
     c->owner=get_transient_for(wm, win);
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
+    c->wm_hint=XGetWMHints(wm->display, win);
     update_size_hint(wm, c);
     apply_rules(wm, c);
     add_client_node(get_area_head(wm, c->area_type), c);
@@ -52,6 +55,7 @@ void add_client(WM *wm, Window win)
         focus_client(wm, wm->cur_desktop, c);
     grab_buttons(wm, c);
     XSelectInput(wm->display, win, EnterWindowMask|PropertyChangeMask);
+    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
 
 static void apply_rules(WM *wm, Client *c)
@@ -137,12 +141,15 @@ static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a)
 
     Client *oc;
     // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
-    long w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h, ow, oh,
+    long w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h,
          sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar.h;
     if(!(p->flags & PPosition))
         c->x=a->x, c->y=a->y;
     if((oc=win_to_client(wm, get_transient_for(wm, c->win))))
-        ow=oc->w, oh=oc->h, c->x=oc->x+(ow-w)/2, c->y=oc->y+(oh-h)/2;
+        c->x=oc->x+(oc->w-w)/2, c->y=oc->y+(oc->h-h)/2;
+    if( get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE])
+        == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG])
+        c->x=(sw-w)/2, c->y=(sh-h-bh)/2+bh;
     if(c->x >= sw-w-bw)
         c->x=sw-w-bw;
     if(c->x < bw)
@@ -155,12 +162,26 @@ static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a)
 
 static void set_default_size(WM *wm, Client *c, XWindowAttributes *a)
 {
+    unsigned int sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar.h;
     XSizeHints *p=&c->size_hint;
-    c->w=p->width, c->h=p->height;
-    SET_DEF_VAL(c->w, p->base_width), SET_DEF_VAL(c->h, p->base_height);
+
+    if(p->width && p->height)
+        c->w=p->width, c->h=p->height;
+    else
+        c->w=a->width, c->h=a->height;
+
+    if(c->w+2*c->border_w > sw)
+        c->w=sw-2*c->border_w;
+    if(c->h+c->title_bar_h+2*c->border_w > sh-th)
+        c->h=sh-th-c->title_bar_h-2*c->border_w;
     c->w=p->base_width+get_client_col(wm, c)*p->width_inc;
     c->h=p->base_height+get_client_row(wm, c)*p->height_inc;
-    SET_DEF_VAL(c->w, a->width), SET_DEF_VAL(c->h, a->height);
+    fix_size_by_hint(c);
+}
+
+static void fix_size_by_hint(Client *c)
+{
+    XSizeHints *p=&c->size_hint;
     if(p->min_width && c->w<p->min_width)
         c->w=p->min_width;
     if(p->min_height && c->h<p->min_height)
@@ -187,7 +208,7 @@ static void frame_client(WM *wm, Client *c)
         fr.h, c->border_w, wm->widget_color[CURRENT_BORDER_COLOR].pixel, 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
 #if SET_FRAME_PROP
-    update_frame_prop(wm, c);
+    copy_prop(wm, c->frame, c->win);
 #endif
     if(c->title_bar_h)
         create_title_bar(wm, c);
@@ -195,25 +216,6 @@ static void frame_client(WM *wm, Client *c)
     XReparentWindow(wm->display, c->win, c->frame, 0, c->title_bar_h);
     XMapWindow(wm->display, c->frame);
     XMapSubwindows(wm->display, c->frame);
-}
-
-void update_frame_prop(WM *wm, Client *c)
-{
-    int n=0;
-    Atom *p=XListProperties(wm->display, c->win, &n);
-    if(p)
-    {
-        Atom type;
-        unsigned long len=(1<<16), total, rest;
-        unsigned char *prop=NULL;
-
-        for(int fmt=0, i=0; i<n; i++, prop && XFree(prop))
-            if( XGetWindowProperty(wm->display, c->win, p[i], 0, len, False,
-                AnyPropertyType, &type, &fmt, &total, &rest, &prop) == Success)
-                XChangeProperty(wm->display, c->frame, p[i], type, fmt,
-                    PropModeReplace, prop, total);
-        XFree(p);
-    }
 }
 
 void create_title_bar(WM *wm, Client *c)
@@ -284,9 +286,6 @@ void del_client(WM *wm, Client *c, bool change_focus)
         if(is_win_exist(wm, c->win, c->frame))
             XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
         XDestroyWindow(wm->display, c->frame);
-        /* XDestroyWindow可能觸發EnterNotify事件，但此時frame已經銷毀了，
-           因而會觸發X錯誤事件，應忽略這些錯誤事件。 */
-        XSync(wm->display, True);
         if(c->area_type == ICONIFY_AREA)
             del_icon(wm, c);
         del_client_node(c);
@@ -563,32 +562,6 @@ int compare_client_order(WM *wm, Client *c1, Client *c2)
         if(c == c2)
             return -1;
     return 1;
-}
-
-bool send_event(WM *wm, Atom protocol, Window win)
-{
-	int i, n;
-	Atom *protocols;
-
-	if(XGetWMProtocols(wm->display, win, &protocols, &n))
-    {
-        XEvent event;
-        for(i=0; i<n && protocols[i]!=protocol; i++)
-            ;
-		XFree(protocols);
-        if(i < n)
-        {
-            event.type=ClientMessage;
-            event.xclient.window=win;
-            event.xclient.message_type=wm->icccm_atoms[WM_PROTOCOLS];
-            event.xclient.format=32;
-            event.xclient.data.l[0]=protocol;
-            event.xclient.data.l[1]=CurrentTime;
-            XSendEvent(wm->display, win, False, NoEventMask, &event);
-        }
-        return i<n;
-	}
-    return false;
 }
 
 bool is_last_typed_client(WM *wm, Client *c, Area_type type)
