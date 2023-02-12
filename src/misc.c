@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     misc.c：雜項。
- *     版權 (C) 2020-2022 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -173,8 +173,11 @@ void clear_wm(WM *wm)
     for(size_t i=0; i<POINTER_ACT_N; i++)
         XFreeCursor(wm->display, wm->cursors[i]);
     XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
-    XDestroyIC(wm->run_cmd.xic);
-    XCloseIM(wm->xim);
+    if(!wm->run_cmd.xic)puts("wtf xic");
+    if(wm->run_cmd.xic)
+        XDestroyIC(wm->run_cmd.xic);
+    if(wm->xim)
+        XCloseIM(wm->xim);
     close_fonts(wm);
     free_files(wm->wallpapers);
     XClearWindow(wm->display, wm->root_win);
@@ -278,4 +281,14 @@ static void create_file_node(File *head, const char *path, char *filename, bool 
     file->name = is_fullname ? copy_strings(path, "/", filename, NULL) : copy_string(filename);
     file->next=head->next;
     head->next=file;
+}
+
+int base_n_floor(int x, int n)
+{
+    return x/n*n;
+}
+
+int base_n_ceil(int x, int n)
+{
+    return base_n_floor(x, n)+(x%n ? n : 0);
 }

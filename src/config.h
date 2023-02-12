@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     config.h：gwm的配置文件。
- *     版權 (C) 2020-2022 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -45,7 +45,6 @@
 #define DEFAULT_N_MAIN_MAX 1 // 默認的主區域最大窗口數量
 #define AUTOSTART "~/.config/gwm/autostart.sh" // 在gwm剛啓動時執行的腳本
 #define CMD_CENTER_COL 4 // 操作中心按鈕列數
-#define MOVE_RESIZE_INC 8 // 移動窗口、調整窗口尺寸的步進值，單位爲像素。僅當窗口未有效設置尺寸特性時才使用它。
 
 #define DEFAULT_FONT_PIXEL_SIZE 24 // 默認字體大小，單位爲像素
 #define TITLE_FONT_PIXEL_SIZE  DEFAULT_FONT_PIXEL_SIZE // 標題欄的字體大小，單位爲像素
@@ -59,7 +58,7 @@
 #define TITLE_BAR_HEIGHT ROUND(TITLE_FONT_PIXEL_SIZE*4/3.0) // 窗口標題欄的高度，單位爲像素
 #define TITLE_BUTTON_WIDTH TITLE_BAR_HEIGHT // 窗口按鈕的寬度，單位爲像素
 #define TITLE_BUTTON_HEIGHT TITLE_BUTTON_WIDTH // 窗口按鈕的高度，單位爲像素
-#define WIN_GAP BORDER_WIDTH // 窗口間隔，單位爲像素
+#define WIN_GAP (BORDER_WIDTH*2) // 窗口間隔，單位爲像素
 #define STATUS_AREA_WIDTH_MAX TASKBAR_FONT_PIXEL_SIZE*30 // 任務欄狀態區域的最大寬度
 #define TASKBAR_HEIGHT ROUND(TASKBAR_FONT_PIXEL_SIZE*4/3.0) // 狀態欄的高度，單位爲像素
 #define TASKBAR_BUTTON_WIDTH TASKBAR_FONT_PIXEL_SIZE*2 // 任務欄按鈕的寬度，單位爲像素
@@ -74,6 +73,7 @@
 #define RUN_CMD_ENTRY_WIDTH (ENTRY_FONT_PIXEL_SIZE*15+ENTRY_TEXT_INDENT*2) // 運行命令的輸入構件的寬度，單位爲像素
 #define RUN_CMD_ENTRY_HEIGHT ROUND(ENTRY_FONT_PIXEL_SIZE*4/3.0) // 運行命令的輸入構件的寬度，單位爲像素
 #define HINT_WIN_LINE_HEIGHT ROUND(HINT_FONT_PIXEL_SIZE*4/3.0) // 提示窗口的行高度，單位爲像素
+#define RESIZE_INC DEFAULT_FONT_PIXEL_SIZE // 調整尺寸的步進值，單位爲像素。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
 
 #define RUN_CMD_ENTRY_HINT L"請輸入命令，然後按回車執行"
 #define DEFAULT_FONT_NAME "monospace:pixelsize="TO_STR(DEFAULT_FONT_PIXEL_SIZE) // 默認字體名
@@ -178,7 +178,7 @@
 
 #define HELP "lxterminal -e 'man gwm' || xfce4-terminal -e 'man gwm' || xterm -e 'man gwm'"
 #define FILE_MANAGER "xdg-open ~"
-#define BROWSER "xdg-open http:"
+#define BROWSER "xdg-open http://bing.com"
 #define TERMINAL "lxterminal || xfce4-terminal || gnome-terminal || konsole5 || xterm"
 #define VOLUME_DOWN "amixer -q sset Master 10%-"
 #define VOLUME_UP "amixer -q sset Master 10%+"

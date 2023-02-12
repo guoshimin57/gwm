@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     client.c：實現X client相關功能。
- *     版權 (C) 2020-2022 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -22,9 +22,13 @@
 
 static void apply_rules(WM *wm, Client *c);
 static bool have_rule(Rule *r, Client *c);
-static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a);
-static void set_default_size(WM *wm, Client *c, XWindowAttributes *a);
-static void fix_size_by_hint(Client *c);
+void set_win_rect_by_attr(WM *wm, Client *c);
+static void fix_win_pos(WM *wm, Client *c);
+static bool fix_win_pos_by_hint(Client *c);
+static void fix_win_pos_by_prop(WM *wm, Client *c);
+static void fix_win_pos_by_screen(WM *wm, Client *c);
+static void fix_win_size(WM *wm, Client *c);
+static void fix_win_size_by_screen(WM *wm, Client *c);
 static void frame_client(WM *wm, Client *c);
 static Rect get_button_rect(Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
@@ -47,7 +51,7 @@ void add_client(WM *wm, Window win)
     apply_rules(wm, c);
     add_client_node(get_area_head(wm, c->area_type), c);
     fix_area_type(wm);
-    set_default_rect(wm, c);
+    set_default_win_rect(wm, c);
     frame_client(wm, c);
     if(c->area_type == ICONIFY_AREA)
         iconify(wm, c);
@@ -69,8 +73,11 @@ static void apply_rules(WM *wm, Client *c)
         || type != wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
         || state == wm->ewmh_atom[_NET_WM_STATE_MODAL])
         c->area_type=FLOATING_AREA;
-    c->border_w=BORDER_WIDTH;
-    c->title_bar_h=TITLE_BAR_HEIGHT;
+    if(type != wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DOCK])
+    {
+        c->border_w=BORDER_WIDTH;
+        c->title_bar_h=TITLE_BAR_HEIGHT;
+    }
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     if(XGetClassHint(wm->display, c->win, &c->class_hint))
@@ -124,32 +131,51 @@ void fix_area_type(WM *wm)
     }
 }
 
-void set_default_rect(WM *wm, Client *c)
+void set_default_win_rect(WM *wm, Client *c)
+{
+    set_win_rect_by_attr(wm, c);
+    fix_win_size(wm, c);
+    fix_win_pos(wm, c);
+}
+
+void set_win_rect_by_attr(WM *wm, Client *c)
 {
     XWindowAttributes a={0, 0, wm->screen_width/4, wm->screen_height/4};
     XGetWindowAttributes(wm->display, c->win, &a);
-    set_default_size(wm, c, &a);
-    set_default_pos(wm, c, &a);
+    c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
 }
 
-static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a)
+static void fix_win_pos(WM *wm, Client *c)
+{
+    if(!fix_win_pos_by_hint(c))
+        fix_win_pos_by_prop(wm, c), fix_win_pos_by_screen(wm, c);
+}
+
+static bool fix_win_pos_by_hint(Client *c)
 {
     XSizeHints *p=&c->size_hint;
-    c->x=p->x, c->y=p->y;
     if((p->flags & USPosition))
-        return;
+        c->x=p->x, c->y=p->y;
+    return (p->flags & USPosition);
+}
 
+static void fix_win_pos_by_prop(WM *wm, Client *c)
+{
     Client *oc;
     // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
-    long w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h,
-         sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar.h;
-    if(!(p->flags & PPosition))
-        c->x=a->x, c->y=a->y;
+    int w=c->w, h=c->h, bh=c->title_bar_h, sw=wm->screen_width, sh=wm->screen_height;
     if((oc=win_to_client(wm, get_transient_for(wm, c->win))))
         c->x=oc->x+(oc->w-w)/2, c->y=oc->y+(oc->h-h)/2;
     if( get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE])
         == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG])
         c->x=(sw-w)/2, c->y=(sh-h-bh)/2+bh;
+}
+
+static void fix_win_pos_by_screen(WM *wm, Client *c)
+{
+    // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
+    int w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h,
+        sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar.h;
     if(c->x >= sw-w-bw)
         c->x=sw-w-bw;
     if(c->x < bw)
@@ -160,45 +186,19 @@ static void set_default_pos(WM *wm, Client *c, XWindowAttributes *a)
         c->y=bw+bh;
 }
 
-static void set_default_size(WM *wm, Client *c, XWindowAttributes *a)
+static void fix_win_size(WM *wm, Client *c)
+{
+    fix_win_size_by_hint(c);
+    fix_win_size_by_screen(wm, c);
+}
+
+static void fix_win_size_by_screen(WM *wm, Client *c)
 {
     unsigned int sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar.h;
-    XSizeHints *p=&c->size_hint;
-
-    if(p->width && p->height)
-        c->w=p->width, c->h=p->height;
-    else
-        c->w=a->width, c->h=a->height;
-
     if(c->w+2*c->border_w > sw)
         c->w=sw-2*c->border_w;
     if(c->h+c->title_bar_h+2*c->border_w > sh-th)
         c->h=sh-th-c->title_bar_h-2*c->border_w;
-    c->w=p->base_width+get_client_col(wm, c)*p->width_inc;
-    c->h=p->base_height+get_client_row(wm, c)*p->height_inc;
-    fix_size_by_hint(c);
-}
-
-static void fix_size_by_hint(Client *c)
-{
-    XSizeHints *p=&c->size_hint;
-    if(p->min_width && c->w<p->min_width)
-        c->w=p->min_width;
-    if(p->min_height && c->h<p->min_height)
-        c->h=p->min_height;
-    if(p->max_width && c->w>p->max_width)
-        c->w=p->max_width;
-    if(p->max_height && c->h>p->max_height)
-        c->h=p->max_height;
-    if(p->min_aspect.x && p->min_aspect.y)
-    {
-        float mina=(float)p->min_aspect.x/p->min_aspect.y,
-              maxa=(float)p->max_aspect.x/p->max_aspect.y;
-        if((float)c->w/c->h < mina)
-            c->h=c->w*mina+0.5;
-        else if((float)c->w/c->h > maxa)
-            c->w=c->h*maxa+0.5;
-    }
 }
 
 static void frame_client(WM *wm, Client *c)

@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     func.c：實現按鍵和按鍵所要綁定的功能。
- *     版權 (C) 2020-2022 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -29,9 +29,13 @@
 static bool is_match_button_release(WM *wm, XEvent *oe, XEvent *ne);
 static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne);
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
-static bool is_prefer_move_resize(WM *wm, Client *c, Delta_rect *d);
-static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d);
-static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act, bool is_resize);
+static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act);
+static bool fix_move_resize_delta_rect(WM *wm, Client *c, Delta_rect *d, bool is_move);
+static bool is_prefer_move(WM *wm, Client *c, Delta_rect *d, bool is_move);
+static bool fix_delta_rect_for_nonprefer_size(Client *c, XSizeHints *hint, Delta_rect *d);
+static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
+static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh);
+static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, int dh, Delta_rect *d);
 static void update_hint_win_for_resize(WM *wm, Client *c);
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
 
@@ -101,11 +105,13 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     if(DESKTOP(wm).cur_layout==TILE || DESKTOP(wm).cur_layout==STACK)
     {
+        Direction dir=arg.direction;
+        bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
         Client *c=DESKTOP(wm).cur_focus_client;
-        Delta_rect d=get_key_delta_rect(c, arg.direction);
+        Delta_rect d=get_key_delta_rect(c, dir);
         if(c->area_type!=FLOATING_AREA && DESKTOP(wm).cur_layout==TILE)
             move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
-        if(is_prefer_move_resize(wm, c, &d) || fix_move_resize(wm, c, &d))
+        if(fix_move_resize_delta_rect(wm, c, &d, is_move))
         {
             move_resize_client(wm, c, &d);
             update_hint_win_for_resize(wm, c);
@@ -145,43 +151,6 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
         [DOWN2DOWN]   = {  0,   0,   0,  hi},
     };
     return dr[dir];
-}
-
-static bool is_prefer_move_resize(WM *wm, Client *c, Delta_rect *d)
-{
-    return ( ((!d->dw && !d->dh)
-        && is_on_screen(wm, c->x+d->dx, c->y+d->dy, c->w+d->dw, c->h+d->dh))
-        || is_prefer_resize(wm, c, d));
-}
-
-static bool fix_move_resize(WM *wm, Client *c, Delta_rect *d)
-{
-    XSizeHints *p=&c->size_hint;
-    long w=c->w, h=c->h, cw=w, ch=h, dw=d->dw, dh=d->dh;
-    if((dw || dh) && (!is_prefer_size(w, h, p) || !is_prefer_aspect(w, h, p)))
-    {
-        if(p->min_width)
-            w=cw=MAX(cw, p->min_width);
-        if(p->min_height)
-            h=ch=MAX(ch, p->min_height);
-        if(p->max_width)
-            w=cw=MIN(cw, p->max_width);
-        if(p->max_height)
-            h=ch=MIN(ch, p->max_height);
-        if(dw)
-            for(w=p->base_width; ;w+=p->width_inc)
-                if(is_prefer_size(w, ch, p) && is_prefer_aspect(w, ch, p))
-                    break;
-        if(dh)
-            for(h=p->base_height; ;h+=p->height_inc)
-                if(is_prefer_size(w, h, p) && is_prefer_aspect(w, h, p))
-                    break;
-        d->dw=w-cw, d->dh=h-ch;
-        // 修正尺寸時，應確保尺寸變化方向上鄰近光標的邊與光標的間距基本不變
-        d->dx = d->dx ? d->dx : -d->dw, d->dy = d->dy ? d->dy : -d->dh;
-        return true;
-    }
-    return false;
 }
 
 void quit_wm(WM *wm, XEvent *e, Func_arg arg)
@@ -238,7 +207,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
         Desktop *d=&DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
         int mw=mr*wm->screen_width, sw=wm->screen_width*(1-fr)-mw;
-        if(sw>=MOVE_RESIZE_INC && mw>=MOVE_RESIZE_INC)
+        if(sw>=RESIZE_INC && mw>=RESIZE_INC)
         {
             d->main_area_ratio=mr;
             update_layout(wm);
@@ -254,7 +223,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
         Desktop *d=&DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
         int mw=wm->screen_width*(mr-arg.change_ratio), fw=wm->screen_width*fr;
-        if(mw>=MOVE_RESIZE_INC && fw>=MOVE_RESIZE_INC)
+        if(mw>=RESIZE_INC && fw>=RESIZE_INC)
         {
             d->main_area_ratio-=arg.change_ratio, d->fixed_area_ratio=fr;
             update_layout(wm);
@@ -326,7 +295,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
                 move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
-            do_valid_pointer_move_resize(wm, c, &m, act, arg.resize);
+            do_valid_pointer_move_resize(wm, c, &m, act);
         }
         else
             handle_event(wm, &ev);
@@ -335,19 +304,18 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     XUnmapWindow(wm->display, wm->hint_win);
 }
 
-static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act, bool is_resize)
+static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act)
 {
-    bool fix;
     Delta_rect d=get_pointer_delta_rect(m, act);
-    if(is_prefer_move_resize(wm, c, &d) || (fix=fix_move_resize(wm, c, &d)))
+    if(fix_move_resize_delta_rect(wm, c, &d, act==MOVE))
     {
         move_resize_client(wm, c, &d);
         update_hint_win_for_resize(wm, c);
-        if(is_resize)
+        if(act != MOVE)
         {
-            if(!fix && d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
+            if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
                 m->ox = d.dx ? m->ox-d.dw : m->ox+d.dw;
-            if(!fix && d.dh) // dy爲0表示定位器從窗口下邊調整尺寸，非0則表示上邊調整
+            if(d.dh) // dy爲0表示定位器從窗口下邊調整尺寸，非0則表示上邊調整
                 m->oy = d.dy ? m->oy-d.dh : m->oy+d.dh;
         }
         else
@@ -355,10 +323,80 @@ static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointe
     }
 }
 
+static bool fix_move_resize_delta_rect(WM *wm, Client *c, Delta_rect *d, bool is_move)
+{
+    if( is_prefer_move(wm, c, d, is_move)
+        || fix_delta_rect_for_nonprefer_size(c, &c->size_hint, d))
+        return true;
+
+    int dw=d->dw, dh=d->dh;
+    fix_dw_by_width_hint(c->w, &c->size_hint, &dw);
+    fix_dh_by_height_hint(c->w, &c->size_hint, &dh);
+    return fix_delta_rect_for_prefer_size(c, &c->size_hint, dw, dh, d);
+}
+
+static bool is_prefer_move(WM *wm, Client *c, Delta_rect *d, bool is_move)
+{
+    return (is_move && is_on_screen(wm, c->x+d->dx, c->y+d->dy, c->w, c->h));
+}
+
+static bool fix_delta_rect_for_nonprefer_size(Client *c, XSizeHints *hint, Delta_rect *d)
+{
+    if((d->dw || d->dh) && !is_prefer_size(c->w, c->h, hint)) // 首次調整尺寸時才要考慮爲偏好而修正尺寸
+    {
+        int ox=c->x, oy=c->y, ow=c->w, oh=c->h;
+        fix_win_size_by_hint(c);
+        d->dx=c->x-ox, d->dy=c->y-oy, d->dw=(int)c->w-ow, d->dh=(int)c->h-oh;
+        c->x=ox, c->y=oy, c->w=ow, c->h=oh;
+        return true;
+    }
+    return false;
+}
+
+static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw)
+{
+    if(*dw/hint->width_inc)
+    {
+        int max=MAX(hint->width_inc, hint->min_width);
+        *dw=base_n_floor(*dw, hint->width_inc);
+        if(w+*dw < max)
+            *dw=max-w;
+    }
+    else
+        *dw=0;
+}
+
+static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh)
+{
+    if(*dh/hint->height_inc)
+    {
+        int max=MAX(hint->height_inc, hint->min_height);
+        *dh=base_n_floor(*dh, hint->height_inc);
+        if(h+*dh < max)
+            *dh=max-h;
+    }
+    else
+        *dh=0;
+}
+
+static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, int dh, Delta_rect *d)
+{
+    if((dw || dh) && is_prefer_size(c->w+dw, c->h+dh, hint))
+    {
+        d->dw=dw, d->dh=dh;
+        if(d->dx)
+            d->dx=-dw;
+        if(d->dy)
+            d->dy=-dh;
+        return true;
+    }
+    return false;
+}
+
 static void update_hint_win_for_resize(WM *wm, Client *c)
 {
     char str[BUFSIZ];
-    unsigned int w=get_client_col(wm, c), h=get_client_row(wm, c);
+    unsigned int w=get_client_col(c), h=get_client_row(c);
     sprintf(str, "(%d, %d) %ux%u", c->x, c->y, w, h);
     get_string_size(wm, wm->font[HINT_FONT], str, &w, NULL);
     int x=(wm->screen_width-w)/2, y=(wm->screen_height-HINT_WIN_LINE_HEIGHT)/2;
@@ -430,7 +468,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
         if(ev.type == MotionNotify)
         {
             nx=ev.xmotion.x, dx=nx-ox;
-            if(abs(dx)>=MOVE_RESIZE_INC && change_layout_ratio(wm, ox, nx))
+            if(abs(dx)>=RESIZE_INC && change_layout_ratio(wm, ox, nx))
                 update_layout(wm), ox=nx;
         }
         else

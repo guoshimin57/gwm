@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     hint.c：實現窗口尺寸條件特性的相關功能。
- *     版權 (C) 2020-2022 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -12,19 +12,20 @@
 #include "gwm.h"
 #include "client.h"
 #include "drawable.h"
+#include "misc.h"
 #include "hint.h"
 
-static bool is_prefer_width_inc(unsigned int w, int dw, XSizeHints *hint);
-static bool is_prefer_height_inc(unsigned int h, int dh, XSizeHints *hint);
-static int get_fixed_width_inc(unsigned int w, XSizeHints *hint);
-static int get_fixed_height_inc(unsigned int h, XSizeHints *hint);
+static void fix_limit_size_hint(XSizeHints *h);
+static bool is_prefer_width(unsigned int w, XSizeHints *hint);
+static bool is_prefer_height(unsigned int h, XSizeHints *hint);
+static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint);
 
-unsigned int get_client_col(WM *wm, Client *c)
+unsigned int get_client_col(Client *c)
 {
     return (c->w-c->size_hint.base_width)/c->size_hint.width_inc;
 }
 
-unsigned int get_client_row(WM *wm, Client *c)
+unsigned int get_client_row(Client *c)
 {
     return (c->h-c->size_hint.base_height)/c->size_hint.height_inc;
 }
@@ -55,68 +56,90 @@ void update_size_hint(WM *wm, Client *c)
         if(!minh && baseh)
             hint.min_height=baseh;
         if(!hint.width_inc)
-            hint.width_inc=MOVE_RESIZE_INC;
+            hint.width_inc=RESIZE_INC;
         if(!hint.height_inc)
-            hint.height_inc=MOVE_RESIZE_INC;
+            hint.height_inc=RESIZE_INC;
+        fix_limit_size_hint(&hint);
         c->size_hint=hint;
     }
-    SET_DEF_VAL(c->size_hint.width_inc, MOVE_RESIZE_INC);
-    SET_DEF_VAL(c->size_hint.height_inc, MOVE_RESIZE_INC);
+    SET_DEF_VAL(c->size_hint.width_inc, RESIZE_INC);
+    SET_DEF_VAL(c->size_hint.height_inc, RESIZE_INC);
 }
 
-bool is_prefer_resize(WM *wm, Client *c, Delta_rect *d)
+// 有的窗口最大、最小尺寸設置不正確，需要修正，如：lxterminal
+static void fix_limit_size_hint(XSizeHints *h)
+{
+    int minw_incs=base_n_ceil(h->min_width-h->base_width, h->width_inc),
+        minh_incs=base_n_ceil(h->min_height-h->base_height, h->height_inc),
+        maxw_incs=base_n_floor(h->max_width-h->base_width, h->width_inc),
+        maxh_incs=base_n_floor(h->max_height-h->base_height, h->height_inc);
+    h->min_width=h->base_width+minw_incs;
+    h->min_height=h->base_height+minh_incs;
+    h->max_width=h->base_width+maxw_incs;
+    h->max_height=h->base_height+maxh_incs;
+}
+
+void fix_win_size_by_hint(Client *c)
 {
     XSizeHints *p=&c->size_hint;
-    long cw=c->w, ch=c->h, dw=d->dw, dh=d->dh, w=cw+dw, h=ch+dh;
-    return (w>=MOVE_RESIZE_INC && h>=MOVE_RESIZE_INC
-        && (is_prefer_width_inc(cw, dw, p) || is_prefer_height_inc(ch, dh, p))
-        && is_prefer_size(w, h, p) && is_prefer_aspect(w, h, p));
-}
-
-static bool is_prefer_width_inc(unsigned int w, int dw, XSizeHints *hint)
-{
-    return !hint->width_inc || abs(dw)>=abs(get_fixed_width_inc(w, hint));
-}
-
-static bool is_prefer_height_inc(unsigned int h, int dh, XSizeHints *hint)
-{
-    return !hint->height_inc || abs(dh)>=abs(get_fixed_height_inc(h, hint));
-}
-
-static int get_fixed_width_inc(unsigned int w, XSizeHints *hint)
-{
-    int inc=MOVE_RESIZE_INC;
-    if(hint->base_width)
-        inc=(w-hint->base_width)%hint->width_inc;
-    else if(hint->min_width)
-        inc=(w-hint->min_width)%hint->width_inc;
-    return inc ? inc : hint->width_inc;
-}
-
-static int get_fixed_height_inc(unsigned int h, XSizeHints *hint)
-{
-    int inc=MOVE_RESIZE_INC;
-    if(hint->base_height)
-        inc=(h-hint->base_height)%hint->height_inc;
-    else if(hint->min_height)
-        inc=(h-hint->min_height)%hint->height_inc;
-    return inc ? inc : hint->height_inc;
+    c->w = (p->flags & USSize) && p->width ?
+        p->width : p->base_width+get_client_col(c)*p->width_inc;
+    c->h = (p->flags & USSize) && p->height ?
+        p->height : p->base_height+get_client_row(c)*p->height_inc;
+    if((p->flags & PMinSize) && p->min_width)
+        c->w=MAX(c->w, p->min_width);
+    if((p->flags & PMinSize) && p->min_height)
+        c->h=MAX(c->h, p->min_height);
+    if((p->flags & PMaxSize) && p->max_width)
+        c->w=MIN(c->w, p->max_width);
+    if((p->flags & PMaxSize) && p->max_height)
+        c->h=MIN(c->h, p->max_height);
+    if( (p->flags & PAspect) && p->min_aspect.x && p->min_aspect.y
+        && p->max_aspect.x && p->max_aspect.y)
+    {
+        float mina=(float)p->min_aspect.x/p->min_aspect.y,
+              maxa=(float)p->max_aspect.x/p->max_aspect.y;
+        if((float)c->w/c->h < mina)
+            c->h=c->w*mina+0.5;
+        else if((float)c->w/c->h > maxa)
+            c->w=c->h*maxa+0.5;
+    }
 }
 
 bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint)
 {
-    return (!hint->min_width || w>=hint->min_width)
-        && (!hint->min_height || h>=hint->min_height)
-        && (!hint->max_width || w<=hint->max_width)
-        && (!hint->max_height || h<=hint->max_height);
+    return is_prefer_width(w, hint)
+        && is_prefer_height(h, hint)
+        && is_prefer_aspect(w, h, hint);
 }
 
-bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)
+static bool is_prefer_width(unsigned int w, XSizeHints *hint)
 {
-    return (!hint->min_aspect.x || !hint->min_aspect.y
+    long f=0;
+    return !hint || !(f=hint->flags) ||
+        (  (!(f & PMinSize) || w>=hint->min_width)
+        && (!(f & PMaxSize) || w<=hint->max_width)
+        && (!(f & PBaseSize) || !(f & PResizeInc) || !hint->width_inc
+           || (w-hint->base_width)%hint->width_inc == 0));
+}
+
+static bool is_prefer_height(unsigned int h, XSizeHints *hint)
+{
+    long f=0;
+    return !hint || !(f=hint->flags) ||
+        (  (!(f & PMinSize) || h>=hint->min_height)
+        && (!(f & PMaxSize) || h<=hint->max_height)
+        && (!(f & PBaseSize) || !(f & PResizeInc) || !hint->height_inc
+           || (h-hint->base_height)%hint->height_inc == 0));
+}
+
+static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)
+{
+    return !hint || !(hint->flags & PAspect) || !w || !h
+        || !hint->min_aspect.x || !hint->min_aspect.y
         || !hint->max_aspect.x || !hint->max_aspect.y
-        || ( (float)w/h >= (float)hint->min_aspect.x/hint->min_aspect.y
-        && (float)w/h <= (float)hint->max_aspect.x/hint->max_aspect.y));
+        || (  (float)w/h >= (float)hint->min_aspect.x/hint->min_aspect.y
+           && (float)w/h <= (float)hint->max_aspect.x/hint->max_aspect.y);
 }
 
 void set_input_focus(WM *wm, XWMHints *hint, Window win)

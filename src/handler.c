@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     handler.c：實現X事件處理功能。
- *     版權 (C) 2020-2022 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -80,7 +80,7 @@ void handle_event(WM *wm, XEvent *e)
         [PropertyNotify]    = handle_property_notify,
         [SelectionNotify]   = handle_selection_notify,
     };
-    if(event_handlers[e->type])
+    if(e->type<ARRAY_NUM(event_handlers) && event_handlers[e->type])
         event_handlers[e->type](wm, e);
 }
 
@@ -102,7 +102,7 @@ static void handle_button_press(WM *wm, XEvent *e)
     }
     if(type != CMD_CENTER_ITEM)
         XUnmapWindow(wm->display, wm->cmd_center.win);
-    if(type != RUN_CMD_ENTRY)
+    if(type!=RUN_CMD_ENTRY && type!=RUN_BUTTON)
         XUnmapWindow(wm->display, wm->run_cmd.win);
 }
  

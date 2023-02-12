@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     gwm.h：與gwm.c相應的頭文件。
- *     版權 (C) 2020-2022 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -23,7 +23,7 @@
 #include "config.h"
 
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_TAKE_FOCUS"}
-#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
+#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG", "_NET_WM_WINDOW_TYPE_DOCK", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
 
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define MAX(a, b) ((a)>(b) ? (a) : (b))
@@ -195,6 +195,7 @@ typedef enum icccm_atom_tag Icccm_atom;
 enum ewmh_atom_tag // EWMH規範的標識符
 {
     _NET_WM_WINDOW_TYPE, _NET_WM_WINDOW_TYPE_NORMAL, _NET_WM_WINDOW_TYPE_DIALOG,
+    _NET_WM_WINDOW_TYPE_DOCK,
     _NET_WM_STATE, _NET_WM_STATE_MODAL, _NET_WM_ICON, EWMH_ATOM_N
 };
 typedef enum ewmh_atom_tag Ewmh_atom;
@@ -341,9 +342,9 @@ struct rule_tag // 窗口管理器的規則
 };
 typedef struct rule_tag Rule;
 
-struct move_info_tag /* 定位器舊、新坐標信息 */
+struct move_info_tag /* 定位器所點擊的窗口位置每次合理移動或調整尺寸所對應的舊、新坐標信息 */
 {
-    int ox, oy, nx, ny; /* 分別爲定位器舊、新坐標 */
+    int ox, oy, nx, ny; /* 分別爲舊、新坐標 */
 };
 typedef struct move_info_tag Move_info;
 
