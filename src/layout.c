@@ -10,6 +10,8 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "config.h"
+#include "misc.h"
 #include "layout.h"
 #include "font.h"
 #include "desktop.h"
@@ -23,28 +25,6 @@ static void get_area_size(WM *wm, unsigned int *mw, unsigned int *mh, unsigned i
 static void fix_win_rect_for_frame(WM *wm);
 static bool should_fix_win_rect(WM *wm, Client *c);
 static void fix_cur_focus_client_rect(WM *wm);
-static void update_title_bar_layout(WM *wm);
-
-void change_layout(WM *wm, XEvent *e, Func_arg arg)
-{
-    Layout *cl=&DESKTOP(wm).cur_layout, *pl=&DESKTOP(wm).prev_layout;
-    if(*cl != arg.layout)
-    {
-        Display *d=wm->display;
-        *pl=*cl, *cl=arg.layout;
-        if(*pl == PREVIEW)
-            for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-                if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
-                    XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
-        if(*cl == PREVIEW)
-            for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-                if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
-                    XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
-        update_layout(wm);
-        update_title_bar_layout(wm);
-        update_taskbar_buttons(wm);
-    }
-}
 
 void update_layout(WM *wm)
 {
@@ -180,7 +160,7 @@ static void fix_cur_focus_client_rect(WM *wm)
 }
 
 
-static void update_title_bar_layout(WM *wm)
+void update_title_bar_layout(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
@@ -201,9 +181,8 @@ void update_taskbar_buttons(WM *wm)
                 CENTER, true,
                 wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel,
                 wm->text_color[TASKBAR_BUTTON_TEXT_COLOR], TASKBAR_BUTTON_FONT};
-        if(b == DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1
-            || (b == LAYOUT_BUTTON_BEGIN+DESKTOP(wm).cur_layout))
-            f.change_bg=true, f.bg=wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel;
+        if(is_chosen_button(wm, b))
+            f.bg=wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel;
         draw_string(wm, wm->taskbar.buttons[i], TASKBAR_BUTTON_TEXT[i], &f);
     }
 }

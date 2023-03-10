@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "config.h"
 #include "client.h"
 #include "drawable.h"
 #include "desktop.h"
@@ -33,7 +34,7 @@ static void frame_client(WM *wm, Client *c);
 static Rect get_button_rect(Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
-static bool is_exist_client(WM *wm, Client *c);
+static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
@@ -57,7 +58,7 @@ void add_client(WM *wm, Window win)
         iconify(wm, c);
     else
         focus_client(wm, wm->cur_desktop, c);
-    grab_buttons(wm, c);
+    grab_buttons(wm, c, BUTTONBIND, ARRAY_NUM(BUTTONBIND));
     XSelectInput(wm->display, win, EnterWindowMask|PropertyChangeMask);
     XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
@@ -73,11 +74,8 @@ static void apply_rules(WM *wm, Client *c)
         || type != wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
         || state == wm->ewmh_atom[_NET_WM_STATE_MODAL])
         c->area_type=FLOATING_AREA;
-    if(type != wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DOCK])
-    {
-        c->border_w=BORDER_WIDTH;
-        c->title_bar_h=TITLE_BAR_HEIGHT;
-    }
+    c->border_w=BORDER_WIDTH;
+    c->title_bar_h=TITLE_BAR_HEIGHT;
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     if(XGetClassHint(wm->display, c->win, &c->class_hint))
@@ -125,8 +123,8 @@ void fix_area_type(WM *wm)
         {
             if(c->area_type==MAIN_AREA && ++n>m)
                 c->area_type=SECOND_AREA;
-            else if(c->area_type==SECOND_AREA && ++n<=m)
-                c->area_type=MAIN_AREA;
+            else if(c->area_type==SECOND_AREA && n<m)
+                c->area_type=MAIN_AREA, n++;
         }
     }
 }
@@ -361,6 +359,9 @@ Client *win_to_iconic_state_client(WM *wm, Window win)
     return NULL;
 }
 
+/* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因
+ * （如移動到其他虛擬桌面）而未更新時，則應使用值爲NULL的c來調用本
+ * 函數。這樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
 void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 {
     update_focus_client_pointer(wm, desktop_n, c);
@@ -374,9 +375,9 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
             XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
         else if(pc->area_type != ICONIFY_AREA)
             set_input_focus(wm, pc->wm_hint, pc->win);
-        update_client_look(wm, desktop_n, pc);
-        update_client_look(wm, desktop_n, d->prev_focus_client);
     }
+    update_client_look(wm, desktop_n, pc);
+    update_client_look(wm, desktop_n, d->prev_focus_client);
     if(pc->area_type!=ICONIFY_AREA || d->cur_layout==PREVIEW)
         raise_client(wm, desktop_n);
 }
@@ -384,33 +385,37 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
 {
     Desktop *d=wm->desktop+desktop_n-1;
-    Client **pp=&d->prev_focus_client, **pc=&d->cur_focus_client;
-    bool del_pc=!is_exist_client(wm, *pc), del_pp=!is_exist_client(wm, *pp);
-    if(!c) // c爲NULL時，既有可能是c被刪除了，也可能是被縮微化了
-    {
-        if(del_pc) // c被刪除
-            *pc = (*pc=win_to_client(wm, (*pc)->owner)) ? *pc : *pp;
-        else // c被縮微化
-            *pc=*pp;
-        if( (  (*pc)->area_type==ICONIFY_AREA || (del_pp && *pc==*pp))
-            && !(*pc=get_prev_map_client(wm, desktop_n, *pp))
-            && !(*pc=get_next_map_client(wm, desktop_n, *pp)))
-            *pc=wm->clients;
-        if( (*pp != wm->clients) && (del_pc || del_pp) &&
-            !(((*pp=win_to_client(wm, (*pp)->owner)) && (*pp != *pc))
-            || (*pp=get_prev_map_client(wm, desktop_n, *pc))
-            || (*pp=get_next_map_client(wm, desktop_n, *pc))))
-            *pp=wm->clients;
+    Client *p=NULL, **pp=&d->prev_focus_client, **pc=&d->cur_focus_client;
+ 
+    if(!c)  // 當某個client在desktop_n中變得不可見時，即既有可能被刪除了，
+    {       // 也可能是被縮微化了，還有可能是移動到其他虛擬桌面了。
+        if(!is_map_client(wm, desktop_n, *pc))
+            p=win_to_client(wm, (*pc)->owner);
+        if(!is_map_client(wm, desktop_n, p))
+            p=*pp;
+        if(!is_map_client(wm, desktop_n, p))
+            p=get_prev_map_client(wm, desktop_n, *pp);
+        if(!p)
+            p=get_next_map_client(wm, desktop_n, *pp);
+        *pc = p ? p : wm->clients;
+        if(!is_map_client(wm, desktop_n, *pp) || *pp==*pc)
+            p=win_to_client(wm, (*pp)->owner);
+        if(!is_map_client(wm, desktop_n, p))
+            p=get_prev_map_client(wm, desktop_n, *pp);
+        if(!p)
+            p=get_next_map_client(wm, desktop_n, *pp);
+        *pp = p ? p : wm->clients;
     }
     else if(c != *pc)
         *pp=*pc, *pc=c;
 }
 
-static bool is_exist_client(WM *wm, Client *c)
+static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c)
 {
-    for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
-        if(p == c)
-            return true;
+    if(c && c->area_type!=ICONIFY_AREA && is_on_desktop_n(desktop_n, c))
+        for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
+            if(p == c)
+                return true;
     return false;
 }
 

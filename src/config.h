@@ -15,6 +15,8 @@
 #include <X11/cursorfont.h>
 #include <X11/keysymdef.h>
 #include <X11/XF86keysym.h>
+#include "gwm.h"
+#include "func.h"
 
 #define TO_STR(value) _TO_STR(value) // 把數字轉換爲字符串常量
 #define _TO_STR(value) # value 
@@ -154,6 +156,7 @@
 #define CURSOR_SHAPE (unsigned int []) /* 定位器相關的光標字體 */  \
 {                                                     \
     XC_left_ptr,            /* NO_OP */               \
+    XC_hand2,               /* CHOOSE */              \
     XC_fleur,               /* MOVE */                \
     XC_exchange,            /* SWAP */                \
     XC_target,              /* CHANGE */              \

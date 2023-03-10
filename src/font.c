@@ -11,6 +11,7 @@
 
 #include <X11/Xft/Xft.h>
 #include "gwm.h"
+#include "config.h"
 #include "font.h"
 #include "misc.h"
 

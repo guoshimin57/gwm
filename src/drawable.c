@@ -11,6 +11,7 @@
 
 #include <time.h>
 #include "gwm.h"
+#include "config.h"
 #include "misc.h"
 #include "drawable.h"
 
@@ -150,8 +151,13 @@ void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h)
 bool is_wm_win(WM *wm, Window win)
 {
     XWindowAttributes attr;
+    Atom type=get_atom_prop(wm, win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE]);
     return (XGetWindowAttributes(wm->display, win, &attr)
-        && attr.map_state!=IsUnmapped && !attr.override_redirect);
+        && attr.map_state!=IsUnmapped && !attr.override_redirect
+        && (   type == None
+            || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
+            || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_UTILITY]
+            || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG]));
 }
 
 void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap)

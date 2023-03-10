@@ -12,6 +12,7 @@
 #include <locale.h>
 #include <sys/types.h>
 #include "gwm.h"
+#include "config.h"
 #include "init.h"
 #include "client.h"
 #include "color.h"
@@ -19,20 +20,15 @@
 #include "desktop.h"
 #include "entry.h"
 #include "font.h"
-#include "func.h"
 #include "grab.h"
 #include "layout.h"
+#include "taskbar.h"
 #include "menu.h"
 #include "misc.h"
 
 static void set_locale(WM *wm);
 static void set_atoms(WM *wm);
 static void create_cursors(WM *wm);
-static void create_taskbar(WM *wm);
-static void create_taskbar_buttons(WM *wm);
-static void create_icon_area(WM *wm);
-static void create_status_area(WM *wm);
-static void create_cmd_center(WM *wm);
 static void create_run_cmd_entry(WM *wm);
 static void create_hint_win(WM *wm);
 static void create_clients(WM *wm);
@@ -67,12 +63,11 @@ void init_wm(WM *wm)
     create_cursors(wm);
     XDefineCursor(wm->display, wm->root_win, wm->cursors[NO_OP]);
     create_taskbar(wm);
-    create_cmd_center(wm);
     create_run_cmd_entry(wm);
     create_hint_win(wm);
     create_clients(wm);
     update_layout(wm);
-    grab_keys(wm);
+    grab_keys(wm, KEYBIND, ARRAY_NUM(KEYBIND));
     exec(wm, NULL, (Func_arg)SH_CMD("[ -x "AUTOSTART" ] && "AUTOSTART));
 }
 
@@ -102,70 +97,6 @@ static void create_cursors(WM *wm)
 {
     for(size_t i=0; i<POINTER_ACT_N; i++)
         wm->cursors[i]=XCreateFontCursor(wm->display, CURSOR_SHAPE[i]);
-}
-
-static void create_taskbar(WM *wm)
-{
-    Taskbar *b=&wm->taskbar;
-    b->x=0, b->y=wm->screen_height-TASKBAR_HEIGHT;
-    b->w=wm->screen_width, b->h=TASKBAR_HEIGHT;
-    b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
-        b->w, b->h, 0, 0, 0);
-    set_override_redirect(wm, b->win);
-    XSelectInput(wm->display, b->win, CROSSING_MASK);
-    create_taskbar_buttons(wm);
-    create_status_area(wm);
-    create_icon_area(wm);
-    XMapRaised(wm->display, b->win);
-    XMapWindow(wm->display, b->win);
-    XMapSubwindows(wm->display, b->win);
-}
-
-static void create_taskbar_buttons(WM *wm)
-{
-    Taskbar *b=&wm->taskbar;
-    for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
-    {
-        unsigned long color = is_chosen_button(wm, TASKBAR_BUTTON_BEGIN+i) ?
-            wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
-            wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel ;
-        b->buttons[i]=XCreateSimpleWindow(wm->display, b->win,
-            TASKBAR_BUTTON_WIDTH*i, 0,
-            TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT, 0, 0, color);
-        XSelectInput(wm->display, b->buttons[i], BUTTON_EVENT_MASK);
-    }
-}
-
-static void create_icon_area(WM *wm)
-{
-    Taskbar *b=&wm->taskbar;
-    unsigned int bw=TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N,
-        w=b->w-bw-b->status_area_w;
-    b->icon_area=XCreateSimpleWindow(wm->display, b->win,
-        bw, 0, w, b->h, 0, 0, wm->widget_color[ICON_AREA_COLOR].pixel);
-}
-static void create_status_area(WM *wm)
-{
-    Taskbar *b=&wm->taskbar;
-    b->status_text=get_text_prop(wm, wm->root_win, XA_WM_NAME);
-    get_string_size(wm, wm->font[STATUS_AREA_FONT], b->status_text, &b->status_area_w, NULL);
-    if(b->status_area_w > STATUS_AREA_WIDTH_MAX)
-        b->status_area_w=STATUS_AREA_WIDTH_MAX;
-    else if(b->status_area_w == 0)
-        b->status_area_w=1;
-    wm->taskbar.status_area=XCreateSimpleWindow(wm->display, b->win,
-        b->w-b->status_area_w, 0, b->status_area_w, b->h,
-        0, 0, wm->widget_color[STATUS_AREA_COLOR].pixel);
-    XSelectInput(wm->display, b->status_area, ExposureMask);
-}
-
-static void create_cmd_center(WM *wm)
-{
-    unsigned int n=CMD_CENTER_ITEM_N, col=CMD_CENTER_COL,
-        w=CMD_CENTER_ITEM_WIDTH, h=CMD_CENTER_ITEM_HEIGHT;
-    unsigned long color=wm->widget_color[CMD_CENTER_COLOR].pixel;
-
-    create_menu(wm, &wm->cmd_center, n, col, w, h, color);
 }
 
 static void create_run_cmd_entry(WM *wm)

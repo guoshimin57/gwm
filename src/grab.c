@@ -11,25 +11,21 @@
 
 #include "gwm.h"
 #include "grab.h"
-#include "client.h"
-#include "func.h"
-#include "layout.h"
-#include "misc.h"
 
 static unsigned int get_num_lock_mask(WM *wm);
 static unsigned int get_valid_mask(WM *wm, unsigned int mask);
 static unsigned int get_modifier_mask(WM *wm, KeySym key_sym);
 
-void grab_keys(WM *wm)
+void grab_keys(WM *wm, Keybind bind[], size_t n)
 {
     unsigned int num_lock_mask=get_num_lock_mask(wm);
     unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     KeyCode code;
     XUngrabKey(wm->display, AnyKey, AnyModifier, wm->root_win);
-    for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++)
-        if((code=XKeysymToKeycode(wm->display, KEYBIND[i].keysym)))
+    for(size_t i=0; i<n; i++)
+        if((code=XKeysymToKeycode(wm->display, bind[i].keysym)))
             for(size_t j=0; j<ARRAY_NUM(masks); j++)
-                XGrabKey(wm->display, code, KEYBIND[i].modifier|masks[j],
+                XGrabKey(wm->display, code, bind[i].modifier|masks[j],
                     wm->root_win, True, GrabModeAsync, GrabModeAsync);
 }
 
@@ -45,20 +41,19 @@ static unsigned int get_num_lock_mask(WM *wm)
     return 0;
 }
     
-void grab_buttons(WM *wm, Client *c)
+void grab_buttons(WM *wm, Client *c, Buttonbind bind[], size_t n)
 {
     unsigned int num_lock_mask=get_num_lock_mask(wm),
                  masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
-    Buttonbind *p=BUTTONBIND;
     XUngrabButton(wm->display, AnyButton, AnyModifier, c->win);
-    for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++, p++)
+    for(size_t i=0; i<n; i++)
     {
-        if(p->widget_type == CLIENT_WIN)
+        if(bind[i].widget_type == CLIENT_WIN)
         {
-            int m=is_equal_modifier_mask(wm, 0, p->modifier) ?
+            int m=is_equal_modifier_mask(wm, 0, bind[i].modifier) ?
                 GrabModeSync : GrabModeAsync;
             for(size_t j=0; j<ARRAY_NUM(masks); j++)
-                XGrabButton(wm->display, p->button, p->modifier|masks[j],
+                XGrabButton(wm->display, bind[i].button, bind[i].modifier|masks[j],
                     c->win, False, BUTTON_MASK, m, m, None, None);
         }
     }
@@ -90,9 +85,9 @@ static unsigned int get_modifier_mask(WM *wm, KeySym key_sym)
     return 0;
 }
 
-bool grab_pointer(WM *wm, Pointer_act act)
+bool grab_pointer(WM *wm, Window win, Pointer_act act)
 {
-    return XGrabPointer(wm->display, wm->root_win, False, POINTER_MASK,
+    return XGrabPointer(wm->display, win, False, POINTER_MASK,
         GrabModeAsync, GrabModeAsync, None, wm->cursors[act], CurrentTime)
         == GrabSuccess;
 }

@@ -12,6 +12,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "gwm.h"
+#include "config.h"
 #include "drawable.h"
 #include "font.h"
 #include "func.h"
@@ -50,7 +51,7 @@ bool is_act_grab_pointer_func(void (*func)(WM *, XEvent *, Func_arg arg))
 
 bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
 {
-    if(act==NO_OP || grab_pointer(wm, act))
+    if(act==NO_OP || grab_pointer(wm, wm->root_win, act))
     {
         XEvent e, *p=(ne ? ne : &e);
         do
@@ -282,7 +283,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
     Client *c=DESKTOP(wm).cur_focus_client;
     Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
-    if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, act))
+    if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, wm->root_win, act))
         return;
 
     XEvent ev;
@@ -454,11 +455,32 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
         move_client(wm, from, to, to->area_type);
 }
 
+void change_layout(WM *wm, XEvent *e, Func_arg arg)
+{
+    Layout *cl=&DESKTOP(wm).cur_layout, *pl=&DESKTOP(wm).prev_layout;
+    if(*cl != arg.layout)
+    {
+        Display *d=wm->display;
+        *pl=*cl, *cl=arg.layout;
+        if(*pl == PREVIEW)
+            for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+                if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+                    XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
+        if(*cl == PREVIEW)
+            for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+                if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+                    XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
+        update_layout(wm);
+        update_title_bar_layout(wm);
+        update_taskbar_buttons(wm);
+    }
+}
+
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     if( DESKTOP(wm).cur_layout!=TILE
         || !is_layout_adjust_area(wm, e->xbutton.window, e->xbutton.x_root)
-        || !grab_pointer(wm, ADJUST_LAYOUT_RATIO))
+        || !grab_pointer(wm, wm->root_win, ADJUST_LAYOUT_RATIO))
         return;
     int ox=e->xbutton.x_root, nx, dx;
     XEvent ev;
@@ -551,12 +573,12 @@ void prev_desktop(WM *wm, XEvent *e, Func_arg arg)
 void move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
     unsigned int n=get_desktop_n(wm, e, arg);
-    Client *pc=DESKTOP(wm).cur_focus_client, *pp=DESKTOP(wm).prev_focus_client;
+    Client *pc=DESKTOP(wm).cur_focus_client;
     if(n && n!=wm->cur_desktop && pc!=wm->clients)
     {
         pc->desktop_mask=get_desktop_mask(n);
         focus_client(wm, n, pc);
-        focus_client(wm, wm->cur_desktop, pp);
+        focus_client(wm, wm->cur_desktop, NULL);
         focus_desktop_n(wm, wm->cur_desktop);
     }
 }

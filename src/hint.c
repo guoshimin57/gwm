@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "config.h"
 #include "client.h"
 #include "drawable.h"
 #include "misc.h"
@@ -144,7 +145,7 @@ static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)
 
 void set_input_focus(WM *wm, XWMHints *hint, Window win)
 {
-    if(!hint || (hint->flags & InputHint) || hint->input)
+    if(!hint || ((hint->flags & InputHint) && hint->input)) // 不抗拒鍵盤輸入
         XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
     send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
 }

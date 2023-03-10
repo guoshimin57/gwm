@@ -30,6 +30,7 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg);
 void maximize_client(WM *wm, XEvent *e, Func_arg arg);
 void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg);
 void pointer_change_area(WM *wm, XEvent *e, Func_arg arg);
+void change_layout(WM *wm, XEvent *e, Func_arg arg);
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg);
 void iconify_all_clients(WM *wm, XEvent *e, Func_arg arg);
 void deiconify_all_clients(WM *wm, XEvent *e, Func_arg arg);

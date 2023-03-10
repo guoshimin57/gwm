@@ -20,10 +20,12 @@
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 #include <X11/Xft/Xft.h>
-#include "config.h"
 
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_TAKE_FOCUS"}
-#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG", "_NET_WM_WINDOW_TYPE_DOCK", "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
+#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE",\
+    "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG",\
+    "_NET_WM_WINDOW_TYPE_UTILITY",\
+    "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
 
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define MAX(a, b) ((a)>(b) ? (a) : (b))
@@ -170,7 +172,7 @@ typedef enum layout_tag Layout;
 
 enum pointer_act_tag // 定位器操作類型
 {
-    NO_OP, MOVE, SWAP, CHANGE, TOP_RESIZE, BOTTOM_RESIZE, LEFT_RESIZE,
+    NO_OP, CHOOSE, MOVE, SWAP, CHANGE, TOP_RESIZE, BOTTOM_RESIZE, LEFT_RESIZE,
     RIGHT_RESIZE, TOP_LEFT_RESIZE, TOP_RIGHT_RESIZE, BOTTOM_LEFT_RESIZE,
     BOTTOM_RIGHT_RESIZE, ADJUST_LAYOUT_RATIO, POINTER_ACT_N
 };
@@ -195,7 +197,7 @@ typedef enum icccm_atom_tag Icccm_atom;
 enum ewmh_atom_tag // EWMH規範的標識符
 {
     _NET_WM_WINDOW_TYPE, _NET_WM_WINDOW_TYPE_NORMAL, _NET_WM_WINDOW_TYPE_DIALOG,
-    _NET_WM_WINDOW_TYPE_DOCK,
+    _NET_WM_WINDOW_TYPE_UTILITY,
     _NET_WM_STATE, _NET_WM_STATE_MODAL, _NET_WM_ICON, EWMH_ATOM_N
 };
 typedef enum ewmh_atom_tag Ewmh_atom;

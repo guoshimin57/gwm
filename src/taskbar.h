@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     layout.h：與layout.c相應的頭文件。
+ *     taskbar.h：與taskbar.c相應的頭文件。
  *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,15 +9,17 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef LAYOUT_H
-#define LAYOUT_H
+#ifndef TASKBAR_H
+#define TASKBAR_H
 
-void update_layout(WM *wm);
-void update_title_bar_layout(WM *wm);
-void update_taskbar_buttons(WM *wm);
-bool is_main_sec_gap(WM *wm, int x);
-bool is_main_fix_gap(WM *wm, int x);
-bool is_layout_adjust_area(WM *wm, Window win, int x);
-bool change_layout_ratio(WM *wm, int ox, int nx);
+void create_taskbar(WM *wm);
+void update_taskbar_button(WM *wm, Widget_type type, bool change_bg);
+void hint_leave_taskbar_button(WM *wm, Widget_type type);
+void handle_pointer_hovers(WM *wm, Window hover, Widget_type type);
+void update_icon_text(WM *wm, Window win);
+void update_cmd_center_button_text(WM *wm, size_t index);
+void update_status_area_text(WM *wm);
+void update_status_area(WM *wm);
+void handle_wm_icon_name_notify(WM *wm, Client *c, Window win);
 
 #endif

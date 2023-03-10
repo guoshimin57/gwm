@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "config.h"
 
 static void alloc_widget_color(WM *wm, const char *color_name, XColor *color);
 static void alloc_text_color(WM *wm, const char *color_name, XftColor *color);

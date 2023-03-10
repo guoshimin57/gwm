@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "config.h"
 #include "drawable.h"
 #include "entry.h"
 #include "font.h"
