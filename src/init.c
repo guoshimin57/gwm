@@ -24,6 +24,7 @@
 #include "layout.h"
 #include "taskbar.h"
 #include "menu.h"
+#include "handler.h"
 #include "misc.h"
 
 static void set_locale(WM *wm);
@@ -55,6 +56,7 @@ void init_wm(WM *wm)
     init_wallpaper_files(wm);
 #endif
     init_desktop(wm);
+    reg_event_handlers(wm);
     XSetErrorHandler(x_fatal_handler);
     XSelectInput(wm->display, wm->root_win, ROOT_EVENT_MASK);
     set_atoms(wm);

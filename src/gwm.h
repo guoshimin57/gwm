@@ -282,6 +282,7 @@ struct wm_tag // 窗口管理器相關信息
     XColor widget_color[WIDGET_COLOR_N]; // 構件顏色
     XftColor text_color[TEXT_COLOR_N]; // 文本顏色
     XIM xim;
+    void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
 };
 typedef struct wm_tag WM;
 

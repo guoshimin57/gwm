@@ -9,13 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <time.h>
 #include "gwm.h"
 #include "config.h"
 #include "client.h"
 #include "drawable.h"
 #include "font.h"
-#include "handler.h"
 #include "menu.h"
 #include "icon.h"
 #include "misc.h"
@@ -24,8 +22,6 @@ static void create_taskbar_buttons(WM *wm);
 static void create_icon_area(WM *wm);
 static void create_status_area(WM *wm);
 static void create_cmd_center(WM *wm);
-static void update_hint_win_for_icon(WM *wm, Window hover);
-static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window));
 
 void create_taskbar(WM *wm)
 {
@@ -136,43 +132,7 @@ void update_status_area(WM *wm)
     update_status_area_text(wm);
 }
 
-
-void handle_pointer_hovers(WM *wm, Window hover, Widget_type type)
-{
-    if(type == CLIENT_ICON)
-        handle_pointer_hover(wm, hover, update_hint_win_for_icon);
-}
-
-void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window))
-{
-    XEvent ev;
-    bool pause=false;
-    unsigned int diff_time; // 單位爲分秒，即十分之一秒
-    clock_t last_time=clock();
-    while(1)
-    {
-        if(XCheckMaskEvent(wm->display, ROOT_EVENT_MASK|PointerMotionMask, &ev))
-        {
-            handle_event(wm, &ev);
-            if(ev.type == MotionNotify && ev.xmotion.window==hover)
-            {
-                last_time=clock();
-                XUnmapWindow(wm->display, wm->hint_win);
-                pause=false;
-            }
-            else if(ev.type==LeaveNotify && ev.xcrossing.window==hover)
-            {
-                XUnmapWindow(wm->display, wm->hint_win);
-                break;
-            }
-        }
-        diff_time=10*(clock()-last_time)/CLOCKS_PER_SEC;
-        if(!pause && diff_time>=HOVER_TIME)
-            handler(wm, hover), pause=true;
-    }
-}
-
-static void update_hint_win_for_icon(WM *wm, Window hover)
+void update_hint_win_for_icon(WM *wm, Window hover)
 {
     Client *c=win_to_iconic_state_client(wm, hover);
     if(c)

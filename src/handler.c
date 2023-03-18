@@ -9,9 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <time.h>
 #include "gwm.h"
 #include "config.h"
 #include "drawable.h"
+#include "focus.h"
 #include "handler.h"
 #include "client.h"
 #include "entry.h"
@@ -19,14 +21,16 @@
 #include "func.h"
 #include "grab.h"
 #include "hint.h"
-#include "icon.h"
 #include "layout.h"
 #include "taskbar.h"
 #include "misc.h"
 
+static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
 static void handle_config_request(WM *wm, XEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
+static void handle_pointer_hovers(WM *wm, Window hover, Widget_type type);
+static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window));
 static void handle_expose(WM *wm, XEvent *e);
 static void handle_key_press(WM *wm, XEvent *e);
 static void handle_leave_notify(WM *wm, XEvent *e);
@@ -53,27 +57,28 @@ void handle_events(WM *wm)
     XSync(wm->display, False);
     while(run_flag && !XNextEvent(wm->display, &e))
         if(!XFilterEvent(&e, None))
-            handle_event(wm, &e);
+            wm->event_handlers[e.type](wm, &e);
+    clear_wm(wm);
 }
 
-void handle_event(WM *wm, XEvent *e)
+void reg_event_handlers(WM *wm)
 {
-    static void (*event_handlers[])(WM *, XEvent *)=
-    {
-        [ButtonPress]       = handle_button_press,
-        [ConfigureRequest]  = handle_config_request,
-        [EnterNotify]       = handle_enter_notify,
-        [Expose]            = handle_expose,
-        [KeyPress]          = handle_key_press,
-        [LeaveNotify]       = handle_leave_notify,
-        [MapRequest]        = handle_map_request,
-        [UnmapNotify]       = handle_unmap_notify,
-        [PropertyNotify]    = handle_property_notify,
-        [SelectionNotify]   = handle_selection_notify,
-    };
-    if(e->type<ARRAY_NUM(event_handlers) && event_handlers[e->type])
-        event_handlers[e->type](wm, e);
+    for(int i=0; i<LASTEvent; i++)
+        wm->event_handlers[i]=ignore_event;
+
+    wm->event_handlers[ButtonPress]      = handle_button_press;
+    wm->event_handlers[ConfigureRequest] = handle_config_request;
+    wm->event_handlers[EnterNotify]      = handle_enter_notify;
+    wm->event_handlers[Expose]           = handle_expose;
+    wm->event_handlers[KeyPress]         = handle_key_press;
+    wm->event_handlers[LeaveNotify]      = handle_leave_notify;
+    wm->event_handlers[MapRequest]       = handle_map_request;
+    wm->event_handlers[UnmapNotify]      = handle_unmap_notify;
+    wm->event_handlers[PropertyNotify]   = handle_property_notify;
+    wm->event_handlers[SelectionNotify]  = handle_selection_notify;
 }
+
+static void ignore_event(WM *wm, XEvent *e){}
 
 static void handle_button_press(WM *wm, XEvent *e)
 {
@@ -94,7 +99,10 @@ static void handle_button_press(WM *wm, XEvent *e)
     if(type != CMD_CENTER_ITEM)
         XUnmapWindow(wm->display, wm->cmd_center.win);
     if(type!=RUN_CMD_ENTRY && type!=RUN_BUTTON)
+    {
         XUnmapWindow(wm->display, wm->run_cmd.win);
+        XUnmapWindow(wm->display, wm->hint_win);
+    }
 }
  
 static bool is_func_click(WM *wm, Widget_type type, Buttonbind *b, XEvent *e)
@@ -156,7 +164,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
 
     if(wm->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
-    if(is_layout_adjust_area(wm, win, x))
+    if(is_layout_adjust_area(wm, win, x) && get_typed_clients_n(wm, MAIN_AREA))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_TASKBAR_BUTTON(type))
         update_win_background(wm, win,
@@ -178,6 +186,41 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     if(type != UNDEFINED)
         XDefineCursor(wm->display, win, wm->cursors[act]);
     handle_pointer_hovers(wm, win, type);
+}
+
+static void handle_pointer_hovers(WM *wm, Window hover, Widget_type type)
+{
+    if(type == CLIENT_ICON)
+        handle_pointer_hover(wm, hover, update_hint_win_for_icon);
+}
+
+static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window))
+{
+    XEvent ev;
+    bool pause=false;
+    unsigned int diff_time; // 單位爲分秒，即十分之一秒
+    clock_t last_time=clock();
+    while(1)
+    {
+        if(XCheckMaskEvent(wm->display, ROOT_EVENT_MASK|PointerMotionMask, &ev))
+        {
+            wm->event_handlers[ev.type](wm, &ev);
+            if(ev.type == MotionNotify && ev.xmotion.window==hover)
+            {
+                last_time=clock();
+                XUnmapWindow(wm->display, wm->hint_win);
+                pause=false;
+            }
+            else if(ev.type==LeaveNotify && ev.xcrossing.window==hover)
+            {
+                XUnmapWindow(wm->display, wm->hint_win);
+                break;
+            }
+        }
+        diff_time=10*(clock()-last_time)/CLOCKS_PER_SEC;
+        if(!pause && diff_time>=HOVER_TIME)
+            handler(wm, hover), pause=true;
+    }
 }
 
 static void handle_expose(WM *wm, XEvent *e)

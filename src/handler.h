@@ -12,7 +12,7 @@
 #ifndef HANDLER_H
 #define HANDLER_H
 
+void reg_event_handlers(WM *wm);
 void handle_events(WM *wm);
-void handle_event(WM *wm, XEvent *e);
 
 #endif

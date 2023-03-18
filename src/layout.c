@@ -11,10 +11,10 @@
 
 #include "gwm.h"
 #include "config.h"
+#include "desktop.h"
 #include "misc.h"
 #include "layout.h"
 #include "font.h"
-#include "desktop.h"
 #include "client.h"
 
 static void set_full_layout(WM *wm);

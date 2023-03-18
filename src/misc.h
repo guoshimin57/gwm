@@ -22,12 +22,10 @@ void clear_zombies(int unused);
 bool is_chosen_button(WM *wm, Widget_type type);
 void set_xic(WM *wm, Window win, XIC *ic);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
-void clear_wm(WM *wm);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
 File *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, size_t *n);
 void free_files(File *head);
-bool regcmp(const char *s, const char *regex);
 int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
 

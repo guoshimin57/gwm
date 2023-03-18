@@ -13,10 +13,17 @@
 #define DESKTOP_H
 
 void init_desktop(WM *wm);
-bool is_on_cur_desktop(WM *wm, Client *c);
-bool is_on_desktop_n(unsigned int desktop_n, Client *c);
-unsigned int get_desktop_mask(unsigned int desktop_n);
 unsigned int get_desktop_n(WM *wm, XEvent *e, Func_arg arg);
 void focus_desktop_n(WM *wm, unsigned int n);
+bool is_on_desktop_n(unsigned int n, Client *c);
+bool is_on_cur_desktop(WM *wm, Client *c);
+unsigned int get_desktop_mask(unsigned int desktop_n);
+void move_to_desktop_n(WM *wm, unsigned int n);
+void all_move_to_desktop_n(WM *wm, unsigned int n);
+void change_to_desktop_n(WM *wm, unsigned int n);
+void all_change_to_desktop_n(WM *wm, unsigned int n);
+void attach_to_desktop_n(WM *wm, unsigned int n);
+void attach_to_desktop_all(WM *wm);
+void all_attach_to_desktop_n(WM *wm, unsigned int n);
 
 #endif

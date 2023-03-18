@@ -11,7 +11,6 @@
 
 #include "gwm.h"
 #include "config.h"
-#include "client.h"
 #include "drawable.h"
 #include "misc.h"
 #include "hint.h"
@@ -141,11 +140,4 @@ static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)
         || !hint->max_aspect.x || !hint->max_aspect.y
         || (  (float)w/h >= (float)hint->min_aspect.x/hint->min_aspect.y
            && (float)w/h <= (float)hint->max_aspect.x/hint->max_aspect.y);
-}
-
-void set_input_focus(WM *wm, XWMHints *hint, Window win)
-{
-    if(!hint || ((hint->flags & InputHint) && hint->input)) // 不抗拒鍵盤輸入
-        XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
-    send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
 }

@@ -37,7 +37,6 @@ int main(int argc, char *argv[])
     XSetScreenSaver(wm.display, SCREEN_SAVER_TIME_OUT, SCREEN_SAVER_INTERVAL,
         PreferBlanking, AllowExposures);
     handle_events(&wm);
-    clear_wm(&wm);
     return EXIT_SUCCESS;
 }
 

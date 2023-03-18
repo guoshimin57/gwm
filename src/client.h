@@ -25,7 +25,6 @@ void del_client_node(Client *c);
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
 void update_frame(WM *wm, unsigned int desktop_n, Client *c);
 Client *win_to_iconic_state_client(WM *wm, Window win);
-void focus_client(WM *wm, unsigned int desktop_n, Client *c);
 void raise_client(WM *wm, unsigned int desktop_n);
 Client *get_next_client(WM *wm, Client *c);
 Client *get_prev_client(WM *wm, Client *c);

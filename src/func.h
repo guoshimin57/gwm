@@ -18,6 +18,7 @@ void choose_client(WM *wm, XEvent *e, Func_arg arg);
 void exec(WM *wm, XEvent *e, Func_arg arg);
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg);
 void quit_wm(WM *wm, XEvent *e, Func_arg arg);
+void clear_wm(WM *wm);
 void close_client(WM *wm, XEvent *e, Func_arg arg);
 void close_all_clients(WM *wm, XEvent *e, Func_arg arg);
 void next_client(WM *wm, XEvent *e, Func_arg arg);

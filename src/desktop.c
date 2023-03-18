@@ -13,6 +13,7 @@
 #include "config.h"
 #include "desktop.h"
 #include "client.h"
+#include "focus.h"
 #include "icon.h"
 #include "layout.h"
 #include "misc.h"
@@ -71,17 +72,89 @@ void focus_desktop_n(WM *wm, unsigned int n)
     update_taskbar_buttons(wm);
 }
 
+bool is_on_desktop_n(unsigned int n, Client *c)
+{
+    return (c->desktop_mask & get_desktop_mask(n));
+}
+
 bool is_on_cur_desktop(WM *wm, Client *c)
 {
     return (c->desktop_mask & get_desktop_mask(wm->cur_desktop));
 }
 
-bool is_on_desktop_n(unsigned int desktop_n, Client *c)
-{
-    return (c->desktop_mask & get_desktop_mask(desktop_n));
-}
-
 unsigned int get_desktop_mask(unsigned int desktop_n)
 {
     return 1<<(desktop_n-1);
+}
+
+void move_to_desktop_n(WM *wm, unsigned int n)
+{
+    Client *pc=DESKTOP(wm).cur_focus_client;
+    if(n && n!=wm->cur_desktop && pc!=wm->clients)
+    {
+        pc->desktop_mask=get_desktop_mask(n);
+        focus_client(wm, n, pc);
+        focus_client(wm, wm->cur_desktop, NULL);
+        focus_desktop_n(wm, wm->cur_desktop);
+    }
+}
+
+void all_move_to_desktop_n(WM *wm, unsigned int n)
+{
+    if(n)
+    {
+        Client *pc=DESKTOP(wm).cur_focus_client;
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            c->desktop_mask=get_desktop_mask(n);
+        for(unsigned int i=1; i<=DESKTOP_N; i++)
+            focus_client(wm, i, i==n ? pc : wm->clients);
+        focus_desktop_n(wm, wm->cur_desktop);
+    }
+}
+
+void change_to_desktop_n(WM *wm, unsigned int n)
+{
+    move_to_desktop_n(wm, n);
+    focus_desktop_n(wm, n);
+}
+
+void all_change_to_desktop_n(WM *wm, unsigned int n)
+{
+    all_move_to_desktop_n(wm, n);
+    focus_desktop_n(wm, n);
+}
+
+void attach_to_desktop_n(WM *wm, unsigned int n)
+{
+    Client *c=DESKTOP(wm).cur_focus_client;
+    if(n && n!=wm->cur_desktop && c!=wm->clients)
+    {
+        c->desktop_mask |= get_desktop_mask(n);
+        focus_client(wm, n, c);
+    }
+}
+
+void attach_to_desktop_all(WM *wm)
+{
+    Client *c=DESKTOP(wm).cur_focus_client;
+    if(c != wm->clients)
+    {
+        c->desktop_mask=~0;
+        for(unsigned int i=1; i<=DESKTOP_N; i++)
+            if(i != wm->cur_desktop)
+                focus_client(wm, i, c);
+    }
+}
+
+void all_attach_to_desktop_n(WM *wm, unsigned int n)
+{
+    if(n)
+    {
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            c->desktop_mask |= get_desktop_mask(n);
+        if(n == wm->cur_desktop)
+            focus_desktop_n(wm, wm->cur_desktop);
+        else
+            focus_client(wm, n, wm->desktop[n-1].cur_focus_client);
+    }
 }

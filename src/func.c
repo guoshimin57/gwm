@@ -19,8 +19,8 @@
 #include "client.h"
 #include "desktop.h"
 #include "entry.h"
+#include "focus.h"
 #include "grab.h"
-#include "handler.h"
 #include "hint.h"
 #include "icon.h"
 #include "layout.h"
@@ -57,7 +57,7 @@ bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
         do
         {
             XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, p);
-            handle_event(wm, p);
+            wm->event_handlers[p->type](wm, p);
         }while(!is_match_button_release(wm, oe, p));
         if(act != NO_OP)
             XUngrabPointer(wm->display, CurrentTime);
@@ -127,7 +127,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
                     break;
                 }
                 else
-                    handle_event(wm, &ev);
+                    wm->event_handlers[ev.type](wm, &ev);
             }
         }
     }
@@ -158,6 +158,35 @@ void quit_wm(WM *wm, XEvent *e, Func_arg arg)
 {
     clear_wm(wm);
     exit(EXIT_SUCCESS);
+}
+
+void clear_wm(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
+        del_client(wm, c, false);
+    }
+    XDestroyWindow(wm->display, wm->taskbar.win);
+    free(wm->taskbar.status_text);
+    XDestroyWindow(wm->display, wm->cmd_center.win);
+    XDestroyWindow(wm->display, wm->run_cmd.win);
+    XDestroyWindow(wm->display, wm->hint_win);
+    XFreeGC(wm->display, wm->gc);
+    XFreeModifiermap(wm->mod_map);
+    for(size_t i=0; i<POINTER_ACT_N; i++)
+        XFreeCursor(wm->display, wm->cursors[i]);
+    XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
+    if(wm->run_cmd.xic)
+        XDestroyIC(wm->run_cmd.xic);
+    if(wm->xim)
+        XCloseIM(wm->xim);
+    close_fonts(wm);
+    free_files(wm->wallpapers);
+    XClearWindow(wm->display, wm->root_win);
+    XFlush(wm->display);
+    XCloseDisplay(wm->display);
+    clear_zombies(0);
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)
@@ -299,7 +328,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
             do_valid_pointer_move_resize(wm, c, &m, act);
         }
         else
-            handle_event(wm, &ev);
+            wm->event_handlers[ev.type](wm, &ev);
     }while(!is_match_button_release(wm, e, &ev));
     XUngrabPointer(wm->display, CurrentTime);
     XUnmapWindow(wm->display, wm->hint_win);
@@ -494,7 +523,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
                 update_layout(wm), ox=nx;
         }
         else
-            handle_event(wm, &ev);
+            wm->event_handlers[ev.type](wm, &ev);
     }while(!is_match_button_release(wm, e, &ev));
     XUngrabPointer(wm->display, CurrentTime);
 }
@@ -572,78 +601,37 @@ void prev_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    unsigned int n=get_desktop_n(wm, e, arg);
-    Client *pc=DESKTOP(wm).cur_focus_client;
-    if(n && n!=wm->cur_desktop && pc!=wm->clients)
-    {
-        pc->desktop_mask=get_desktop_mask(n);
-        focus_client(wm, n, pc);
-        focus_client(wm, wm->cur_desktop, NULL);
-        focus_desktop_n(wm, wm->cur_desktop);
-    }
+    move_to_desktop_n(wm, get_desktop_n(wm, e, arg));
 }
 
 void all_move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    unsigned int n=get_desktop_n(wm, e, arg);
-    if(n)
-    {
-        Client *pc=DESKTOP(wm).cur_focus_client;
-        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            c->desktop_mask=get_desktop_mask(n);
-        for(unsigned int i=1; i<=DESKTOP_N; i++)
-            focus_client(wm, i, i==n ? pc : wm->clients);
-        focus_desktop_n(wm, wm->cur_desktop);
-    }
+    all_move_to_desktop_n(wm, get_desktop_n(wm, e, arg));
 }
 
 void change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    move_to_desktop(wm, e, arg);
-    focus_desktop(wm, e, arg);
+    change_to_desktop_n(wm, get_desktop_n(wm, e, arg));
 }
 
 void all_change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    all_move_to_desktop(wm, e, arg);
-    focus_desktop(wm, e, arg);
+    all_change_to_desktop_n(wm, get_desktop_n(wm, e, arg));
 }
 
 void attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    unsigned int n=get_desktop_n(wm, e, arg);
-    Client *c=DESKTOP(wm).cur_focus_client;
-    if(n && n!=wm->cur_desktop && c!=wm->clients)
-    {
-        c->desktop_mask |= get_desktop_mask(n);
-        focus_client(wm, n, c);
-    }
+    attach_to_desktop_n(wm, get_desktop_n(wm, e, arg));
 }
 
 void attach_to_all_desktops(WM *wm, XEvent *e, Func_arg arg)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
-    if(c != wm->clients)
-    {
-        c->desktop_mask=~0;
-        for(unsigned int i=1; i<=DESKTOP_N; i++)
-            if(i != wm->cur_desktop)
-                focus_client(wm, i, c);
-    }
+    attach_to_desktop_all(wm);
 }
 
 void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    unsigned int n=get_desktop_n(wm, e, arg);
-    if(n)
-    {
-        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            c->desktop_mask |= get_desktop_mask(n);
-        if(n == wm->cur_desktop)
-            focus_desktop_n(wm, wm->cur_desktop);
-        else
-            focus_client(wm, n, wm->desktop[n-1].cur_focus_client);
-    }
+    all_attach_to_desktop_n(wm, get_desktop_n(wm, e, arg));
 }
 
 void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg)

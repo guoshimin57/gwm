@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     hint.h：與hint.c相應的頭文件。
+ *     focus.h：與focus.c相應的頭文件。
  *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,14 +9,10 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef HINT_H
-#define HINT_H
+#ifndef FOCUS_H
+#define FOCUS_H
 
-unsigned int get_client_col(Client *c);
-unsigned int get_client_row(Client *c);
-void update_size_hint(WM *wm, Client *c);
-void fix_win_size_by_hint(Client *c);
-bool is_prefer_resize(WM *wm, Client *c, Delta_rect *d);
-bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint);
+void focus_client(WM *wm, unsigned int desktop_n, Client *c);
+void set_input_focus(WM *wm, XWMHints *hint, Window win);
 
 #endif

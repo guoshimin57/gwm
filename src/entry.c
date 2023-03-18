@@ -18,15 +18,17 @@
 #include "misc.h"
 
 static int get_entry_cursor_x(WM *wm, Entry *e);
+static void hint_for_run_cmd_entry(WM *wm, const char *pattern);
+static char *get_match_cmd(const char *pattern);
 static void complete_cmd_for_entry(WM *wm, Entry *e);
 static bool close_entry(WM *wm, Entry *e, bool result);
 
 void create_entry(WM *wm, Entry *e, Rect *r, wchar_t *hint)
 {
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h;
-    e->win=XCreateSimpleWindow(wm->display, wm->root_win,
-        e->x, e->y, e->w, e->h,
-        0, 0, wm->widget_color[ENTRY_COLOR].pixel);
+    e->win=XCreateSimpleWindow(wm->display, wm->root_win, e->x, e->y,
+        e->w, e->h, BORDER_WIDTH, wm->widget_color[CURRENT_BORDER_COLOR].pixel,
+        wm->widget_color[ENTRY_COLOR].pixel);
     set_override_redirect(wm, e->win);
     XSelectInput(wm->display, e->win, ENTRY_EVENT_MASK);
     e->hint=hint;
@@ -65,7 +67,7 @@ static int get_entry_cursor_x(WM *wm, Entry *e)
     return ENTRY_TEXT_INDENT+w;
 }
 
-void hint_for_run_cmd_entry(WM *wm, const char *pattern)
+static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
 {
     Window win=wm->hint_win;
     char *paths=getenv("PATH");
@@ -74,7 +76,7 @@ void hint_for_run_cmd_entry(WM *wm, const char *pattern)
         unsigned int w=RUN_CMD_ENTRY_WIDTH, h=HINT_WIN_LINE_HEIGHT;
         String_format fmt={{0, 0, w, h}, CENTER_LEFT,
             false, 0, wm->text_color[HINT_TEXT_COLOR], HINT_FONT};
-        int x=(wm->screen_width-w)/2,
+        int x=(wm->screen_width-w)/2+BORDER_WIDTH,
             y=(wm->screen_height+RUN_CMD_ENTRY_HEIGHT)/2, *py=&fmt.r.y;
         size_t i, n, max=(wm->screen_height-wm->taskbar.h-y)/h;
         const char *reg=copy_strings(pattern, "*", NULL);
@@ -93,7 +95,7 @@ void hint_for_run_cmd_entry(WM *wm, const char *pattern)
     XUnmapWindow(wm->display, win);
 }
 
-char *get_match_cmd(WM *wm, const char *pattern)
+static char *get_match_cmd(const char *pattern)
 {
     char *cmd=NULL, *paths=getenv("PATH");
     if(paths)
@@ -160,7 +162,7 @@ static void complete_cmd_for_entry(WM *wm, Entry *e)
 {
     char *cmd, pattern[FILENAME_MAX]={0};
     wcstombs(pattern, e->text, FILENAME_MAX);
-    if((cmd=get_match_cmd(wm, pattern)))
+    if((cmd=get_match_cmd(pattern)))
         mbstowcs(e->text, cmd, FILENAME_MAX), e->cursor_offset=wcslen(e->text);
 }
 

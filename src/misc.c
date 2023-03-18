@@ -15,12 +15,11 @@
 #include <stdarg.h>
 #include "gwm.h"
 #include "client.h"
-#include "drawable.h"
-#include "font.h"
 #include "misc.h"
 
 static size_t get_files_in_path(const char *path, const char *regex, File *head, Order order, bool is_fullname);
 static bool match(const char *s, const char *r, const char *os);
+static bool regcmp(const char *s, const char *regex);
 static int cmp_basename(const char *s1, const char *s2);
 static void create_file_node(File *head, const char *path, char *filename, bool is_fullname);
 
@@ -156,36 +155,6 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
     return ks;
 }
 
-void clear_wm(WM *wm)
-{
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-    {
-        XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
-        del_client(wm, c, false);
-    }
-    XDestroyWindow(wm->display, wm->taskbar.win);
-    free(wm->taskbar.status_text);
-    XDestroyWindow(wm->display, wm->cmd_center.win);
-    XDestroyWindow(wm->display, wm->run_cmd.win);
-    XDestroyWindow(wm->display, wm->hint_win);
-    XFreeGC(wm->display, wm->gc);
-    XFreeModifiermap(wm->mod_map);
-    for(size_t i=0; i<POINTER_ACT_N; i++)
-        XFreeCursor(wm->display, wm->cursors[i]);
-    XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
-    if(!wm->run_cmd.xic)puts("wtf xic");
-    if(wm->run_cmd.xic)
-        XDestroyIC(wm->run_cmd.xic);
-    if(wm->xim)
-        XCloseIM(wm->xim);
-    close_fonts(wm);
-    free_files(wm->wallpapers);
-    XClearWindow(wm->display, wm->root_win);
-    XFlush(wm->display);
-    XCloseDisplay(wm->display);
-    clear_zombies(0);
-}
-
 char *copy_string(const char *s)
 {
     return strcpy(malloc_s(strlen(s)+1), s);
@@ -263,7 +232,7 @@ static bool match(const char *s, const char *r, const char *os)
     }
 }
 
-bool regcmp(const char *s, const char *regex) // 簡單的全文(即整個s)正則表達式匹配
+static bool regcmp(const char *s, const char *regex) // 簡單的全文(即整個s)正則表達式匹配
 {
     return match(s, regex, s);
 }
