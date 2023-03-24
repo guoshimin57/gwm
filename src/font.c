@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include <X11/Xft/Xft.h>
+#include <math.h>
 #include "gwm.h"
 #include "config.h"
 #include "font.h"
@@ -21,11 +22,11 @@ void load_font(WM *wm)
     {
         bool flag=true;
         for(size_t j=0; j<i && flag; j++)
-            if(strcmp(FONT_NAME[j], FONT_NAME[i]) == 0)
+            if(strcmp(wm->cfg.font_name[j], wm->cfg.font_name[i]) == 0)
                 wm->font[i]=wm->font[j], flag=false;
         if(flag)
-            if(!(wm->font[i]=XftFontOpenName(wm->display, wm->screen, FONT_NAME[i])))
-                if(!(wm->font[i]=XftFontOpenName(wm->display, wm->screen, DEFAULT_FONT_NAME)))
+            if(!(wm->font[i]=XftFontOpenName(wm->display, wm->screen, wm->cfg.font_name[i])))
+                if(!(wm->font[i]=XftFontOpenName(wm->display, wm->screen, wm->cfg.default_font_name)))
                     exit_with_msg("錯誤：不能加載必要的字體。");
     }
 }
@@ -93,4 +94,45 @@ void close_fonts(WM *wm)
         if(j == i)
             XftFontClose(wm->display, wm->font[i]);
     }
+}
+
+/*
+ * 正常坐姿下，人眼到屏幕的距離是0.8米，正常視力的人可以勉強看清距離5米、
+ * 高度爲5.78毫米的E字。根據相似三角形的性質可知：
+ *                                 *
+ *                         *       *
+ *                 *               *
+ *         *                       *
+ * *       +       *       *       + 5m, 5.78mm
+ *         *                       *
+ *       0.8m      *               *
+ *                         *       *
+ *                                 *
+ * 人眼可以看得清的E字最小高度hE=0.8*5.78/5=0.9248mm。
+ * 因1英寸等於25.4毫米，故DPM=DPI/25.4。
+ * 若以像素計量，人眼可以看得清的E字最小高度HE=hE*DPM=hE*DPI/25.4。
+ * 一般字體會爲字留空白，最大字高佔外框高度的90%左右，故與人眼可以看得
+ * 清的E字相應的最小字體高度HEf=HE/0.9=hE*DPM/0.9=hE*DPI/(25.4*0.9)。
+ * 漢字或其他一些文字的筆畫遠比E字多，若以筆畫數最多的常用字“矗”爲準，
+ * 則筆畫數是E的6倍，考慮到同一字體，非字母文字尺寸是字母文字的2倍，故
+ * 實際筆畫密度是E的3倍。因此，人眼可以看得清的最小字體尺寸
+ * Hf=3*HEf=3*hE*DPM/0.9=3*hE*DPI/(25.4*0.9)。
+ * 簡化可得：Hf=3*HEf=hE*DPM/0.3=hE*DPI/7.62。
+ * 考慮到舒適性，應乘以一個放大系數a。因此，人眼可以輕鬆看得清的最小字體尺寸
+ * Hfb=a*Hf=a*3*HEf=a*hE*DPM/0.3=a*hE*DPI/7.62。
+ * 對於近視的人，字體尺寸還應調大一點。
+ */
+unsigned int get_min_font_size(WM *wm)
+{
+    int w=DisplayWidthMM(wm->display, wm->screen),
+        h=DisplayHeightMM(wm->display, wm->screen),
+        W=DisplayWidth(wm->display, wm->screen),
+        H=DisplayHeight(wm->display, wm->screen);
+    double dpm=sqrt(W*W+H*H)/sqrt(w*w+h*h), dpi=25.4*dpm;
+    return ceil(0.9248*dpi/7.62);
+}
+
+unsigned int get_scale_font_size(WM *wm, double scale)
+{
+    return scale*get_min_font_size(wm);
 }

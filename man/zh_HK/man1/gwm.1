@@ -8,7 +8,7 @@
 ./"     你應該已經收到一份附隨此程序的GNU通用公共許可證副本。否則，請參閱
 ./" <http://www.gnu.org/licenses/>。
 ./" ************************************************************************/
-.TH gwm 1 2023年3月 "gwm 1.8.10" gwm
+.TH gwm 1 2023年3月 "gwm 1.9.0" gwm
 .
 .SH 名稱
 gwm \- gwm（gsm's window manager），是一個用C語言編寫的基於X11的動態窗口管理器。
@@ -341,10 +341,6 @@ gwm啓動後會立即嘗試執行~/.config/gwm/autostart.sh。
 打開QQ。
 .
 .TP
-.B Mod4+Mod1+s
-打開星際譯王。
-.
-.TP
 .B Mod4+Mod1+t
 依次嘗試打開以下模擬終端直到打開其中之一或試完爲止：lxterminal、xfce4-terminal、gnome-terminal、konsole5、xterm。以下簡稱打開模擬終端。
 .
@@ -455,7 +451,7 @@ gwm啓動後會立即嘗試執行~/.config/gwm/autostart.sh。
 .SS 配置
 .
 .TP
-目前只能通過修改源代碼來修改配置。具體是修改config.h，該文件已經包含詳細的配置注釋。
+目前只能通過修改源代碼來修改配置。具體是修改config.c，該文件已經包含詳細的配置注釋。
 .
 .SH 漏洞報告
 .

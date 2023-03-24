@@ -20,7 +20,7 @@ void copy_prop(WM *wm, Window dest, Window src);
 bool send_event(WM *wm, Atom protocol, Window win);
 bool is_pointer_on_win(WM *wm, Window win);
 bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
-void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h);
+void print_area(WM *wm, Drawable d, int x, int y, unsigned int w, unsigned int h);
 bool is_wm_win(WM *wm, Window win);
 void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap);
 void set_override_redirect(WM *wm, Window win);

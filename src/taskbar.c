@@ -26,8 +26,8 @@ static void create_cmd_center(WM *wm);
 void create_taskbar(WM *wm)
 {
     Taskbar *b=&wm->taskbar;
-    b->x=0, b->y=wm->screen_height-TASKBAR_HEIGHT;
-    b->w=wm->screen_width, b->h=TASKBAR_HEIGHT;
+    b->x=0, b->y=wm->screen_height-wm->cfg.taskbar_height;
+    b->w=wm->screen_width, b->h=wm->cfg.taskbar_height;
     b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
         b->w, b->h, 0, 0, 0);
     set_override_redirect(wm, b->win);
@@ -50,8 +50,8 @@ static void create_taskbar_buttons(WM *wm)
             wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
             wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel ;
         b->buttons[i]=XCreateSimpleWindow(wm->display, b->win,
-            TASKBAR_BUTTON_WIDTH*i, 0,
-            TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT, 0, 0, color);
+            wm->cfg.taskbar_button_width*i, 0,
+            wm->cfg.taskbar_button_width, wm->cfg.taskbar_button_height, 0, 0, color);
         XSelectInput(wm->display, b->buttons[i], BUTTON_EVENT_MASK);
     }
 }
@@ -59,7 +59,7 @@ static void create_taskbar_buttons(WM *wm)
 static void create_icon_area(WM *wm)
 {
     Taskbar *b=&wm->taskbar;
-    unsigned int bw=TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N,
+    unsigned int bw=wm->cfg.taskbar_button_width*TASKBAR_BUTTON_N,
         w=b->w-bw-b->status_area_w;
     b->icon_area=XCreateSimpleWindow(wm->display, b->win,
         bw, 0, w, b->h, 0, 0, wm->widget_color[ICON_AREA_COLOR].pixel);
@@ -69,8 +69,8 @@ static void create_status_area(WM *wm)
     Taskbar *b=&wm->taskbar;
     b->status_text=get_text_prop(wm, wm->root_win, XA_WM_NAME);
     get_string_size(wm, wm->font[STATUS_AREA_FONT], b->status_text, &b->status_area_w, NULL);
-    if(b->status_area_w > STATUS_AREA_WIDTH_MAX)
-        b->status_area_w=STATUS_AREA_WIDTH_MAX;
+    if(b->status_area_w > wm->cfg.status_area_width_max)
+        b->status_area_w=wm->cfg.status_area_width_max;
     else if(b->status_area_w == 0)
         b->status_area_w=1;
     wm->taskbar.status_area=XCreateSimpleWindow(wm->display, b->win,
@@ -81,8 +81,8 @@ static void create_status_area(WM *wm)
 
 static void create_cmd_center(WM *wm)
 {
-    unsigned int n=CMD_CENTER_ITEM_N, col=CMD_CENTER_COL,
-        w=CMD_CENTER_ITEM_WIDTH, h=CMD_CENTER_ITEM_HEIGHT;
+    unsigned int n=CMD_CENTER_ITEM_N, col=wm->cfg.cmd_center_col,
+        w=wm->cfg.cmd_center_item_width, h=wm->cfg.cmd_center_item_height;
     unsigned long color=wm->widget_color[CMD_CENTER_COLOR].pixel;
 
     create_menu(wm, &wm->cmd_center, n, col, w, h, color);
@@ -91,12 +91,12 @@ static void create_cmd_center(WM *wm)
 void update_taskbar_button(WM *wm, Widget_type type, bool change_bg)
 {
     size_t i=TASKBAR_BUTTON_INDEX(type);
-    String_format f={{0, 0, TASKBAR_BUTTON_WIDTH, TASKBAR_BUTTON_HEIGHT},
+    String_format f={{0, 0, wm->cfg.taskbar_button_width, wm->cfg.taskbar_button_height},
             CENTER, change_bg, is_chosen_button(wm, type) ?
             wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
             wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel,
             wm->text_color[TASKBAR_BUTTON_TEXT_COLOR], TASKBAR_BUTTON_FONT};
-    draw_string(wm, wm->taskbar.buttons[i], TASKBAR_BUTTON_TEXT[i], &f);
+    draw_string(wm, wm->taskbar.buttons[i], wm->cfg.taskbar_button_text[i], &f);
 }
 
 void update_status_area_text(WM *wm)
@@ -118,11 +118,11 @@ void hint_leave_taskbar_button(WM *wm, Widget_type type)
 
 void update_status_area(WM *wm)
 {
-    unsigned int w, bw=TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N;
+    unsigned int w, bw=wm->cfg.taskbar_button_width*TASKBAR_BUTTON_N;
     Taskbar *b=&wm->taskbar;
     get_string_size(wm, wm->font[STATUS_AREA_FONT], b->status_text, &w, NULL);
-    if(w > STATUS_AREA_WIDTH_MAX)
-        w=STATUS_AREA_WIDTH_MAX;
+    if(w > wm->cfg.status_area_width_max)
+        w=wm->cfg.status_area_width_max;
     if(w != b->status_area_w)
     {
         XMoveResizeWindow(wm->display, b->status_area, b->w-w, 0, w, b->h);
@@ -138,7 +138,7 @@ void update_hint_win_for_icon(WM *wm, Window hover)
     if(c)
     {
         Window root, child;
-        unsigned int cw, tw, mask, h=HINT_WIN_LINE_HEIGHT;
+        unsigned int cw, tw, mask, h=wm->cfg.hint_win_line_height;
         int x=c->icon->x+c->icon->w, y=c->icon->y+c->icon->h, rx, ry, wx, wy;
         get_string_size(wm, wm->font[HINT_FONT], c->class_name, &cw, NULL);
         get_string_size(wm, wm->font[HINT_FONT], c->icon->title_text, &tw, NULL);
@@ -146,7 +146,7 @@ void update_hint_win_for_icon(WM *wm, Window hover)
             set_pos_for_click(wm, hover, rx, ry, &x, &y, cw+tw, h);
         XMoveResizeWindow(wm->display, wm->hint_win, x, y, cw+tw, h);
         XMapRaised(wm->display, wm->hint_win);
-        String_format f={{0, 0, cw, HINT_WIN_LINE_HEIGHT}, CENTER,
+        String_format f={{0, 0, cw, wm->cfg.hint_win_line_height}, CENTER,
             false, 0, wm->text_color[CLASS_TEXT_COLOR], HINT_FONT};
         draw_string(wm, wm->hint_win, c->class_name, &f);
         f.r.x=cw, f.r.w=tw, f.fg=wm->text_color[TITLE_TEXT_COLOR];
@@ -173,10 +173,10 @@ void update_icon_text(WM *wm, Window win)
 
 void update_cmd_center_button_text(WM *wm, size_t index)
 {
-    String_format f={{0, 0, CMD_CENTER_ITEM_WIDTH, CMD_CENTER_ITEM_HEIGHT},
+    String_format f={{0, 0, wm->cfg.cmd_center_item_width, wm->cfg.cmd_center_item_height},
         CENTER_LEFT, false, 0, wm->text_color[CMD_CENTER_ITEM_TEXT_COLOR],
         CMD_CENTER_FONT};
-    draw_string(wm, wm->cmd_center.items[index], CMD_CENTER_ITEM_TEXT[index], &f);
+    draw_string(wm, wm->cmd_center.items[index], wm->cfg.cmd_center_item_text[index], &f);
 }
 
 void handle_wm_icon_name_notify(WM *wm, Client *c, Window win)

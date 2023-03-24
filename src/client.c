@@ -22,7 +22,7 @@
 #include "misc.h"
 
 static void apply_rules(WM *wm, Client *c);
-static bool have_rule(Rule *r, Client *c);
+static bool have_rule(const Rule *r, Client *c);
 void set_win_rect_by_attr(WM *wm, Client *c);
 static void fix_win_pos(WM *wm, Client *c);
 static bool fix_win_pos_by_hint(Client *c);
@@ -31,7 +31,7 @@ static void fix_win_pos_by_screen(WM *wm, Client *c);
 static void fix_win_size(WM *wm, Client *c);
 static void fix_win_size_by_screen(WM *wm, Client *c);
 static void frame_client(WM *wm, Client *c);
-static Rect get_button_rect(Client *c, size_t index);
+static Rect get_button_rect(WM *wm, Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
 static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type);
 
@@ -53,7 +53,7 @@ void add_client(WM *wm, Window win)
         iconify(wm, c);
     else
         focus_client(wm, wm->cur_desktop, c);
-    grab_buttons(wm, c, BUTTONBIND, ARRAY_NUM(BUTTONBIND));
+    grab_buttons(wm, c);
     XSelectInput(wm->display, win, EnterWindowMask|PropertyChangeMask);
     XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
 }
@@ -69,21 +69,22 @@ static void apply_rules(WM *wm, Client *c)
         || type != wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
         || state == wm->ewmh_atom[_NET_WM_STATE_MODAL])
         c->area_type=FLOATING_AREA;
-    c->border_w=BORDER_WIDTH;
-    c->title_bar_h=TITLE_BAR_HEIGHT;
+    c->border_w=wm->cfg.border_width;
+    c->title_bar_h=wm->cfg.title_bar_height;
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     if(XGetClassHint(wm->display, c->win, &c->class_hint))
     {
-        Rule *r=RULE;
         c->class_name=c->class_hint.res_class;
-        for(size_t i=0; i<ARRAY_NUM(RULE); i++, r++)
+        for(const Rule *r=wm->cfg.rule; r->app_class; r++)
         {
             if(have_rule(r, c))
             {
                 c->area_type=r->area_type;
-                c->border_w=r->border_w;
-                c->title_bar_h=r->title_bar_h;
+                if(!r->show_border)
+                    c->border_w=0;
+                if(!r->show_title_bar)
+                    c->title_bar_h=0;
                 c->desktop_mask = r->desktop_mask ?
                     r->desktop_mask : get_desktop_mask(wm->cur_desktop);
                 if(r->class_alias)
@@ -93,7 +94,7 @@ static void apply_rules(WM *wm, Client *c)
     }
 }
 
-static bool have_rule(Rule *r, Client *c)
+static bool have_rule(const Rule *r, Client *c)
 {
     const char *pc=r->app_class, *pn=r->app_name,
         *class=c->class_hint.res_class, *name=c->class_hint.res_name;
@@ -200,9 +201,8 @@ static void frame_client(WM *wm, Client *c)
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y, fr.w,
         fr.h, c->border_w, wm->widget_color[CURRENT_BORDER_COLOR].pixel, 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
-#if SET_FRAME_PROP
-    copy_prop(wm, c->frame, c->win);
-#endif
+    if(wm->cfg.set_frame_prop)
+        copy_prop(wm, c->frame, c->win);
     if(c->title_bar_h)
         create_title_bar(wm, c);
     XAddToSaveSet(wm->display, c->win);
@@ -218,7 +218,7 @@ void create_title_bar(WM *wm, Client *c)
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
-        Rect br=get_button_rect(c, i);
+        Rect br=get_button_rect(wm, c, i);
         c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame,
             br.x, br.y, br.w, br.h, 0, 0, bc);
         XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
@@ -238,14 +238,14 @@ Rect get_title_area_rect(WM *wm, Client *c)
 {
     int buttons_n[]={[FULL]=0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
         n=buttons_n[DESKTOP(wm).cur_layout];
-    return (Rect){0, 0, c->w-TITLE_BUTTON_WIDTH*n, c->title_bar_h};
+    return (Rect){0, 0, c->w-wm->cfg.title_button_width*n, c->title_bar_h};
 }
 
-static Rect get_button_rect(Client *c, size_t index)
+static Rect get_button_rect(WM *wm, Client *c, size_t index)
 {
-    return (Rect){c->w-TITLE_BUTTON_WIDTH*(TITLE_BUTTON_N-index),
-        (c->title_bar_h-TITLE_BUTTON_HEIGHT)/2,
-        TITLE_BUTTON_WIDTH, TITLE_BUTTON_HEIGHT};
+    return (Rect){c->w-wm->cfg.title_button_width*(TITLE_BUTTON_N-index),
+        (c->title_bar_h-wm->cfg.title_button_height)/2,
+        wm->cfg.title_button_width, wm->cfg.title_button_height};
 }
 
 unsigned int get_typed_clients_n(WM *wm, Area_type type)
@@ -287,13 +287,13 @@ void del_client(WM *wm, Client *c, bool change_focus)
             for(size_t i=1; i<=DESKTOP_N; i++)
                 if(is_on_desktop_n(i, c))
                     focus_client(wm, i, NULL);
-#if USE_IMAGE_ICON
-        if(c->image)
+
+        if(wm->cfg.use_image_icon && c->image)
         {
             imlib_context_set_image(c->image);
             imlib_free_image();
         }
-#endif
+
         XFree(c->class_hint.res_class);
         XFree(c->class_hint.res_name);
         XFree(c->wm_hint);
@@ -319,7 +319,7 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
         {
-            Rect br=get_button_rect(c, i);
+            Rect br=get_button_rect(wm, c, i);
             XMoveWindow(wm->display, c->buttons[i], br.x, br.y);
         }
         XResizeWindow(wm->display, c->title_area, tr.w, tr.h);

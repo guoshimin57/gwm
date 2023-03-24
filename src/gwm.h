@@ -38,6 +38,8 @@
 #define TASKBAR_BUTTON_N (TASKBAR_BUTTON_END-TASKBAR_BUTTON_BEGIN+1)
 #define CMD_CENTER_ITEM_N (CMD_CENTER_ITEM_END-CMD_CENTER_ITEM_BEGIN+1)
 #define DESKTOP_N (DESKTOP_BUTTON_END-DESKTOP_BUTTON_BEGIN+1)
+#define FONT_NAME_MAX 64
+
 
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
@@ -121,9 +123,8 @@ typedef enum widget_type_tag Widget_type;
 
 enum font_type_tag // 字體類型, 按字符顯示位置分類
 {
-    TITLE_AREA_FONT, TITLE_BUTTON_FONT, CMD_CENTER_FONT,
-    TASKBAR_BUTTON_FONT, CLASS_FONT, TITLE_FONT, STATUS_AREA_FONT,
-    ENTRY_FONT, HINT_FONT,
+    DEFAULT_FONT, TITLE_BUTTON_FONT, CMD_CENTER_FONT, TASKBAR_BUTTON_FONT,
+    CLASS_FONT, TITLE_FONT, STATUS_AREA_FONT, ENTRY_FONT, HINT_FONT,
     FONT_N
 };
 typedef enum font_type_tag Font_type;
@@ -256,34 +257,16 @@ struct entry_tag
 };
 typedef struct entry_tag Entry;
 
-struct wm_tag // 窗口管理器相關信息
+struct rule_tag // 窗口管理器的規則
 {
-    Display *display; // 顯示器
-    int screen; // 屏幕
-    unsigned int screen_width, screen_height; // 屏幕寬度、高度
-    unsigned int cur_desktop; // 當前虛擬桌面編號
-    Desktop desktop[DESKTOP_N]; // 虛擬桌面
-	XModifierKeymap *mod_map; // 功能轉換鍵映射
-    Window root_win, hint_win; // 根窗口、提示窗口
-    GC gc; // 窗口管理器的圖形信息
-    Visual *visual; // 着色類型
-    Colormap colormap; // 着色圖
-    Atom icccm_atoms[ICCCM_ATOMS_N]; // icccm規範的標識符
-    Atom ewmh_atom[EWMH_ATOM_N]; // ewmh規範的標識符
-    Atom utf8; // utf8字符编码的標識符
-    Client *clients; // 頭結點
-    Focus_mode focus_mode; // 窗口聚焦模式
-    XftFont *font[FONT_N]; // 窗口管理器用到的字體
-    File *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
-    Cursor cursors[POINTER_ACT_N]; // 光標
-    Taskbar taskbar; // 任務欄
-    Menu cmd_center; // 操作中心
-    Entry run_cmd; // 輸入命令並執行的構件
-    XColor widget_color[WIDGET_COLOR_N]; // 構件顏色
-    XftColor text_color[TEXT_COLOR_N]; // 文本顏色
-    XIM xim;
-    void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
+    const char *app_class, *app_name; // 分別爲客戶窗口的程序類型和程序名稱
+    const char *class_alias; // 客戶窗口的類型別名
+    Area_type area_type; // 客戶窗口的區域類型
+    bool show_title_bar, show_border; // 是否顯示客戶窗口標題欄和邊框
+    unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼
 };
+typedef struct rule_tag Rule;
+
 typedef struct wm_tag WM;
 
 enum direction_tag // 方向
@@ -293,14 +276,6 @@ enum direction_tag // 方向
     UP2UP, UP2DOWN, DOWN2UP, DOWN2DOWN,
 };
 typedef enum direction_tag Direction;
-
-enum align_type_tag // 文字對齊方式
-{
-    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
-    CENTER_LEFT, CENTER, CENTER_RIGHT,
-    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT,
-};
-typedef enum align_type_tag Align_type;
 
 union func_arg_tag // 函數參數類型
 {
@@ -317,33 +292,124 @@ union func_arg_tag // 函數參數類型
 };
 typedef union func_arg_tag Func_arg;
 
+struct keybind_tag // 鍵盤按鍵功能綁定
+{
+	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵
+	KeySym keysym; // 要綁定的鍵盤功能轉換鍵
+	void (*func)(WM *, XEvent *, Func_arg); // 要綁定的函數
+    Func_arg arg; // 要綁定的函數的參數
+};
+typedef struct keybind_tag Keybind;
+
 struct buttonbind_tag // 定位器按鈕功能綁定
 {
     Widget_type widget_type; // 要綁定的構件類型
 	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵 
     unsigned int button; // 要綁定的定位器按鈕
-	void (*func)(WM *wm, XEvent *e, Func_arg arg); // 要綁定的函數
+	void (*func)(WM *, XEvent *, Func_arg); // 要綁定的函數
     Func_arg arg; // 要綁定的函數的參數
 };
 typedef struct buttonbind_tag Buttonbind;
 
-struct keybind_tag // 鍵盤按鍵功能綁定
+// 說明：尺寸單位均爲像素
+struct config_tag
 {
-	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵
-	KeySym keysym; // 要綁定的鍵盤功能轉換鍵
-	void (*func)(WM *wm, XEvent *e, Func_arg arg); // 要綁定的函數
-    Func_arg arg; // 要綁定的函數的參數
-};
-typedef struct keybind_tag Keybind;
+    bool set_frame_prop; // true表示把窗口特性復制到窗口框架（代價是每個窗口可能要多消耗幾十到幾百KB內存），false表示不復制
+    bool use_image_icon; // true表示使用圖像形式的圖標，false表示使用文字形式的圖標
+    char default_font_name[FONT_NAME_MAX]; // 默認字體名
+    char font_name[FONT_N][FONT_NAME_MAX]; // 本窗口管理器所使用的字庫名稱列表。注意：每增加一種不同的字體，就會增加2M左右的內存佔用
+    Focus_mode focus_mode; // 聚焦模式
+    Layout default_layout; // 默認的窗口布局模式
+    Area_type default_area_type; // 新打開的窗口的默認區域類型
+    /* 屏幕保護程序的行爲取決於X服務器，可能顯示移動的圖像，可能只是黑屏。*/
+    unsigned int screen_saver_time_out; // 激活內置屏幕之前的空閒時間，單位爲秒。當值爲0時表示禁用屏保，爲-1時恢復缺省值。
+    unsigned int screen_saver_interval; // 內置屏保周期性變化的時間間隔，單位爲秒。當值爲0時表示禁止周期性變化。
+    unsigned int hover_time; // 定位器懸停的判定時間界限，單位爲分秒，即十分之一秒
+    unsigned int default_cur_desktop; // 默認的當前桌面
+    unsigned int default_n_main_max; // 默認的主區域最大窗口數量
+    unsigned int cmd_center_col; // 操作中心按鈕列數
 
-struct rule_tag // 窗口管理器的規則
-{
-    const char *app_class, *app_name; // 分別爲客戶窗口的程序類型和程序名稱
-    const char *class_alias; // 客戶窗口的類型別名
-    Area_type area_type; // 客戶窗口的區域類型
-    unsigned int title_bar_h, border_w, desktop_mask; // 客戶窗口標題欄高度和邊框寬度、所属虚拟桌面
+    /* 以下尺寸的單位均爲像素 */
+    unsigned int font_size[FONT_N]; // 字體尺寸列表
+    /* 以下尺寸根據相應字體來確定就有不錯的效果 */
+    unsigned int border_width; // 窗口框架边框的宽度
+    unsigned int title_bar_height; // 窗口標題欄的高度
+    unsigned int title_button_width; // 窗口按鈕的寬度
+    unsigned int title_button_height;// 窗口按鈕的高度
+    unsigned int win_gap; // 窗口間隔
+    unsigned int status_area_width_max; // 任務欄狀態區域的最大寬度
+    unsigned int taskbar_height; // 狀態欄的高度
+    unsigned int taskbar_button_width; // 任務欄按鈕的寬度
+    unsigned int taskbar_button_height; // 任務欄按鈕的高度
+    unsigned int icon_size; // 圖標的尺寸
+    unsigned int icon_win_width_max; // 縮微窗口的最大寬度
+    unsigned int icons_space; // 縮微化窗口的間隔
+    unsigned int cmd_center_item_width; // 操作中心按鈕的寬度
+    unsigned int cmd_center_item_height; // 操作中心按鈕的高度
+    unsigned int entry_text_indent; // 文字縮進量
+    unsigned int run_cmd_entry_width; // 運行命令的輸入構件的寬度
+    unsigned int run_cmd_entry_height; // 運行命令的輸入構件的寬度
+    unsigned int hint_win_line_height; // 提示窗口的行高度
+    unsigned int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
+
+    unsigned int cursor_shape[POINTER_ACT_N]; // 定位器相關的光標字體
+
+    double default_main_area_ratio; // 默認的主區域比例
+    double default_fixed_area_ratio; // 默認的固定區域比例
+    const char *autostart; // 在gwm剛啓動時執行的腳本
+    const char *cur_icon_theme; // 當前圖標主題
+    const char *screenshot_path; // 屏幕截圖的文件保存路徑，請自行確保路徑存在
+    const char *screenshot_format; // 屏幕截圖的文件保存格式
+    const char *wallpaper_paths; // 壁紙目錄列表，如取消此宏定义或目录为空或不能访问，则切换绝壁时使用纯色
+    const char *wallpaper_filename; // 壁紙文件名。若刪除本行或文件不能訪問，則使用純色背景
+    const char *widget_color_name[WIDGET_COLOR_N]; // 構件顏色名
+    const char *text_color_name[TEXT_COLOR_N]; // 構件顏色名
+    const char *title_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
+    const char *taskbar_button_text[TASKBAR_BUTTON_N]; // 任務欄按鈕的標籤
+    const char *cmd_center_item_text[CMD_CENTER_ITEM_N]; // 操作中心按鈕的標籤
+    const wchar_t *run_cmd_entry_hint; // 運行輸入框的提示文字
+    const Keybind *keybind; // 按鍵功能綁定。有的鍵盤同時按多個鍵會衝突，故組合鍵宜盡量少
+    const Buttonbind *buttonbind; // 定位器按鈕功能綁定。
+    const Rule *rule; // 窗口管理器對窗口的管理規則
 };
-typedef struct rule_tag Rule;
+typedef struct config_tag Config;
+
+struct wm_tag // 窗口管理器相關信息
+{
+    Display *display; // 顯示器
+    int screen; // 屏幕
+    unsigned int screen_width, screen_height; // 屏幕寬度、高度
+    unsigned int cur_desktop; // 當前虛擬桌面編號
+    Desktop desktop[DESKTOP_N]; // 虛擬桌面
+	XModifierKeymap *mod_map; // 功能轉換鍵映射
+    Window root_win, hint_win; // 根窗口、提示窗口
+    GC gc; // 窗口管理器的圖形信息
+    Visual *visual; // 着色類型
+    Colormap colormap; // 着色圖
+    Atom icccm_atoms[ICCCM_ATOMS_N]; // icccm規範的標識符
+    Atom ewmh_atom[EWMH_ATOM_N]; // ewmh規範的標識符
+    Atom utf8; // utf8字符编码的標識符
+    Client *clients; // 頭結點
+    XftFont *font[FONT_N]; // 窗口管理器用到的字體
+    File *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
+    Cursor cursors[POINTER_ACT_N]; // 光標
+    Taskbar taskbar; // 任務欄
+    Menu cmd_center; // 操作中心
+    Entry run_cmd; // 輸入命令並執行的構件
+    XColor widget_color[WIDGET_COLOR_N]; // 構件顏色
+    XftColor text_color[TEXT_COLOR_N]; // 文本顏色
+    XIM xim; // 輸入法
+    void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
+    Config cfg; // 窗口管理器配置
+};
+
+enum align_type_tag // 文字對齊方式
+{
+    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
+    CENTER_LEFT, CENTER, CENTER_RIGHT,
+    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT,
+};
+typedef enum align_type_tag Align_type;
 
 struct move_info_tag /* 定位器所點擊的窗口位置每次合理移動或調整尺寸所對應的舊、新坐標信息 */
 {

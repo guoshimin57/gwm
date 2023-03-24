@@ -56,14 +56,14 @@ void update_size_hint(WM *wm, Client *c)
         if(!minh && baseh)
             hint.min_height=baseh;
         if(!hint.width_inc)
-            hint.width_inc=RESIZE_INC;
+            hint.width_inc=wm->cfg.resize_inc;
         if(!hint.height_inc)
-            hint.height_inc=RESIZE_INC;
+            hint.height_inc=wm->cfg.resize_inc;
         fix_limit_size_hint(&hint);
         c->size_hint=hint;
     }
-    SET_DEF_VAL(c->size_hint.width_inc, RESIZE_INC);
-    SET_DEF_VAL(c->size_hint.height_inc, RESIZE_INC);
+    SET_DEF_VAL(c->size_hint.width_inc, wm->cfg.resize_inc);
+    SET_DEF_VAL(c->size_hint.height_inc, wm->cfg.resize_inc);
 }
 
 // 有的窗口最大、最小尺寸設置不正確，需要修正，如：lxterminal

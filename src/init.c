@@ -34,6 +34,7 @@ static void create_run_cmd_entry(WM *wm);
 static void create_hint_win(WM *wm);
 static void create_clients(WM *wm);
 static void init_wallpaper_files(WM *wm);
+static void exec_autostart(WM *wm);
 
 void init_wm(WM *wm)
 {
@@ -50,11 +51,10 @@ void init_wm(WM *wm)
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
     wm->visual=DefaultVisual(wm->display, wm->screen);
     wm->colormap=DefaultColormap(wm->display, wm->screen);
-    wm->focus_mode=DEFAULT_FOCUS_MODE;
 
-#ifdef WALLPAPER_PATHS
-    init_wallpaper_files(wm);
-#endif
+    config(wm);
+    if(wm->cfg.wallpaper_paths)
+        init_wallpaper_files(wm);
     init_desktop(wm);
     reg_event_handlers(wm);
     XSetErrorHandler(x_fatal_handler);
@@ -69,8 +69,16 @@ void init_wm(WM *wm)
     create_hint_win(wm);
     create_clients(wm);
     update_layout(wm);
-    grab_keys(wm, KEYBIND, ARRAY_NUM(KEYBIND));
-    exec(wm, NULL, (Func_arg)SH_CMD("[ -x "AUTOSTART" ] && "AUTOSTART));
+    grab_keys(wm);
+    exec_autostart(wm);
+}
+
+static void exec_autostart(WM *wm)
+{
+    char cmd[BUFSIZ];
+    sprintf(cmd, "[ -x '%s' ] && '%s'", wm->cfg.autostart, wm->cfg.autostart);
+    const char *sh_cmd[]={"/bin/sh", "-c", wm->cfg.autostart, NULL};
+    exec_cmd(wm, (char *const *)sh_cmd);
 }
 
 static void set_locale(WM *wm)
@@ -98,15 +106,15 @@ static void set_atoms(WM *wm)
 static void create_cursors(WM *wm)
 {
     for(size_t i=0; i<POINTER_ACT_N; i++)
-        wm->cursors[i]=XCreateFontCursor(wm->display, CURSOR_SHAPE[i]);
+        wm->cursors[i]=XCreateFontCursor(wm->display, wm->cfg.cursor_shape[i]);
 }
 
 static void create_run_cmd_entry(WM *wm)
 {
-    Rect r={(wm->screen_width-RUN_CMD_ENTRY_WIDTH)/2,
-    (wm->screen_height-RUN_CMD_ENTRY_HEIGHT)/2,
-    RUN_CMD_ENTRY_WIDTH, RUN_CMD_ENTRY_HEIGHT};
-    create_entry(wm, &wm->run_cmd, &r, RUN_CMD_ENTRY_HINT);
+    Rect r={(wm->screen_width-wm->cfg.run_cmd_entry_width)/2,
+    (wm->screen_height-wm->cfg.run_cmd_entry_height)/2,
+    wm->cfg.run_cmd_entry_width, wm->cfg.run_cmd_entry_height};
+    create_entry(wm, &wm->run_cmd, &r, wm->cfg.run_cmd_entry_hint);
 }
 
 static void create_hint_win(WM *wm)
@@ -148,7 +156,7 @@ void init_imlib(WM *wm)
 
 static void init_wallpaper_files(WM *wm)
 {
-    wm->wallpapers=get_files_in_paths(WALLPAPER_PATHS, "*.png|*.jpg", NOSORT, true, NULL);
+    wm->wallpapers=get_files_in_paths(wm->cfg.wallpaper_paths, "*.png|*.jpg", NOSORT, true, NULL);
     wm->cur_wallpaper=wm->wallpapers->next;
 }
 
@@ -156,12 +164,9 @@ void init_root_win_background(WM *wm)
 {
     unsigned long color=wm->widget_color[ROOT_WIN_COLOR].pixel;
     Pixmap pixmap=None;
-#ifdef WALLPAPER_FILENAME
-    pixmap=create_pixmap_from_file(wm, wm->root_win, WALLPAPER_FILENAME);
-#endif
+    if(wm->cfg.wallpaper_filename)
+        pixmap=create_pixmap_from_file(wm, wm->root_win, wm->cfg.wallpaper_filename);
     update_win_background(wm, wm->root_win, color, pixmap);
-#ifdef WALLPAPER_FILENAME
-    if(pixmap)
+    if(wm->cfg.wallpaper_filename && pixmap)
         XFreePixmap(wm->display, pixmap);
-#endif
 }

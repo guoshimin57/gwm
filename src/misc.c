@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <dirent.h>
@@ -260,4 +261,20 @@ int base_n_floor(int x, int n)
 int base_n_ceil(int x, int n)
 {
     return base_n_floor(x, n)+(x%n ? n : 0);
+}
+
+void exec_cmd(WM *wm, char *const *cmd)
+{
+    pid_t pid=fork();
+	if(pid == 0)
+    {
+		if(wm->display)
+            close(ConnectionNumber(wm->display));
+		if(!setsid())
+            perror("未能成功地爲命令創建新會話");
+		if(execvp(cmd[0], cmd) == -1)
+            exit_with_perror("命令執行錯誤");
+    }
+    else if(pid == -1)
+        perror("未能成功地爲命令創建新進程");
 }

@@ -12,7 +12,7 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-void create_entry(WM *wm, Entry *e, Rect *r, wchar_t *hint);
+void create_entry(WM *wm, Entry *e, Rect *r, const wchar_t *hint);
 void show_entry(WM *wm, Entry *e);
 bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke);
 void update_entry_text(WM *wm, Entry *e);

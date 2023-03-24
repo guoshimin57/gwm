@@ -39,7 +39,7 @@ static void handle_unmap_notify(WM *wm, XEvent *e);
 static void handle_property_notify(WM *wm, XEvent *e);
 static void handle_wm_transient_for_notify(WM *wm, Client *c, Window win);
 static void handle_selection_notify(WM *wm, XEvent *e);
-static bool is_func_click(WM *wm, Widget_type type, Buttonbind *b, XEvent *e);
+static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e);
 static void focus_clicked_client(WM *wm, Window win);
 static void config_managed_client(WM *wm, Client *c);
 static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
@@ -82,12 +82,11 @@ static void ignore_event(WM *wm, XEvent *e){}
 
 static void handle_button_press(WM *wm, XEvent *e)
 {
-    Buttonbind *b=BUTTONBIND;
     Widget_type type=get_widget_type(wm, e->xbutton.window);
-    for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++, b++)
+    for(const Buttonbind *b=wm->cfg.buttonbind; b->func; b++)
     {
-        if( is_func_click(wm, type, b, e) && (is_act_grab_pointer_func(b->func)
-            || get_valid_click(wm, CHOOSE, e, NULL)))
+        if( is_func_click(wm, type, b, e)
+            && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
             focus_clicked_client(wm, e->xbutton.window);
             if(b->func)
@@ -105,7 +104,7 @@ static void handle_button_press(WM *wm, XEvent *e)
     }
 }
  
-static bool is_func_click(WM *wm, Widget_type type, Buttonbind *b, XEvent *e)
+static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e)
 {
     return (b->widget_type == type 
         && b->button == e->xbutton.button
@@ -162,7 +161,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     Pointer_act act=NO_OP;
     Move_info m={x, y, 0, 0};
 
-    if(wm->focus_mode==ENTER_FOCUS && c)
+    if(wm->cfg.focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
     if(is_layout_adjust_area(wm, win, x) && get_typed_clients_n(wm, MAIN_AREA))
         act=ADJUST_LAYOUT_RATIO;
@@ -218,7 +217,7 @@ static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Win
             }
         }
         diff_time=10*(clock()-last_time)/CLOCKS_PER_SEC;
-        if(!pause && diff_time>=HOVER_TIME)
+        if(!pause && diff_time>=wm->cfg.hover_time)
             handler(wm, hover), pause=true;
     }
 }
@@ -251,7 +250,7 @@ static void update_title_area_text(WM *wm, Client *c)
     if(c->title_bar_h)
     {
         String_format f={get_title_area_rect(wm, c), CENTER_LEFT, false, 0,
-            wm->text_color[TITLE_AREA_TEXT_COLOR], TITLE_AREA_FONT};
+            wm->text_color[TITLE_AREA_TEXT_COLOR], TITLE_FONT};
         draw_string(wm, c->title_area, c->title_text, &f);
     }
 }
@@ -260,10 +259,10 @@ static void update_title_button_text(WM *wm, Client *c, size_t index)
 {
     if(c->title_bar_h)
     {
-        String_format f={{0, 0, TITLE_BUTTON_WIDTH, TITLE_BUTTON_HEIGHT},
+        String_format f={{0, 0, wm->cfg.title_button_width, wm->cfg.title_button_height},
             CENTER, false, 0, wm->text_color[TITLE_BUTTON_TEXT_COLOR],
             TITLE_BUTTON_FONT};
-        draw_string(wm, c->buttons[index], TITLE_BUTTON_TEXT[index], &f);
+        draw_string(wm, c->buttons[index], wm->cfg.title_button_text[index], &f);
     }
 }
 
@@ -275,15 +274,12 @@ static void handle_key_press(WM *wm, XEvent *e)
     {
         int n;
         KeySym *ks=XGetKeyboardMapping(wm->display, e->xkey.keycode, 1, &n);
-        Keybind *p=KEYBIND;
 
-        for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++, p++)
-        {
-            if( *ks == p->keysym
-                && is_equal_modifier_mask(wm, p->modifier, e->xkey.state)
-                && p->func)
-                p->func(wm, e, p->arg);
-        }
+        for(const Keybind *kb=wm->cfg.keybind; kb->func; kb++)
+            if( *ks == kb->keysym
+                && is_equal_modifier_mask(wm, kb->modifier, e->xkey.state)
+                && kb->func)
+                kb->func(wm, e, kb->arg);
         XFree(ks);
     }
 }
@@ -330,7 +326,7 @@ static void handle_map_request(WM *wm, XEvent *e)
     {
         add_client(wm, win);
         update_layout(wm);
-        DESKTOP(wm).default_area_type=DEFAULT_AREA_TYPE;
+        DESKTOP(wm).default_area_type=wm->cfg.default_area_type;
     }
     else // 不受WM控制的窗口要放在窗口疊頂部才能確保可見，如截圖、通知窗口
         XRaiseWindow(wm->display, win);
@@ -365,10 +361,8 @@ static void handle_property_notify(WM *wm, XEvent *e)
 {
     Window win=e->xproperty.window;
     Client *c=win_to_client(wm, win);
-#if SET_FRAME_PROP
-    if(c)
+    if(wm->cfg.set_frame_prop && c)
         copy_prop(wm, c->frame, c->win);
-#endif
     switch(e->xproperty.atom)
     {
         case XA_WM_HINTS:

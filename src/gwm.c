@@ -34,8 +34,8 @@ int main(int argc, char *argv[])
     init_wm(&wm);
     init_imlib(&wm);
     init_root_win_background(&wm);
-    XSetScreenSaver(wm.display, SCREEN_SAVER_TIME_OUT, SCREEN_SAVER_INTERVAL,
-        PreferBlanking, AllowExposures);
+    XSetScreenSaver(wm.display, wm.cfg.screen_saver_time_out,
+        wm.cfg.screen_saver_interval, PreferBlanking, AllowExposures);
     handle_events(&wm);
     return EXIT_SUCCESS;
 }
@@ -50,6 +50,8 @@ static void set_signals(void)
         perror("不能安裝SIGTERM信號處理函數");
 	if(signal(SIGQUIT, ready_to_quit) == SIG_ERR)
         perror("不能安裝SIGQUIT信號處理函數");
+	if(signal(SIGHUP, ready_to_quit) == SIG_ERR)
+        perror("不能安裝SIGHUP信號處理函數");
 }
 
 static void ready_to_quit(int unused)

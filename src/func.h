@@ -12,7 +12,7 @@
 #ifndef FUNC_H
 #define FUNC_H
 
-bool is_act_grab_pointer_func(void (*func)(WM *, XEvent *, Func_arg arg));
+bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg));
 bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne);
 void choose_client(WM *wm, XEvent *e, Func_arg arg);
 void exec(WM *wm, XEvent *e, Func_arg arg);

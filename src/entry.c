@@ -23,11 +23,11 @@ static char *get_match_cmd(const char *pattern);
 static void complete_cmd_for_entry(WM *wm, Entry *e);
 static bool close_entry(WM *wm, Entry *e, bool result);
 
-void create_entry(WM *wm, Entry *e, Rect *r, wchar_t *hint)
+void create_entry(WM *wm, Entry *e, Rect *r, const wchar_t *hint)
 {
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h;
     e->win=XCreateSimpleWindow(wm->display, wm->root_win, e->x, e->y,
-        e->w, e->h, BORDER_WIDTH, wm->widget_color[CURRENT_BORDER_COLOR].pixel,
+        e->w, e->h, wm->cfg.border_width, wm->widget_color[CURRENT_BORDER_COLOR].pixel,
         wm->widget_color[ENTRY_COLOR].pixel);
     set_override_redirect(wm, e->win);
     XSelectInput(wm->display, e->win, ENTRY_EVENT_MASK);
@@ -45,7 +45,7 @@ void show_entry(WM *wm, Entry *e)
 
 void update_entry_text(WM *wm, Entry *e)
 {
-    String_format f={{ENTRY_TEXT_INDENT, 0, e->w-2*ENTRY_TEXT_INDENT, e->h},
+    String_format f={{wm->cfg.entry_text_indent, 0, e->w-2*wm->cfg.entry_text_indent, e->h},
         CENTER_LEFT, false, 0,
         e->text[0]==L'\0' ? wm->text_color[HINT_TEXT_COLOR] :
         wm->text_color[ENTRY_TEXT_COLOR], ENTRY_FONT};
@@ -64,7 +64,7 @@ static int get_entry_cursor_x(WM *wm, Entry *e)
     if(wcstombs(mbs, e->text, n) != (size_t)-1)
         get_string_size(wm, wm->font[ENTRY_FONT], mbs, &w, NULL);
     e->text[e->cursor_offset]=wc; 
-    return ENTRY_TEXT_INDENT+w;
+    return wm->cfg.entry_text_indent+w;
 }
 
 static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
@@ -73,11 +73,11 @@ static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
     char *paths=getenv("PATH");
     if(paths && pattern && *pattern)
     {
-        unsigned int w=RUN_CMD_ENTRY_WIDTH, h=HINT_WIN_LINE_HEIGHT;
+        unsigned int w=wm->cfg.run_cmd_entry_width, h=wm->cfg.hint_win_line_height;
         String_format fmt={{0, 0, w, h}, CENTER_LEFT,
             false, 0, wm->text_color[HINT_TEXT_COLOR], HINT_FONT};
-        int x=(wm->screen_width-w)/2+BORDER_WIDTH,
-            y=(wm->screen_height+RUN_CMD_ENTRY_HEIGHT)/2, *py=&fmt.r.y;
+        int x=(wm->screen_width-w)/2+wm->cfg.border_width,
+            y=(wm->screen_height+wm->cfg.run_cmd_entry_height)/2, *py=&fmt.r.y;
         size_t i, n, max=(wm->screen_height-wm->taskbar.h-y)/h;
         const char *reg=copy_strings(pattern, "*", NULL);
         File *f, *files=get_files_in_paths(paths, reg, RISE, false, &n);

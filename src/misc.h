@@ -28,5 +28,6 @@ File *get_files_in_paths(const char *paths, const char *regex, Order order, bool
 void free_files(File *head);
 int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
+void exec_cmd(WM *wm, char *const*cmd);
 
 #endif

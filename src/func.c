@@ -10,7 +10,6 @@
  * ************************************************************************/
 
 #include <time.h>
-#include <unistd.h>
 #include "gwm.h"
 #include "config.h"
 #include "drawable.h"
@@ -40,18 +39,26 @@ static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, 
 static void update_hint_win_for_resize(WM *wm, Client *c);
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
 
-bool is_act_grab_pointer_func(void (*func)(WM *, XEvent *, Func_arg arg))
+bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg))
 {
     return func == pointer_swap_clients
         || func == pointer_move_resize_client
         || func == pointer_change_area
-        || func == adjust_layout_ratio
-        || func == choose_client; // add_client時已經調用XGrabButton
+        || func == adjust_layout_ratio;
+}
+
+static bool is_grab_root_act(Pointer_act act)
+{
+    return act==SWAP || act==CHANGE;
 }
 
 bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
 {
-    if(act==NO_OP || grab_pointer(wm, wm->root_win, act))
+    if(act==CHOOSE && get_widget_type(wm, oe->xbutton.window)==CLIENT_WIN)
+        return true;
+
+    Window win = is_grab_root_act(act) ? wm->root_win : oe->xbutton.window;
+    if(act==NO_OP || grab_pointer(wm, win, act))
     {
         XEvent e, *p=(ne ? ne : &e);
         do
@@ -88,18 +95,7 @@ void choose_client(WM *wm, XEvent *e, Func_arg arg)
 
 void exec(WM *wm, XEvent *e, Func_arg arg)
 {
-    pid_t pid=fork();
-	if(pid == 0)
-    {
-		if(wm->display)
-            close(ConnectionNumber(wm->display));
-		if(!setsid())
-            perror("未能成功地爲命令創建新會話");
-		if(execvp(arg.cmd[0], arg.cmd) == -1)
-            exit_with_perror("命令執行錯誤");
-    }
-    else if(pid == -1)
-        perror("未能成功地爲命令創建新進程");
+    exec_cmd(wm, arg.cmd);
 }
 
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
@@ -237,7 +233,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
         Desktop *d=&DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
         int mw=mr*wm->screen_width, sw=wm->screen_width*(1-fr)-mw;
-        if(sw>=RESIZE_INC && mw>=RESIZE_INC)
+        if(sw>=wm->cfg.resize_inc && mw>=wm->cfg.resize_inc)
         {
             d->main_area_ratio=mr;
             update_layout(wm);
@@ -253,7 +249,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
         Desktop *d=&DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
         int mw=wm->screen_width*(mr-arg.change_ratio), fw=wm->screen_width*fr;
-        if(mw>=RESIZE_INC && fw>=RESIZE_INC)
+        if(mw>=wm->cfg.resize_inc && fw>=wm->cfg.resize_inc)
         {
             d->main_area_ratio-=arg.change_ratio, d->fixed_area_ratio=fr;
             update_layout(wm);
@@ -281,7 +277,7 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
-    int x=ev.xbutton.x-TASKBAR_BUTTON_WIDTH*TASKBAR_BUTTON_N;
+    int x=ev.xbutton.x-wm->cfg.taskbar_button_width*TASKBAR_BUTTON_N;
     if((to=win_to_client(wm, ev.xbutton.subwindow)) == NULL)
         for(Client *c=head->next; c!=head && !to; c=c->next)
             if( c!=from && c->area_type==ICONIFY_AREA
@@ -429,10 +425,10 @@ static void update_hint_win_for_resize(WM *wm, Client *c)
     unsigned int w=get_client_col(c), h=get_client_row(c);
     sprintf(str, "(%d, %d) %ux%u", c->x, c->y, w, h);
     get_string_size(wm, wm->font[HINT_FONT], str, &w, NULL);
-    int x=(wm->screen_width-w)/2, y=(wm->screen_height-HINT_WIN_LINE_HEIGHT)/2;
-    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, HINT_WIN_LINE_HEIGHT);
+    int x=(wm->screen_width-w)/2, y=(wm->screen_height-wm->cfg.hint_win_line_height)/2;
+    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, wm->cfg.hint_win_line_height);
     XMapRaised(wm->display, wm->hint_win);
-    String_format f={{0, 0, w, HINT_WIN_LINE_HEIGHT}, CENTER,
+    String_format f={{0, 0, w, wm->cfg.hint_win_line_height}, CENTER,
         false, 0, wm->text_color[HINT_TEXT_COLOR], HINT_FONT};
     draw_string(wm, wm->hint_win, str, &f);
 }
@@ -519,7 +515,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
         if(ev.type == MotionNotify)
         {
             nx=ev.xmotion.x, dx=nx-ox;
-            if(abs(dx)>=RESIZE_INC && change_layout_ratio(wm, ox, nx))
+            if(abs(dx)>=wm->cfg.resize_inc && change_layout_ratio(wm, ox, nx))
                 update_layout(wm), ox=nx;
         }
         else
@@ -550,7 +546,7 @@ void change_default_area_type(WM *wm, XEvent *e, Func_arg arg)
 
 void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)
 {
-    wm->focus_mode = wm->focus_mode==ENTER_FOCUS ? CLICK_FOCUS : ENTER_FOCUS;
+    wm->cfg.focus_mode = wm->cfg.focus_mode==ENTER_FOCUS ? CLICK_FOCUS : ENTER_FOCUS;
 }
 
 void open_cmd_center(WM *wm, XEvent *e, Func_arg arg)
@@ -561,7 +557,7 @@ void open_cmd_center(WM *wm, XEvent *e, Func_arg arg)
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=DESKTOP(wm).cur_focus_client;
-    c->border_w = c->border_w ? 0 : BORDER_WIDTH;
+    c->border_w = c->border_w ? 0 : wm->cfg.border_width;
     XSetWindowBorderWidth(wm->display, c->frame, c->border_w);
     update_layout(wm);
 }
@@ -569,7 +565,7 @@ void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
 void toggle_title_bar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=DESKTOP(wm).cur_focus_client;
-    c->title_bar_h = c->title_bar_h ? 0 : TITLE_BAR_HEIGHT;
+    c->title_bar_h = c->title_bar_h ? 0 : wm->cfg.title_bar_height;
     if(c->title_bar_h)
     {
         create_title_bar(wm, c);
@@ -644,14 +640,15 @@ void change_wallpaper(WM *wm, XEvent *e, Func_arg arg)
     srand((unsigned int)time(NULL));
     unsigned long r1=rand(), r2=rand(), color=(r1<<32)|r2;
     Pixmap pixmap=None;
-#ifdef WALLPAPER_PATHS
-    File *f=wm->cur_wallpaper;
-    if(f)
+    if(wm->cfg.wallpaper_paths)
     {
-        f=wm->cur_wallpaper=(f->next ? f->next : wm->wallpapers->next);
-        pixmap=create_pixmap_from_file(wm, wm->root_win, f->name);
+        File *f=wm->cur_wallpaper;
+        if(f)
+        {
+            f=wm->cur_wallpaper=(f->next ? f->next : wm->wallpapers->next);
+            pixmap=create_pixmap_from_file(wm, wm->root_win, f->name);
+        }
     }
-#endif
     update_win_background(wm, wm->root_win, color, pixmap);
     if(pixmap)
         XFreePixmap(wm->display, pixmap);
@@ -659,12 +656,12 @@ void change_wallpaper(WM *wm, XEvent *e, Func_arg arg)
 
 void print_screen(WM *wm, XEvent *e, Func_arg arg)
 {
-    print_area(wm->root_win, 0, 0, wm->screen_width, wm->screen_height);
+    print_area(wm, wm->root_win, 0, 0, wm->screen_width, wm->screen_height);
 }
 
 void print_win(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=DESKTOP(wm).cur_focus_client;
     if(c != wm->clients)
-        print_area(c->frame, 0, 0, c->w, c->h);
+        print_area(wm, c->frame, 0, 0, c->w, c->h);
 }

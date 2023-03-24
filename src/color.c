@@ -29,7 +29,7 @@ static void alloc_text_color(WM *wm, const char *color_name, XftColor *color)
 void alloc_color(WM *wm)
 {
     for(Widget_color i=0; i<WIDGET_COLOR_N; i++)
-        alloc_widget_color(wm, WIDGET_COLOR_NAME[i], wm->widget_color+i);
+        alloc_widget_color(wm, wm->cfg.widget_color_name[i], wm->widget_color+i);
     for(Text_color i=0; i<TEXT_COLOR_N; i++)
-        alloc_text_color(wm, TEXT_COLOR_NAME[i], wm->text_color+i);
+        alloc_text_color(wm, wm->cfg.text_color_name[i], wm->text_color+i);
 }

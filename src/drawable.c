@@ -126,7 +126,7 @@ bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h)
     return abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
 }
 
-void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h)
+void print_area(WM *wm, Drawable d, int x, int y, unsigned int w, unsigned int h)
 {
     imlib_context_set_drawable(d);
     Imlib_Image image=imlib_create_image_from_drawable(None, x, y, w, h, 0);
@@ -134,15 +134,15 @@ void print_area(Drawable d, int x, int y, unsigned int w, unsigned int h)
     {
         time_t timer=time(NULL), err=-1;
         char name[FILENAME_MAX];
-        if(*SCREENSHOT_PATH == '~')
-            sprintf(name, "%s%s/gwm-", getenv("HOME"), SCREENSHOT_PATH+1);
+        if(wm->cfg.screenshot_path[0] == '~')
+            sprintf(name, "%s%s/gwm-", getenv("HOME"), wm->cfg.screenshot_path+1);
         else
-            sprintf(name, "%s/gwm-", SCREENSHOT_PATH);
+            sprintf(name, "%s/gwm-", wm->cfg.screenshot_path);
         if(timer != err)
             strftime(name+strlen(name), FILENAME_MAX, "%Y_%m_%d_%H_%M_%S", localtime(&timer));
         imlib_context_set_image(image);
-        imlib_image_set_format(SCREENSHOT_FORMAT);
-        sprintf(name+strlen(name), ".%s", SCREENSHOT_FORMAT);
+        imlib_image_set_format(wm->cfg.screenshot_format);
+        sprintf(name+strlen(name), ".%s", wm->cfg.screenshot_format);
         imlib_save_image(name);
         imlib_free_image();
     }
