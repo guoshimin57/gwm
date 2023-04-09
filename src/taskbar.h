@@ -19,7 +19,6 @@ void update_icon_text(WM *wm, Window win);
 void update_cmd_center_button_text(WM *wm, size_t index);
 void update_status_area_text(WM *wm);
 void update_status_area(WM *wm);
-void update_hint_win_for_icon(WM *wm, Window hover);
 void handle_wm_icon_name_notify(WM *wm, Client *c, Window win);
 
 #endif

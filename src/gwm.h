@@ -13,14 +13,24 @@
 #define GWM_H
 
 #include <signal.h>
-#include <stdio.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
 #include <wchar.h>
+#include <dirent.h>
 #include <Imlib2.h>
+#include <locale.h>
+#include <math.h>
+#include <X11/cursorfont.h>
+#include <X11/keysymdef.h>
 #include <X11/Xatom.h>
-#include <X11/Xproto.h>
+#include <X11/XF86keysym.h>
 #include <X11/Xft/Xft.h>
-
+#include <X11/Xproto.h>
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_TAKE_FOCUS"}
 #define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE",\
     "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG",\
@@ -66,12 +76,7 @@
     ((type)>=CMD_CENTER_ITEM_BEGIN && (type)<=CMD_CENTER_ITEM_END)
 
 #define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
-
-enum order_tag // 文件名排序类型
-{
-    RISE=-1, NOSORT=0, FALL=1 // 依次为升序、不排序、降序
-};
-typedef enum order_tag Order;
+#define CUR_FOC_CLI(wm) DESKTOP(wm).cur_focus_client
 
 struct file_tag
 {
@@ -98,7 +103,7 @@ enum widget_type_tag // 構件類型
     UNDEFINED, ROOT_WIN, STATUS_AREA, RUN_CMD_ENTRY,
     CLIENT_WIN, CLIENT_FRAME, TITLE_AREA, HINT_WIN, CLIENT_ICON,
 
-    MAIN_BUTTON, SECOND_BUTTON, FIXED_BUTTON, FLOAT_BUTTON,
+    SECOND_BUTTON, MAIN_BUTTON, FIXED_BUTTON, FLOAT_BUTTON,
     ICON_BUTTON, MAX_BUTTON, CLOSE_BUTTON,
 
     DESKTOP1_BUTTON, DESKTOP2_BUTTON, DESKTOP3_BUTTON, 
@@ -113,7 +118,8 @@ enum widget_type_tag // 構件類型
     ICON_NEW_BUTTON, N_MAIN_UP_BUTTON, N_MAIN_DOWN_BUTTON, FOCUS_MODE_BUTTON,
     QUIT_WM_BUTTON, LOGOUT_BUTTON, REBOOT_BUTTON, POWEROFF_BUTTON, RUN_BUTTON,
 
-    TITLE_BUTTON_BEGIN=MAIN_BUTTON, TITLE_BUTTON_END=CLOSE_BUTTON,
+    WIDGET_N,
+    TITLE_BUTTON_BEGIN=SECOND_BUTTON, TITLE_BUTTON_END=CLOSE_BUTTON,
     TASKBAR_BUTTON_BEGIN=DESKTOP1_BUTTON, TASKBAR_BUTTON_END=CMD_CENTER_ITEM,
     LAYOUT_BUTTON_BEGIN=FULL_BUTTON, LAYOUT_BUTTON_END=TILE_BUTTON, 
     DESKTOP_BUTTON_BEGIN=DESKTOP1_BUTTON, DESKTOP_BUTTON_END=DESKTOP3_BUTTON,
@@ -191,7 +197,7 @@ typedef struct taskbar_tag Taskbar;
 
 enum icccm_atom_tag // icccm規範的標識符
 {
-    WM_PROTOCOLS, WM_DELETE_WINDOW, WM_TAKE_FOCUS, ICCCM_ATOMS_N
+    WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, ICCCM_ATOMS_N
 };
 typedef enum icccm_atom_tag Icccm_atom;
 
@@ -237,15 +243,21 @@ typedef enum widget_color_tag Widget_color;
 
 enum text_color_tag // 文本顏色類型
 {
-    TITLE_AREA_TEXT_COLOR, TITLE_BUTTON_TEXT_COLOR,
-    TASKBAR_BUTTON_TEXT_COLOR, STATUS_AREA_TEXT_COLOR,
-    CLASS_TEXT_COLOR, TITLE_TEXT_COLOR,
+    NORMAL_TITLE_TEXT_COLOR, CURRENT_TITLE_TEXT_COLOR,
+    NORMAL_TITLE_BUTTON_TEXT_COLOR, CURRENT_TITLE_BUTTON_TEXT_COLOR,
+    TASKBAR_BUTTON_TEXT_COLOR, STATUS_AREA_TEXT_COLOR, CLASS_TEXT_COLOR,
     CMD_CENTER_ITEM_TEXT_COLOR, ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
     TEXT_COLOR_N 
 };
 typedef enum text_color_tag Text_color;
 
-struct entry_tag
+enum color_theme_tag // 顏色主題
+{
+    DARK_THEME, NORMAL_THEME, LIGHT_THEME, COLOR_THEME_N
+};
+typedef enum color_theme_tag Color_theme;
+
+struct entry_tag // 輸入構件
 {
     Window win;
     int x, y;
@@ -321,6 +333,7 @@ struct config_tag
     Focus_mode focus_mode; // 聚焦模式
     Layout default_layout; // 默認的窗口布局模式
     Area_type default_area_type; // 新打開的窗口的默認區域類型
+    Color_theme color_theme; // 顏色主題
     /* 屏幕保護程序的行爲取決於X服務器，可能顯示移動的圖像，可能只是黑屏。*/
     unsigned int screen_saver_time_out; // 激活內置屏幕之前的空閒時間，單位爲秒。當值爲0時表示禁用屏保，爲-1時恢復缺省值。
     unsigned int screen_saver_interval; // 內置屏保周期性變化的時間間隔，單位爲秒。當值爲0時表示禁止周期性變化。
@@ -362,8 +375,9 @@ struct config_tag
     const char *screenshot_format; // 屏幕截圖的文件保存格式
     const char *wallpaper_paths; // 壁紙目錄列表，如取消此宏定义或目录为空或不能访问，则切换绝壁时使用纯色
     const char *wallpaper_filename; // 壁紙文件名。若刪除本行或文件不能訪問，則使用純色背景
-    const char *widget_color_name[WIDGET_COLOR_N]; // 構件顏色名
-    const char *text_color_name[TEXT_COLOR_N]; // 構件顏色名
+    const char *tooltip[WIDGET_N]; // 构件提示
+    const char *widget_color_name[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色名
+    const char *text_color_name[COLOR_THEME_N][TEXT_COLOR_N]; // 構件顏色名
     const char *title_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
     const char *taskbar_button_text[TASKBAR_BUTTON_N]; // 任務欄按鈕的標籤
     const char *cmd_center_item_text[CMD_CENTER_ITEM_N]; // 操作中心按鈕的標籤
@@ -396,8 +410,8 @@ struct wm_tag // 窗口管理器相關信息
     Taskbar taskbar; // 任務欄
     Menu cmd_center; // 操作中心
     Entry run_cmd; // 輸入命令並執行的構件
-    XColor widget_color[WIDGET_COLOR_N]; // 構件顏色
-    XftColor text_color[TEXT_COLOR_N]; // 文本顏色
+    XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
+    XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色
     XIM xim; // 輸入法
     void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
     Config cfg; // 窗口管理器配置
@@ -435,5 +449,25 @@ struct string_format_tag // 字符串格式
 typedef struct string_format_tag String_format;
 
 extern sig_atomic_t run_flag; // 程序運行標志
+
+#include "client.h"
+#include "color.h"
+#include "config.h"
+#include "desktop.h"
+#include "drawable.h"
+#include "entry.h"
+#include "focus.h"
+#include "font.h"
+#include "func.h"
+#include "grab.h"
+#include "gwm.h"
+#include "handler.h"
+#include "hint.h"
+#include "icon.h"
+#include "init.h"
+#include "layout.h"
+#include "menu.h"
+#include "misc.h"
+#include "taskbar.h"
 
 #endif

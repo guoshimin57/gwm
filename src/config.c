@@ -9,14 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <X11/cursorfont.h>
-#include <X11/keysymdef.h>
-#include <X11/XF86keysym.h>
 #include "gwm.h"
-#include "font.h"
-#include "func.h"
-#include "misc.h"
-#include "config.h"
 
 #define TOGGLE_PROCESS_STATE(process) /* 切換進程狀態 */ \
     "{ pid=$(ps -C '"process"' -o pid=); " \
@@ -29,16 +22,18 @@
         family, wm->cfg.font_size[type]=size)
 #define SET_CURSOR_SHAPE(wm, act, shape) /* 設置光標形狀 */ \
     wm->cfg.cursor_shape[act]=shape
-#define SET_WIDGET_COLOR_NAME(wm, type, name) /* 設置構件顏色 */ \
-    wm->cfg.widget_color_name[type]=name
-#define SET_TEXT_COLOR_NAME(wm, type, name) /* 設置文字顏色 */ \
-    wm->cfg.text_color_name[type]=name
+#define SET_WIDGET_COLOR_NAME(wm, theme, type, name) /* 設置構件顏色 */ \
+    wm->cfg.widget_color_name[theme][type]=name
+#define SET_TEXT_COLOR_NAME(wm, theme, type, name) /* 設置文字顏色 */ \
+    wm->cfg.text_color_name[theme][type]=name
 #define SET_TITLE_BUTTON_TEXT(wm, type, text) /* 設置標題按鈕文字 */ \
     wm->cfg.title_button_text[type-TITLE_BUTTON_BEGIN]=text
 #define SET_TASKBAR_BUTTON_TEXT(wm, type, text) /* 設置任務欄按鈕文字 */ \
     wm->cfg.taskbar_button_text[type-TASKBAR_BUTTON_BEGIN]=text
 #define SET_CMD_CENTER_ITEM_TEXT(wm, type, text) /* 設置操作中心文字 */ \
     wm->cfg.cmd_center_item_text[type-CMD_CENTER_ITEM_BEGIN]=text
+#define SET_TOOLTIP(wm, type, text) /* 設置構件提示 */ \
+    wm->cfg.tooltip[type]=text
 
 
 /* =========================== 以下爲用戶配置項 =========================== */ 
@@ -88,9 +83,9 @@
 /* 功能：設置按鍵功能綁定。*/
 static const Keybind keybind[] =
 {/* 功能轉換鍵掩碼  鍵符號        要綁定的函數                 函數的參數 */
+    {0,             XK_F1,        exec,                        SH_CMD(HELP)},
     {0, XF86XK_MonBrightnessDown, exec,                        SH_CMD(LIGHT_DOWN)},
     {0, XF86XK_MonBrightnessUp,   exec,                        SH_CMD(LIGHT_UP)},
-    {0,             XK_F1,        exec,                        SH_CMD(HELP)},
     {CMD_KEY,       XK_f,         exec,                        SH_CMD(FILE_MANAGER)},
     {CMD_KEY,       XK_g,         exec,                        SH_CMD(GAME)},
     {CMD_KEY,       XK_q,         exec,                        SH_CMD("qq")},
@@ -155,6 +150,7 @@ static const Keybind keybind[] =
     {WM_KEY,        XK_Page_Up,   prev_desktop,                {0}},
     {0,             XK_Print,     print_screen,                {0}},
     {WM_KEY,        XK_Print,     print_win,                   {0}},
+    {WM_KEY,        XK_backslash, switch_color_theme,          {0}},
     DESKTOP_KEYBIND(XK_0, 0),
     DESKTOP_KEYBIND(XK_1, 1), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */
     DESKTOP_KEYBIND(XK_2, 2),
@@ -264,7 +260,7 @@ static const Rule rule[] =
  */
 static void config_font(WM *wm)
 {
-    unsigned int size=get_scale_font_size(wm, 1.75);
+    unsigned int size=get_scale_font_size(wm, 2.0);
     /* 用戶設置：字體類型(詳gwm.h)    字體系列     字號 */
     SET_FONT(wm, DEFAULT_FONT,        "monospace", size);
     SET_FONT(wm, TITLE_BUTTON_FONT,   "monospace", size);
@@ -324,58 +320,152 @@ static void config_cursor_shape(WM *wm)
     SET_CURSOR_SHAPE(wm, ADJUST_LAYOUT_RATIO,    XC_sb_h_double_arrow);
 }
 
-/* 功能：設置構件顏色。
+/* 功能：爲深色主題設置構件顏色。
  * 說明：顏色名詳見rgb.txt（此文件的位置因系統而異，可用locate rgb.txt搜索）。
  * 也可以用十六進制顏色說明，格式爲以下之一：
  *     #RGB、#RRGGBB、#RRRGGGBBB、#RRRRGGGGBBBB。
  * 下同。
  */
+static void config_widget_color_for_dark(WM *wm)
+{
+    /*                          用戶設置：構件顏色類型(詳gwm.h)        顏色名 */
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_BORDER_COLOR,         "grey31");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_BORDER_COLOR,        "grey11");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLE_AREA_COLOR,     "grey31");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLE_AREA_COLOR,    "grey11");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLE_BUTTON_COLOR,   "grey31");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLE_BUTTON_COLOR,  "grey11");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTERED_NORMAL_BUTTON_COLOR, "DarkOrange");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_TASKBAR_BUTTON_COLOR, "grey21");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CHOSEN_TASKBAR_BUTTON_COLOR, "DeepSkyBlue4");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CMD_CENTER_COLOR,            "grey31");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ICON_COLOR,                  "grey21");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ICON_AREA_COLOR,             "grey21");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, STATUS_AREA_COLOR,           "grey21");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTRY_COLOR,                 "white");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, HINT_WIN_COLOR,              "grey91");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ROOT_WIN_COLOR,              "black");
+}
+
+/* 功能：爲中庸顏色主題設置構件顏色。*/
+static void config_widget_color_for_normal(WM *wm)
+{
+    /*                            用戶設置：構件顏色類型(詳gwm.h)        顏色名 */
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_BORDER_COLOR,         "grey31");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CURRENT_BORDER_COLOR,        "DodgerBlue");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TITLE_AREA_COLOR,     "grey31");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CURRENT_TITLE_AREA_COLOR,    "DodgerBlue");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TITLE_BUTTON_COLOR,   "grey31");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CURRENT_TITLE_BUTTON_COLOR,  "DodgerBlue");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTERED_NORMAL_BUTTON_COLOR, "DarkOrange");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TASKBAR_BUTTON_COLOR, "grey21");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CHOSEN_TASKBAR_BUTTON_COLOR, "DeepSkyBlue4");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CMD_CENTER_COLOR,            "grey31");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ICON_COLOR,                  "grey21");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ICON_AREA_COLOR,             "grey21");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, STATUS_AREA_COLOR,           "grey21");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTRY_COLOR,                 "white");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, HINT_WIN_COLOR,              "grey21");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ROOT_WIN_COLOR,              "black");
+}
+
+/* 功能：爲淺色主題設置構件顏色。*/
+static void config_widget_color_for_light(WM *wm)
+{
+    /*                            用戶設置：構件顏色類型(詳gwm.h)        顏色名 */
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_BORDER_COLOR,         "grey61");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CURRENT_BORDER_COLOR,        "grey91");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TITLE_AREA_COLOR,     "grey61");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CURRENT_TITLE_AREA_COLOR,    "grey91");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TITLE_BUTTON_COLOR,   "grey61");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CURRENT_TITLE_BUTTON_COLOR,  "grey91");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ENTERED_NORMAL_BUTTON_COLOR, "white");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TASKBAR_BUTTON_COLOR, "grey81");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CHOSEN_TASKBAR_BUTTON_COLOR, "LightSkyBlue");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CMD_CENTER_COLOR,            "grey61");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ICON_COLOR,                  "grey81");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ICON_AREA_COLOR,             "grey81");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, STATUS_AREA_COLOR,           "grey81");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ENTRY_COLOR,                 "black");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, HINT_WIN_COLOR,              "grey31");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ROOT_WIN_COLOR,              "black");
+}
+
 static void config_widget_color(WM *wm)
 {
-    /*              用戶設置：構件顏色類型(詳gwm.h)        顏色名 */
-    SET_WIDGET_COLOR_NAME(wm, NORMAL_BORDER_COLOR,         "grey31");
-    SET_WIDGET_COLOR_NAME(wm, CURRENT_BORDER_COLOR,        "dodgerblue");
-    SET_WIDGET_COLOR_NAME(wm, NORMAL_TITLE_AREA_COLOR,     "grey31");
-    SET_WIDGET_COLOR_NAME(wm, CURRENT_TITLE_AREA_COLOR,    "dodgerblue");
-    SET_WIDGET_COLOR_NAME(wm, NORMAL_TITLE_BUTTON_COLOR,   "grey31");
-    SET_WIDGET_COLOR_NAME(wm, CURRENT_TITLE_BUTTON_COLOR,  "dodgerblue");
-    SET_WIDGET_COLOR_NAME(wm, ENTERED_NORMAL_BUTTON_COLOR, "darkorange");
-    SET_WIDGET_COLOR_NAME(wm, ENTERED_CLOSE_BUTTON_COLOR,  "red");
-    SET_WIDGET_COLOR_NAME(wm, NORMAL_TASKBAR_BUTTON_COLOR, "grey21");
-    SET_WIDGET_COLOR_NAME(wm, CHOSEN_TASKBAR_BUTTON_COLOR, "deepskyblue4");
-    SET_WIDGET_COLOR_NAME(wm, CMD_CENTER_COLOR,            "grey21");
-    SET_WIDGET_COLOR_NAME(wm, ICON_COLOR,                  "grey11");
-    SET_WIDGET_COLOR_NAME(wm, ICON_AREA_COLOR,             "grey11");
-    SET_WIDGET_COLOR_NAME(wm, STATUS_AREA_COLOR,           "grey21");
-    SET_WIDGET_COLOR_NAME(wm, ENTRY_COLOR,                 "white");
-    SET_WIDGET_COLOR_NAME(wm, HINT_WIN_COLOR,              "grey21");
-    SET_WIDGET_COLOR_NAME(wm, ROOT_WIN_COLOR,              "black");
+    config_widget_color_for_dark(wm);
+    config_widget_color_for_normal(wm);
+    config_widget_color_for_light(wm);
+}
+
+/* 功能：爲深色主題設置文字顏色。*/
+static void config_text_color_for_dark(WM *wm)
+{
+    /*            用戶設置：文字顏色類型(詳gwm.h)            顏色名 */
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLE_TEXT_COLOR,         "grey61");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLE_TEXT_COLOR,        "white");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLE_BUTTON_TEXT_COLOR,  "grey61");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLE_BUTTON_TEXT_COLOR, "LightGreen");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, TASKBAR_BUTTON_TEXT_COLOR,       "white");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, STATUS_AREA_TEXT_COLOR,          "white");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, CLASS_TEXT_COLOR,                "RosyBrown");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, CMD_CENTER_ITEM_TEXT_COLOR,      "white");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, ENTRY_TEXT_COLOR,                "black");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, HINT_TEXT_COLOR,                 "grey41");
+}
+
+/* 功能：爲中庸顏色主題設置文字顏色。*/
+static void config_text_color_for_normal(WM *wm)
+{
+    /*                          用戶設置：文字顏色類型(詳gwm.h)            顏色名 */
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TITLE_TEXT_COLOR,         "grey71");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CURRENT_TITLE_TEXT_COLOR,        "white");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TITLE_BUTTON_TEXT_COLOR,  "grey71");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CURRENT_TITLE_BUTTON_TEXT_COLOR, "white");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, TASKBAR_BUTTON_TEXT_COLOR,       "white");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, STATUS_AREA_TEXT_COLOR,          "white");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CLASS_TEXT_COLOR,                "RosyBrown");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CMD_CENTER_ITEM_TEXT_COLOR,      "white");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, ENTRY_TEXT_COLOR,                "black");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, HINT_TEXT_COLOR,                 "grey61");
+}
+
+/* 功能：爲淺色主題設置文字顏色。*/
+static void config_text_color_for_light(WM *wm)
+{
+    /*                         用戶設置：文字顏色類型(詳gwm.h)            顏色名 */
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TITLE_TEXT_COLOR,         "grey31");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CURRENT_TITLE_TEXT_COLOR,        "black");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TITLE_BUTTON_TEXT_COLOR,  "grey31");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CURRENT_TITLE_BUTTON_TEXT_COLOR, "black");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, TASKBAR_BUTTON_TEXT_COLOR,       "black");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, STATUS_AREA_TEXT_COLOR,          "black");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CLASS_TEXT_COLOR,                "RosyBrown");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CMD_CENTER_ITEM_TEXT_COLOR,      "black");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, ENTRY_TEXT_COLOR,                "white");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, HINT_TEXT_COLOR,                 "grey61");
 }
 
 /* 功能：設置文字顏色。*/
 static void config_text_color(WM *wm)
 {
-    /*            用戶設置：文字顏色類型(詳gwm.h)       顏色名 */
-    SET_TEXT_COLOR_NAME(wm, TITLE_AREA_TEXT_COLOR,      "white");
-    SET_TEXT_COLOR_NAME(wm, TITLE_BUTTON_TEXT_COLOR,    "white");
-    SET_TEXT_COLOR_NAME(wm, TASKBAR_BUTTON_TEXT_COLOR,  "white");
-    SET_TEXT_COLOR_NAME(wm, STATUS_AREA_TEXT_COLOR,     "white");
-    SET_TEXT_COLOR_NAME(wm, CLASS_TEXT_COLOR,           "rosybrown");
-    SET_TEXT_COLOR_NAME(wm, TITLE_TEXT_COLOR,           "white");
-    SET_TEXT_COLOR_NAME(wm, CMD_CENTER_ITEM_TEXT_COLOR, "white");
-    SET_TEXT_COLOR_NAME(wm, ENTRY_TEXT_COLOR,           "black");
-    SET_TEXT_COLOR_NAME(wm, HINT_TEXT_COLOR,            "grey61");
+    config_text_color_for_dark(wm);
+    config_text_color_for_normal(wm);
+    config_text_color_for_light(wm);
 }
 
 /* 功能：設置標題按鈕的文字 */
 static void config_title_button_text(WM *wm)
 {
     /*              用戶設置：標題欄按鈕類型(詳gwm.h)  按鈕文字 */
-    SET_TITLE_BUTTON_TEXT(wm, MAIN_BUTTON,             "主");
-    SET_TITLE_BUTTON_TEXT(wm, SECOND_BUTTON,           "次");
-    SET_TITLE_BUTTON_TEXT(wm, FIXED_BUTTON,            "固");
-    SET_TITLE_BUTTON_TEXT(wm, FLOAT_BUTTON,            "浮");
-    SET_TITLE_BUTTON_TEXT(wm, ICON_BUTTON,             "-" );
+    SET_TITLE_BUTTON_TEXT(wm, SECOND_BUTTON,           "◁");
+    SET_TITLE_BUTTON_TEXT(wm, MAIN_BUTTON,             "★");
+    SET_TITLE_BUTTON_TEXT(wm, FIXED_BUTTON,            "▷");
+    SET_TITLE_BUTTON_TEXT(wm, FLOAT_BUTTON,            "△");
+    SET_TITLE_BUTTON_TEXT(wm, ICON_BUTTON,             "ᅳ" );
     SET_TITLE_BUTTON_TEXT(wm, MAX_BUTTON,              "□");
     SET_TITLE_BUTTON_TEXT(wm, CLOSE_BUTTON,            "×");
 }
@@ -430,10 +520,35 @@ static void config_cmd_center_item_text(WM *wm)
     SET_CMD_CENTER_ITEM_TEXT(wm, RUN_BUTTON,                "運行");
 }
 
+/* 功能：設置構件功能提示。
+ * 說明：以下未列出的構件要麼不必顯示提示，要麼動態變化而不可在此設置。
+ */
+static void config_tooltip(WM *wm)
+{
+    /*    用戶設置：構件類型(詳gwm.h)  構件功能提示文字 */
+    SET_TOOLTIP(wm, CLIENT_FRAME,      "拖動以調整窗口尺寸");
+    SET_TOOLTIP(wm, SECOND_BUTTON,     "切換到次要區域");
+    SET_TOOLTIP(wm, MAIN_BUTTON,       "切換到主要區域");
+    SET_TOOLTIP(wm, FIXED_BUTTON,      "切換到固定區域");
+    SET_TOOLTIP(wm, FLOAT_BUTTON,      "切換到懸浮區域");
+    SET_TOOLTIP(wm, ICON_BUTTON,       "切換到圖符區域");
+    SET_TOOLTIP(wm, MAX_BUTTON,        "切換到懸浮區域並最大化窗口");
+    SET_TOOLTIP(wm, CLOSE_BUTTON,      "關閉窗口");
+    SET_TOOLTIP(wm, DESKTOP1_BUTTON,   "切換到虛擬桌面1");
+    SET_TOOLTIP(wm, DESKTOP2_BUTTON,   "切換到虛擬桌面2");
+    SET_TOOLTIP(wm, DESKTOP3_BUTTON,   "切換到虛擬桌面3");
+    SET_TOOLTIP(wm, FULL_BUTTON,       "切換到全屏模式");
+    SET_TOOLTIP(wm, PREVIEW_BUTTON,    "切換到預覽模式");
+    SET_TOOLTIP(wm, STACK_BUTTON,      "切換到堆疊模式");
+    SET_TOOLTIP(wm, TILE_BUTTON,       "切換到平鋪模式");
+    SET_TOOLTIP(wm, DESKTOP_BUTTON,    "顯示桌面");
+    SET_TOOLTIP(wm, CMD_CENTER_ITEM,   "打開操作中心");
+}
+
 /* 功能：設置其他雜項。
  * 說明：標識符含義詳見gwm.h。
  */
-void config_misc(WM *wm)
+static void config_misc(WM *wm)
 {
     Config *c=&wm->cfg;
     c->set_frame_prop=0;
@@ -441,6 +556,7 @@ void config_misc(WM *wm)
     c->focus_mode=CLICK_FOCUS;
     c->default_layout=TILE;
     c->default_area_type=MAIN_AREA;
+    c->color_theme=NORMAL_THEME;
     c->screen_saver_time_out=600;
     c->screen_saver_interval=600;
     c->hover_time=3;
@@ -473,5 +589,6 @@ void config(WM *wm)
     config_title_button_text(wm);
     config_taskbar_button_text(wm);
     config_cmd_center_item_text(wm);
+    config_tooltip(wm);
     config_misc(wm);
 }

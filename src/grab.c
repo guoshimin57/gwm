@@ -10,8 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "misc.h"
-#include "grab.h"
 
 static unsigned int get_num_lock_mask(WM *wm);
 static unsigned int get_valid_mask(WM *wm, unsigned int mask);

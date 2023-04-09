@@ -10,14 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "config.h"
-#include "client.h"
-#include "desktop.h"
-#include "drawable.h"
-#include "focus.h"
-#include "font.h"
-#include "icon.h"
-#include "misc.h"
 
 // 存儲圖標主題規範所說的Per-Directory Keys的結構
 struct icon_dir_info_tag
@@ -80,7 +72,7 @@ static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
     {
         unsigned int w, h;
         Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
-        if(!get_geometry(wm, pixmap, NULL, NULL, &w, &h, NULL))
+        if(!get_geometry(wm, pixmap, NULL, NULL, &w, &h, NULL, NULL))
             return NULL;
         imlib_context_set_drawable(pixmap);   
         return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
@@ -421,7 +413,7 @@ static void create_icon(WM *wm, Client *c)
     p->area_type=c->area_type==ICONIFY_AREA ? wm->cfg.default_area_type : c->area_type;
     c->area_type=ICONIFY_AREA;
     p->win=XCreateSimpleWindow(wm->display, wm->taskbar.icon_area, p->x, p->y,
-        p->w, p->h, 0, 0, wm->widget_color[ICON_COLOR].pixel);
+        p->w, p->h, 0, 0, wm->widget_color[wm->cfg.color_theme][ICON_COLOR].pixel);
     XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
     if(wm->cfg.use_image_icon)
         set_icon_image(wm, c);
@@ -466,7 +458,7 @@ void draw_icon(WM *wm, Client *c)
 {
     Icon *i=c->icon;
     String_format f={{0, 0, i->w, i->h}, CENTER_LEFT, false, 0,
-        wm->text_color[CLASS_TEXT_COLOR], CLASS_FONT};
+        wm->text_color[wm->cfg.color_theme][CLASS_TEXT_COLOR], CLASS_FONT};
     if(wm->cfg.use_image_icon && c->image)
         draw_string(wm, i->win, "", &f), draw_icon_image(wm, c);
     else

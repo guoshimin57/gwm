@@ -10,7 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "config.h"
 
 static void alloc_widget_color(WM *wm, const char *color_name, XColor *color);
 static void alloc_text_color(WM *wm, const char *color_name, XftColor *color);
@@ -28,8 +27,36 @@ static void alloc_text_color(WM *wm, const char *color_name, XftColor *color)
 
 void alloc_color(WM *wm)
 {
-    for(Widget_color i=0; i<WIDGET_COLOR_N; i++)
-        alloc_widget_color(wm, wm->cfg.widget_color_name[i], wm->widget_color+i);
-    for(Text_color i=0; i<TEXT_COLOR_N; i++)
-        alloc_text_color(wm, wm->cfg.text_color_name[i], wm->text_color+i);
+    for(Color_theme i=0; i<COLOR_THEME_N; i++)
+        for(Widget_color j=0; j<WIDGET_COLOR_N; j++)
+            alloc_widget_color(wm, wm->cfg.widget_color_name[i][j], &wm->widget_color[i][j]);
+    for(Color_theme i=0; i<COLOR_THEME_N; i++)
+        for(Text_color j=0; j<TEXT_COLOR_N; j++)
+            alloc_text_color(wm, wm->cfg.text_color_name[i][j], &wm->text_color[i][j]);
+}
+
+void update_widget_color(WM *wm)
+{
+    update_taskbar_buttons(wm);
+    update_win_background(wm, wm->taskbar.icon_area,
+        wm->widget_color[wm->cfg.color_theme][ICON_AREA_COLOR].pixel, None);
+    /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
+     * 雖然給icon_area發送了Expose事件，但實際上沒更新背景。也許當窗口沒有內容
+     * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
+    XClearWindow(wm->display, wm->taskbar.icon_area);
+    update_win_background(wm, wm->taskbar.status_area,
+        wm->widget_color[wm->cfg.color_theme][STATUS_AREA_COLOR].pixel, None);
+    update_win_background(wm, wm->cmd_center.win,
+        wm->widget_color[wm->cfg.color_theme][CMD_CENTER_COLOR].pixel, None);
+    for(size_t i=0; i<CMD_CENTER_ITEM_N; i++)
+        update_win_background(wm, wm->cmd_center.items[i],
+            wm->widget_color[wm->cfg.color_theme][CMD_CENTER_COLOR].pixel,None);
+    update_win_background(wm, wm->hint_win,
+        wm->widget_color[wm->cfg.color_theme][HINT_WIN_COLOR].pixel, None);
+    update_win_background(wm, wm->run_cmd.win,
+        wm->widget_color[wm->cfg.color_theme][ENTRY_COLOR].pixel, None);
+    XSetWindowBorder(wm->display, wm->run_cmd.win,
+        wm->widget_color[wm->cfg.color_theme][CURRENT_BORDER_COLOR].pixel);
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        update_client_look(wm, wm->cur_desktop, c);
 }

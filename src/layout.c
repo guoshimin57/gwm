@@ -10,12 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "config.h"
-#include "desktop.h"
-#include "misc.h"
-#include "layout.h"
-#include "font.h"
-#include "client.h"
 
 static void set_full_layout(WM *wm);
 static void set_preview_layout(WM *wm);
@@ -52,7 +46,7 @@ void update_layout(WM *wm)
 
 static void set_full_layout(WM *wm)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 }
 
@@ -153,7 +147,7 @@ static bool should_fix_win_rect(WM *wm, Client *c)
 
 static void fix_cur_focus_client_rect(WM *wm)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     if( DESKTOP(wm).prev_layout==FULL && c->area_type==FLOATING_AREA
         && (DESKTOP(wm).cur_layout==TILE || DESKTOP(wm).cur_layout==STACK))
         set_default_win_rect(wm, c);
@@ -174,16 +168,16 @@ void update_title_bar_layout(WM *wm)
 
 void update_taskbar_buttons(WM *wm)
 {
-    for(size_t b=TASKBAR_BUTTON_BEGIN; b<TASKBAR_BUTTON_END; b++)
+    for(size_t b=TASKBAR_BUTTON_BEGIN; b<=TASKBAR_BUTTON_END; b++)
     {
         size_t i=TASKBAR_BUTTON_INDEX(b);
         String_format f={{0, 0, wm->cfg.taskbar_button_width,
             wm->cfg.taskbar_button_height},
             CENTER, true,
-            wm->widget_color[NORMAL_TASKBAR_BUTTON_COLOR].pixel,
-            wm->text_color[TASKBAR_BUTTON_TEXT_COLOR], TASKBAR_BUTTON_FONT};
+            wm->widget_color[wm->cfg.color_theme][NORMAL_TASKBAR_BUTTON_COLOR].pixel,
+            wm->text_color[wm->cfg.color_theme][TASKBAR_BUTTON_TEXT_COLOR], TASKBAR_BUTTON_FONT};
         if(is_chosen_button(wm, b))
-            f.bg=wm->widget_color[CHOSEN_TASKBAR_BUTTON_COLOR].pixel;
+            f.bg=wm->widget_color[wm->cfg.color_theme][CHOSEN_TASKBAR_BUTTON_COLOR].pixel;
         draw_string(wm, wm->taskbar.buttons[i], wm->cfg.taskbar_button_text[i], &f);
     }
 }

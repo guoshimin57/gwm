@@ -9,12 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <X11/Xft/Xft.h>
-#include <math.h>
 #include "gwm.h"
-#include "config.h"
-#include "font.h"
-#include "misc.h"
 
 void load_font(WM *wm)
 {

@@ -14,5 +14,6 @@
 
 void focus_client(WM *wm, unsigned int desktop_n, Client *c);
 void set_input_focus(WM *wm, XWMHints *hint, Window win);
+void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
 
 #endif

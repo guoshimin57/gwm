@@ -10,12 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "config.h"
-#include "drawable.h"
-#include "entry.h"
-#include "font.h"
-#include "grab.h"
-#include "misc.h"
 
 static int get_entry_cursor_x(WM *wm, Entry *e);
 static void hint_for_run_cmd_entry(WM *wm, const char *pattern);
@@ -27,8 +21,9 @@ void create_entry(WM *wm, Entry *e, Rect *r, const wchar_t *hint)
 {
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h;
     e->win=XCreateSimpleWindow(wm->display, wm->root_win, e->x, e->y,
-        e->w, e->h, wm->cfg.border_width, wm->widget_color[CURRENT_BORDER_COLOR].pixel,
-        wm->widget_color[ENTRY_COLOR].pixel);
+        e->w, e->h, wm->cfg.border_width,
+        wm->widget_color[wm->cfg.color_theme][CURRENT_BORDER_COLOR].pixel,
+        wm->widget_color[wm->cfg.color_theme][ENTRY_COLOR].pixel);
     set_override_redirect(wm, e->win);
     XSelectInput(wm->display, e->win, ENTRY_EVENT_MASK);
     e->hint=hint;
@@ -38,6 +33,7 @@ void create_entry(WM *wm, Entry *e, Rect *r, const wchar_t *hint)
 void show_entry(WM *wm, Entry *e)
 {
     e->text[0]=L'\0', e->cursor_offset=0;
+    XRaiseWindow(wm->display, e->win);
     XMapWindow(wm->display, e->win);
     update_entry_text(wm, e);
     XGrabKeyboard(wm->display, e->win, True, GrabModeAsync, GrabModeAsync, CurrentTime);
@@ -47,8 +43,8 @@ void update_entry_text(WM *wm, Entry *e)
 {
     String_format f={{wm->cfg.entry_text_indent, 0, e->w-2*wm->cfg.entry_text_indent, e->h},
         CENTER_LEFT, false, 0,
-        e->text[0]==L'\0' ? wm->text_color[HINT_TEXT_COLOR] :
-        wm->text_color[ENTRY_TEXT_COLOR], ENTRY_FONT};
+        e->text[0]==L'\0' ? wm->text_color[wm->cfg.color_theme][HINT_TEXT_COLOR] :
+        wm->text_color[wm->cfg.color_theme][ENTRY_TEXT_COLOR], ENTRY_FONT};
     int x=get_entry_cursor_x(wm, e);
     XClearArea(wm->display, e->win, 0, 0, e->w, e->h, False); 
     draw_wcs(wm, e->win, e->text[0]==L'\0' ? e->hint : e->text, &f);
@@ -75,9 +71,8 @@ static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
     {
         unsigned int w=wm->cfg.run_cmd_entry_width, h=wm->cfg.hint_win_line_height;
         String_format fmt={{0, 0, w, h}, CENTER_LEFT,
-            false, 0, wm->text_color[HINT_TEXT_COLOR], HINT_FONT};
-        int x=(wm->screen_width-w)/2+wm->cfg.border_width,
-            y=(wm->screen_height+wm->cfg.run_cmd_entry_height)/2, *py=&fmt.r.y;
+            false, 0, wm->text_color[wm->cfg.color_theme][HINT_TEXT_COLOR], HINT_FONT};
+        int x=wm->run_cmd.x+wm->cfg.border_width, y=wm->run_cmd.y+wm->run_cmd.h+wm->cfg.border_width, *py=&fmt.r.y;
         size_t i, n, max=(wm->screen_height-wm->taskbar.h-y)/h;
         const char *reg=copy_strings(pattern, "*", NULL);
         File *f, *files=get_files_in_paths(paths, reg, RISE, false, &n);

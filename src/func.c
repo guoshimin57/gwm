@@ -9,22 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <time.h>
 #include "gwm.h"
-#include "config.h"
-#include "drawable.h"
-#include "font.h"
-#include "func.h"
-#include "client.h"
-#include "desktop.h"
-#include "entry.h"
-#include "focus.h"
-#include "grab.h"
-#include "hint.h"
-#include "icon.h"
-#include "layout.h"
-#include "menu.h"
-#include "misc.h"
 
 static bool is_match_button_release(WM *wm, XEvent *oe, XEvent *ne);
 static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne);
@@ -86,7 +71,7 @@ static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne)
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     if(c->area_type == ICONIFY_AREA)
         move_client(wm, c, get_area_head(wm, c->icon->area_type), c->icon->area_type);
     if(DESKTOP(wm).cur_layout == PREVIEW)
@@ -100,13 +85,14 @@ void exec(WM *wm, XEvent *e, Func_arg arg)
 
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
-    if(DESKTOP(wm).cur_layout==TILE || DESKTOP(wm).cur_layout==STACK)
+    Layout lay=DESKTOP(wm).cur_layout;
+    Client *c=CUR_FOC_CLI(wm);
+    if(lay==TILE || lay==STACK || (lay==FULL && c->area_type==FLOATING_AREA))
     {
         Direction dir=arg.direction;
         bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
-        Client *c=DESKTOP(wm).cur_focus_client;
         Delta_rect d=get_key_delta_rect(c, dir);
-        if(c->area_type!=FLOATING_AREA && DESKTOP(wm).cur_layout==TILE)
+        if(c->area_type!=FLOATING_AREA && lay==TILE)
             move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
         if(fix_move_resize_delta_rect(wm, c, &d, is_move))
         {
@@ -161,7 +147,7 @@ void clear_wm(WM *wm)
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
-        del_client(wm, c, false);
+        del_client(wm, c, true);
     }
     XDestroyWindow(wm->display, wm->taskbar.win);
     free(wm->taskbar.status_text);
@@ -188,7 +174,7 @@ void clear_wm(WM *wm)
 void close_client(WM *wm, XEvent *e, Func_arg arg)
 {
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     if( c != wm->clients
         && !send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], c->win))
         XDestroyWindow(wm->display, c->win);
@@ -204,14 +190,14 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 /* 取得窗口疊次序意義上的下一個客戶窗口 */
 void next_client(WM *wm, XEvent *e, Func_arg arg)
 {   /* 允許切換至根窗口 */
-    Client *c=get_prev_client(wm, DESKTOP(wm).cur_focus_client);
+    Client *c=get_prev_client(wm, CUR_FOC_CLI(wm));
     focus_client(wm, wm->cur_desktop, c ? c : wm->clients);
 }
 
 /* 取得窗口疊次序意義上的上一個客戶窗口 */
 void prev_client(WM *wm, XEvent *e, Func_arg arg)
 {   /* 允許切換至根窗口 */
-    Client *c=get_next_client(wm, DESKTOP(wm).cur_focus_client);
+    Client *c=get_next_client(wm, CUR_FOC_CLI(wm));
     focus_client(wm, wm->cur_desktop, c ? c : wm->clients);
 }
 
@@ -259,7 +245,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 
 void change_area(WM *wm, XEvent *e, Func_arg arg)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     Layout l=DESKTOP(wm).cur_layout;
     Area_type t=arg.area_type==PREV_AREA ? c->icon->area_type : arg.area_type;
     if( c!=wm->clients && (l==TILE || (l==STACK
@@ -271,7 +257,7 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     XEvent ev;
     Layout layout=DESKTOP(wm).cur_layout;
-    Client *from=DESKTOP(wm).cur_focus_client, *to=NULL, *head=wm->clients;
+    Client *from=CUR_FOC_CLI(wm), *to=NULL, *head=wm->clients;
     if(layout!=TILE || from==head || !get_valid_click(wm, SWAP, e, &ev))
         return;
 
@@ -289,7 +275,7 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 
 void maximize_client(WM *wm, XEvent *e, Func_arg arg)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
     {
         unsigned int bw=c->border_w, th=c->title_bar_h;
@@ -306,9 +292,10 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Layout layout=DESKTOP(wm).cur_layout;
     Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
-    if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, wm->root_win, act))
+    if( (layout==FULL && c->area_type!=FLOATING_AREA) || layout==PREVIEW
+        || !grab_pointer(wm, wm->root_win, act))
         return;
 
     XEvent ev;
@@ -429,7 +416,7 @@ static void update_hint_win_for_resize(WM *wm, Client *c)
     XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, wm->cfg.hint_win_line_height);
     XMapRaised(wm->display, wm->hint_win);
     String_format f={{0, 0, w, wm->cfg.hint_win_line_height}, CENTER,
-        false, 0, wm->text_color[HINT_TEXT_COLOR], HINT_FONT};
+        false, 0, wm->text_color[wm->cfg.color_theme][HINT_TEXT_COLOR], HINT_FONT};
     draw_string(wm, wm->hint_win, str, &f);
 }
 
@@ -455,7 +442,7 @@ static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act)
 void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
 {
     XEvent ev;
-    Client *from=DESKTOP(wm).cur_focus_client, *to;
+    Client *from=CUR_FOC_CLI(wm), *to;
     if( DESKTOP(wm).cur_layout!=TILE || from==wm->clients
         || !get_valid_click(wm, CHANGE, e, &ev))
         return;
@@ -556,7 +543,7 @@ void open_cmd_center(WM *wm, XEvent *e, Func_arg arg)
 
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     c->border_w = c->border_w ? 0 : wm->cfg.border_width;
     XSetWindowBorderWidth(wm->display, c->frame, c->border_w);
     update_layout(wm);
@@ -564,7 +551,7 @@ void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
 
 void toggle_title_bar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     c->title_bar_h = c->title_bar_h ? 0 : wm->cfg.title_bar_height;
     if(c->title_bar_h)
     {
@@ -661,7 +648,18 @@ void print_screen(WM *wm, XEvent *e, Func_arg arg)
 
 void print_win(WM *wm, XEvent *e, Func_arg arg)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
         print_area(wm, c->frame, 0, 0, c->w, c->h);
+}
+
+void switch_color_theme(WM *wm, XEvent *e, Func_arg arg)
+{
+    if(wm->cfg.color_theme < COLOR_THEME_N-1)
+        wm->cfg.color_theme++;
+    else
+        wm->cfg.color_theme=0;
+    // 以下函數會產生Expose事件，而處理Expose事件時會更新窗口的文字
+    // 內容及其顏色，故此處不必更新構件文字顏色。
+    update_widget_color(wm);
 }

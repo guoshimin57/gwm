@@ -10,16 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "config.h"
-#include "client.h"
-#include "drawable.h"
-#include "desktop.h"
-#include "focus.h"
-#include "grab.h"
-#include "hint.h"
-#include "icon.h"
-#include "layout.h"
-#include "misc.h"
 
 static void apply_rules(WM *wm, Client *c);
 static bool have_rule(const Rule *r, Client *c);
@@ -48,14 +38,17 @@ void add_client(WM *wm, Window win)
     add_client_node(get_area_head(wm, c->area_type), c);
     fix_area_type(wm);
     set_default_win_rect(wm, c);
-    frame_client(wm, c);
     if(c->area_type == ICONIFY_AREA)
         iconify(wm, c);
-    else
-        focus_client(wm, wm->cur_desktop, c);
     grab_buttons(wm, c);
     XSelectInput(wm->display, win, EnterWindowMask|PropertyChangeMask);
     XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+    frame_client(wm, c);
+    update_layout(wm);
+    XMapWindow(wm->display, c->frame);
+    XMapSubwindows(wm->display, c->frame);
+    if(c->area_type != ICONIFY_AREA)
+        focus_client(wm, wm->cur_desktop, c);
 }
 
 static void apply_rules(WM *wm, Client *c)
@@ -199,7 +192,8 @@ static void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c);
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y, fr.w,
-        fr.h, c->border_w, wm->widget_color[CURRENT_BORDER_COLOR].pixel, 0);
+        fr.h, c->border_w,
+        wm->widget_color[wm->cfg.color_theme][CURRENT_BORDER_COLOR].pixel, 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
     if(wm->cfg.set_frame_prop)
         copy_prop(wm, c->frame, c->win);
@@ -207,14 +201,12 @@ static void frame_client(WM *wm, Client *c)
         create_title_bar(wm, c);
     XAddToSaveSet(wm->display, c->win);
     XReparentWindow(wm->display, c->win, c->frame, 0, c->title_bar_h);
-    XMapWindow(wm->display, c->frame);
-    XMapSubwindows(wm->display, c->frame);
 }
 
 void create_title_bar(WM *wm, Client *c)
 {
-    unsigned long bc=wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel,
-                  ac=wm->widget_color[CURRENT_TITLE_AREA_COLOR].pixel;
+    unsigned long bc=wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel,
+                  ac=wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_AREA_COLOR].pixel;
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
@@ -272,7 +264,7 @@ Client *win_to_client(WM *wm, Window win)
     return NULL;
 }
 
-void del_client(WM *wm, Client *c, bool change_focus)
+void del_client(WM *wm, Client *c, bool is_for_quit)
 {
     if(c)
     {
@@ -283,7 +275,7 @@ void del_client(WM *wm, Client *c, bool change_focus)
             del_icon(wm, c);
         del_client_node(c);
         fix_area_type(wm);
-        if(change_focus)
+        if(!is_for_quit)
             for(size_t i=1; i<=DESKTOP_N; i++)
                 if(is_on_desktop_n(i, c))
                     focus_client(wm, i, NULL);
@@ -299,6 +291,9 @@ void del_client(WM *wm, Client *c, bool change_focus)
         XFree(c->wm_hint);
         free(c->title_text);
         free(c);
+
+        if(!is_for_quit)
+            update_layout(wm);
     }
 }
 
@@ -313,8 +308,7 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
     if(d)
         c->x+=d->dx, c->y+=d->dy, c->w+=d->dw, c->h+=d->dh;
     Rect fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
-    XMoveResizeWindow(wm->display, c->win,
-        0, c->title_bar_h, c->w, c->h);
+    XMoveResizeWindow(wm->display, c->win, 0, c->title_bar_h, c->w, c->h);
     if(c->title_bar_h)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
@@ -332,17 +326,17 @@ void update_frame(WM *wm, unsigned int desktop_n, Client *c)
     bool flag=(c==wm->desktop[desktop_n-1].cur_focus_client);
     if(c->border_w)
         XSetWindowBorder(wm->display, c->frame, flag ?
-            wm->widget_color[CURRENT_BORDER_COLOR].pixel :
-            wm->widget_color[NORMAL_BORDER_COLOR].pixel);
+            wm->widget_color[wm->cfg.color_theme][CURRENT_BORDER_COLOR].pixel :
+            wm->widget_color[wm->cfg.color_theme][NORMAL_BORDER_COLOR].pixel);
     if(c->title_bar_h)
     {
         update_win_background(wm, c->title_area, flag ?
-            wm->widget_color[CURRENT_TITLE_AREA_COLOR].pixel :
-            wm->widget_color[NORMAL_TITLE_AREA_COLOR].pixel, None);
+            wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_AREA_COLOR].pixel :
+            wm->widget_color[wm->cfg.color_theme][NORMAL_TITLE_AREA_COLOR].pixel, None);
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             update_win_background(wm, c->buttons[i], flag ?
-                wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel :
-                wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel, None);
+                wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel :
+                wm->widget_color[wm->cfg.color_theme][NORMAL_TITLE_BUTTON_COLOR].pixel, None);
     }
 }
 

@@ -13,5 +13,6 @@
 #define COLOR_H
 
 void alloc_color(WM *wm);
+void update_widget_color(WM *wm);
 
 #endif

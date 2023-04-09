@@ -9,11 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <time.h>
 #include "gwm.h"
-#include "config.h"
-#include "misc.h"
-#include "drawable.h"
+
+static bool is_wm_win_type(WM *wm, Window win);
 
 Window get_transient_for(WM *wm, Window w)
 {
@@ -110,7 +108,7 @@ bool is_pointer_on_win(WM *wm, Window win)
     int rx, ry, x, y;
     unsigned int w, h, state;
     
-    return get_geometry(wm, win, NULL, NULL, &w, &h, NULL)
+    return get_geometry(wm, win, NULL, NULL, &w, &h, NULL, NULL)
         && XQueryPointer(wm->display, win, &r, &c, &rx, &ry, &x, &y, &state)
         && x>=0 && x<w && y>=0 && y<h;
 }
@@ -148,16 +146,26 @@ void print_area(WM *wm, Drawable d, int x, int y, unsigned int w, unsigned int h
     }
 }
 
-bool is_wm_win(WM *wm, Window win)
+bool is_wm_win(WM *wm, Window win, bool before_wm)
 {
-    XWindowAttributes attr;
+    XWindowAttributes a;
+    if( !XGetWindowAttributes(wm->display, win, &a) || a.override_redirect
+        || !is_wm_win_type(wm, win))
+        return false;
+    if(before_wm)
+        return a.map_state == IsViewable
+            || get_atom_prop(wm, win, wm->icccm_atoms[WM_STATE]) == IconicState;
+    else
+        return !win_to_client(wm, win);
+}
+
+static bool is_wm_win_type(WM *wm, Window win)
+{
     Atom type=get_atom_prop(wm, win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE]);
-    return (XGetWindowAttributes(wm->display, win, &attr)
-        && attr.map_state!=IsUnmapped && !attr.override_redirect
-        && (   type == None
-            || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
-            || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_UTILITY]
-            || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG]));
+    return(type == None
+        || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
+        || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_UTILITY]
+        || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG]);
 }
 
 void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap)
@@ -181,44 +189,28 @@ void set_override_redirect(WM *wm, Window win)
     XChangeWindowAttributes(wm->display, win, CWOverrideRedirect, &attr);
 }
 
-bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigned int *h, unsigned int *depth)
+bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigned int *h, unsigned int *bw, unsigned int *depth)
 {
     Window r;
     int xt, yt;
-    unsigned int wt, ht, bw, dt;
+    unsigned int wt, ht, bwt, dt;
     return XGetGeometry(wm->display, drw, &r, x ? x : &xt, y ? y : &yt,
-        w ? w : &wt, h ? h : &ht, &bw, depth ? depth : &dt);
+        w ? w : &wt, h ? h : &ht, bw ? bw : &bwt, depth ? depth : &dt);
 }
 
 /* 坐標均相對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
 void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph)
 {
-    unsigned int cw=0, ch=0, sw=wm->screen_width, sh=wm->screen_height;
+    int x=0, y=0;
+    unsigned int w=0, h=0, bw=0, sw=wm->screen_width, sh=wm->screen_height;
+    Window child;
 
-    get_geometry(wm, click, NULL, NULL, &cw, &ch, NULL);
-
-    if(cx < 0) // 窗口click左邊出屏
-        cw=cx+pw, cx=0;
-    if(cx+cw > sw) // 窗口click右邊出屏
-        cw=sw-cx;
-
-    if(cx+pw <= sw) // 在窗口click的右邊能顯示完整的菜單
-        *px=cx;
-    else if(cx+cw >= pw) // 在窗口click的左邊能顯示完整的菜單
-        *px=cx+cw-pw;
-    else if(cx+cw/2 <= sw/2) // 窗口click在屏幕的左半部
-        *px=sw-pw;
-    else // 窗口click在屏幕的右半部
-        *px=0;
-
-    if(cy+ch+ph <= sh) // 在窗口click下能顯示完整的菜單
-        *py=cy+ch;
-    else if(cy >= ph) // 在窗口click上能顯示完整的菜單
-        *py=cy-ph;
-    else if(cy+ch/2 <= sh/2) // 窗口click在屏幕的上半部
-        *py=sh-ph;
-    else // 窗口click在屏幕的下半部
-        *py=0;
+    XTranslateCoordinates(wm->display, click, wm->root_win, 0, 0, &x, &y, &child);
+    get_geometry(wm, click, NULL, NULL, &w, &h, &bw, NULL);
+    // 優先考慮右邊顯示彈窗；若不夠位置，則考慮左邊顯示；再不濟則從屏幕左邊開始顯示
+    *px = cx+(int)pw<(int)sw ? cx : (cx-(int)pw>0 ? cx-(int)pw : 0);
+    // 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示
+    *py = y+(int)(h+bw+ph)<(int)sh ? y+(int)(h+bw) : (y-(int)(bw+ph)>0 ? y-(int)(bw+ph) : 0);
 }
 
 bool is_win_exist(WM *wm, Window win, Window parent)
@@ -236,7 +228,7 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
 {
     unsigned int w, h, d;
     Imlib_Image image=imlib_load_image(filename);
-    if(image && get_geometry(wm, win, NULL, NULL, &w, &h, &d))
+    if(image && get_geometry(wm, win, NULL, NULL, &w, &h, NULL, &d))
     {
         Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
         imlib_context_set_image(image);
@@ -246,4 +238,31 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
         return bg;
     }
     return None;
+}
+
+void show_tooltip(WM *wm, Window hover)
+{
+    Window r, c;
+    unsigned int m, w, h=wm->cfg.hint_win_line_height;
+    int x, y, rx, ry;
+    Widget_type type=get_widget_type(wm, hover);
+    const char *s=NULL;
+
+    switch(type)
+    {
+        case CLIENT_ICON: s=win_to_iconic_state_client(wm, hover)->icon->title_text; break;
+        case TITLE_AREA: s=win_to_client(wm, hover)->title_text; break;
+        default: s=wm->cfg.tooltip[type]; break;
+    }
+
+    if(s && XQueryPointer(wm->display, hover, &r, &c, &rx, &ry, &x, &y, &m))
+    {
+        get_string_size(wm, wm->font[HINT_FONT], s, &w, NULL);
+        set_pos_for_click(wm, hover, rx, ry, &x, &y, w, h);
+        XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
+        XMapRaised(wm->display, wm->hint_win);
+        String_format f={{0, 0, w, h}, CENTER,
+            false, 0, wm->text_color[wm->cfg.color_theme][HINT_TEXT_COLOR], HINT_FONT};
+        draw_string(wm, wm->hint_win, s, &f);
+    }
 }

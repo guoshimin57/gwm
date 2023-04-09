@@ -10,10 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "config.h"
-#include "drawable.h"
-#include "misc.h"
-#include "hint.h"
 
 static void fix_limit_size_hint(XSizeHints *h);
 static bool is_prefer_width(unsigned int w, XSizeHints *hint);

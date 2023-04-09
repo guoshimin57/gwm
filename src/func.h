@@ -54,5 +54,6 @@ void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg);
 void change_wallpaper(WM *wm, XEvent *e, Func_arg arg);
 void print_screen(WM *wm, XEvent *e, Func_arg arg);
 void print_win(WM *wm, XEvent *e, Func_arg arg);
+void switch_color_theme(WM *wm, XEvent *e, Func_arg arg);
 
 #endif

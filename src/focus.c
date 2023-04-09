@@ -10,16 +10,11 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "client.h"
-#include "desktop.h"
-#include "drawable.h"
-#include "focus.h"
 
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
-static void update_client_look(WM *wm, unsigned int desktop_n, Client *c);
 
 /* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因
  * （如移動到其他虛擬桌面）而未更新時，則應使用值爲NULL的c來調用本
@@ -106,15 +101,15 @@ void set_input_focus(WM *wm, XWMHints *hint, Window win)
     send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
 }
 
-static void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
+void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
 {
     if(c && c!=wm->clients)
     {
         Desktop *d=wm->desktop+desktop_n-1;
         if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
             update_win_background(wm, c->icon->win, c==d->cur_focus_client ?
-                wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel :
-                wm->widget_color[ICON_AREA_COLOR].pixel, None);
+                wm->widget_color[wm->cfg.color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel :
+                wm->widget_color[wm->cfg.color_theme][ICON_AREA_COLOR].pixel, None);
         else
             update_frame(wm, desktop_n,  c);
     }

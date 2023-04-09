@@ -12,8 +12,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "gwm.h"
-
 void config(WM *wm);
 
 #endif

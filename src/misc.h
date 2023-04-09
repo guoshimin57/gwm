@@ -12,6 +12,12 @@
 #ifndef MISC_H
 #define MISC_H
 
+enum order_tag // 文件名排序类型
+{
+    RISE=-1, NOSORT=0, FALL=1 // 依次为升序、不排序、降序
+};
+typedef enum order_tag Order;
+
 void *malloc_s(size_t size);
 int x_fatal_handler(Display *display, XErrorEvent *e);
 void exit_with_perror(const char *s);

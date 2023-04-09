@@ -21,12 +21,13 @@ bool send_event(WM *wm, Atom protocol, Window win);
 bool is_pointer_on_win(WM *wm, Window win);
 bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h);
 void print_area(WM *wm, Drawable d, int x, int y, unsigned int w, unsigned int h);
-bool is_wm_win(WM *wm, Window win);
+bool is_wm_win(WM *wm, Window win, bool before_wm);
 void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap);
 void set_override_redirect(WM *wm, Window win);
-bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigned int *h, unsigned int *depth);
+bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigned int *h, unsigned int *bw, unsigned int *depth);
 void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph);
 bool is_win_exist(WM *wm, Window win, Window parent);
 Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename);
+void show_tooltip(WM *wm, Window hover);
 
 #endif

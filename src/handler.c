@@ -9,27 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <time.h>
 #include "gwm.h"
-#include "config.h"
-#include "drawable.h"
-#include "focus.h"
-#include "handler.h"
-#include "client.h"
-#include "entry.h"
-#include "font.h"
-#include "func.h"
-#include "grab.h"
-#include "hint.h"
-#include "layout.h"
-#include "taskbar.h"
-#include "misc.h"
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
 static void handle_config_request(WM *wm, XEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
-static void handle_pointer_hovers(WM *wm, Window hover, Widget_type type);
 static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window));
 static void handle_expose(WM *wm, XEvent *e);
 static void handle_key_press(WM *wm, XEvent *e);
@@ -167,30 +152,24 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_TASKBAR_BUTTON(type))
         update_win_background(wm, win,
-            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
+            wm->widget_color[wm->cfg.color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     else if(type == CLIENT_ICON)
         update_win_background(wm, win,
-            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
+            wm->widget_color[wm->cfg.color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     else if(IS_CMD_CENTER_ITEM(type))
         update_win_background(wm, win,
-            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
+            wm->widget_color[wm->cfg.color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     else if(type == CLIENT_FRAME)
         act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
         act=MOVE;
     else if(IS_TITLE_BUTTON(type))
         update_win_background(wm, win, type==CLOSE_BUTTON ?
-            wm->widget_color[ENTERED_CLOSE_BUTTON_COLOR].pixel :
-            wm->widget_color[ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
+            wm->widget_color[wm->cfg.color_theme][ENTERED_CLOSE_BUTTON_COLOR].pixel :
+            wm->widget_color[wm->cfg.color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     if(type != UNDEFINED)
         XDefineCursor(wm->display, win, wm->cursors[act]);
-    handle_pointer_hovers(wm, win, type);
-}
-
-static void handle_pointer_hovers(WM *wm, Window hover, Widget_type type)
-{
-    if(type == CLIENT_ICON)
-        handle_pointer_hover(wm, hover, update_hint_win_for_icon);
+    handle_pointer_hover(wm, win, show_tooltip);
 }
 
 static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window))
@@ -250,7 +229,8 @@ static void update_title_area_text(WM *wm, Client *c)
     if(c->title_bar_h)
     {
         String_format f={get_title_area_rect(wm, c), CENTER_LEFT, false, 0,
-            wm->text_color[TITLE_AREA_TEXT_COLOR], TITLE_FONT};
+            wm->text_color[wm->cfg.color_theme][c==CUR_FOC_CLI(wm) ?  CURRENT_TITLE_TEXT_COLOR
+                : NORMAL_TITLE_TEXT_COLOR], TITLE_FONT};
         draw_string(wm, c->title_area, c->title_text, &f);
     }
 }
@@ -259,9 +239,10 @@ static void update_title_button_text(WM *wm, Client *c, size_t index)
 {
     if(c->title_bar_h)
     {
-        String_format f={{0, 0, wm->cfg.title_button_width, wm->cfg.title_button_height},
-            CENTER, false, 0, wm->text_color[TITLE_BUTTON_TEXT_COLOR],
-            TITLE_BUTTON_FONT};
+        String_format f={{0, 0, wm->cfg.title_button_width,
+            wm->cfg.title_button_height}, CENTER, false, 0,
+            wm->text_color[wm->cfg.color_theme][c==CUR_FOC_CLI(wm) ? CURRENT_TITLE_BUTTON_TEXT_COLOR
+                : NORMAL_TITLE_BUTTON_TEXT_COLOR], TITLE_BUTTON_FONT};
         draw_string(wm, c->buttons[index], wm->cfg.title_button_text[index], &f);
     }
 }
@@ -301,9 +282,9 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     if(IS_TASKBAR_BUTTON(type))
         hint_leave_taskbar_button(wm, type);
     else if(type == CLIENT_ICON)
-        update_win_background(wm, win, wm->widget_color[ICON_AREA_COLOR].pixel, None);
+        update_win_background(wm, win, wm->widget_color[wm->cfg.color_theme][ICON_AREA_COLOR].pixel, None);
     else if(IS_CMD_CENTER_ITEM(type))
-        update_win_background(wm, win, wm->widget_color[CMD_CENTER_COLOR].pixel, None);
+        update_win_background(wm, win, wm->widget_color[wm->cfg.color_theme][CMD_CENTER_COLOR].pixel, None);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
     if(type != UNDEFINED)
@@ -313,23 +294,23 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
 {
     Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
-    update_win_background(wm, win, c==DESKTOP(wm).cur_focus_client ?
-        wm->widget_color[CURRENT_TITLE_BUTTON_COLOR].pixel :
-        wm->widget_color[NORMAL_TITLE_BUTTON_COLOR].pixel, None);
+    update_win_background(wm, win, c==CUR_FOC_CLI(wm) ?
+        wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel :
+        wm->widget_color[wm->cfg.color_theme][NORMAL_TITLE_BUTTON_COLOR].pixel, None);
 }
 
 static void handle_map_request(WM *wm, XEvent *e)
 {
     Window win=e->xmaprequest.window;
-    XMapWindow(wm->display, win);
-    if(is_wm_win(wm, win) && !win_to_client(wm, win))
+    if(is_wm_win(wm, win, false))
+    //if(is_wm_win(wm, win) && !win_to_client(wm, win))
     {
         add_client(wm, win);
-        update_layout(wm);
         DESKTOP(wm).default_area_type=wm->cfg.default_area_type;
     }
     else // 不受WM控制的窗口要放在窗口疊頂部才能確保可見，如截圖、通知窗口
         XRaiseWindow(wm->display, win);
+    XMapWindow(wm->display, win);
 }
 
 /* 對已經映射的窗口重設父窗口會依次執行以下操作：
@@ -351,10 +332,7 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
 
     if( c && ue->window==c->win
         && (ue->send_event || ue->event==c->frame || ue->event==c->win))
-    {
-        del_client(wm, c, true);
-        update_layout(wm);
-    }
+        del_client(wm, c, false);
 }
 
 static void handle_property_notify(WM *wm, XEvent *e)

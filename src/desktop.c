@@ -10,13 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "config.h"
-#include "desktop.h"
-#include "client.h"
-#include "focus.h"
-#include "icon.h"
-#include "layout.h"
-#include "misc.h"
 
 void init_desktop(WM *wm)
 {
@@ -66,7 +59,7 @@ void focus_desktop_n(WM *wm, unsigned int n)
         }
     }
 
-    focus_client(wm, wm->cur_desktop, DESKTOP(wm).cur_focus_client);
+    focus_client(wm, wm->cur_desktop, CUR_FOC_CLI(wm));
     update_layout(wm);
     update_icon_area(wm);
     update_taskbar_buttons(wm);
@@ -89,7 +82,7 @@ unsigned int get_desktop_mask(unsigned int desktop_n)
 
 void move_to_desktop_n(WM *wm, unsigned int n)
 {
-    Client *pc=DESKTOP(wm).cur_focus_client;
+    Client *pc=CUR_FOC_CLI(wm);
     if(n && n!=wm->cur_desktop && pc!=wm->clients)
     {
         pc->desktop_mask=get_desktop_mask(n);
@@ -103,7 +96,7 @@ void all_move_to_desktop_n(WM *wm, unsigned int n)
 {
     if(n)
     {
-        Client *pc=DESKTOP(wm).cur_focus_client;
+        Client *pc=CUR_FOC_CLI(wm);
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
             c->desktop_mask=get_desktop_mask(n);
         for(unsigned int i=1; i<=DESKTOP_N; i++)
@@ -126,7 +119,7 @@ void all_change_to_desktop_n(WM *wm, unsigned int n)
 
 void attach_to_desktop_n(WM *wm, unsigned int n)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     if(n && n!=wm->cur_desktop && c!=wm->clients)
     {
         c->desktop_mask |= get_desktop_mask(n);
@@ -136,7 +129,7 @@ void attach_to_desktop_n(WM *wm, unsigned int n)
 
 void attach_to_desktop_all(WM *wm)
 {
-    Client *c=DESKTOP(wm).cur_focus_client;
+    Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
     {
         c->desktop_mask=~0;

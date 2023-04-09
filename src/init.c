@@ -9,23 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <locale.h>
-#include <sys/types.h>
 #include "gwm.h"
-#include "config.h"
-#include "init.h"
-#include "client.h"
-#include "color.h"
-#include "drawable.h"
-#include "desktop.h"
-#include "entry.h"
-#include "font.h"
-#include "grab.h"
-#include "layout.h"
-#include "taskbar.h"
-#include "menu.h"
-#include "handler.h"
-#include "misc.h"
 
 static void set_locale(WM *wm);
 static void set_atoms(WM *wm);
@@ -68,7 +52,6 @@ void init_wm(WM *wm)
     create_run_cmd_entry(wm);
     create_hint_win(wm);
     create_clients(wm);
-    update_layout(wm);
     grab_keys(wm);
     exec_autostart(wm);
 }
@@ -111,8 +94,8 @@ static void create_cursors(WM *wm)
 
 static void create_run_cmd_entry(WM *wm)
 {
-    Rect r={(wm->screen_width-wm->cfg.run_cmd_entry_width)/2,
-    (wm->screen_height-wm->cfg.run_cmd_entry_height)/2,
+    Rect r={(wm->screen_width-wm->cfg.run_cmd_entry_width)/2-wm->cfg.border_width,
+    (wm->screen_height-wm->cfg.run_cmd_entry_height)/2-wm->cfg.border_width,
     wm->cfg.run_cmd_entry_width, wm->cfg.run_cmd_entry_height};
     create_entry(wm, &wm->run_cmd, &r, wm->cfg.run_cmd_entry_hint);
 }
@@ -120,7 +103,7 @@ static void create_run_cmd_entry(WM *wm)
 static void create_hint_win(WM *wm)
 {
     wm->hint_win=XCreateSimpleWindow(wm->display, wm->root_win, 0, 0, 1,
-        1, 0, 0, wm->widget_color[HINT_WIN_COLOR].pixel);
+        1, 0, 0, wm->widget_color[wm->cfg.color_theme][HINT_WIN_COLOR].pixel);
     set_override_redirect(wm, wm->hint_win);
     XSelectInput(wm->display, wm->hint_win, ExposureMask);
 }
@@ -142,7 +125,7 @@ static void create_clients(WM *wm)
     if(!XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
         exit_with_msg("錯誤：查詢窗口清單失敗！");
     for(size_t i=0; i<n; i++)
-        if(is_wm_win(wm, child[i]))
+        if(is_wm_win(wm, child[i], true))
             add_client(wm, child[i]);
     XFree(child);
 }
@@ -162,7 +145,7 @@ static void init_wallpaper_files(WM *wm)
 
 void init_root_win_background(WM *wm)
 {
-    unsigned long color=wm->widget_color[ROOT_WIN_COLOR].pixel;
+    unsigned long color=wm->widget_color[wm->cfg.color_theme][ROOT_WIN_COLOR].pixel;
     Pixmap pixmap=None;
     if(wm->cfg.wallpaper_filename)
         pixmap=create_pixmap_from_file(wm, wm->root_win, wm->cfg.wallpaper_filename);

@@ -9,17 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "config.h"
 #include "gwm.h"
-#include "client.h"
-#include "desktop.h"
-#include "func.h"
-#include "grab.h"
-#include "handler.h"
-#include "init.h"
-#include "layout.h"
-#include "menu.h"
-#include "misc.h"
 
 static void set_signals(void);
 static void ready_to_quit(int unused);
