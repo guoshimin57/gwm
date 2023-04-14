@@ -11,8 +11,9 @@
 
 #include "gwm.h"
 
-void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg)
+Menu *create_menu(WM *wm, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg)
 {
+    Menu *menu=malloc_s(sizeof(Menu));
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
     menu->w=w, menu->h=h, menu->bg=bg;
     menu->win=XCreateSimpleWindow(wm->display, wm->root_win,
@@ -28,6 +29,7 @@ void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned 
     }
 
     XMapSubwindows(wm->display, menu->win);
+    return menu;
 }
 
 void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)

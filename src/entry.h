@@ -12,7 +12,18 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-void create_entry(WM *wm, Entry *e, Rect *r, const wchar_t *hint);
+struct entry_tag // 輸入構件
+{
+    Window win;  // 輸入構件的窗口
+    int x, y; // 坐標
+    unsigned int w, h; // 寬和高
+    wchar_t text[BUFSIZ]; // 構件上的文字
+    const wchar_t *hint; // 構件的提示文字
+    size_t cursor_offset; // 光標位置
+    XIC xic; // 輸入法句柄
+};
+
+Entry *create_entry(WM *wm, Rect *r, const wchar_t *hint);
 void show_entry(WM *wm, Entry *e);
 bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke);
 void update_entry_text(WM *wm, Entry *e);

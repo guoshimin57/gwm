@@ -12,7 +12,15 @@
 #ifndef MENU_H
 #define MENU_H
 
-void create_menu(WM *wm, Menu *menu, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg);
+struct menu_tag // 一級多行多列菜單 
+{
+    Window win, *items; // 菜單窗口和菜單項
+    unsigned int n, col, row, w, h; // 菜單項數量、列數、行數、寬度、高度
+    int x, y; // 菜單窗口的坐標
+    unsigned long bg; // 菜單的背景色
+};
+
+Menu *create_menu(WM *wm, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg);
 void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind);
 void set_menu_pos_for_click(WM *wm, Window win, int x, int y, Menu *menu);
 

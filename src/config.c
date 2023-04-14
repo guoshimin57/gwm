@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 
+/* =========================== 以下爲非用戶配置項 =========================== */ 
 #define TOGGLE_PROCESS_STATE(process) /* 切換進程狀態 */ \
     "{ pid=$(ps -C '"process"' -o pid=); " \
     "ps -o stat= $pid | head -n1 | grep T > /dev/null ; } " \
@@ -18,22 +19,22 @@
 #define DESKTOPN_BUTTON(n) DESKTOP ## n ##_BUTTON // 獲取虛擬桌面按鈕類型
 #define ROUND(value) ((int)((value)+0.5)) // 把浮點數四舍五入後轉換爲整數
 #define SET_FONT(wm, type, family, size) /* 設置字體 */ \
-    sprintf(wm->cfg.font_name[type], "%s:pixelsize=%u", \
-        family, wm->cfg.font_size[type]=size)
+    sprintf(wm->cfg->font_name[type], "%s:pixelsize=%u", \
+        family, wm->cfg->font_size[type]=size)
 #define SET_CURSOR_SHAPE(wm, act, shape) /* 設置光標形狀 */ \
-    wm->cfg.cursor_shape[act]=shape
+    wm->cfg->cursor_shape[act]=shape
 #define SET_WIDGET_COLOR_NAME(wm, theme, type, name) /* 設置構件顏色 */ \
-    wm->cfg.widget_color_name[theme][type]=name
+    wm->cfg->widget_color_name[theme][type]=name
 #define SET_TEXT_COLOR_NAME(wm, theme, type, name) /* 設置文字顏色 */ \
-    wm->cfg.text_color_name[theme][type]=name
+    wm->cfg->text_color_name[theme][type]=name
 #define SET_TITLE_BUTTON_TEXT(wm, type, text) /* 設置標題按鈕文字 */ \
-    wm->cfg.title_button_text[type-TITLE_BUTTON_BEGIN]=text
+    wm->cfg->title_button_text[type-TITLE_BUTTON_BEGIN]=text
 #define SET_TASKBAR_BUTTON_TEXT(wm, type, text) /* 設置任務欄按鈕文字 */ \
-    wm->cfg.taskbar_button_text[type-TASKBAR_BUTTON_BEGIN]=text
+    wm->cfg->taskbar_button_text[type-TASKBAR_BUTTON_BEGIN]=text
 #define SET_CMD_CENTER_ITEM_TEXT(wm, type, text) /* 設置操作中心文字 */ \
-    wm->cfg.cmd_center_item_text[type-CMD_CENTER_ITEM_BEGIN]=text
+    wm->cfg->cmd_center_item_text[type-CMD_CENTER_ITEM_BEGIN]=text
 #define SET_TOOLTIP(wm, type, text) /* 設置構件提示 */ \
-    wm->cfg.tooltip[type]=text
+    wm->cfg->tooltip[type]=text
 
 
 /* =========================== 以下爲用戶配置項 =========================== */ 
@@ -278,7 +279,7 @@ static void config_font(WM *wm)
  */
 static void config_widget_size(WM *wm)
 {
-    Config *c=&wm->cfg;
+    Config *c=wm->cfg;
     c->border_width=ROUND(c->font_size[DEFAULT_FONT]/8.0);
     c->title_bar_height=ROUND(c->font_size[TITLE_FONT]*4/3.0);
     c->title_button_width=c->title_bar_height;
@@ -348,7 +349,7 @@ static void config_widget_color_for_dark(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ROOT_WIN_COLOR,              "black");
 }
 
-/* 功能：爲中庸顏色主題設置構件顏色。*/
+/* 功能：爲默認顏色主題設置構件顏色。*/
 static void config_widget_color_for_normal(WM *wm)
 {
     /*                            用戶設置：構件顏色類型(詳gwm.h)        顏色名 */
@@ -367,7 +368,7 @@ static void config_widget_color_for_normal(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ICON_AREA_COLOR,             "grey21");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, STATUS_AREA_COLOR,           "grey21");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTRY_COLOR,                 "white");
-    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, HINT_WIN_COLOR,              "grey21");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, HINT_WIN_COLOR,              "grey31");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ROOT_WIN_COLOR,              "black");
 }
 
@@ -417,7 +418,7 @@ static void config_text_color_for_dark(WM *wm)
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, HINT_TEXT_COLOR,                 "grey41");
 }
 
-/* 功能：爲中庸顏色主題設置文字顏色。*/
+/* 功能：爲默認顏色主題設置文字顏色。*/
 static void config_text_color_for_normal(WM *wm)
 {
     /*                          用戶設置：文字顏色類型(詳gwm.h)            顏色名 */
@@ -550,7 +551,7 @@ static void config_tooltip(WM *wm)
  */
 static void config_misc(WM *wm)
 {
-    Config *c=&wm->cfg;
+    Config *c=wm->cfg;
     c->set_frame_prop=0;
     c->use_image_icon=1;
     c->focus_mode=CLICK_FOCUS;
@@ -559,7 +560,7 @@ static void config_misc(WM *wm)
     c->color_theme=NORMAL_THEME;
     c->screen_saver_time_out=600;
     c->screen_saver_interval=600;
-    c->hover_time=3;
+    c->hover_time=300;
     c->default_cur_desktop=1;
     c->default_n_main_max=1;
     c->cmd_center_col=4;
@@ -581,6 +582,7 @@ static void config_misc(WM *wm)
 
 void config(WM *wm)
 {
+    wm->cfg=malloc_s(sizeof(Config));
     config_font(wm);
     config_widget_size(wm);
     config_cursor_shape(wm);

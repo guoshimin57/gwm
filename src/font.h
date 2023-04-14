@@ -12,6 +12,16 @@
 #ifndef FONT_H
 #define FONT_H
 
+struct string_format_tag // 字符串格式
+{
+    Rect r; // 坐標和尺寸信息
+    Align_type align; // 對齊方式
+    bool change_bg; // 是否改變背景色的標志
+    unsigned long bg; // r區域的背景色
+    XftColor fg; // 字符串的前景色
+    Font_type font_type; // 字體類型
+};
+
 void load_font(WM *wm);
 void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f);
 void draw_string(WM *wm, Drawable d, const char *str, const String_format *f);

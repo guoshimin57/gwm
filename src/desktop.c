@@ -13,15 +13,15 @@
 
 void init_desktop(WM *wm)
 {
-    wm->cur_desktop=wm->cfg.default_cur_desktop;
+    wm->cur_desktop=wm->cfg->default_cur_desktop;
     for(size_t i=0; i<DESKTOP_N; i++)
     {
-        Desktop *d=wm->desktop+i;
-        d->n_main_max=wm->cfg.default_n_main_max;
-        d->cur_layout=d->prev_layout=wm->cfg.default_layout;
-        d->default_area_type=wm->cfg.default_area_type;
-        d->main_area_ratio=wm->cfg.default_main_area_ratio;
-        d->fixed_area_ratio=wm->cfg.default_fixed_area_ratio;
+        Desktop *d=wm->desktop[i]=malloc_s(sizeof(Desktop));
+        d->n_main_max=wm->cfg->default_n_main_max;
+        d->cur_layout=d->prev_layout=wm->cfg->default_layout;
+        d->default_area_type=wm->cfg->default_area_type;
+        d->main_area_ratio=wm->cfg->default_main_area_ratio;
+        d->fixed_area_ratio=wm->cfg->default_fixed_area_ratio;
     }
 }
 
@@ -148,6 +148,6 @@ void all_attach_to_desktop_n(WM *wm, unsigned int n)
         if(n == wm->cur_desktop)
             focus_desktop_n(wm, wm->cur_desktop);
         else
-            focus_client(wm, n, wm->desktop[n-1].cur_focus_client);
+            focus_client(wm, n, wm->desktop[n-1]->cur_focus_client);
     }
 }

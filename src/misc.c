@@ -56,20 +56,20 @@ Widget_type get_widget_type(WM *wm, Window win)
     Client *c;
     if(win == wm->root_win)
         return ROOT_WIN;
-    if(win == wm->run_cmd.win)
+    if(win == wm->run_cmd->win)
         return RUN_CMD_ENTRY;
     if(win == wm->hint_win)
         return HINT_WIN;
     for(type=TASKBAR_BUTTON_BEGIN; type<=TASKBAR_BUTTON_END; type++)
-        if(win == wm->taskbar.buttons[TASKBAR_BUTTON_INDEX(type)])
+        if(win == wm->taskbar->buttons[TASKBAR_BUTTON_INDEX(type)])
             return type;
-    if(win == wm->taskbar.status_area)
+    if(win == wm->taskbar->status_area)
         return STATUS_AREA;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(c->area_type==ICONIFY_AREA && win==c->icon->win)
             return CLIENT_ICON;
     for(type=CMD_CENTER_ITEM_BEGIN; type<=CMD_CENTER_ITEM_END; type++)
-        if(win == wm->cmd_center.items[CMD_CENTER_ITEM_INDEX(type)])
+        if(win == wm->cmd_center->items[CMD_CENTER_ITEM_INDEX(type)])
             return type;
     if((c=win_to_client(wm, win)))
     {
@@ -122,7 +122,7 @@ void clear_zombies(int unused)
 bool is_chosen_button(WM *wm, Widget_type type)
 {
     return(type == DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1
-        || type == LAYOUT_BUTTON_BEGIN+DESKTOP(wm).cur_layout);
+        || type == LAYOUT_BUTTON_BEGIN+DESKTOP(wm)->cur_layout);
 }
 
 void set_xic(WM *wm, Window win, XIC *ic)
@@ -175,6 +175,15 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
         strcat(result, p);
     va_end(ap);
     return result;
+}
+
+void vfree(void *ptr, ...) // 調用時須以NULL結尾
+{
+    va_list ap;
+    va_start(ap, ptr);
+    for(void *p=ptr; p; p=va_arg(ap, void *))
+        free(p);
+    va_end(ap);
 }
 
 File *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, size_t *n)

@@ -56,7 +56,7 @@ char *get_text_prop(WM *wm, Window win, Atom atom)
         XFree(name.value);
     }
     if(!result)
-        result=copy_string(win==wm->taskbar.win ? "gwm" : "");
+        result=copy_string(win==wm->taskbar->win ? "gwm" : "");
     return result;
 }
 
@@ -132,15 +132,15 @@ void print_area(WM *wm, Drawable d, int x, int y, unsigned int w, unsigned int h
     {
         time_t timer=time(NULL), err=-1;
         char name[FILENAME_MAX];
-        if(wm->cfg.screenshot_path[0] == '~')
-            sprintf(name, "%s%s/gwm-", getenv("HOME"), wm->cfg.screenshot_path+1);
+        if(wm->cfg->screenshot_path[0] == '~')
+            sprintf(name, "%s%s/gwm-", getenv("HOME"), wm->cfg->screenshot_path+1);
         else
-            sprintf(name, "%s/gwm-", wm->cfg.screenshot_path);
+            sprintf(name, "%s/gwm-", wm->cfg->screenshot_path);
         if(timer != err)
             strftime(name+strlen(name), FILENAME_MAX, "%Y_%m_%d_%H_%M_%S", localtime(&timer));
         imlib_context_set_image(image);
-        imlib_image_set_format(wm->cfg.screenshot_format);
-        sprintf(name+strlen(name), ".%s", wm->cfg.screenshot_format);
+        imlib_image_set_format(wm->cfg->screenshot_format);
+        sprintf(name+strlen(name), ".%s", wm->cfg->screenshot_format);
         imlib_save_image(name);
         imlib_free_image();
     }
@@ -243,7 +243,7 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
 void show_tooltip(WM *wm, Window hover)
 {
     Window r, c;
-    unsigned int m, w, h=wm->cfg.hint_win_line_height;
+    unsigned int m, w, h=wm->cfg->hint_win_line_height;
     int x, y, rx, ry;
     Widget_type type=get_widget_type(wm, hover);
     const char *s=NULL;
@@ -252,7 +252,7 @@ void show_tooltip(WM *wm, Window hover)
     {
         case CLIENT_ICON: s=win_to_iconic_state_client(wm, hover)->icon->title_text; break;
         case TITLE_AREA: s=win_to_client(wm, hover)->title_text; break;
-        default: s=wm->cfg.tooltip[type]; break;
+        default: s=wm->cfg->tooltip[type]; break;
     }
 
     if(s && XQueryPointer(wm->display, hover, &r, &c, &rx, &ry, &x, &y, &m))
@@ -262,7 +262,7 @@ void show_tooltip(WM *wm, Window hover)
         XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
         XMapRaised(wm->display, wm->hint_win);
         String_format f={{0, 0, w, h}, CENTER,
-            false, 0, wm->text_color[wm->cfg.color_theme][HINT_TEXT_COLOR], HINT_FONT};
+            false, 0, wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
         draw_string(wm, wm->hint_win, s, &f);
     }
 }

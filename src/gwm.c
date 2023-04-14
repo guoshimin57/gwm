@@ -24,8 +24,8 @@ int main(int argc, char *argv[])
     init_wm(&wm);
     init_imlib(&wm);
     init_root_win_background(&wm);
-    XSetScreenSaver(wm.display, wm.cfg.screen_saver_time_out,
-        wm.cfg.screen_saver_interval, PreferBlanking, AllowExposures);
+    XSetScreenSaver(wm.display, wm.cfg->screen_saver_time_out,
+        wm.cfg->screen_saver_interval, PreferBlanking, AllowExposures);
     handle_events(&wm);
     return EXIT_SUCCESS;
 }

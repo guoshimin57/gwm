@@ -17,17 +17,19 @@ static char *get_match_cmd(const char *pattern);
 static void complete_cmd_for_entry(WM *wm, Entry *e);
 static bool close_entry(WM *wm, Entry *e, bool result);
 
-void create_entry(WM *wm, Entry *e, Rect *r, const wchar_t *hint)
+Entry *create_entry(WM *wm, Rect *r, const wchar_t *hint)
 {
+    Entry *e=wm->run_cmd=malloc_s(sizeof(Entry));
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h;
     e->win=XCreateSimpleWindow(wm->display, wm->root_win, e->x, e->y,
-        e->w, e->h, wm->cfg.border_width,
-        wm->widget_color[wm->cfg.color_theme][CURRENT_BORDER_COLOR].pixel,
-        wm->widget_color[wm->cfg.color_theme][ENTRY_COLOR].pixel);
+        e->w, e->h, wm->cfg->border_width,
+        wm->widget_color[wm->cfg->color_theme][CURRENT_BORDER_COLOR].pixel,
+        wm->widget_color[wm->cfg->color_theme][ENTRY_COLOR].pixel);
     set_override_redirect(wm, e->win);
     XSelectInput(wm->display, e->win, ENTRY_EVENT_MASK);
     e->hint=hint;
     set_xic(wm, e->win, &e->xic);
+    return e;
 }
 
 void show_entry(WM *wm, Entry *e)
@@ -36,15 +38,15 @@ void show_entry(WM *wm, Entry *e)
     XRaiseWindow(wm->display, e->win);
     XMapWindow(wm->display, e->win);
     update_entry_text(wm, e);
-    XGrabKeyboard(wm->display, e->win, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+    XGrabKeyboard(wm->display, e->win, False, GrabModeAsync, GrabModeAsync, CurrentTime);
 }
 
 void update_entry_text(WM *wm, Entry *e)
 {
-    String_format f={{wm->cfg.entry_text_indent, 0, e->w-2*wm->cfg.entry_text_indent, e->h},
+    String_format f={{wm->cfg->entry_text_indent, 0, e->w-2*wm->cfg->entry_text_indent, e->h},
         CENTER_LEFT, false, 0,
-        e->text[0]==L'\0' ? wm->text_color[wm->cfg.color_theme][HINT_TEXT_COLOR] :
-        wm->text_color[wm->cfg.color_theme][ENTRY_TEXT_COLOR], ENTRY_FONT};
+        e->text[0]==L'\0' ? wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR] :
+        wm->text_color[wm->cfg->color_theme][ENTRY_TEXT_COLOR], ENTRY_FONT};
     int x=get_entry_cursor_x(wm, e);
     XClearArea(wm->display, e->win, 0, 0, e->w, e->h, False); 
     draw_wcs(wm, e->win, e->text[0]==L'\0' ? e->hint : e->text, &f);
@@ -60,7 +62,7 @@ static int get_entry_cursor_x(WM *wm, Entry *e)
     if(wcstombs(mbs, e->text, n) != (size_t)-1)
         get_string_size(wm, wm->font[ENTRY_FONT], mbs, &w, NULL);
     e->text[e->cursor_offset]=wc; 
-    return wm->cfg.entry_text_indent+w;
+    return wm->cfg->entry_text_indent+w;
 }
 
 static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
@@ -69,11 +71,11 @@ static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
     char *paths=getenv("PATH");
     if(paths && pattern && *pattern)
     {
-        unsigned int w=wm->cfg.run_cmd_entry_width, h=wm->cfg.hint_win_line_height;
+        unsigned int w=wm->cfg->run_cmd_entry_width, h=wm->cfg->hint_win_line_height;
         String_format fmt={{0, 0, w, h}, CENTER_LEFT,
-            false, 0, wm->text_color[wm->cfg.color_theme][HINT_TEXT_COLOR], HINT_FONT};
-        int x=wm->run_cmd.x+wm->cfg.border_width, y=wm->run_cmd.y+wm->run_cmd.h+wm->cfg.border_width, *py=&fmt.r.y;
-        size_t i, n, max=(wm->screen_height-wm->taskbar.h-y)/h;
+            false, 0, wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
+        int x=wm->run_cmd->x+wm->cfg->border_width, y=wm->run_cmd->y+wm->run_cmd->h+wm->cfg->border_width, *py=&fmt.r.y;
+        size_t i, n, max=(wm->screen_height-wm->taskbar->h-y)/h;
         const char *reg=copy_strings(pattern, "*", NULL);
         File *f, *files=get_files_in_paths(paths, reg, RISE, false, &n);
         if(n)

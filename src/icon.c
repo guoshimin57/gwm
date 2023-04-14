@@ -46,7 +46,7 @@ static bool is_accessible(const char *filename);
 static void draw_icon_image(WM *wm, Client *c)
 {
     if(c && c->icon && c->image)
-        draw_image(wm, c->image, c->icon->win, 0, 0, wm->cfg.icon_size, wm->cfg.icon_size);
+        draw_image(wm, c->image, c->icon->win, 0, 0, wm->cfg->icon_size, wm->cfg->icon_size);
 }
 
 static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h)
@@ -107,7 +107,7 @@ static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 
 static Imlib_Image get_icon_image_from_file(WM *wm, Client *c)
 {
-    char *filename=find_icon(wm, c->class_hint.res_name, wm->cfg.icon_size, 1, "apps");
+    char *filename=find_icon(wm, c->class_hint.res_name, wm->cfg->icon_size, 1, "apps");
     return filename ? imlib_load_image(filename) : NULL;
 }
 
@@ -132,7 +132,7 @@ static char *find_icon(WM *wm, const char *name, int size, int scale, const char
     char *filename=NULL, **base_dirs=get_base_dirs();
 
     // 規範建議先找基本目錄，然後找hicolor，最後找後備目錄
-    if( (filename=find_icon_helper(name, size, scale, base_dirs, wm->cfg.cur_icon_theme, context_dir))
+    if( (filename=find_icon_helper(name, size, scale, base_dirs, wm->cfg->cur_icon_theme, context_dir))
         || (filename=find_icon_helper(name, size, scale, base_dirs, "hicolor", context_dir))
         || (filename=lookup_fallback_icon(name, base_dirs)))
     {
@@ -398,7 +398,7 @@ void iconify(WM *wm, Client *c)
     create_icon(wm, c);
     XMapWindow(wm->display, c->icon->win);
     XUnmapWindow(wm->display, c->frame);
-    if(c == DESKTOP(wm).cur_focus_client)
+    if(c == DESKTOP(wm)->cur_focus_client)
     {
         focus_client(wm, wm->cur_desktop, NULL);
         update_frame(wm, wm->cur_desktop, c);
@@ -408,14 +408,14 @@ void iconify(WM *wm, Client *c)
 static void create_icon(WM *wm, Client *c)
 {
     Icon *p=c->icon=malloc_s(sizeof(Icon));
-    p->w=p->h=wm->cfg.icon_size;
-    p->x=0, p->y=wm->taskbar.h/2-p->h/2;
-    p->area_type=c->area_type==ICONIFY_AREA ? wm->cfg.default_area_type : c->area_type;
+    p->w=p->h=wm->cfg->icon_size;
+    p->x=0, p->y=wm->taskbar->h/2-p->h/2;
+    p->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
     c->area_type=ICONIFY_AREA;
-    p->win=XCreateSimpleWindow(wm->display, wm->taskbar.icon_area, p->x, p->y,
-        p->w, p->h, 0, 0, wm->widget_color[wm->cfg.color_theme][ICON_COLOR].pixel);
+    p->win=XCreateSimpleWindow(wm->display, wm->taskbar->icon_area, p->x, p->y,
+        p->w, p->h, 0, 0, wm->widget_color[wm->cfg->color_theme][ICON_COLOR].pixel);
     XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
-    if(wm->cfg.use_image_icon)
+    if(wm->cfg->use_image_icon)
         set_icon_image(wm, c);
     p->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
     update_icon_area(wm);
@@ -429,17 +429,17 @@ void update_icon_area(WM *wm)
         if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
         {
             Icon *i=c->icon;
-            i->w=MIN(get_icon_draw_width(wm, c), wm->cfg.icon_win_width_max);
+            i->w=MIN(get_icon_draw_width(wm, c), wm->cfg->icon_win_width_max);
             if(have_same_class_icon_client(wm, c))
             {
                 get_string_size(wm, wm->font[TITLE_FONT], i->title_text, &w, NULL);
-                i->w=MIN(i->w+w, wm->cfg.icon_win_width_max);
+                i->w=MIN(i->w+w, wm->cfg->icon_win_width_max);
                 i->is_short_text=false;
             }
             else
                 i->is_short_text=true;
             i->x=x;
-            x+=i->w+wm->cfg.icons_space;
+            x+=i->w+wm->cfg->icons_space;
             XMoveResizeWindow(wm->display, i->win, i->x, i->y, i->w, i->h); 
         }
     }
@@ -447,8 +447,8 @@ void update_icon_area(WM *wm)
 
 unsigned int get_icon_draw_width(WM *wm, Client *c)
 {
-    if(wm->cfg.use_image_icon)
-        return wm->cfg.icon_size;
+    if(wm->cfg->use_image_icon)
+        return wm->cfg->icon_size;
     unsigned int w=0;
     get_string_size(wm, wm->font[CLASS_FONT], c->class_name, &w, NULL);
     return w;
@@ -458,8 +458,8 @@ void draw_icon(WM *wm, Client *c)
 {
     Icon *i=c->icon;
     String_format f={{0, 0, i->w, i->h}, CENTER_LEFT, false, 0,
-        wm->text_color[wm->cfg.color_theme][CLASS_TEXT_COLOR], CLASS_FONT};
-    if(wm->cfg.use_image_icon && c->image)
+        wm->text_color[wm->cfg->color_theme][CLASS_TEXT_COLOR], CLASS_FONT};
+    if(wm->cfg->use_image_icon && c->image)
         draw_string(wm, i->win, "", &f), draw_icon_image(wm, c);
     else
         draw_string(wm, i->win, c->class_name, &f);

@@ -12,6 +12,15 @@
 #ifndef DESKTOP_H
 #define DESKTOP_H
 
+struct desktop_tag // 虛擬桌面相關信息
+{
+    int n_main_max; // 主區域可容納的客戶窗口數量
+    Client *cur_focus_client, *prev_focus_client; // 分別爲當前聚焦結點、前一個聚焦結點
+    Layout cur_layout, prev_layout; // 分別爲當前布局模式和前一個布局模式
+    Area_type default_area_type; // 默認的窗口區域類型
+    double main_area_ratio, fixed_area_ratio; // 分別爲主要和固定區域屏佔比
+};
+
 void init_desktop(WM *wm);
 unsigned int get_desktop_n(WM *wm, XEvent *e, Func_arg arg);
 void focus_desktop_n(WM *wm, unsigned int n);

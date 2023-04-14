@@ -57,19 +57,19 @@ static void apply_rules(WM *wm, Client *c)
          state=get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_STATE]);
 
     Window tw=get_transient_for(wm, c->win);
-    c->area_type=DESKTOP(wm).default_area_type;
+    c->area_type=DESKTOP(wm)->default_area_type;
     if( (tw && tw!=wm->root_win)
         || type != wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
         || state == wm->ewmh_atom[_NET_WM_STATE_MODAL])
         c->area_type=FLOATING_AREA;
-    c->border_w=wm->cfg.border_width;
-    c->title_bar_h=wm->cfg.title_bar_height;
+    c->border_w=wm->cfg->border_width;
+    c->title_bar_h=wm->cfg->title_bar_height;
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     if(XGetClassHint(wm->display, c->win, &c->class_hint))
     {
         c->class_name=c->class_hint.res_class;
-        for(const Rule *r=wm->cfg.rule; r->app_class; r++)
+        for(const Rule *r=wm->cfg->rule; r->app_class; r++)
         {
             if(have_rule(r, c))
             {
@@ -105,7 +105,7 @@ void add_client_node(Client *head, Client *c)
 
 void fix_area_type(WM *wm)
 {
-    int n=0, m=DESKTOP(wm).n_main_max;
+    int n=0, m=DESKTOP(wm)->n_main_max;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         if(is_on_cur_desktop(wm, c))
@@ -162,7 +162,7 @@ static void fix_win_pos_by_screen(WM *wm, Client *c)
 {
     // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
     int w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h,
-        sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar.h;
+        sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar->h;
     if(c->x >= sw-w-bw)
         c->x=sw-w-bw;
     if(c->x < bw)
@@ -181,7 +181,7 @@ static void fix_win_size(WM *wm, Client *c)
 
 static void fix_win_size_by_screen(WM *wm, Client *c)
 {
-    unsigned int sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar.h;
+    unsigned int sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar->h;
     if(c->w+2*c->border_w > sw)
         c->w=sw-2*c->border_w;
     if(c->h+c->title_bar_h+2*c->border_w > sh-th)
@@ -193,9 +193,9 @@ static void frame_client(WM *wm, Client *c)
     Rect fr=get_frame_rect(c);
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y, fr.w,
         fr.h, c->border_w,
-        wm->widget_color[wm->cfg.color_theme][CURRENT_BORDER_COLOR].pixel, 0);
+        wm->widget_color[wm->cfg->color_theme][CURRENT_BORDER_COLOR].pixel, 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
-    if(wm->cfg.set_frame_prop)
+    if(wm->cfg->set_frame_prop)
         copy_prop(wm, c->frame, c->win);
     if(c->title_bar_h)
         create_title_bar(wm, c);
@@ -205,8 +205,8 @@ static void frame_client(WM *wm, Client *c)
 
 void create_title_bar(WM *wm, Client *c)
 {
-    unsigned long bc=wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel,
-                  ac=wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_AREA_COLOR].pixel;
+    unsigned long bc=wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel,
+                  ac=wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_AREA_COLOR].pixel;
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
@@ -229,15 +229,15 @@ static Rect get_frame_rect(Client *c)
 Rect get_title_area_rect(WM *wm, Client *c)
 {
     int buttons_n[]={[FULL]=0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
-        n=buttons_n[DESKTOP(wm).cur_layout];
-    return (Rect){0, 0, c->w-wm->cfg.title_button_width*n, c->title_bar_h};
+        n=buttons_n[DESKTOP(wm)->cur_layout];
+    return (Rect){0, 0, c->w-wm->cfg->title_button_width*n, c->title_bar_h};
 }
 
 static Rect get_button_rect(WM *wm, Client *c, size_t index)
 {
-    return (Rect){c->w-wm->cfg.title_button_width*(TITLE_BUTTON_N-index),
-        (c->title_bar_h-wm->cfg.title_button_height)/2,
-        wm->cfg.title_button_width, wm->cfg.title_button_height};
+    return (Rect){c->w-wm->cfg->title_button_width*(TITLE_BUTTON_N-index),
+        (c->title_bar_h-wm->cfg->title_button_height)/2,
+        wm->cfg->title_button_width, wm->cfg->title_button_height};
 }
 
 unsigned int get_typed_clients_n(WM *wm, Area_type type)
@@ -280,7 +280,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
                 if(is_on_desktop_n(i, c))
                     focus_client(wm, i, NULL);
 
-        if(wm->cfg.use_image_icon && c->image)
+        if(wm->cfg->use_image_icon && c->image)
         {
             imlib_context_set_image(c->image);
             imlib_free_image();
@@ -289,8 +289,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
         XFree(c->class_hint.res_class);
         XFree(c->class_hint.res_name);
         XFree(c->wm_hint);
-        free(c->title_text);
-        free(c);
+        vfree(c->title_text, c, NULL);
 
         if(!is_for_quit)
             update_layout(wm);
@@ -323,20 +322,20 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
 
 void update_frame(WM *wm, unsigned int desktop_n, Client *c)
 {
-    bool flag=(c==wm->desktop[desktop_n-1].cur_focus_client);
+    bool flag=(c==wm->desktop[desktop_n-1]->cur_focus_client);
     if(c->border_w)
         XSetWindowBorder(wm->display, c->frame, flag ?
-            wm->widget_color[wm->cfg.color_theme][CURRENT_BORDER_COLOR].pixel :
-            wm->widget_color[wm->cfg.color_theme][NORMAL_BORDER_COLOR].pixel);
+            wm->widget_color[wm->cfg->color_theme][CURRENT_BORDER_COLOR].pixel :
+            wm->widget_color[wm->cfg->color_theme][NORMAL_BORDER_COLOR].pixel);
     if(c->title_bar_h)
     {
         update_win_background(wm, c->title_area, flag ?
-            wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_AREA_COLOR].pixel :
-            wm->widget_color[wm->cfg.color_theme][NORMAL_TITLE_AREA_COLOR].pixel, None);
+            wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_AREA_COLOR].pixel :
+            wm->widget_color[wm->cfg->color_theme][NORMAL_TITLE_AREA_COLOR].pixel, None);
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             update_win_background(wm, c->buttons[i], flag ?
-                wm->widget_color[wm->cfg.color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel :
-                wm->widget_color[wm->cfg.color_theme][NORMAL_TITLE_BUTTON_COLOR].pixel, None);
+                wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel :
+                wm->widget_color[wm->cfg->color_theme][NORMAL_TITLE_BUTTON_COLOR].pixel, None);
     }
 }
 
@@ -351,10 +350,10 @@ Client *win_to_iconic_state_client(WM *wm, Window win)
 /* 僅在移動窗口、聚焦窗口時才有可能需要提升 */
 void raise_client(WM *wm, unsigned int desktop_n)
 {
-    Client *c=wm->desktop[desktop_n-1].cur_focus_client;
+    Client *c=wm->desktop[desktop_n-1]->cur_focus_client;
     if(c != wm->clients)
     {
-        Window wins[]={wm->taskbar.win, c->frame};
+        Window wins[]={wm->taskbar->win, c->frame};
         if(is_on_desktop_n(desktop_n, c) && c->area_type==FLOATING_AREA)
             XRaiseWindow(wm->display, c->frame);
         else
