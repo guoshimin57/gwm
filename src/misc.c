@@ -22,17 +22,19 @@ void *malloc_s(size_t size)
 {
     void *p=malloc(size);
     if(p == NULL)
-        exit_with_msg("錯誤：申請內存失敗");
+        exit_with_msg(_("錯誤：申請內存失敗"));
     return p;
 }
 
 int x_fatal_handler(Display *display, XErrorEvent *e)
 {
+    UNUSED(display);
     unsigned char ec=e->error_code, rc=e->request_code;
+
     if(rc==X_ChangeWindowAttributes && ec==BadAccess)
-        exit_with_msg("錯誤：已經有其他窗口管理器在運行！");
-    fprintf(stderr, "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, "
-            "次請求碼=%d\n", e->resourceid, e->serial, ec, rc, e->minor_code);
+        exit_with_msg(_("錯誤：已經有其他窗口管理器在運行！"));
+    fprintf(stderr, _("X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"),
+        e->resourceid, e->serial, ec, rc, e->minor_code);
 	if(ec == BadWindow || (rc==X_ConfigureWindow && ec==BadMatch))
 		return -1;
     return 0;
@@ -113,8 +115,9 @@ Pointer_act get_resize_act(Client *c, const Move_info *m)
         return NO_OP;
 }
 
-void clear_zombies(int unused)
+void clear_zombies(int signum)
 {
+    UNUSED(signum);
 	while(0 < waitpid(-1, NULL, WNOHANG))
         ;
 }
@@ -131,7 +134,7 @@ void set_xic(WM *wm, Window win, XIC *ic)
         return;
     if((*ic=XCreateIC(wm->xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing,
         XNClientWindow, win, NULL)) == NULL)
-        fprintf(stderr, "錯誤：窗口（0x%lx）輸入法設置失敗！", win);
+        fprintf(stderr, _("錯誤：窗口（0x%lx）輸入法設置失敗！"), win);
     else
         XSetICFocus(*ic);
 }
@@ -298,10 +301,10 @@ void exec_cmd(WM *wm, char *const *cmd)
 		if(wm->display)
             close(ConnectionNumber(wm->display));
 		if(!setsid())
-            perror("未能成功地爲命令創建新會話");
+            perror(_("未能成功地爲命令創建新會話"));
 		if(execvp(cmd[0], cmd) == -1)
-            exit_with_perror("命令執行錯誤");
+            exit_with_perror(_("命令執行錯誤"));
     }
     else if(pid == -1)
-        perror("未能成功地爲命令創建新進程");
+        perror(_("未能成功地爲命令創建新進程"));
 }

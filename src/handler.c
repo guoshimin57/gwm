@@ -63,7 +63,10 @@ void reg_event_handlers(WM *wm)
     wm->event_handlers[SelectionNotify]  = handle_selection_notify;
 }
 
-static void ignore_event(WM *wm, XEvent *e){}
+static void ignore_event(WM *wm, XEvent *e)
+{
+    UNUSED(wm), UNUSED(e);
+}
 
 static void handle_button_press(WM *wm, XEvent *e)
 {

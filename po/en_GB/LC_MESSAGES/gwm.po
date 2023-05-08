@@ -1,0 +1,261 @@
+# English translations for gwm package.
+# Copyright (C) 2023 gsm 406643764@qq.com
+# This file is distributed under the same license as the gwm package.
+# gsm <406643764@qq.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gwm 2.0\n"
+"Report-Msgid-Bugs-To: 406643764@qq.com\n"
+"POT-Creation-Date: 2023-05-05 11:26+0800\n"
+"PO-Revision-Date: 2023-05-05 11:26+0800\n"
+"Last-Translator: gsm <406643764@qq.com>\n"
+"Language-Team: English (British) <(nothing)>\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. 用戶設置：操作中心按鈕類型(詳gwm.h)  按鈕文字
+#: ../src/config.c:493
+msgid "幫助"
+msgstr "Help"
+
+#: ../src/config.c:494
+msgid "文件"
+msgstr "File"
+
+#: ../src/config.c:495
+msgid "終端模擬器"
+msgstr "Terminal emulator"
+
+#: ../src/config.c:496
+msgid "網絡瀏覽器"
+msgstr "Web browser"
+
+#: ../src/config.c:498
+msgid "播放影音"
+msgstr "Start Play"
+
+#: ../src/config.c:499
+msgid "切換播放狀態"
+msgstr "Toggle Play"
+
+#: ../src/config.c:500
+msgid "關閉影音"
+msgstr "Quit Play"
+
+#: ../src/config.c:501
+msgid "减小音量"
+msgstr "Volume down"
+
+#: ../src/config.c:503
+msgid "增大音量"
+msgstr "Volume up"
+
+#: ../src/config.c:504
+msgid "最大音量"
+msgstr "Volume max"
+
+#: ../src/config.c:505
+msgid "靜音切換"
+msgstr "Mute toggle"
+
+#: ../src/config.c:506
+msgid "暫主區開窗"
+msgstr "Open in main area"
+
+#: ../src/config.c:508
+msgid "暫次區開窗"
+msgstr "Open in sec area"
+
+#: ../src/config.c:509
+msgid "暫固定區開窗"
+msgstr "Open in fixed area"
+
+#: ../src/config.c:510
+msgid "暫懸浮區開窗"
+msgstr "Open in floating area"
+
+#: ../src/config.c:511
+msgid "暫縮微區開窗"
+msgstr "Open in icon area"
+
+#: ../src/config.c:513
+msgid "增大主區容量"
+msgstr "Main area num up"
+
+#: ../src/config.c:514
+msgid "减小主區容量"
+msgstr "Main area num down"
+
+#: ../src/config.c:515
+msgid "切換聚焦模式"
+msgstr "Toggle focus mode"
+
+#: ../src/config.c:516
+msgid "退出gwm"
+msgstr "Quit gwm"
+
+#: ../src/config.c:518
+msgid "注銷"
+msgstr "Logout"
+
+#: ../src/config.c:519
+msgid "重啓"
+msgstr "Reboot"
+
+#: ../src/config.c:520
+msgid "關機"
+msgstr "Shutdown"
+
+#: ../src/config.c:521
+msgid "運行"
+msgstr "Run"
+
+#. 用戶設置：構件類型(詳gwm.h)  構件功能提示文字
+#: ../src/config.c:530
+msgid "拖動以調整窗口尺寸"
+msgstr "Drag to resize"
+
+#: ../src/config.c:531
+msgid "切換到次要區域"
+msgstr "To sec area"
+
+#: ../src/config.c:532
+msgid "切換到主要區域"
+msgstr "To main area"
+
+#: ../src/config.c:533
+msgid "切換到固定區域"
+msgstr "To fixed area"
+
+#: ../src/config.c:534
+msgid "切換到懸浮區域"
+msgstr "To floating area"
+
+#: ../src/config.c:535
+msgid "切換到圖符區域"
+msgstr "To icon area"
+
+#: ../src/config.c:536
+msgid "切換到懸浮區域並最大化窗口"
+msgstr "Maximize window"
+
+#: ../src/config.c:537
+msgid "關閉窗口"
+msgstr "Close window"
+
+#: ../src/config.c:538
+msgid "切換到虛擬桌面1"
+msgstr "To virtual desktop 1"
+
+#: ../src/config.c:539
+msgid "切換到虛擬桌面2"
+msgstr "To virtual desktop 2"
+
+#: ../src/config.c:540
+msgid "切換到虛擬桌面3"
+msgstr "To virtual desktop 3"
+
+#: ../src/config.c:541
+msgid "切換到全屏模式"
+msgstr "To full screen mode"
+
+#: ../src/config.c:542
+msgid "切換到預覽模式"
+msgstr "To preview mode"
+
+#: ../src/config.c:543
+msgid "切換到堆疊模式"
+msgstr "To stacking mode"
+
+#: ../src/config.c:544
+msgid "切換到平鋪模式"
+msgstr "To tiling mode"
+
+#: ../src/config.c:545
+msgid "顯示桌面"
+msgstr "show desktop"
+
+#: ../src/config.c:546
+msgid "打開操作中心"
+msgstr "Open action center"
+
+#: ../src/config.c:575
+msgid "請輸入命令，然後按回車執行"
+msgstr "Enter the command and press Enter to execute"
+
+#: ../src/font.c:25
+msgid "錯誤：不能加載必要的字體。"
+msgstr "Error: Unable to load necessary fonts."
+
+#: ../src/grab.c:80
+#, c-format
+msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
+msgstr "Error: The corresponding modifier key for the specified key symbol could not be found!\n"
+
+#: ../src/grab.c:83
+#, c-format
+msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
+msgstr "Error: The key symbol specified does not have a corresponding key code!\n"
+
+#: ../src/gwm.c:36
+msgid "不能安裝SIGCHLD信號處理函數"
+msgstr "SIGCHLD signal handler function cannot be installed"
+
+#: ../src/gwm.c:38
+msgid "不能安裝SIGINT信號處理函數"
+msgstr "SIGINT signal handler cannot be installed"
+
+#: ../src/gwm.c:40
+msgid "不能安裝SIGTERM信號處理函數"
+msgstr "SIGTERM signal handler cannot be installed"
+
+#: ../src/gwm.c:42
+msgid "不能安裝SIGQUIT信號處理函數"
+msgstr "SIGQUIT signal handler cannot be installed"
+
+#: ../src/gwm.c:44
+msgid "不能安裝SIGHUP信號處理函數"
+msgstr "SIGHUP signal handler cannot be installed"
+
+#: ../src/init.c:79
+#, c-format
+msgid "錯誤: 不能設置輸入法"
+msgstr "Error: Unable to set input method"
+
+#: ../src/init.c:129
+msgid "錯誤：查詢窗口清單失敗！"
+msgstr "Error: Failed to query window list!"
+
+#: ../src/misc.c:25
+msgid "錯誤：申請內存失敗"
+msgstr "Error: Failed to allocate memory"
+
+#: ../src/misc.c:35
+msgid "錯誤：已經有其他窗口管理器在運行！"
+msgstr "Error: There is already another window manager running!"
+
+#: ../src/misc.c:36
+#, c-format
+msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
+msgstr "X error: Resource number=%#lx, Request number=%lu, Error code=%d, Major request code=%d, Minor request code=%d\n"
+
+#: ../src/misc.c:137
+#, c-format
+msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
+msgstr "Error: Window (0x%lx) input method setup failed!"
+
+#: ../src/misc.c:304
+msgid "未能成功地爲命令創建新會話"
+msgstr "Failed to successfully create a new session for the command"
+
+#: ../src/misc.c:306
+msgid "命令執行錯誤"
+msgstr "Command execution error"
+
+#: ../src/misc.c:309
+msgid "未能成功地爲命令創建新進程"
+msgstr "Failed to successfully create a new process for the command"

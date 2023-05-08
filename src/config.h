@@ -52,7 +52,7 @@ struct config_tag
     unsigned int run_cmd_entry_width; // 運行命令的輸入構件的寬度
     unsigned int run_cmd_entry_height; // 運行命令的輸入構件的寬度
     unsigned int hint_win_line_height; // 提示窗口的行高度
-    unsigned int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
+    int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
 
     unsigned int cursor_shape[POINTER_ACT_N]; // 定位器相關的光標字體
 
@@ -70,7 +70,7 @@ struct config_tag
     const char *title_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
     const char *taskbar_button_text[TASKBAR_BUTTON_N]; // 任務欄按鈕的標籤
     const char *cmd_center_item_text[CMD_CENTER_ITEM_N]; // 操作中心按鈕的標籤
-    const wchar_t *run_cmd_entry_hint; // 運行輸入框的提示文字
+    const char *run_cmd_entry_hint; // 運行輸入框的提示文字
     const Keybind *keybind; // 按鍵功能綁定。有的鍵盤同時按多個鍵會衝突，故組合鍵宜盡量少
     const Buttonbind *buttonbind; // 定位器按鈕功能綁定。
     const Rule *rule; // 窗口管理器對窗口的管理規則

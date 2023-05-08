@@ -37,8 +37,7 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
     if(e->type == ButtonPress)
     {
         XButtonEvent *b=&e->xbutton;
-        int x=b->x_root-b->x, y=b->y_root-b->y;
-        set_pos_for_click(wm, bind, x, y, &menu->x, &menu->y,
+        set_pos_for_click(wm, bind, b->x_root-b->x, &menu->x, &menu->y,
             menu->w*menu->col, menu->h*menu->row);
     }
     XMoveWindow(wm->display, menu->win, menu->x, menu->y);

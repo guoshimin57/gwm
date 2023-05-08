@@ -66,14 +66,17 @@ static void exec_autostart(WM *wm)
 
 static void set_locale(WM *wm)
 {
-	if(!setlocale(LC_CTYPE, "") || !XSupportsLocale())
+	if(!setlocale(LC_ALL, "") || !XSupportsLocale())
 		fprintf(stderr, "warning: no locale support\n");
     else
     {
+        bindtextdomain("gwm", "/usr/share/locale/");
+        textdomain("gwm");
+
         char *m=XSetLocaleModifiers("");
         wm->xim=XOpenIM(wm->display, NULL, NULL, NULL);
         if(!m || !wm->xim)
-            fprintf(stderr, "錯誤: 不能設置輸入法");
+            fprintf(stderr, _("錯誤: 不能設置輸入法"));
     }
 }
 
@@ -123,7 +126,7 @@ static void create_clients(WM *wm)
     wm->clients->win=wm->root_win;
     wm->clients->prev=wm->clients->next=wm->clients;
     if(!XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
-        exit_with_msg("錯誤：查詢窗口清單失敗！");
+        exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
     for(size_t i=0; i<n; i++)
         if(is_wm_win(wm, child[i], true))
             add_client(wm, child[i]);

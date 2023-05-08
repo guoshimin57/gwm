@@ -20,7 +20,7 @@ struct icon_dir_info_tag
 typedef struct icon_dir_info_tag Icon_dir_info;
 
 static void draw_icon_image(WM *wm, Client *c);
-static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h);
+static void draw_image(Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h);
 static void set_icon_image(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c);
@@ -36,7 +36,7 @@ static char **get_sub_dirs(const char *base_dir, const char *theme, const char *
 static char **get_list_val_from_index_theme(const char *base_dir, const char *theme, const char *key, const char *filter);
 static char *grep_index_theme(const char *base_dir, const char *theme, const char *key, char *buf, size_t size);
 static bool get_dir_info_from_index_theme(const char *base_dir, const char *theme, const char *sub_dir, Icon_dir_info *info);
-static bool get_icon_dir_info_from_buf(char *buf, size_t size, Icon_dir_info *info);
+static bool get_icon_dir_info_from_buf(char *buf, Icon_dir_info *info);
 static void fix_icon_dir_info(Icon_dir_info *info);
 static FILE *open_index_theme(const char *base_dir, const char *theme);
 static size_t get_spec_char_num(const char *str, int ch);
@@ -46,10 +46,10 @@ static bool is_accessible(const char *filename);
 static void draw_icon_image(WM *wm, Client *c)
 {
     if(c && c->icon && c->image)
-        draw_image(wm, c->image, c->icon->win, 0, 0, wm->cfg->icon_size, wm->cfg->icon_size);
+        draw_image(c->image, c->icon->win, 0, 0, wm->cfg->icon_size, wm->cfg->icon_size);
 }
 
-static void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h)
+static void draw_image(Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h)
 {
     imlib_context_set_image(image);
     imlib_context_set_drawable(d);   
@@ -237,7 +237,7 @@ static char **get_base_dirs(void)
 {
     char **dirs=NULL, *home=getenv("HOME"), *pix="/usr/share/pixmaps",
           *xdg=copy_strings(getenv("XDG_DATA_DIRS"), NULL);
-    int n=get_spec_char_num(xdg, ':')+4;
+    size_t n=get_spec_char_num(xdg, ':')+4;
 
     // 規範規定依次搜索如下三個基本目錄：
     // $HOME/.icons、$XDG_DATA_DIRS/icons、/usr/share/pixmaps
@@ -310,14 +310,14 @@ static bool get_dir_info_from_index_theme(const char *base_dir, const char *them
         && (!fgets(buf, ICON_BUF_SIZE, fp) || strstr(buf, sub_dir)!=buf+1))
         ;
     while( (result=!feof(fp)) && fgets(buf, ICON_BUF_SIZE, fp)
-        && get_icon_dir_info_from_buf(buf, ICON_BUF_SIZE, info))
+        && get_icon_dir_info_from_buf(buf, info))
         ;
     fclose(fp);
     fix_icon_dir_info(info);
     return result;
 }
 
-static bool get_icon_dir_info_from_buf(char *buf, size_t size, Icon_dir_info *info)
+static bool get_icon_dir_info_from_buf(char *buf, Icon_dir_info *info)
 {
     for(size_t i=0, n=ARRAY_NUM(ICON_THEME_PER_DIR_KEYS); i<n; i++)
     {

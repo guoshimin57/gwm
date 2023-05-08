@@ -9,7 +9,7 @@
 # <http://www.gnu.org/licenses/>。
 # *************************************************************************
 
-subdirs := zh_HK 
+subdirs := en_GB zh_CN zh_HK
 
 .PHONY : all install install-strip uninstall clean
 all :

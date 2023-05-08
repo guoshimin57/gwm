@@ -1,0 +1,481 @@
+./" ************************************************* ***************************
+./" gwm.1: gwm(1) manpage.
+./" Copyright (C) 2020-2023 gsm <406643764@qq.com>
+./" This program is free software: you may redistribute and modify it under the
+./" GNU General Public License, version 3 or later, as published by the Free
+./" Software Foundation.
+./" Whilst this program is published for purpose of use, no warranty of any
+./" kind is assumed, nor is the implied warranty of merchantability or fitness
+./" for a particular purpose contained. See GNU > General Public License for
+./" details.
+./" You should have received a copy of the GNU General Public License with this
+./" program. Otherwise, see <http://www.gnu.org/licenses/>.
+./" ************************************************* ***************************/
+
+.TH gwm 1 May 2023 "gwm 2.0" gwm
+.
+.SH NAME
+gwm \- gwm (gsm's window manager), is an X11-based dynamic window manager written in C language.
+.
+.SH SYNOPSIS 
+.B gwm
+.
+.SH DESCRIPTION
+.PP
+gwm (gsm's window manager), is an X11-based dynamic window manager written in C language.
+.PP
+The child windows of the X Window System are always located above the parent window in screen space, and the window opened later is always located above the brother window opened first in screen space; the newly opened window is always located on top of the screen space. This window order is called window stacking order. The stacking order can be adjusted.
+.PP
+gwm virtualizes the physical screen into multiple logical screens, the so-called virtual desktops; logically divides the screen space into three layers. The bottom layer is the root window, which is the predecessor window of all other windows; the upper layer above the taskbar is used to place floating windows; the middle layer between the taskbar and the root window is used to place other windows. This is just a logical layering, the purpose is to achieve visual layering. In fact, gwm achieves the layering effect by adjusting the stacking order of the windows, not by resetting the parent window for layering. The windows on the upper layer will always block the windows on the middle and lower layers, that is, the floating windows will block the non-floating windows. For the middle screen space, gwm supports four window layout modes: full screen, tiling, stacking, and preview, which can be dynamically switched at runtime. Full screen mode does not display the taskbar, and other modes display the taskbar. The taskbar is located at the bottom of the screen and consists of buttons on the left, a icon bar in the middle, and a status bar on the right. Buttons are used to achieve specific functions, and the text of each button from left to right is: 1, 2, 3, □, ▦, ▣, ▥, ■, ^. The icon bar is used to display the iconified window, click the iconified window to deiconify window. The status bar shows the name of the root window.
+.PP
+The windows mentioned below, unless otherwise specified, refer to the windows managed by this window manager. The current window mentioned below, unless otherwise specified, refers to the window under the current virtual desktop that gets the keyboard input focus. The following instructions or commands, unless otherwise specified, are limited to the current virtual desktop. The screen space mentioned below, unless otherwise specified, refers to the screen space of the middle layer.
+.PP
+Full screen mode is a layout mode in which the current window exclusively occupies the entire screen space.
+.PP
+Tiling mode is a layout mode in which all non-iconified and non-floating windows are allocated all screen space except the taskbar area in stacking order. It divides the screen space into main area, secondary area, fixed area and taskbar. From left to right are the secondary area, the main area, and the fixed area. If the fixed area is not occupied by windows, the area will be merged into the main area and the secondary area. If the secondary area is not occupied by a window, the area is merged into the main area. Each of the three areas evenly allocates space to the corresponding window. The windows of the main area and the secondary area are complementary to each other, that is, if the number of windows in the main area is more than the number of windows that can be accommodated in the main area due to an operation, the windows at the bottom of the main area will be moved to the top of the secondary area; If the number of windows in the main area is less than the number of windows that can be accommodated in the main area and the number of windows in the secondary area is greater than zero, the window at the top of the secondary area will be moved to the bottom of the main area. Hereinafter, this rule is referred to as main and secondary area complementarity.
+.PP
+Stacking mode is a layout mode in which windows can be stacked, all windows are arranged in their original positions and occupy all screen space except the taskbar.
+.PP
+Preview mode is a layout mode in which all windows equally distribute all screen space except the taskbar. If a window is selected in this mode, it will switch to the previous layout mode, the selected window will become the current window, and other windows will remain in the previous layout mode. If the previous layout mode is tiling mode, the selected window will be moved to the top of the main area.
+.PP
+gwm resets the parent window for all windows, the parent window also includes the border, the title bar, both of which are collectively called the window frame. The original window range before reparenting is called the non-frame area. Among them, the title bar sets the title area and buttons sequentially from left to right. The title area is used to display the title of the window and provide the function of moving the window. Buttons are used to implement specific functions, and the number of buttons varies with the basic window layout mode. In tiling mode, the text of each button from left to right is: ◁, ▼, ▷, △, —, □, ×. In full screen mode, the border and title bar are not displayed. In stacking mode, ◁, ▼, ▷, △ buttons are not displayed. In preview mode, only the × button is displayed.
+.
+.SH OPTIONS
+none.
+.
+.SH USAGE
+.
+.SS General Description
+.
+.TP
+You can view the mapping of modifier keys through xmodmap(1). Usually, Mod1 corresponds to Alt, and Mod4 corresponds to Super.
+.TP
+When using keyboard commands, pointer commands, the caps lock and num lock keys are ignored.
+.TP
+Under normal circumstances, if there are floating windows, the stacking order between the floating windows remains unchanged; unless otherwise specified, otherwise all of the above. The stacking order of windows refers to the order in which windows are placed. The default is the order in which windows are opened. The window opened first is at the bottom of the stack, and the window opened later is at the top of the stack, that is, last in first out; the window manager can change the window stacking order. For window stacking order, floating windows are always above the taskbar, and other types of windows are always below the taskbar.
+.TP
+When moving or resizing a window in tiling mode, the window switches to the top of the floating area, while the remaining windows remain in the original layout mode. Windows can only be moved or resized in full screen, stacking, or tiling modes. In full screen mode, only the floating window can be moved or resized. Except that the window can be switched to the icon area in the stacking mode, only in the tiling mode can the area be switched or exchanged for the window, the area ratio can be adjusted, and the maximum number of windows in the area can be adjusted. When a window is moved or resized, a hint window for window coordinates and dimensions will be displayed. The size is in the size step value preferred by the program, which may be in pixels, character width, or other.
+.TP
+Unless otherwise specified, the following commands operate on the current desktop.
+.TP
+The status bar will show the result of "xsetroot \-name". If not set, "gwm" is displayed.
+.TP
+Immediately after gwm starts, it tries to execute ~/.config/gwm/autostart.sh.
+.
+.SS Key Commands
+.
+.TP
+.B F1
+Try opening the gwm manpage with one of the following terminal emulators in order: lxterminal, xfce4-terminal, xterm. Hereinafter referred to as Open the gwm manpage.
+.
+.TP
+.B Brightness down key
+Reduce screen brightness.
+.
+.TP
+.B Brightness up key
+Increase screen brightness.
+.
+.TP
+.B Mod4+Mod1+f
+Open your default file browser.
+.
+.TP
+.B Mod4+Mod1+g
+Open the Battle for Wesnoth.
+.
+.TP
+.B Mod4+Mod1+q
+Open QQ.
+.
+.TP
+.B Mod4+Mod1+t
+Try to open the following emulated terminals in order until one of them is opened or the trial is exhausted: lxterminal, xfce4-terminal, gnome-terminal, konsole5, xterm. Hereinafter referred to as open emulated terminal.
+.
+.TP
+.B Mod4+Mod1+w
+Open your default web browser.
+.
+.TP
+.B Mod4+Mod1+F1
+Run the following command: mplayer -shuffle ~/music/*.
+.
+.TP
+B. Mod4+Mod1+F2
+Switch the start and stop status of the above mplayer commands.
+.
+.TP
+.V Mod4+Mod1+F3
+Terminate the above mplayer command.
+.
+.TP
+.B Mod4+Control+d
+Open the command entry and have grab keyboard. After typing part or all of a command, press Enter to run the first matching command and exit. Press the Esc key or use the pointer to click outside the entry to close the command entry. Support simple editing functions, you can use the Backspace key to delete a character before the cursor, use the Del key to delete a character after the cursor, use the left key to move the cursor to the position of the previous character, and use the right key to move the cursor to the position of next character, use the Home key to move the cursor before the first character, use End to move the cursor behind the last character, use Control+u to clear all characters before the cursor, use Control+v to paste the content at the cursor position, use Tab key completes commands.
+.
+.TP
+.B Mod4+Control+F1
+Use amixer to reduce the volume.
+.
+.TP
+B Mod4+control+F2
+Use amixer to increase the volume.
+.
+.TP
+.B Mod4+Control+F3
+Use amixer to set the volume to maximum.
+.
+.TP
+.B Mod4+Control+F4
+Use amixer to toggle between current volume and mute.
+.
+.TP
+.B Mod4+Control+l
+Log out of the gwm session, ie: pkill -9 startgwm.
+.
+.TP
+.B Mod4+Control+p
+shutdown.
+.
+.TP
+.B Mod4+Control+r
+Restart the operating system.
+.
+.TP
+.B Mod4+Delete
+Quit gwm.
+.
+.TP
+.B Mod4+k
+Move the current window up.
+.
+.TP
+.B Mod4+j
+Move the current window down.
+.
+.TP
+.B Mod4+h
+Move the current window to the left.
+.
+.TP
+.B Mod4+l
+Move the current window to the right.
+.
+.TP
+.B Mod4+Up
+Move the upper border of the current window up.
+.
+.TP
+.B Mod4+Shift+Up
+Moves the top edge of the current window down.
+.
+.TP
+.B Mod4+Down
+Moves the bottom border of the current window down.
+.
+.TP
+.B Mod4+Shift+Down
+Move the bottom border of the current window up.
+.
+.TP
+.B Mod4+Left
+Move the left edge of the current window to the left.
+.
+.TP
+.B Mod4+Shift+Left
+Moves the left border of the current window to the right.
+.
+.TP
+.B Mod4+Right
+Move the right edge of the current window to the right.
+.
+.TP
+.B Mod4+Shift+Right
+Move the right border of the current window to the left.
+.
+.TP
+.B Mod4+F1
+Move the current window to the top of the main area.
+.
+.TP
+.B Mod4+F2
+Move the current window to the top of the secondary area.
+.
+.TP
+.B Mod4+F3
+Move the current window to the top of the fixed area.
+.
+.TP
+.B Mod4+F4
+Move the current window to the top of the floating area.
+.
+.TP
+.B Mod4+F5
+iconify the current window.
+.
+.TP
+.B Mod4+Shift+F1
+Set to move the window to the top of the main area when the window is opened in tiling mode next time.
+.
+.TP
+.B Mod4+Shift+F2
+Sets to move the window to the top of the secondary area when the window is opened in tiling mode next time.
+.
+.TP
+.B Mod4+Shift+F3
+Set to move the window to the top of the fixed area when the window is opened in tiling mode next time.
+.
+.TP
+.B Mod4+Shift+F4
+Set to move the window to the top of the floating area when the window is opened in tiling mode next time.
+.
+.TP
+.B Mod4+Shift+F5
+Set to iconify the window when the window is opened in tiling mode or floating mode next time.
+.
+.TP
+.B Mod4+Return
+If the current window is a iconified window, the window will be deiconified; if the current window is in preview mode, it will also switch to the previous layout mode.
+.
+.TP
+.B Mod4+Tab
+Switches to the next window, which has a higher stacking order.
+.
+.TP
+.B Mod4+Shift+Tab
+Switch to the previous window, which has a lower stacking order.
+.
+.TP
+.B Mod4+b
+Toggles the visibility of window border.
+.
+.TP
+.B Mod4+c
+Close the current window.
+.
+.TP
+.B Mod4+Shift+c
+Close all windows.
+.
+.TP
+.B Mod4+d
+Show the desktop, i.e. iconify all windows.
+.
+.TP
+.B Mod4+Shift+d
+deiconify all windows.
+.
+.TP
+.B Mod4+e
+Toggle focus mode. There are two focus modes, one focuses the window when the cursor enters the non-iconified window, and the other focuses the window when the pointer button clicks on the window.
+.
+.TP
+.B Mod4+f
+Switch to full screen mode.
+.
+.TP
+.B Mod4+p
+Switch to preview mode.
+.
+.TP
+.B Mod4+s
+Switch to stacking mode.
+.
+.TP
+.B Mod4+t
+Switch to tiling mode.
+.
+.TP
+.B Mod4+Shift+t
+Toggles the visibility of the current window's title bar.
+.
+.TP
+.B Mod4+i
+Increase the number of windows that can fit in the main area.
+.
+.TP
+.B Mod4+Shift+i
+Reduce the number of windows that can fit in the main area.
+.
+.TP
+.B Mod4+m
+If there are secondary area, increase the main area rate and decrease the secondary area rate accordingly.
+.
+.TP
+.B Mod4+Shift+m
+If there are  secondary area, decrease the main area rate and increase the secondary area rate accordingly.
+.
+.TP
+.B Mod4+x
+If there is a fixed area, increase the fixed area rate and decrease the main area rate accordingly.
+.
+.TP
+.B Mod4+Shift+x
+If there is a fixed area, decrease the fixed area rate and increase the main area rate accordingly.
+.
+.TP
+.B Mod1+w
+Change the wallpaper.
+.
+.TP
+.B Mod4+PageDown
+Switches to the next virtual desktop. Can be cycled.
+.
+.TP
+.B Mod4+PageUp
+Switch to the previous virtual desktop. Can be cycled.
+.
+.TP
+.B Print
+Take full screen screenshots and save to file.
+.
+.TP
+.B Mod4+Print
+Take a screenshot of the current window and save it to file.
+.
+.TP
+.B Mod4+\e
+Switch color theme.
+.
+.TP
+.B Mod4+Shift+number N key
+Switch to the Nth virtual desktop.
+.
+.TP
+.B Mod4+number N key
+Move the current window to the Nth virtual desktop.
+.
+.TP
+.B Mod4+Mod1+number N key
+Move all windows to the Nth virtual desktop.
+.
+.TP
+.B Control+number N key
+Move the current window to the Nth virtual desktop, and switch to the Nth virtual desktop.
+.
+.TP
+.B Control+Mod1+number N key
+Move all windows to the Nth virtual desktop, and switch to the Nth virtual desktop.
+.
+.TP
+.B Mod1+number N key
+Attach the current window to the Nth virtual desktop.
+.
+.TP
+.B Mod1+Shift+number N key
+Attach all windows to the Nth virtual desktop.
+.
+.TP
+.B Shift+Control+0
+Attach the current window to all virtual desktops.
+.
+.SS Pointer Command
+.
+.TP
+Pointer hovering means that the pointer does not move for a set period of time. Pointer button 1 is usually the left mouse button, pointer button 2 is usually the middle mouse button, and pointer button 3 is usually the right mouse button. Clicking on the window with the pointer will switch the window to the current window, that is, if the window is a floating window, the window will be promoted to the top of the window stack, otherwise, the window will be promoted to the top of all windows except the floating window and get the keyboard input focus. Clicking in a window other than the Action Center will close the Action Center. Pointer commands vary by pointer button pressed, keypressed, clicked, window hovered over. Unless otherwise specified below, when the pointer hovers over the component, a tooltip window will pop up.
+.
+.TP
+Unless otherwise specified below, moving the window refers to moving the window from the position where the window is clicked to the position where the corresponding pointer button is released. If this operation is performed in the tiling mode, the window will also be turned into a floating window; swapping the window refers to in the tiling mode, the clicked window is exchanged with the window where the cursor is when the corresponding pointer button is released; switching area refers to switching the clicked window to the area indicated by the clicked area button, or switching the clicked window switches to the area where the cursor was when the corresponding pointer button was released and is positioned in front of the window where the cursor was released, with the following exceptions: When released at the left edge of the screen, if a window exists in the secondary area, the window switches to the top of the secondary area, Otherwise, switch to the top of the main area; when the right edge of the screen is released, switch to the top of the fixed area; when the top edge of the screen is released, switch to the top of the floating area; when the root window is released, switch to the top of the main area.
+.
+.TP
+.B Operate the application window (unless otherwise specified, the corresponding pointer command is: pointer button 1 - click)
+    Window "◁" button: switch the window to the main area;
+    Window "▼" button: switch the window to the secondary area;
+    Window "▷" button: switch the window to a fixed area;
+    Window "△" button: switch the window to the floating area;
+    Window "—" button:iconify the window and focus on the previous window;
+    Window "□" button: maximize the window and switch the window to the floating area;
+    Window "×" button: close this window and focus on the previous window;
+    Window title area:
+        Pointer button 1 - click      Focus the window,
+        Pointer button 1 - move       Move the window,
+        Pointer button 2 - move       Change area,
+        Pointer button 3 - move       Swap two windows;
+    Window borders:
+        Pointer button 1 - click      Focus window,
+        Pointer button 1 - move       Adjusts the window size;
+    Window non-frame area:
+        Pointer button 1            - click     Focus the window, if preview mode now, switch to the previous layout mode, and if the window is a iconified window, then deiconify the window,
+        Mod4+pointer button 1       - move      Move the window,
+        Mod4+Shift+pointer button 1 - move      Resize the window,
+        Mod4+pointer button 2       - move      Change area,
+        Mod4+pointer button 3       - move      Swap window.
+.
+.TP
+.B Operate the root window (unless otherwise specified, the corresponding pointer command is: pointer button 1 - move)
+    Between the main area and the secondary area: adjust the rate of the main area and the secondary area;
+    Between the main and fixed areas: adjust the ratio of the main and fixed areas.
+.
+.TP
+.B Operation taskbar (unless otherwise specified, the corresponding pointer command is: pointer button 1 - click)
+    Taskbar virtual desktop buttons:
+        Pointer button 1              - click  Change to this virtual desktop,
+        Control+pointer button 1      - click  Move the current window to this virtual desktop, and change to this virtual desktop,
+        Control+Mod1+pointer button 1 - click  Move all windows to this virtual desktop, and Change to this virtual desktop,
+        Pointer button 2              - click  The current window is attached to this virtual desktop,
+        Mod1+pointer button 2         - click  All windows are attached to this virtual desktop,
+        Shift+pointer button 2        - click  The current window is attached to all virtual desktops,
+        Pointer button 3              - click  The current window to move to that virtual desktop,
+        Mod1+pointer button 3         - click  Move all windows to this virtual desktop;
+    Taskbar "□" button: switch to full screen mode;
+    Taskbar "▦" button: switch to preview mode;
+    Taskbar "▣" button: switch to stacking mode;
+    Taskbar "▥" button: switch to tiling mode;
+    Taskbar "■" button:
+        Pointer button 1      - click    Display the desktop, that is, to iconify all windows,
+        pointer button 3      - click    deiconify all windows,
+        Mod4+pointer button 2 - click    Close all windows of all desktops;
+    Taskbar "^" button: open the Action Center;
+    Action Center buttons:
+        "Help" button in Action Center: open the gwm manpage;
+        "File" button in Action Center: open the default file browser;
+        "Terminal Emulator" button: open the emulated terminal;
+        "Web Browser" button: open the default web browser;
+        The "Start Play" button: execute the "mplayer -shuffle ~/music/*" command;
+        "Toggle Play Status" button: toggle the start and stop status of the above commands;
+        "Quit Play" button: terminate the above mplayer command;
+        "Volume down" button: use amixer to reduce the volume;
+        "Volume up" button: use amixer to increase the volume;
+        "Volume max" button: use amixer to set the volume to the maximum;
+        "Mute toggle" button: use amixer to switch between the current volume and mute;
+        "Open in main area" button: set the window to be moved to the top of the main area if it is in the tiling mode when the window is opened next time;
+        "Open in sec area" button: set the window to be moved to the top of the secondary area when the next time the window is opened in tiling mode;
+        "Open in fixed area" button: set the window to be moved to the top of the fixed area when opening the window in tiling mode next time;
+        "Open in floating area" button: set the window to be moved to the top of the floating area when the window is opened in tiling mode next time;
+        "Open in icon area" button: set the window to be moved to the top of the icon area when the window is opened in tiling mode next time;
+        "Main area num up" button: increase the number of windows that can be accommodated in the main area;
+        "Main area num down" button: reduce the number of windows that can be accommodated in the main area;
+        "Toggle focus mode" button: toggle focus mode;
+        "Quit gwm" button: quit gwm;
+        "Logout" button in Action Center: Logout;
+        "Restart" button: restart the operating system;
+        "Shutdown" button in the action center: Shut down;
+        "Run" button: equivalent to the keyboard command Mod4+Control+d;
+    icon in the taskbar:
+        Pointer button 1      - click   Deiconify the window,
+        Pointer button 3      - move    Swap two windows,
+        Pointer button 2      - move    Change area,
+        Mod4+pointer button 2 - click   Close the icon and the corresponding window.
+.
+.SS Configuration
+.
+.TP
+Currently the configuration can only be modified by modifying the source code. Specifically, modify config.c, which already contains detailed configuration notes.
+.
+.SH BUGS REPORT
+.
+Because the ICCCM and EWMH protocols have not been fully implemented yet, the program windows using these protocols may not run correctly. If you find other bugs, please report to <406643764@qq.com>.
+.
+.SH AUTHOR
+.
+This program is developed by gsm<406643764@qq.com>.
+.br
+Official website: https://sourceforge.net/projects/gsmwm/.
+.
+.br
+Official QQ group: The group account is 920793458, and the group name is gwm.
+.
+.SH COPYRIGHT
+.
+Copyright \(co 2020-2023 gsm <406643764@qq.com>.
+.br
+This program is free software: you may redistribute and modify it under the GNU General Public License, version 3 or later, as published by the Free Software Foundation.

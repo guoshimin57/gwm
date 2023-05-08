@@ -17,7 +17,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/select.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -25,6 +24,7 @@
 #include <dirent.h>
 #include <Imlib2.h>
 #include <locale.h>
+#include <libintl.h>
 #include <math.h>
 #include <X11/cursorfont.h>
 #include <X11/keysymdef.h>
@@ -32,12 +32,16 @@
 #include <X11/XF86keysym.h>
 #include <X11/Xft/Xft.h>
 #include <X11/Xproto.h>
+
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_TAKE_FOCUS"}
 #define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE",\
     "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG",\
     "_NET_WM_WINDOW_TYPE_UTILITY",\
     "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
 
+#define _(s) gettext(s)
+
+#define UNUSED(x) ((void)(x))
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define MAX(a, b) ((a)>(b) ? (a) : (b))
 #define SET_DEF_VAL(var, value) ((var) = (var) ? (var) : (value))

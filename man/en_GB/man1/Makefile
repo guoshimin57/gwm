@@ -11,7 +11,7 @@
 
 srcs := $(wildcard *.1)
 objs := $(srcs:.1=.1.gz)
-install_path := $(prefix)/share/man/zh_HK/man1
+install_path := $(prefix)/share/man/en_GB/man1
 
 .PHONY : all install install-strip uninstall clean
 all : $(objs)

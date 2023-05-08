@@ -11,7 +11,7 @@
 
 export MAKE := make
 export prefix := /usr
-subdirs := src man tools
+subdirs := src man po tools
 doc := AUTHORS ChangeLog COPYING NEWS README THANKS TODO
 package := gwm 
 

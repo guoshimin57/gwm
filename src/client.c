@@ -127,7 +127,7 @@ void set_default_win_rect(WM *wm, Client *c)
 
 void set_win_rect_by_attr(WM *wm, Client *c)
 {
-    XWindowAttributes a={0, 0, wm->screen_width/4, wm->screen_height/4};
+    XWindowAttributes a={.x=0, .y=0, .width=wm->screen_width/4, .height=wm->screen_height/4};
     XGetWindowAttributes(wm->display, c->win, &a);
     c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
 }

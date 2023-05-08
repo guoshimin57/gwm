@@ -33,8 +33,8 @@ static unsigned int get_num_lock_mask(WM *wm)
 	XModifierKeymap *m=XGetModifierMapping(wm->display);
     KeyCode code=XKeysymToKeycode(wm->display, XK_Num_Lock);
     if(code)
-        for(size_t i=0; i<8; i++)
-            for(size_t j=0; j<m->max_keypermod; j++)
+        for(int i=0; i<8; i++)
+            for(int j=0; j<m->max_keypermod; j++)
                 if(m->modifiermap[i*m->max_keypermod+j] == code)
                     { XFreeModifiermap(m); return (1<<i); }
     return 0;
@@ -74,13 +74,13 @@ static unsigned int get_modifier_mask(WM *wm, KeySym key_sym)
     KeyCode kc;
     if((kc=XKeysymToKeycode(wm->display, key_sym)) != 0)
     {
-        for(size_t i=0; i<8*wm->mod_map->max_keypermod; i++)
+        for(int i=0; i<8*wm->mod_map->max_keypermod; i++)
             if(wm->mod_map->modifiermap[i] == kc)
                 return 1 << (i/wm->mod_map->max_keypermod);
-        fprintf(stderr, "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n");
+        fprintf(stderr, _("錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"));
     }
     else
-        fprintf(stderr, "錯誤：指定的鍵符號不存在對應的鍵代碼！\n");
+        fprintf(stderr, _("錯誤：指定的鍵符號不存在對應的鍵代碼！\n"));
     return 0;
 }
 

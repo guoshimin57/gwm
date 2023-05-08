@@ -245,12 +245,12 @@ static const Buttonbind buttonbind[] =
  */
 static const Rule rule[] =
 {
-//  客戶程序類型           客戶程序名稱 客戶程序的類型別名 窗口放置位置(詳gwm.h)  是否顯示標題欄 是否顯示邊框 桌面掩碼
-    {"Qq",                 "qq",                 "QQ",     FIXED_AREA,            false,         false,        0},
-    {"explorer.exe",       "explorer.exe",       NULL,     FLOATING_AREA,         false,         false,        0},
-    {"Thunder.exe",        "Thunder.exe",        NULL,     FLOATING_AREA,         true,          true,         0},
-    {"Google-chrome",      "google-chrome",      "chrome", MAIN_AREA,             true,          true,         0},
-    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "文件",   MAIN_AREA,             true,          true,         0},
+//  客戶程序類型           客戶程序名稱 客戶程序的類型別名   窗口放置位置(詳gwm.h)  是否顯示標題欄 是否顯示邊框 桌面掩碼
+    {"Qq",                 "qq",                 "QQ",       FIXED_AREA,            false,         false,        0},
+    {"explorer.exe",       "explorer.exe",       NULL,       FLOATING_AREA,         false,         false,        0},
+    {"Thunder.exe",        "Thunder.exe",        NULL,       FLOATING_AREA,         true,          true,         0},
+    {"Google-chrome",      "google-chrome",      "chrome",   MAIN_AREA,             true,          true,         0},
+    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "Nautilus", MAIN_AREA,             true,          true,         0},
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 
@@ -463,10 +463,10 @@ static void config_title_button_text(WM *wm)
 {
     /*              用戶設置：標題欄按鈕類型(詳gwm.h)  按鈕文字 */
     SET_TITLE_BUTTON_TEXT(wm, SECOND_BUTTON,           "◁");
-    SET_TITLE_BUTTON_TEXT(wm, MAIN_BUTTON,             "★");
+    SET_TITLE_BUTTON_TEXT(wm, MAIN_BUTTON,             "▼");
     SET_TITLE_BUTTON_TEXT(wm, FIXED_BUTTON,            "▷");
     SET_TITLE_BUTTON_TEXT(wm, FLOAT_BUTTON,            "△");
-    SET_TITLE_BUTTON_TEXT(wm, ICON_BUTTON,             "ᅳ" );
+    SET_TITLE_BUTTON_TEXT(wm, ICON_BUTTON,             "—");
     SET_TITLE_BUTTON_TEXT(wm, MAX_BUTTON,              "□");
     SET_TITLE_BUTTON_TEXT(wm, CLOSE_BUTTON,            "×");
 }
@@ -490,35 +490,35 @@ static void config_taskbar_button_text(WM *wm)
 static void config_cmd_center_item_text(WM *wm)
 {
     /*                 用戶設置：操作中心按鈕類型(詳gwm.h)  按鈕文字 */
-    SET_CMD_CENTER_ITEM_TEXT(wm, HELP_BUTTON,               "幫助");
-    SET_CMD_CENTER_ITEM_TEXT(wm, FILE_BUTTON,               "文件");
-    SET_CMD_CENTER_ITEM_TEXT(wm, TERM_BUTTON,               "終端模擬器");
-    SET_CMD_CENTER_ITEM_TEXT(wm, BROWSER_BUTTON,            "網絡瀏覽器");
+    SET_CMD_CENTER_ITEM_TEXT(wm, HELP_BUTTON,               _("幫助"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, FILE_BUTTON,               _("文件"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, TERM_BUTTON,               _("終端模擬器"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, BROWSER_BUTTON,            _("網絡瀏覽器"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_START_BUTTON,         "播放影音");
-    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_TOGGLE_BUTTON,        "切換播放狀態");
-    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_QUIT_BUTTON,          "關閉影音");
-    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_DOWN_BUTTON,        "减小音量");
+    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_START_BUTTON,         _("播放影音"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_TOGGLE_BUTTON,        _("切換播放狀態"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_QUIT_BUTTON,          _("關閉影音"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_DOWN_BUTTON,        _("减小音量"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_UP_BUTTON,          "增大音量");
-    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_MAX_BUTTON,         "最大音量");
-    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_TOGGLE_BUTTON,      "靜音切換");
-    SET_CMD_CENTER_ITEM_TEXT(wm, MAIN_NEW_BUTTON,           "暫主區開窗");
+    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_UP_BUTTON,          _("增大音量"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_MAX_BUTTON,         _("最大音量"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_TOGGLE_BUTTON,      _("靜音切換"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, MAIN_NEW_BUTTON,           _("暫主區開窗"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, SEC_NEW_BUTTON,            "暫次區開窗");
-    SET_CMD_CENTER_ITEM_TEXT(wm, FIX_NEW_BUTTON,            "暫固定區開窗");
-    SET_CMD_CENTER_ITEM_TEXT(wm, FLOAT_NEW_BUTTON,          "暫懸浮區開窗");
-    SET_CMD_CENTER_ITEM_TEXT(wm, ICON_NEW_BUTTON,           "暫縮微區開窗");
+    SET_CMD_CENTER_ITEM_TEXT(wm, SEC_NEW_BUTTON,            _("暫次區開窗"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, FIX_NEW_BUTTON,            _("暫固定區開窗"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, FLOAT_NEW_BUTTON,          _("暫懸浮區開窗"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, ICON_NEW_BUTTON,           _("暫縮微區開窗"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, N_MAIN_UP_BUTTON,          "增大主區容量");
-    SET_CMD_CENTER_ITEM_TEXT(wm, N_MAIN_DOWN_BUTTON,        "减小主區容量");
-    SET_CMD_CENTER_ITEM_TEXT(wm, FOCUS_MODE_BUTTON,         "切換聚焦模式");
-    SET_CMD_CENTER_ITEM_TEXT(wm, QUIT_WM_BUTTON,            "退出gwm");
+    SET_CMD_CENTER_ITEM_TEXT(wm, N_MAIN_UP_BUTTON,          _("增大主區容量"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, N_MAIN_DOWN_BUTTON,        _("减小主區容量"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, FOCUS_MODE_BUTTON,         _("切換聚焦模式"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, QUIT_WM_BUTTON,            _("退出gwm"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, LOGOUT_BUTTON,             "注銷");
-    SET_CMD_CENTER_ITEM_TEXT(wm, REBOOT_BUTTON,             "重啓");
-    SET_CMD_CENTER_ITEM_TEXT(wm, POWEROFF_BUTTON,           "關機");
-    SET_CMD_CENTER_ITEM_TEXT(wm, RUN_BUTTON,                "運行");
+    SET_CMD_CENTER_ITEM_TEXT(wm, LOGOUT_BUTTON,             _("注銷"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, REBOOT_BUTTON,             _("重啓"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, POWEROFF_BUTTON,           _("關機"));
+    SET_CMD_CENTER_ITEM_TEXT(wm, RUN_BUTTON,                _("運行"));
 }
 
 /* 功能：設置構件功能提示。
@@ -527,23 +527,23 @@ static void config_cmd_center_item_text(WM *wm)
 static void config_tooltip(WM *wm)
 {
     /*    用戶設置：構件類型(詳gwm.h)  構件功能提示文字 */
-    SET_TOOLTIP(wm, CLIENT_FRAME,      "拖動以調整窗口尺寸");
-    SET_TOOLTIP(wm, SECOND_BUTTON,     "切換到次要區域");
-    SET_TOOLTIP(wm, MAIN_BUTTON,       "切換到主要區域");
-    SET_TOOLTIP(wm, FIXED_BUTTON,      "切換到固定區域");
-    SET_TOOLTIP(wm, FLOAT_BUTTON,      "切換到懸浮區域");
-    SET_TOOLTIP(wm, ICON_BUTTON,       "切換到圖符區域");
-    SET_TOOLTIP(wm, MAX_BUTTON,        "切換到懸浮區域並最大化窗口");
-    SET_TOOLTIP(wm, CLOSE_BUTTON,      "關閉窗口");
-    SET_TOOLTIP(wm, DESKTOP1_BUTTON,   "切換到虛擬桌面1");
-    SET_TOOLTIP(wm, DESKTOP2_BUTTON,   "切換到虛擬桌面2");
-    SET_TOOLTIP(wm, DESKTOP3_BUTTON,   "切換到虛擬桌面3");
-    SET_TOOLTIP(wm, FULL_BUTTON,       "切換到全屏模式");
-    SET_TOOLTIP(wm, PREVIEW_BUTTON,    "切換到預覽模式");
-    SET_TOOLTIP(wm, STACK_BUTTON,      "切換到堆疊模式");
-    SET_TOOLTIP(wm, TILE_BUTTON,       "切換到平鋪模式");
-    SET_TOOLTIP(wm, DESKTOP_BUTTON,    "顯示桌面");
-    SET_TOOLTIP(wm, CMD_CENTER_ITEM,   "打開操作中心");
+    SET_TOOLTIP(wm, CLIENT_FRAME,      _("拖動以調整窗口尺寸"));
+    SET_TOOLTIP(wm, SECOND_BUTTON,     _("切換到次要區域"));
+    SET_TOOLTIP(wm, MAIN_BUTTON,       _("切換到主要區域"));
+    SET_TOOLTIP(wm, FIXED_BUTTON,      _("切換到固定區域"));
+    SET_TOOLTIP(wm, FLOAT_BUTTON,      _("切換到懸浮區域"));
+    SET_TOOLTIP(wm, ICON_BUTTON,       _("切換到圖符區域"));
+    SET_TOOLTIP(wm, MAX_BUTTON,        _("切換到懸浮區域並最大化窗口"));
+    SET_TOOLTIP(wm, CLOSE_BUTTON,      _("關閉窗口"));
+    SET_TOOLTIP(wm, DESKTOP1_BUTTON,   _("切換到虛擬桌面1"));
+    SET_TOOLTIP(wm, DESKTOP2_BUTTON,   _("切換到虛擬桌面2"));
+    SET_TOOLTIP(wm, DESKTOP3_BUTTON,   _("切換到虛擬桌面3"));
+    SET_TOOLTIP(wm, FULL_BUTTON,       _("切換到全屏模式"));
+    SET_TOOLTIP(wm, PREVIEW_BUTTON,    _("切換到預覽模式"));
+    SET_TOOLTIP(wm, STACK_BUTTON,      _("切換到堆疊模式"));
+    SET_TOOLTIP(wm, TILE_BUTTON,       _("切換到平鋪模式"));
+    SET_TOOLTIP(wm, DESKTOP_BUTTON,    _("顯示桌面"));
+    SET_TOOLTIP(wm, CMD_CENTER_ITEM,   _("打開操作中心"));
 }
 
 /* 功能：設置其他雜項。
@@ -572,7 +572,7 @@ static void config_misc(WM *wm)
     c->screenshot_format="png";
     c->wallpaper_paths="/usr/share/backgrounds/fedora-workstation:/usr/share/wallpapers";
     c->wallpaper_filename="/usr/share/backgrounds/gwm.png";
-    c->run_cmd_entry_hint=L"請輸入命令，然後按回車執行";
+    c->run_cmd_entry_hint=_("請輸入命令，然後按回車執行");
     c->keybind=keybind;
     c->buttonbind=buttonbind;
     c->rule=rule;

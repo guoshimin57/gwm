@@ -22,7 +22,7 @@ void load_font(WM *wm)
         if(flag)
             if(!(wm->font[i]=XftFontOpenName(wm->display, wm->screen, wm->cfg->font_name[i])))
                 if(!(wm->font[i]=XftFontOpenName(wm->display, wm->screen, wm->cfg->default_font_name)))
-                    exit_with_msg("錯誤：不能加載必要的字體。");
+                    exit_with_msg(_("錯誤：不能加載必要的字體。"));
     }
 }
 

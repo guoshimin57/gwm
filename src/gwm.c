@@ -12,20 +12,20 @@
 #include "gwm.h"
 
 static void set_signals(void);
-static void ready_to_quit(int unused);
+static void ready_to_quit(int signum);
 
 sig_atomic_t run_flag=1;
 
-int main(int argc, char *argv[])
+int main(void)
 {
     WM wm;
-    set_signals();
     clear_zombies(0);
     init_wm(&wm);
     init_imlib(&wm);
     init_root_win_background(&wm);
     XSetScreenSaver(wm.display, wm.cfg->screen_saver_time_out,
         wm.cfg->screen_saver_interval, PreferBlanking, AllowExposures);
+    set_signals();
     handle_events(&wm);
     return EXIT_SUCCESS;
 }
@@ -33,18 +33,19 @@ int main(int argc, char *argv[])
 static void set_signals(void)
 {
 	if(signal(SIGCHLD, clear_zombies) == SIG_ERR)
-        perror("不能安裝SIGCHLD信號處理函數");
+        perror(_("不能安裝SIGCHLD信號處理函數"));
 	if(signal(SIGINT, ready_to_quit) == SIG_ERR)
-        perror("不能安裝SIGINT信號處理函數");
+        perror(_("不能安裝SIGINT信號處理函數"));
 	if(signal(SIGTERM, ready_to_quit) == SIG_ERR)
-        perror("不能安裝SIGTERM信號處理函數");
+        perror(_("不能安裝SIGTERM信號處理函數"));
 	if(signal(SIGQUIT, ready_to_quit) == SIG_ERR)
-        perror("不能安裝SIGQUIT信號處理函數");
+        perror(_("不能安裝SIGQUIT信號處理函數"));
 	if(signal(SIGHUP, ready_to_quit) == SIG_ERR)
-        perror("不能安裝SIGHUP信號處理函數");
+        perror(_("不能安裝SIGHUP信號處理函數"));
 }
 
-static void ready_to_quit(int unused)
+static void ready_to_quit(int signum)
 {
+    UNUSED(signum);
     run_flag=0;
 }

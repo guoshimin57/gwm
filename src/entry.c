@@ -14,10 +14,10 @@
 static int get_entry_cursor_x(WM *wm, Entry *e);
 static void hint_for_run_cmd_entry(WM *wm, const char *pattern);
 static char *get_match_cmd(const char *pattern);
-static void complete_cmd_for_entry(WM *wm, Entry *e);
+static void complete_cmd_for_entry(Entry *e);
 static bool close_entry(WM *wm, Entry *e, bool result);
 
-Entry *create_entry(WM *wm, Rect *r, const wchar_t *hint)
+Entry *create_entry(WM *wm, Rect *r, const char *hint)
 {
     Entry *e=wm->run_cmd=malloc_s(sizeof(Entry));
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h;
@@ -49,7 +49,10 @@ void update_entry_text(WM *wm, Entry *e)
         wm->text_color[wm->cfg->color_theme][ENTRY_TEXT_COLOR], ENTRY_FONT};
     int x=get_entry_cursor_x(wm, e);
     XClearArea(wm->display, e->win, 0, 0, e->w, e->h, False); 
-    draw_wcs(wm, e->win, e->text[0]==L'\0' ? e->hint : e->text, &f);
+    if(e->text[0] == L'\0')
+        draw_string(wm, e->win, e->hint, &f);
+    else
+        draw_wcs(wm, e->win, e->text, &f);
     XDrawLine(wm->display, e->win, wm->gc, x, 0, x, e->h);
 }
 
@@ -126,7 +129,7 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
         {
             case XK_Escape:     return close_entry(wm, e, false);
             case XK_Return:
-            case XK_KP_Enter:   return close_entry(wm, e, true);
+            case XK_KP_Enter:   complete_cmd_for_entry(e); return close_entry(wm, e, true);
             case XK_BackSpace:
                 if(n1)
                     wmemmove(e->text+*i-1, e->text+*i, no+1), (*i)--;
@@ -142,7 +145,7 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
             case XK_KP_Right:   *i = *i<n1 ? *i+1 : *i; break;
             case XK_Home:       (*i)=0; break;
             case XK_End:        (*i)=n1; break;
-            case XK_Tab:        complete_cmd_for_entry(wm, e); break;
+            case XK_Tab:        complete_cmd_for_entry(e); break;
             default:            wcsncpy(e->text+n1, keyname, n-n1-1), (*i)+=n2;
         }
     }
@@ -155,7 +158,7 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
     return false;
 }
 
-static void complete_cmd_for_entry(WM *wm, Entry *e)
+static void complete_cmd_for_entry(Entry *e)
 {
     char *cmd, pattern[FILENAME_MAX]={0};
     wcstombs(pattern, e->text, FILENAME_MAX);

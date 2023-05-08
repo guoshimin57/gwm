@@ -52,7 +52,7 @@ static void set_full_layout(WM *wm)
 
 static void set_preview_layout(WM *wm)
 {
-    int n=get_clients_n(wm), i=n-1, rows, cols, w, h,
+    long n=get_clients_n(wm), i=n-1, rows, cols, w, h,
         sw=wm->screen_width, sh=wm->screen_height, ch=(sh-wm->taskbar->h);
     if(n == 0)
         return;
@@ -185,13 +185,13 @@ void update_taskbar_buttons(WM *wm)
 bool is_main_sec_gap(WM *wm, int x)
 {
     Desktop *d=DESKTOP(wm);
-    unsigned int w=wm->screen_width*(1-d->main_area_ratio-d->fixed_area_ratio);
+    long w=wm->screen_width*(1-d->main_area_ratio-d->fixed_area_ratio);
     return (get_typed_clients_n(wm, SECOND_AREA) && x>=w-wm->cfg->win_gap && x<w);
 }
 
 bool is_main_fix_gap(WM *wm, int x)
 {
-    unsigned int w=wm->screen_width*(1-DESKTOP(wm)->fixed_area_ratio);
+    long w=wm->screen_width*(1-DESKTOP(wm)->fixed_area_ratio);
     return (get_typed_clients_n(wm, FIXED_AREA) && x>=w && x<w+wm->cfg->win_gap);
 }
 

@@ -9,7 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-配置方法：修改config.h文件。
+配置方法：修改config.c文件。
 安裝方法：請參閱INSTALL。
 使用方法：詳見gwm(1)。安裝之後，用man gwm命令來查看手冊。
 軟件首頁：https://sourceforge.net/projects/gsmwm/ 。

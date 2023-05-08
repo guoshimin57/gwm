@@ -56,7 +56,12 @@ char *get_text_prop(WM *wm, Window win, Atom atom)
         XFree(name.value);
     }
     if(!result)
-        result=copy_string(win==wm->taskbar->win ? "gwm" : "");
+    {
+        if(win == wm->taskbar->win)
+            result=copy_string("gwm");
+        else if(get_widget_type(wm, win) == CLIENT_WIN)
+            result=copy_string(win_to_client(wm, win)->title_text);
+    }
     return result;
 }
 
@@ -110,7 +115,7 @@ bool is_pointer_on_win(WM *wm, Window win)
     
     return get_geometry(wm, win, NULL, NULL, &w, &h, NULL, NULL)
         && XQueryPointer(wm->display, win, &r, &c, &rx, &ry, &x, &y, &state)
-        && x>=0 && x<w && y>=0 && y<h;
+        && x>=0 && x<(long)w && y>=0 && y<(long)h;
 }
 
 /* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外。
@@ -120,8 +125,8 @@ bool is_pointer_on_win(WM *wm, Window win)
  */
 bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h)
 {
-    unsigned int sw=wm->screen_width, sh=wm->screen_height;
-    return abs(2*x+w-sw)<w+sw && abs(2*y+h-sh)<h+sh;
+    long sw=wm->screen_width, sh=wm->screen_height, wl=w, hl=h;
+    return labs(2*x+wl-sw)<wl+sw && labs(2*y+hl-sh)<hl+sh;
 }
 
 void print_area(WM *wm, Drawable d, int x, int y, unsigned int w, unsigned int h)
@@ -199,7 +204,7 @@ bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigne
 }
 
 /* 坐標均相對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
-void set_pos_for_click(WM *wm, Window click, int cx, int cy, int *px, int *py, unsigned int pw, unsigned int ph)
+void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, unsigned int pw, unsigned int ph)
 {
     int x=0, y=0;
     unsigned int w=0, h=0, bw=0, sw=wm->screen_width, sh=wm->screen_height;
@@ -258,7 +263,7 @@ void show_tooltip(WM *wm, Window hover)
     if(s && XQueryPointer(wm->display, hover, &r, &c, &rx, &ry, &x, &y, &m))
     {
         get_string_size(wm, wm->font[HINT_FONT], s, &w, NULL);
-        set_pos_for_click(wm, hover, rx, ry, &x, &y, w, h);
+        set_pos_for_click(wm, hover, rx, &x, &y, w, h);
         XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
         XMapRaised(wm->display, wm->hint_win);
         String_format f={{0, 0, w, h}, CENTER,

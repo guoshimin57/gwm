@@ -78,18 +78,19 @@ static void fix_limit_size_hint(XSizeHints *h)
 void fix_win_size_by_hint(Client *c)
 {
     XSizeHints *p=&c->size_hint;
+    long col=get_client_col(c), row=get_client_row(c);
     c->w = (p->flags & USSize) && p->width ?
-        p->width : p->base_width+get_client_col(c)*p->width_inc;
+        p->width : p->base_width+col*p->width_inc;
     c->h = (p->flags & USSize) && p->height ?
-        p->height : p->base_height+get_client_row(c)*p->height_inc;
+        p->height : p->base_height+row*p->height_inc;
     if((p->flags & PMinSize) && p->min_width)
-        c->w=MAX(c->w, p->min_width);
+        c->w=MAX((long)c->w, p->min_width);
     if((p->flags & PMinSize) && p->min_height)
-        c->h=MAX(c->h, p->min_height);
+        c->h=MAX((long)c->h, p->min_height);
     if((p->flags & PMaxSize) && p->max_width)
-        c->w=MIN(c->w, p->max_width);
+        c->w=MIN((long)c->w, p->max_width);
     if((p->flags & PMaxSize) && p->max_height)
-        c->h=MIN(c->h, p->max_height);
+        c->h=MIN((long)c->h, p->max_height);
     if( (p->flags & PAspect) && p->min_aspect.x && p->min_aspect.y
         && p->max_aspect.x && p->max_aspect.y)
     {
@@ -111,22 +112,22 @@ bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint)
 
 static bool is_prefer_width(unsigned int w, XSizeHints *hint)
 {
-    long f=0;
+    long f=0, wl=w;
     return !hint || !(f=hint->flags) ||
-        (  (!(f & PMinSize) || w>=hint->min_width)
-        && (!(f & PMaxSize) || w<=hint->max_width)
+        (  (!(f & PMinSize) || wl>=hint->min_width)
+        && (!(f & PMaxSize) || wl<=hint->max_width)
         && (!(f & PBaseSize) || !(f & PResizeInc) || !hint->width_inc
-           || (w-hint->base_width)%hint->width_inc == 0));
+           || (wl-hint->base_width)%hint->width_inc == 0));
 }
 
 static bool is_prefer_height(unsigned int h, XSizeHints *hint)
 {
-    long f=0;
+    long f=0, hl=h;
     return !hint || !(f=hint->flags) ||
-        (  (!(f & PMinSize) || h>=hint->min_height)
-        && (!(f & PMaxSize) || h<=hint->max_height)
+        (  (!(f & PMinSize) || hl>=hint->min_height)
+        && (!(f & PMaxSize) || hl<=hint->max_height)
         && (!(f & PBaseSize) || !(f & PResizeInc) || !hint->height_inc
-           || (h-hint->base_height)%hint->height_inc == 0));
+           || (hl-hint->base_height)%hint->height_inc == 0));
 }
 
 static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)

@@ -1,5 +1,5 @@
 # *************************************************************************
-#     Makefile：執行當前目錄下與man1手冊頁相關的任務。
+#     Makefile：調用當前子目錄下的Makefile文件。
 #     版權 (C) 2020-2023 gsm <406643764@qq.com>
 #     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
 # GNU通用公共許可證重新發布、修改本程序。
@@ -9,21 +9,33 @@
 # <http://www.gnu.org/licenses/>。
 # *************************************************************************
 
-srcs := $(wildcard *.1)
-objs := $(srcs:.1=.1.gz)
-install_path := $(prefix)/share/man/zh_HK/man1
+subdirs := en_GB zh_CN
 
 .PHONY : all install install-strip uninstall clean
-all : $(objs)
-$(objs) : $(srcs)
-	gzip -kf $(srcs)
+all :
+	@set -e ; \
+	for dir in $(subdirs) ; \
+	do \
+		$(MAKE) -C $$dir all ; \
+	done ;
 install :
-	install -d  $(install_path) ;
-	install -m 644 $(objs) $(install_path) ;
-install-strip:
+	@for dir in $(subdirs) ; \
+	do \
+		$(MAKE) -C $$dir install ; \
+	done ;
+install-strip :
+	@for dir in $(subdirs) ; \
+	do \
+		$(MAKE) -C $$dir install-strip ; \
+	done ;
 uninstall :
-	cd $(install_path) ;
-	rm -f $(objs) ;
-	cd - ;
-clean:
-	rm -f $(objs) *~
+	@for dir in $(subdirs) ; \
+	do \
+		$(MAKE) -C $$dir uninstall ; \
+	done ;
+clean :
+	@for dir in $(subdirs) ; \
+	do \
+		$(MAKE) -C $$dir clean ; \
+	done ; \
+	rm -f *~ ;
