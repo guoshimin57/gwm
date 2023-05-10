@@ -41,6 +41,7 @@
 
 #define _(s) gettext(s)
 
+#define SET_NULL(array, n) for(size_t i=0; i<n; i++) array[i]=NULL
 #define UNUSED(x) ((void)(x))
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define MAX(a, b) ((a)>(b) ? (a) : (b))

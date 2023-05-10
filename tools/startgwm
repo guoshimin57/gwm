@@ -13,24 +13,17 @@
 
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources &
 
-#export LC_ALL="zh_CN.UTF-8"
-#export LANG="zh_CN.UTF-8"
-#export XMODIFIERS='@im=fcitx'
-#export GTK_IM_MODULE=fcitx
-#export QT_IM_MODULE=fcitx
-#fcitx > /dev/null 2>&1 &
-
 while true
 do
-    VOL=$(amixer get Master | tail -1 | sed 's/.*\[\([0-9]*%\)\].*/◀｠\1/')
+    VOL=$(amixer get Master | tail -1 | sed 's/.*\[\([0-9]*%\)\].*/◀)\1/')
     LOCALTIME=$(date "+%m/%d %a %p%H:%M")
     if acpi -a 2> /dev/null | grep line
     then
         if acpi -a 2> /dev/null | grep on-line
         then
-            BAT=" ⊕$(acpi -b 2> /dev/null | awk '{ print $4 "+" $5 }' | tr -d ',')"
+            BAT=" +$(acpi -b 2> /dev/null | awk '{ print $4 "+" $5 }' | tr -d ',')"
         else
-            BAT=" ⊖$(acpi -b 2> /dev/null | awk '{ print $4 "-" $5 }' | tr -d ',')"
+            BAT=" -$(acpi -b 2> /dev/null | awk '{ print $4 "-" $5 }' | tr -d ',')"
         fi
     fi
     xsetroot -name "$BAT $VOL $LOCALTIME"

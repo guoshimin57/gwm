@@ -26,7 +26,7 @@ $(exec) : $(objs)
 	$(CC) $(objs) -o $@ $(CFLAGS)
 install :
 	install -d $(prefix)/bin ;
-	install -m 755 $(exec) $(prefix)/bin ;
+	install -m 755 $(exec) $(prefix)/bin
 install-strip :
 	install -d $(prefix)/bin ;
 	install -m 755 -s $(exec) $(prefix)/bin

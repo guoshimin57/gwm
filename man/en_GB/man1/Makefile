@@ -9,6 +9,7 @@
 # <http://www.gnu.org/licenses/>。
 # *************************************************************************
 
+orig := $(wildcard ../../zh_HK/man1/*.1)
 srcs := $(wildcard *.1)
 objs := $(srcs:.1=.1.gz)
 install_path := $(prefix)/share/man/en_GB/man1
@@ -17,6 +18,8 @@ install_path := $(prefix)/share/man/en_GB/man1
 all : $(objs)
 $(objs) : $(srcs)
 	gzip -kf $(srcs)
+$(srcs) : $(orig)
+	@echo "需要更新：$(realpath $(srcs))"
 install :
 	install -d  $(install_path) ;
 	install -m 644 $(objs) $(install_path) ;

@@ -69,9 +69,10 @@
  * 鍵符號的定義詳見<X11/keysymdef.h>和<X11/XF86keysym.h>。下同。
  * 可綁定的函數詳見func.h，相應的函數參數詳見gwm.h。下同。
  * n=0表示所有虛擬桌面，僅適用於attach_to_all_desktops。
+ * 格式：
+ *     功能轉換鍵掩碼     鍵符號 要綁定的函數             函數的參數
  */
 #define DESKTOP_KEYBIND(key, n)                                            \
-/*  功能轉換鍵掩碼        鍵符號 要綁定的函數             函數的參數 */    \
     {WM_KEY|ShiftMask,      key, focus_desktop,           {.desktop_n=n}}, \
     {WM_KEY,	            key, move_to_desktop,         {.desktop_n=n}}, \
     {WM_KEY|Mod1Mask,	    key, all_move_to_desktop,     {.desktop_n=n}}, \
@@ -81,9 +82,12 @@
     {Mod1Mask|ShiftMask,    key, all_attach_to_desktop,   {.desktop_n=n}}, \
     {ShiftMask|ControlMask, key, attach_to_all_desktops,  {.desktop_n=n}}
 
-/* 功能：設置按鍵功能綁定。*/
+/* 功能：設置按鍵功能綁定。
+ * 格式：
+ *     功能轉換鍵掩碼  鍵符號     要綁定的函數                 函數的參數
+ */
 static const Keybind keybind[] =
-{/* 功能轉換鍵掩碼  鍵符號        要綁定的函數                 函數的參數 */
+{
     {0,             XK_F1,        exec,                        SH_CMD(HELP)},
     {0, XF86XK_MonBrightnessDown, exec,                        SH_CMD(LIGHT_DOWN)},
     {0, XF86XK_MonBrightnessUp,   exec,                        SH_CMD(LIGHT_UP)},
@@ -161,9 +165,10 @@ static const Keybind keybind[] =
 
 /* 功能：設置與虛擬桌面相關的定位器按鈕功能綁定。
  * 說明：可以用xev(1)命令來檢測定位器按鈕。
+ * 格式：
+ *     虛擬桌面n                    功能轉換鍵  定位器按鈕 要綁定的函數       函數的參數
  */
 #define DESKTOP_BUTTONBIND(n)                                                              \
-/*  虛擬桌面n                       功能轉換鍵  定位器按鈕 要綁定的函數       函數的參數 */\
     {DESKTOPN_BUTTON(n),                    0,    Button1, focus_desktop,          {0}},   \
     {DESKTOPN_BUTTON(n),          ControlMask,    Button1, change_to_desktop,      {0}},   \
     {DESKTOPN_BUTTON(n), Mod1Mask|ControlMask,    Button1, all_change_to_desktop,  {0}},   \
@@ -173,9 +178,12 @@ static const Keybind keybind[] =
     {DESKTOPN_BUTTON(n),                    0,    Button3, move_to_desktop,        {0}},   \
     {DESKTOPN_BUTTON(n),             Mod1Mask,    Button3, all_move_to_desktop,    {0}}
 
-/* 功能：設置定位器按鈕功能綁定。*/
+/* 功能：設置定位器按鈕功能綁定。
+ * 格式：
+ *     構件類型        功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數
+ */
 static const Buttonbind buttonbind[] =
-{/* 構件類型           功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數 */
+{
     DESKTOP_BUTTONBIND(1), 
     DESKTOP_BUTTONBIND(2), 
     DESKTOP_BUTTONBIND(3), 
@@ -242,10 +250,11 @@ static const Buttonbind buttonbind[] =
  * 一個窗口可以歸屬多個桌面，桌面從1開始編號，桌面n的掩碼計算公式：1<<(n-1)。
  * 譬如，桌面1的掩碼是1<<(1-1)，即1；桌面2的掩碼是1<<(2-1)，即2；1&2即3表示窗口歸屬桌面1和2。
  * 若掩碼爲0，表示窗口歸屬默認桌面。
+ * 格式：
+ *     客戶程序類型        客戶程序名稱 客戶程序的類型別名   窗口放置位置(詳gwm.h)  是否顯示標題欄 是否顯示邊框 桌面掩碼
  */
 static const Rule rule[] =
 {
-//  客戶程序類型           客戶程序名稱 客戶程序的類型別名   窗口放置位置(詳gwm.h)  是否顯示標題欄 是否顯示邊框 桌面掩碼
     {"Qq",                 "qq",                 "QQ",       FIXED_AREA,            false,         false,        0},
     {"explorer.exe",       "explorer.exe",       NULL,       FLOATING_AREA,         false,         false,        0},
     {"Thunder.exe",        "Thunder.exe",        NULL,       FLOATING_AREA,         true,          true,         0},
@@ -258,11 +267,11 @@ static const Rule rule[] =
  * 說明：每增加一種不同的字體，就會增加2M左右的內存佔用。
  * 縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
  * 近視之人應按近視程度設置大於1.0的合適值。
+ * 用戶設置：    字體類型(詳gwm.h)    字體系列     字號
  */
 static void config_font(WM *wm)
 {
     unsigned int size=get_scale_font_size(wm, 2.0);
-    /* 用戶設置：字體類型(詳gwm.h)    字體系列     字號 */
     SET_FONT(wm, DEFAULT_FONT,        "monospace", size);
     SET_FONT(wm, TITLE_BUTTON_FONT,   "monospace", size);
     SET_FONT(wm, CMD_CENTER_FONT,     "monospace", size);
@@ -292,7 +301,7 @@ static void config_widget_size(WM *wm)
     c->icon_size=c->taskbar_height;
     c->icon_win_width_max=c->icon_size*10;
     c->icons_space=ROUND(c->icon_size/2.0);
-    c->cmd_center_item_width=c->font_size[CMD_CENTER_FONT]*7;
+    c->cmd_center_item_width=c->font_size[CMD_CENTER_FONT]*10;
     c->cmd_center_item_height=ROUND(c->font_size[CMD_CENTER_FONT]*1.5);
     c->entry_text_indent=ROUND(c->font_size[ENTRY_FONT]/4.0);
     c->run_cmd_entry_width=c->font_size[CMD_CENTER_FONT]*15+c->entry_text_indent*2;
@@ -301,10 +310,11 @@ static void config_widget_size(WM *wm)
     c->resize_inc=c->font_size[TITLE_FONT];
 }
 
-/* 功能：設置與定位器操作類型相對應的光標符號。*/
+/* 功能：設置與定位器操作類型相對應的光標符號。
+ * 用戶設置：            定位器操作類型(詳gwm.h) 光標符號(詳<X11/cursorfont.h>)
+ */
 static void config_cursor_shape(WM *wm)
 {
-    /*         用戶設置：定位器操作類型(詳gwm.h) 光標符號(詳<X11/cursorfont.h>) */
     SET_CURSOR_SHAPE(wm, NO_OP,                  XC_left_ptr);
     SET_CURSOR_SHAPE(wm, CHOOSE,                 XC_hand2);
     SET_CURSOR_SHAPE(wm, MOVE,                   XC_fleur);
@@ -326,10 +336,10 @@ static void config_cursor_shape(WM *wm)
  * 也可以用十六進制顏色說明，格式爲以下之一：
  *     #RGB、#RRGGBB、#RRRGGGBBB、#RRRRGGGGBBBB。
  * 下同。
+ * 用戶設置：                             構件顏色類型(詳gwm.h)        顏色名
  */
 static void config_widget_color_for_dark(WM *wm)
 {
-    /*                          用戶設置：構件顏色類型(詳gwm.h)        顏色名 */
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_BORDER_COLOR,         "grey31");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_BORDER_COLOR,        "grey11");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLE_AREA_COLOR,     "grey31");
@@ -349,10 +359,11 @@ static void config_widget_color_for_dark(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ROOT_WIN_COLOR,              "black");
 }
 
-/* 功能：爲默認顏色主題設置構件顏色。*/
+/* 功能：爲默認顏色主題設置構件顏色。
+ * 用戶設置：                               構件顏色類型(詳gwm.h)        顏色名
+ */
 static void config_widget_color_for_normal(WM *wm)
 {
-    /*                            用戶設置：構件顏色類型(詳gwm.h)        顏色名 */
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_BORDER_COLOR,         "grey31");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CURRENT_BORDER_COLOR,        "DodgerBlue");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TITLE_AREA_COLOR,     "grey31");
@@ -372,10 +383,11 @@ static void config_widget_color_for_normal(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ROOT_WIN_COLOR,              "black");
 }
 
-/* 功能：爲淺色主題設置構件顏色。*/
+/* 功能：爲淺色主題設置構件顏色。
+ * 用戶設置：                              構件顏色類型(詳gwm.h)        顏色名
+ */
 static void config_widget_color_for_light(WM *wm)
 {
-    /*                            用戶設置：構件顏色類型(詳gwm.h)        顏色名 */
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_BORDER_COLOR,         "grey61");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CURRENT_BORDER_COLOR,        "grey91");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TITLE_AREA_COLOR,     "grey61");
@@ -395,6 +407,7 @@ static void config_widget_color_for_light(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ROOT_WIN_COLOR,              "black");
 }
 
+/* 功能：爲各種主題設置構件顏色。*/
 static void config_widget_color(WM *wm)
 {
     config_widget_color_for_dark(wm);
@@ -402,10 +415,11 @@ static void config_widget_color(WM *wm)
     config_widget_color_for_light(wm);
 }
 
-/* 功能：爲深色主題設置文字顏色。*/
+/* 功能：爲深色主題設置文字顏色。
+ * 用戶設置：                           文字顏色類型(詳gwm.h)            顏色名
+ */
 static void config_text_color_for_dark(WM *wm)
 {
-    /*            用戶設置：文字顏色類型(詳gwm.h)            顏色名 */
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLE_TEXT_COLOR,         "grey61");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLE_TEXT_COLOR,        "white");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLE_BUTTON_TEXT_COLOR,  "grey61");
@@ -418,10 +432,11 @@ static void config_text_color_for_dark(WM *wm)
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, HINT_TEXT_COLOR,                 "grey41");
 }
 
-/* 功能：爲默認顏色主題設置文字顏色。*/
+/* 功能：爲默認顏色主題設置文字顏色。
+ * 用戶設置：                             文字顏色類型(詳gwm.h)            顏色名
+ */
 static void config_text_color_for_normal(WM *wm)
 {
-    /*                          用戶設置：文字顏色類型(詳gwm.h)            顏色名 */
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TITLE_TEXT_COLOR,         "grey71");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CURRENT_TITLE_TEXT_COLOR,        "white");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TITLE_BUTTON_TEXT_COLOR,  "grey71");
@@ -434,10 +449,11 @@ static void config_text_color_for_normal(WM *wm)
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, HINT_TEXT_COLOR,                 "grey61");
 }
 
-/* 功能：爲淺色主題設置文字顏色。*/
+/* 功能：爲淺色主題設置文字顏色。
+ * 用戶設置：                            文字顏色類型(詳gwm.h)            顏色名
+ */
 static void config_text_color_for_light(WM *wm)
 {
-    /*                         用戶設置：文字顏色類型(詳gwm.h)            顏色名 */
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TITLE_TEXT_COLOR,         "grey31");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CURRENT_TITLE_TEXT_COLOR,        "black");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TITLE_BUTTON_TEXT_COLOR,  "grey31");
@@ -450,7 +466,7 @@ static void config_text_color_for_light(WM *wm)
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, HINT_TEXT_COLOR,                 "grey61");
 }
 
-/* 功能：設置文字顏色。*/
+/* 功能：爲各種主題設置文字顏色。*/
 static void config_text_color(WM *wm)
 {
     config_text_color_for_dark(wm);
@@ -458,10 +474,11 @@ static void config_text_color(WM *wm)
     config_text_color_for_light(wm);
 }
 
-/* 功能：設置標題按鈕的文字 */
+/* 功能：設置標題按鈕的文字。
+ * 用戶設置：                 標題欄按鈕類型(詳gwm.h)  按鈕文字
+ */
 static void config_title_button_text(WM *wm)
 {
-    /*              用戶設置：標題欄按鈕類型(詳gwm.h)  按鈕文字 */
     SET_TITLE_BUTTON_TEXT(wm, SECOND_BUTTON,           "◁");
     SET_TITLE_BUTTON_TEXT(wm, MAIN_BUTTON,             "▼");
     SET_TITLE_BUTTON_TEXT(wm, FIXED_BUTTON,            "▷");
@@ -471,10 +488,11 @@ static void config_title_button_text(WM *wm)
     SET_TITLE_BUTTON_TEXT(wm, CLOSE_BUTTON,            "×");
 }
 
-/* 功能：設置任務欄按鈕的文字 */
+/* 功能：設置任務欄按鈕的文字。
+ * 用戶設置：                   任務欄按鈕類型(詳gwm.h)  按鈕文字
+ */
 static void config_taskbar_button_text(WM *wm)
 {
-    /*                用戶設置：任務欄按鈕類型(詳gwm.h)  按鈕文字 */
     SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP1_BUTTON,         "1");
     SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP2_BUTTON,         "2");
     SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP3_BUTTON,         "3");
@@ -486,10 +504,12 @@ static void config_taskbar_button_text(WM *wm)
     SET_TASKBAR_BUTTON_TEXT(wm, CMD_CENTER_ITEM,         "^");
 }
 
-/* 功能：設置操作中心的文字 */
+/* 功能：設置操作中心的文字。
+ * 用戶設置：                    操作中心按鈕類型(詳gwm.h)  按鈕文字
+ */
 static void config_cmd_center_item_text(WM *wm)
 {
-    /*                 用戶設置：操作中心按鈕類型(詳gwm.h)  按鈕文字 */
+    // 以下爲操作中心按鈕的文字，翻譯時應保持簡潔，長度不宜超過原文最長者，否則可能顯示不全
     SET_CMD_CENTER_ITEM_TEXT(wm, HELP_BUTTON,               _("幫助"));
     SET_CMD_CENTER_ITEM_TEXT(wm, FILE_BUTTON,               _("文件"));
     SET_CMD_CENTER_ITEM_TEXT(wm, TERM_BUTTON,               _("終端模擬器"));
@@ -518,15 +538,16 @@ static void config_cmd_center_item_text(WM *wm)
     SET_CMD_CENTER_ITEM_TEXT(wm, LOGOUT_BUTTON,             _("注銷"));
     SET_CMD_CENTER_ITEM_TEXT(wm, REBOOT_BUTTON,             _("重啓"));
     SET_CMD_CENTER_ITEM_TEXT(wm, POWEROFF_BUTTON,           _("關機"));
+    // 最後一個操作中心按鈕項
     SET_CMD_CENTER_ITEM_TEXT(wm, RUN_BUTTON,                _("運行"));
 }
 
 /* 功能：設置構件功能提示。
  * 說明：以下未列出的構件要麼不必顯示提示，要麼動態變化而不可在此設置。
+ * 用戶設置：       構件類型(詳gwm.h)  構件功能提示文字
  */
 static void config_tooltip(WM *wm)
 {
-    /*    用戶設置：構件類型(詳gwm.h)  構件功能提示文字 */
     SET_TOOLTIP(wm, CLIENT_FRAME,      _("拖動以調整窗口尺寸"));
     SET_TOOLTIP(wm, SECOND_BUTTON,     _("切換到次要區域"));
     SET_TOOLTIP(wm, MAIN_BUTTON,       _("切換到主要區域"));
@@ -583,6 +604,8 @@ static void config_misc(WM *wm)
 void config(WM *wm)
 {
     wm->cfg=malloc_s(sizeof(Config));
+    SET_NULL(wm->cfg->tooltip, WIDGET_N);
+
     config_font(wm);
     config_widget_size(wm);
     config_cursor_shape(wm);
