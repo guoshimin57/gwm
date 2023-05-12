@@ -57,7 +57,7 @@ char *get_text_prop(WM *wm, Window win, Atom atom)
     }
     if(!result)
     {
-        if(win == wm->taskbar->win)
+        if(win == wm->taskbar->status_area)
             result=copy_string("gwm");
         else if(get_widget_type(wm, win) == CLIENT_WIN)
             result=copy_string(win_to_client(wm, win)->title_text);

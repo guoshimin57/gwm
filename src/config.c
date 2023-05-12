@@ -301,7 +301,7 @@ static void config_widget_size(WM *wm)
     c->icon_size=c->taskbar_height;
     c->icon_win_width_max=c->icon_size*10;
     c->icons_space=ROUND(c->icon_size/2.0);
-    c->cmd_center_item_width=c->font_size[CMD_CENTER_FONT]*10;
+    c->cmd_center_item_width=c->font_size[CMD_CENTER_FONT]*8;
     c->cmd_center_item_height=ROUND(c->font_size[CMD_CENTER_FONT]*1.5);
     c->entry_text_indent=ROUND(c->font_size[ENTRY_FONT]/4.0);
     c->run_cmd_entry_width=c->font_size[CMD_CENTER_FONT]*15+c->entry_text_indent*2;

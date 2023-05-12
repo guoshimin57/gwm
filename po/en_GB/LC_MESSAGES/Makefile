@@ -20,7 +20,7 @@ all : $(mo)
 $(mo) : $(po)
 	msgfmt -o $@ $<
 $(po) : $(srcs)
-	@echo "需要更新：$(realpath gwm.po)"
+	@echo "可能需要更新：$(realpath gwm.po)"
 install :
 	install -d $(install_path) ;
 	install -m 644 $(mo) $(install_path) ;
