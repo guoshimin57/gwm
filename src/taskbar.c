@@ -62,6 +62,8 @@ static void create_status_area(WM *wm)
 {
     Taskbar *b=wm->taskbar;
     b->status_text=get_text_prop(wm, wm->root_win, XA_WM_NAME);
+    if(!b->status_text)
+        b->status_text=copy_string("gwm");
     get_string_size(wm, wm->font[STATUS_AREA_FONT], b->status_text, &b->status_area_w, NULL);
     if(b->status_area_w > wm->cfg->status_area_width_max)
         b->status_area_w=wm->cfg->status_area_width_max;
@@ -154,10 +156,14 @@ void update_cmd_center_button_text(WM *wm, size_t index)
 
 void handle_wm_icon_name_notify(WM *wm, Client *c, Window win)
 {
+    char *s=NULL;
     if(c && c->win==win && c->area_type==ICONIFY_AREA)
     {
-        free(c->icon->title_text);
-        c->icon->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
-        update_icon_area(wm);
+        if((s=get_text_prop(wm, c->win, XA_WM_ICON_NAME)))
+        {
+            free(c->icon->title_text);
+            c->icon->title_text=s;
+            update_icon_area(wm);
+        }
     }
 }

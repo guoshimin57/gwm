@@ -13,7 +13,7 @@
 
 static void apply_rules(WM *wm, Client *c);
 static bool have_rule(const Rule *r, Client *c);
-void set_win_rect_by_attr(WM *wm, Client *c);
+static void set_win_rect_by_attr(WM *wm, Client *c);
 static void fix_win_pos(WM *wm, Client *c);
 static bool fix_win_pos_by_hint(Client *c);
 static void fix_win_pos_by_prop(WM *wm, Client *c);
@@ -32,6 +32,8 @@ void add_client(WM *wm, Window win)
     c->win=win;
     c->owner=get_transient_for(wm, win);
     c->title_text=get_text_prop(wm, win, XA_WM_NAME);
+    if(!c->title_text)
+        c->title_text=copy_string("?");
     c->wm_hint=XGetWMHints(wm->display, win);
     update_size_hint(wm, c);
     apply_rules(wm, c);
@@ -125,7 +127,7 @@ void set_default_win_rect(WM *wm, Client *c)
     fix_win_pos(wm, c);
 }
 
-void set_win_rect_by_attr(WM *wm, Client *c)
+static void set_win_rect_by_attr(WM *wm, Client *c)
 {
     XWindowAttributes a={.x=0, .y=0, .width=wm->screen_width/4, .height=wm->screen_height/4};
     XGetWindowAttributes(wm->display, c->win, &a);

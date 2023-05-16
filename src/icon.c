@@ -418,6 +418,8 @@ static void create_icon(WM *wm, Client *c)
     if(wm->cfg->use_image_icon)
         set_icon_image(wm, c);
     p->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
+    if(!p->title_text)
+        p->title_text=copy_string(c->title_text);
     update_icon_area(wm);
 }
 

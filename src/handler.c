@@ -70,19 +70,29 @@ static void ignore_event(WM *wm, XEvent *e)
 
 static void handle_button_press(WM *wm, XEvent *e)
 {
-    Widget_type type=get_widget_type(wm, e->xbutton.window);
+    XWindowAttributes a;
+    Window win=e->xbutton.window;
+    Widget_type type=get_widget_type(wm, win);
     for(const Buttonbind *b=wm->cfg->buttonbind; b->func; b++)
     {
         if( is_func_click(wm, type, b, e)
             && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
-            focus_clicked_client(wm, e->xbutton.window);
-            if(b->func)
-                b->func(wm, e, b->arg);
-            if(type == CLIENT_WIN)
-                XAllowEvents(wm->display, ReplayPointer, CurrentTime);
+            if( type == CMD_CENTER_ITEM
+                && XGetWindowAttributes(wm->display, wm->cmd_center->win, &a)
+                && a.map_state==IsViewable)
+                XUnmapWindow(wm->display, wm->cmd_center->win);
+            else
+            {
+                focus_clicked_client(wm, win);
+                if(b->func)
+                    b->func(wm, e, b->arg);
+                if(type == CLIENT_WIN)
+                    XAllowEvents(wm->display, ReplayPointer, CurrentTime);
+            }
         }
     }
+
     if(type != CMD_CENTER_ITEM)
         XUnmapWindow(wm->display, wm->cmd_center->win);
     if(type!=RUN_CMD_ENTRY && type!=RUN_BUTTON)
