@@ -15,6 +15,16 @@ static void fix_limit_size_hint(XSizeHints *h);
 static bool is_prefer_width(unsigned int w, XSizeHints *hint);
 static bool is_prefer_height(unsigned int h, XSizeHints *hint);
 static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint);
+static void set_net_supported(WM *wm);
+static void set_net_client_list(WM *wm);
+static void set_net_client_list_stacking(WM *wm);
+static int cmp_win(const void *pwin1, const void *pwin2);
+static void set_net_number_of_desktops(WM *wm);
+static void set_net_desktop_geometry(WM *wm);
+static void set_net_desktop_viewport(WM *wm);
+static void set_net_desktop_names(WM *wm);
+static void set_net_workarea(WM *wm);
+static void set_net_supporting_wm_check(WM *wm);
 
 unsigned int get_client_col(Client *c)
 {
@@ -137,4 +147,166 @@ static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)
         || !hint->max_aspect.x || !hint->max_aspect.y
         || (  (float)w/h >= (float)hint->min_aspect.x/hint->min_aspect.y
            && (float)w/h <= (float)hint->max_aspect.x/hint->max_aspect.y);
+}
+
+void set_ewmh(WM *wm)
+{
+    set_net_supported(wm);
+    set_net_number_of_desktops(wm);
+    set_net_desktop_geometry(wm);
+    set_net_desktop_viewport(wm);
+    set_net_current_desktop(wm);
+    set_net_desktop_names(wm);
+    set_net_workarea(wm);
+    set_net_supporting_wm_check(wm);
+    set_net_showing_desktop(wm, false);
+}
+
+static void set_net_supported(WM *wm)
+{
+	XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_SUPPORTED], XA_ATOM, 32,
+        PropModeReplace, (unsigned char *)wm->ewmh_atom, EWMH_ATOM_N);
+}
+
+void set_all_net_client_list(WM *wm)
+{
+    set_net_client_list(wm);
+    set_net_client_list_stacking(wm);
+}
+
+static void set_net_client_list(WM *wm)
+{
+    Window root=wm->root_win;
+    Atom a = wm->ewmh_atom[_NET_CLIENT_LIST];
+    unsigned long i=0, n=get_all_clients_n(wm);
+    if(n == 0)
+        XDeleteProperty(wm->display, root, a);
+    else
+    {
+        Window list[n];
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            list[i++]=c->win;
+        qsort(list, n, sizeof(Window), cmp_win);
+        XChangeProperty(wm->display, root, a, XA_WINDOW, 32,
+            PropModeReplace, (unsigned char *)list, n);
+    }
+}
+
+static int cmp_win(const void *pwin1, const void *pwin2)
+{
+    return (*(Window *)pwin1-*(Window *)pwin2);
+}
+
+static void set_net_client_list_stacking(WM *wm)
+{
+    Atom a = wm->ewmh_atom[_NET_CLIENT_LIST_STACKING];
+    unsigned int n=0, na=0;
+    Window root, parent, *child=NULL;
+    if(XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &na))
+    {
+        Client *c=NULL;
+        for(unsigned int i=0; i<na; i++)
+            if((c=win_to_client(wm, child[i])) && is_on_cur_desktop(wm, c))
+                child[n++]=child[i];
+        XChangeProperty(wm->display, wm->root_win, a, XA_WINDOW, 32,
+            PropModeReplace, (unsigned char *)child, n);
+        XFree(child);
+    }
+}
+
+static void set_net_number_of_desktops(WM *wm)
+{
+    int32_t desktop_n=DESKTOP_N;
+	XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32,
+        PropModeReplace, (unsigned char *)&desktop_n, 1);
+}
+
+static void set_net_desktop_geometry(WM *wm)
+{
+    int32_t size[2]={wm->screen_width, wm->screen_height};
+	XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_DESKTOP_GEOMETRY], XA_CARDINAL, 32,
+        PropModeReplace, (unsigned char *)size, 2);
+}
+
+static void set_net_desktop_viewport(WM *wm)
+{
+    int32_t pos[2]={0, 0};
+	XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_DESKTOP_GEOMETRY], XA_CARDINAL, 32,
+        PropModeReplace, (unsigned char *)pos, 2);
+}
+
+void set_net_current_desktop(WM *wm)
+{
+    int32_t n=wm->cur_desktop-1;
+	XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_CURRENT_DESKTOP], XA_CARDINAL, 32,
+        PropModeReplace, (unsigned char *)&n, 1);
+}
+
+static void set_net_desktop_names(WM *wm)
+{
+    size_t n=0, begin=TASKBAR_BUTTON_INDEX(DESKTOP_BUTTON_BEGIN);
+
+    for(size_t i=0; i<DESKTOP_N; i++)
+        n += strlen(wm->cfg->taskbar_button_text[begin+i])+1;
+    XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_DESKTOP_NAMES], wm->utf8, 8, PropModeReplace,
+        (unsigned char *)wm->cfg->taskbar_button_text[begin], n);
+}
+
+void set_net_active_window(WM *wm)
+{
+    XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_ACTIVE_WINDOW], XA_WINDOW, 32, PropModeReplace,
+        (unsigned char *)&CUR_FOC_CLI(wm)->win, 1);
+}
+
+static void set_net_workarea(WM *wm)
+{
+    unsigned int w=wm->screen_width, h=wm->screen_height-wm->taskbar->h;
+    int32_t rect[DESKTOP_N][4];
+
+    for(size_t i=0; i<DESKTOP_N; i++)
+        rect[i][0]=0, rect[i][1]=0, rect[i][2]=w, rect[i][3]=h;
+    XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_WORKAREA], XA_CARDINAL, 32,
+        PropModeReplace, (unsigned char *)rect, DESKTOP_N*4);
+}
+
+static void set_net_supporting_wm_check(WM *wm)
+{
+	XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
+        PropModeReplace, (unsigned char *)&wm->wm_check_win, 1);
+
+    /* FIXME: 此項設置會導致firefox不能全屏顯示，也許是因爲gwm不支持真正的全屏，確切原因未明
+	XChangeProperty(wm->display, wm->wm_check_win,
+        wm->ewmh_atom[_NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
+        PropModeReplace, (unsigned char *)&wm->wm_check_win, 1);
+        */
+
+	XChangeProperty(wm->display, wm->wm_check_win,
+        wm->ewmh_atom[_NET_WM_NAME], wm->utf8, 8,
+        PropModeReplace, (unsigned char *)"gwm", 3);
+}
+
+void set_net_showing_desktop(WM *wm, bool show)
+{
+	XChangeProperty(wm->display, wm->root_win,
+        wm->ewmh_atom[_NET_SHOWING_DESKTOP], XA_CARDINAL, 32,
+        PropModeReplace, (unsigned char *)&show, 1);
+}
+
+void set_urgency(WM *wm, Client *c, bool urg)
+{
+    XWMHints *h=XGetWMHints(wm->display, c->win);
+    if(!h)
+        return;
+    h->flags = urg ? (h->flags | XUrgencyHint) : (h->flags & ~XUrgencyHint);
+    XSetWMHints(wm->display, c->win, h);
+    XFree(h);
 }

@@ -13,7 +13,6 @@
 
 static void set_full_layout(WM *wm);
 static void set_preview_layout(WM *wm);
-static unsigned int get_clients_n(WM *wm);
 static void set_tile_layout(WM *wm);
 static void get_area_size(WM *wm, unsigned int *mw, unsigned int *mh, unsigned int *sw, unsigned int *sh, unsigned int *fw, unsigned int *fh);
 static void fix_win_rect_for_frame(WM *wm);
@@ -72,15 +71,6 @@ static void set_preview_layout(WM *wm)
             i--;
         }
     }
-}
-
-static unsigned int get_clients_n(WM *wm)
-{
-    unsigned int n=0;
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(wm, c))
-            n++;
-    return n;
 }
 
 /* 平鋪布局模式的空間布置如下：

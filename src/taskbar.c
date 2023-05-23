@@ -153,17 +153,3 @@ void update_cmd_center_button_text(WM *wm, size_t index)
         CMD_CENTER_FONT};
     draw_string(wm, wm->cmd_center->items[index], wm->cfg->cmd_center_item_text[index], &f);
 }
-
-void handle_wm_icon_name_notify(WM *wm, Client *c, Window win)
-{
-    char *s=NULL;
-    if(c && c->win==win && c->area_type==ICONIFY_AREA)
-    {
-        if((s=get_text_prop(wm, c->win, XA_WM_ICON_NAME)))
-        {
-            free(c->icon->title_text);
-            c->icon->title_text=s;
-            update_icon_area(wm);
-        }
-    }
-}

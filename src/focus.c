@@ -21,6 +21,8 @@ static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
  * 函數。這樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
 void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 {
+    if(c && c!=CUR_FOC_CLI(wm) && c->wm_hint && (c->wm_hint->flags & XUrgencyHint))
+        set_urgency(wm, c, false);
     update_focus_client_pointer(wm, desktop_n, c);
 
     Desktop *d=wm->desktop[desktop_n-1];
@@ -37,6 +39,7 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     update_client_look(wm, desktop_n, d->prev_focus_client);
     if(pc->area_type!=ICONIFY_AREA || d->cur_layout==PREVIEW)
         raise_client(wm, desktop_n);
+    set_net_active_window(wm);
 }
 
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)

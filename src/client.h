@@ -36,6 +36,8 @@ void set_default_win_rect(WM *wm, Client *c);
 void create_title_bar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
 unsigned int get_typed_clients_n(WM *wm, Area_type type);
+unsigned int get_clients_n(WM *wm);
+unsigned int get_all_clients_n(WM *wm);
 Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c, bool is_for_quit);
 void del_client_node(Client *c);

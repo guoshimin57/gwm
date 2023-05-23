@@ -18,5 +18,11 @@ void update_size_hint(WM *wm, Client *c);
 void fix_win_size_by_hint(Client *c);
 bool is_prefer_resize(WM *wm, Client *c, Delta_rect *d);
 bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint);
+void set_ewmh(WM *wm);
+void set_all_net_client_list(WM *wm);
+void set_net_current_desktop(WM *wm);
+void set_net_active_window(WM *wm);
+void set_net_showing_desktop(WM *wm, bool show);
+void set_urgency(WM *wm, Client *c, bool urg);
 
 #endif

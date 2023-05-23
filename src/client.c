@@ -51,6 +51,7 @@ void add_client(WM *wm, Window win)
     XMapSubwindows(wm->display, c->frame);
     if(c->area_type != ICONIFY_AREA)
         focus_client(wm, wm->cur_desktop, c);
+    set_all_net_client_list(wm);
 }
 
 static void apply_rules(WM *wm, Client *c)
@@ -251,6 +252,23 @@ unsigned int get_typed_clients_n(WM *wm, Area_type type)
     return n;
 }
 
+unsigned int get_clients_n(WM *wm)
+{
+    unsigned int n=0;
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        if(is_on_cur_desktop(wm, c))
+            n++;
+    return n;
+}
+
+unsigned int get_all_clients_n(WM *wm)
+{
+    unsigned int n=0;
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        n++;
+    return n;
+}
+
 Client *win_to_client(WM *wm, Window win)
 {
     // 當隱藏標題欄時，標題區和按鈕的窗口ID爲0。故win爲0時，不應視爲找到
@@ -295,6 +313,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
 
         if(!is_for_quit)
             update_layout(wm);
+        set_all_net_client_list(wm);
     }
 }
 
@@ -360,6 +379,7 @@ void raise_client(WM *wm, unsigned int desktop_n)
             XRaiseWindow(wm->display, c->frame);
         else
             XRestackWindows(wm->display, wins, ARRAY_NUM(wins));
+        set_all_net_client_list(wm);
     }
 }
 

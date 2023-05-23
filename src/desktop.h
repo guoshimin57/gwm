@@ -27,12 +27,12 @@ void focus_desktop_n(WM *wm, unsigned int n);
 bool is_on_desktop_n(unsigned int n, Client *c);
 bool is_on_cur_desktop(WM *wm, Client *c);
 unsigned int get_desktop_mask(unsigned int desktop_n);
-void move_to_desktop_n(WM *wm, unsigned int n);
+void move_to_desktop_n(WM *wm, Client *c, unsigned int n);
 void all_move_to_desktop_n(WM *wm, unsigned int n);
-void change_to_desktop_n(WM *wm, unsigned int n);
+void change_to_desktop_n(WM *wm, Client *c, unsigned int n);
 void all_change_to_desktop_n(WM *wm, unsigned int n);
-void attach_to_desktop_n(WM *wm, unsigned int n);
-void attach_to_desktop_all(WM *wm);
+void attach_to_desktop_n(WM *wm, Client *c, unsigned int n);
+void attach_to_desktop_all(WM *wm, Client *c);
 void all_attach_to_desktop_n(WM *wm, unsigned int n);
 
 #endif

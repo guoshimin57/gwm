@@ -26,6 +26,7 @@ int main(void)
     XSetScreenSaver(wm.display, wm.cfg->screen_saver_time_out,
         wm.cfg->screen_saver_interval, PreferBlanking, AllowExposures);
     set_signals();
+    set_ewmh(&wm);
     handle_events(&wm);
     return EXIT_SUCCESS;
 }

@@ -264,3 +264,9 @@ void show_tooltip(WM *wm, Window hover)
         draw_string(wm, wm->hint_win, s, &f);
     }
 }
+
+void close_win(WM *wm, Window win)
+{
+    if(!send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], win))
+        XDestroyWindow(wm->display, win);
+}

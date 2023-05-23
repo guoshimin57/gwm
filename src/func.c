@@ -155,6 +155,7 @@ void clear_wm(WM *wm)
     XDestroyWindow(wm->display, wm->cmd_center->win);
     XDestroyWindow(wm->display, wm->run_cmd->win);
     XDestroyWindow(wm->display, wm->hint_win);
+    XDestroyWindow(wm->display, wm->wm_check_win);
     XFreeGC(wm->display, wm->gc);
     XFreeModifiermap(wm->mod_map);
     for(size_t i=0; i<POINTER_ACT_N; i++)
@@ -181,17 +182,15 @@ void close_client(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(e), UNUSED(arg);
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
     Client *c=CUR_FOC_CLI(wm);
-    if( c != wm->clients
-        && !send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], c->win))
-        XDestroyWindow(wm->display, c->win);
+    if(c != wm->clients)
+        close_win(wm, c->win);
 }
 
 void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(!send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], c->win))
-            XDestroyWindow(wm->display, c->win);
+        close_win(wm, c->win);
 }
 
 /* 取得窗口疊次序意義上的下一個客戶窗口 */
@@ -529,21 +528,17 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
     XUngrabPointer(wm->display, CurrentTime);
 }
 
-void iconify_all_clients(WM *wm, XEvent *e, Func_arg arg)
+void show_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(wm, c) && c->area_type!=ICONIFY_AREA)
-            iconify(wm, c);
-}
-
-void deiconify_all_clients(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
-            deiconify(wm, c);
-    update_layout(wm);
+    Atom mtype=wm->ewmh_atom[_NET_SHOWING_DESKTOP];
+    unsigned char *p=get_prop(wm, wm->root_win, mtype, NULL);
+    int32_t show=*(int32_t *)p;
+    XFree(p);
+    XEvent ev={.xclient={.type=ClientMessage, .window=wm->root_win,
+        .message_type=mtype, .format=32, .data.l[0]=!show}};
+    XSendEvent(wm->display, wm->root_win, False,
+        SubstructureNotifyMask|SubstructureRedirectMask, &ev);
 }
 
 void change_default_area_type(WM *wm, XEvent *e, Func_arg arg)
@@ -611,7 +606,7 @@ void prev_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    move_to_desktop_n(wm, get_desktop_n(wm, e, arg));
+    move_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(wm, e, arg));
 }
 
 void all_move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
@@ -621,7 +616,7 @@ void all_move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    change_to_desktop_n(wm, get_desktop_n(wm, e, arg));
+    change_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(wm, e, arg));
 }
 
 void all_change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
@@ -631,13 +626,13 @@ void all_change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    attach_to_desktop_n(wm, get_desktop_n(wm, e, arg));
+    attach_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(wm, e, arg));
 }
 
 void attach_to_all_desktops(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    attach_to_desktop_all(wm);
+    attach_to_desktop_all(wm, CUR_FOC_CLI(wm));
 }
 
 void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)

@@ -13,28 +13,36 @@
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
+static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e);
+static void focus_clicked_client(WM *wm, Window win);
+static void handle_client_message(WM *wm, XEvent *e);
+static void activate_win(WM *wm, Window win, unsigned long src);
+static void toggle_showing_desktop_mode(WM *wm, bool show_mode);
+static void change_desktop(WM *wm, Window win, unsigned int desktop);
+static void update_hint_win_for_info(WM *wm, const char *info);
 static void handle_config_request(WM *wm, XEvent *e);
+static void config_managed_client(WM *wm, Client *c);
+static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
 static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window));
 static void handle_expose(WM *wm, XEvent *e);
+static void update_title_area_text(WM *wm, Client *c);
+static void update_title_button_text(WM *wm, Client *c, size_t index);
 static void handle_key_press(WM *wm, XEvent *e);
+static void key_run_cmd(WM *wm, XKeyEvent *e);
 static void handle_leave_notify(WM *wm, XEvent *e);
+static void hint_leave_title_button(WM *wm, Client *c, Widget_type type);
 static void handle_map_request(WM *wm, XEvent *e);
 static void handle_unmap_notify(WM *wm, XEvent *e);
 static void handle_property_notify(WM *wm, XEvent *e);
-static void handle_wm_transient_for_notify(WM *wm, Client *c, Window win);
+static void handle_wm_hints_notify(WM *wm, Window win);
+static void handle_wm_icon_name_notify(WM *wm, Window win);
+static void handle_wm_hints_notify(WM *wm, Window win);
+static void handle_wm_icon_name_notify(WM *wm, Window win);
+static void handle_wm_name_notify(WM *wm, Window win);
+static void handle_wm_normal_hints_notify(WM *wm, Window win);
+static void handle_wm_transient_for_notify(WM *wm, Window win);
 static void handle_selection_notify(WM *wm, XEvent *e);
-static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e);
-static void focus_clicked_client(WM *wm, Window win);
-static void config_managed_client(WM *wm, Client *c);
-static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
-static void update_title_area_text(WM *wm, Client *c);
-static void update_title_button_text(WM *wm, Client *c, size_t index);
-static void key_run_cmd(WM *wm, XKeyEvent *e);
-static void hint_leave_title_button(WM *wm, Client *c, Widget_type type);
-static void handle_wm_hints_notify(WM *wm, Client *c, Window win);
-static void handle_wm_name_notify(WM *wm, Client *c, Window win);
-static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win);
 
 void handle_events(WM *wm)
 {
@@ -52,6 +60,7 @@ void reg_event_handlers(WM *wm)
         wm->event_handlers[i]=ignore_event;
 
     wm->event_handlers[ButtonPress]      = handle_button_press;
+    wm->event_handlers[ClientMessage]    = handle_client_message;;
     wm->event_handlers[ConfigureRequest] = handle_config_request;
     wm->event_handlers[EnterNotify]      = handle_enter_notify;
     wm->event_handlers[Expose]           = handle_expose;
@@ -116,6 +125,88 @@ static void focus_clicked_client(WM *wm, Window win)
         c=win_to_iconic_state_client(wm, win);
     if(c)
         focus_client(wm, wm->cur_desktop, c);
+}
+
+static void handle_client_message(WM *wm, XEvent *e)
+{
+    Window win=e->xclient.window;
+    Atom type=e->xclient.message_type;
+    if(type == wm->ewmh_atom[_NET_NUMBER_OF_DESKTOPS])
+        update_hint_win_for_info(wm, "gwm不支持動態更改虛擬桌面數量！");
+    else if(type == wm->ewmh_atom[_NET_DESKTOP_GEOMETRY])
+        update_hint_win_for_info(wm, "gwm不支持大型桌面，故不支持動態更改虛擬桌面尺寸！");
+    else if(type == wm->ewmh_atom[_NET_DESKTOP_VIEWPORT])
+        update_hint_win_for_info(wm, "gwm不支持大型桌面，故不支持動態更改當前虛擬桌面視口！");
+    if(type == wm->ewmh_atom[_NET_CURRENT_DESKTOP])
+        focus_desktop_n(wm, e->xclient.data.l[0]+1);
+    else if(type == wm->ewmh_atom[_NET_DESKTOP_NAMES])
+        update_hint_win_for_info(wm, "gwm不支持動態更改虛擬桌面名稱！");
+    else if(type == wm->ewmh_atom[_NET_ACTIVE_WINDOW])
+        activate_win(wm, win, e->xclient.data.l[0]);
+    else if(type == wm->ewmh_atom[_NET_SHOWING_DESKTOP])
+        toggle_showing_desktop_mode(wm, e->xclient.data.l[0]);
+    else if(type == wm->ewmh_atom[_NET_CLOSE_WINDOW])
+    {
+        // 尚未知道有哪些分頁器支持此特性，誰要是知道的話，煩請告知我
+        update_hint_win_for_info(wm, "此分頁器支持_NET_CLOSE_WINDOW特性");
+        close_win(wm, win);
+    }
+    else if(type == wm->ewmh_atom[_NET_MOVERESIZE_WINDOW])
+        // 尚未知道有哪些分頁器支持此特性，誰要是知道的話，煩請告知我
+        update_hint_win_for_info(wm, "此分頁器支持_NET_MOVERESIZE_WINDOW特性");
+    else if(type == wm->ewmh_atom[_NET_WM_MOVERESIZE])
+        update_hint_win_for_info(wm, "稍後支持_NET_WM_MOVERESIZE特性，敬請期待！");
+    else if(type == wm->ewmh_atom[_NET_RESTACK_WINDOW])
+        // 尚未知道有哪些分頁器支持此特性，誰要是知道的話，煩請告知我
+        update_hint_win_for_info(wm, "此分頁器支持_NET_RESTACK_WINDOW特性");
+    else if(type == wm->ewmh_atom[_NET_REQUEST_FRAME_EXTENTS])
+        // 尚未知道有哪些分頁器支持此特性，誰要是知道的話，煩請告知我
+        update_hint_win_for_info(wm, "此分頁器支持_NET_REQUEST_FRAME_EXTENTS特性");
+    else if(type == wm->ewmh_atom[_NET_WM_DESKTOP])
+        change_desktop(wm, win, e->xclient.data.l[0]);
+}
+
+static void activate_win(WM *wm, Window win, unsigned long src)
+{
+    Client *c=NULL;
+    if(src==1 && (c=win_to_client(wm, win)) && c!=CUR_FOC_CLI(wm))
+        set_urgency(wm, c, true);
+    if(src==2 && (c=win_to_client(wm, win)) && is_on_cur_desktop(wm, c))
+        focus_client(wm, wm->cur_desktop, c);
+}
+
+static void toggle_showing_desktop_mode(WM *wm, bool show_mode)
+{
+    if(show_mode)
+        iconify_all_clients(wm);
+    else
+        deiconify_all_clients(wm);
+    set_net_showing_desktop(wm, show_mode);
+}
+
+static void change_desktop(WM *wm, Window win, unsigned int desktop)
+{ 
+    Client *c=win_to_client(wm, win);
+    if(c && c!=wm->clients)
+    {
+        if(desktop== 0xFFFFFFFF)
+            attach_to_desktop_all(wm, c);
+        else
+            move_to_desktop_n(wm, c, desktop+1);
+    }
+}
+
+static void update_hint_win_for_info(WM *wm, const char *info)
+{
+    unsigned int w=0, h=wm->cfg->hint_win_line_height;
+    get_string_size(wm, wm->font[HINT_FONT], info, &w, NULL);
+    w+=h, h+=h;
+    int x=(wm->screen_width-w)/2, y=(wm->screen_height-h)/2;
+    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
+    XMapRaised(wm->display, wm->hint_win);
+    String_format f={{0, 0, w, h}, CENTER, false, 0,
+        wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
+    draw_string(wm, wm->hint_win, info, &f);
 }
 
 static void handle_config_request(WM *wm, XEvent *e)
@@ -356,31 +447,32 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
 static void handle_property_notify(WM *wm, XEvent *e)
 {
     Window win=e->xproperty.window;
-    Client *c=win_to_client(wm, win);
-    if(wm->cfg->set_frame_prop && c)
+    Client *c=NULL;
+    if(wm->cfg->set_frame_prop && (c=win_to_client(wm, win)))
         copy_prop(wm, c->frame, c->win);
     switch(e->xproperty.atom)
     {
         case XA_WM_HINTS:
-            handle_wm_hints_notify(wm, c, win); break;
+            handle_wm_hints_notify(wm, win); break;
         case XA_WM_ICON_NAME:
-            handle_wm_icon_name_notify(wm, c, win); break;
+            handle_wm_icon_name_notify(wm, win); break;
         case XA_WM_NAME:
-            handle_wm_name_notify(wm, c, win); break;
+            handle_wm_name_notify(wm, win); break;
         case XA_WM_NORMAL_HINTS:
-            handle_wm_normal_hints_notify(wm, c, win); break;
+            handle_wm_normal_hints_notify(wm, win); break;
         case XA_WM_TRANSIENT_FOR:
-            handle_wm_transient_for_notify(wm, c, win); break;
+            handle_wm_transient_for_notify(wm, win); break;
         default: break; // 或許其他的情況也應考慮，但暫時還沒遇到必要的情況
     }
 }
 
-static void handle_wm_hints_notify(WM *wm, Client *c, Window win)
+static void handle_wm_hints_notify(WM *wm, Window win)
 {
-    if(c && c->win==win)
+    Client *c=win_to_client(wm, win);
+    if(c)
     {
         XWMHints *oh=c->wm_hint, *nh=XGetWMHints(wm->display, win);
-        if( ((nh->flags & InputHint) && nh->input) // 變成需要鍵盤輸入
+        if( nh && ((nh->flags & InputHint) && nh->input) // 變成需要鍵盤輸入
             && (!oh || !((oh->flags & InputHint) && oh->input)))
             set_input_focus(wm, nh, win);
         if(nh)
@@ -388,35 +480,56 @@ static void handle_wm_hints_notify(WM *wm, Client *c, Window win)
     }
 }
 
-static void handle_wm_name_notify(WM *wm, Client *c, Window win)
+static void handle_wm_icon_name_notify(WM *wm, Window win)
 {
-    char *s=get_text_prop(wm, win, XA_WM_NAME);
-    if(s)
+    char *s=NULL;
+    Client *c=win_to_client(wm, win);
+
+    if(c && c->area_type==ICONIFY_AREA)
     {
-        if(c && c->win==win)
+        if((s=get_text_prop(wm, c->win, XA_WM_ICON_NAME)))
         {
-            free(c->title_text);
-            c->title_text=s;
-            update_title_area_text(wm, c);
+            free(c->icon->title_text);
+            c->icon->title_text=s;
+            update_icon_area(wm);
         }
-        else if(win == wm->root_win)
+    }
+}
+
+static void handle_wm_name_notify(WM *wm, Window win)
+{
+    char *s=NULL;
+    Client *c=NULL;
+
+    if( (win==wm->root_win || (c=win_to_client(wm, win)))
+        && (s=get_text_prop(wm, win, XA_WM_NAME)))
+    {
+        if(win == wm->root_win)
         {
             free(wm->taskbar->status_text);
             wm->taskbar->status_text=s;
             update_status_area(wm);
         }
+        else
+        {
+            free(c->title_text);
+            c->title_text=s;
+            update_title_area_text(wm, c);
+        }
     }
 }
 
-static void handle_wm_normal_hints_notify(WM *wm, Client *c, Window win)
+static void handle_wm_normal_hints_notify(WM *wm, Window win)
 {
-    if(c && c->win==win)
+    Client *c=win_to_client(wm, win);
+    if(c)
         update_size_hint(wm, c);
 }
 
-static void handle_wm_transient_for_notify(WM *wm, Client *c, Window win)
+static void handle_wm_transient_for_notify(WM *wm, Window win)
 {
-    if(c && c->win==win)
+    Client *c=win_to_client(wm, win);
+    if(c)
         c->owner=get_transient_for(wm, win);
 }
 

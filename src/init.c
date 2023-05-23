@@ -35,6 +35,8 @@ void init_wm(WM *wm)
     wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
     wm->visual=DefaultVisual(wm->display, wm->screen);
     wm->colormap=DefaultColormap(wm->display, wm->screen);
+    wm->wm_check_win=XCreateSimpleWindow(wm->display, wm->root_win,
+        -1, -1, 1, 1, 0, 0, 0);
 
     config(wm);
     if(wm->cfg->wallpaper_paths)

@@ -12,7 +12,7 @@
 ./" program. Otherwise, see <http://www.gnu.org/licenses/>.
 ./" ************************************************* ***************************/
 
-.TH gwm 1 May 2023 "gwm 2.0.3" gwm
+.TH gwm 1 May 2023 "gwm 2.1.0" gwm
 .
 .SH NAME
 gwm \- gwm (gsm's window manager), is an X11-based dynamic window manager written in C language.
@@ -258,11 +258,7 @@ Close all windows.
 .
 .TP
 .B Mod4+d
-Show the desktop, i.e. iconify all windows.
-.
-.TP
-.B Mod4+Shift+d
-deiconify all windows.
+Show the desktop, i.e. when WM is in "showing the desktop" mode, iconify all windows; otherwise deconify all windows.
 .
 .TP
 .B Mod4+e
@@ -421,8 +417,7 @@ Unless otherwise specified below, moving the window refers to moving the window 
     Taskbar "▣" button: switch to stacking mode;
     Taskbar "▥" button: switch to tiling mode;
     Taskbar "■" button:
-        Pointer button 1      - click    Display the desktop, that is, to iconify all windows,
-        pointer button 3      - click    deiconify all windows,
+        Pointer button 1      - click    show the desktop, same as key command "mod4+d",
         Mod4+pointer button 2 - click    Close all windows of all desktops;
     Taskbar "^" button: open the Action Center;
     Action Center buttons:

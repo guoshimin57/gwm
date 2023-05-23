@@ -236,7 +236,8 @@ static int get_dir_size_distance(const char *base_dir, const char *theme, const 
 static char **get_base_dirs(void)
 {
     char **dirs=NULL, *home=getenv("HOME"), *pix="/usr/share/pixmaps",
-          *xdg=copy_strings(getenv("XDG_DATA_DIRS"), NULL);
+         *x=getenv("XDG_DATA_DIRS"), // 注意環境變量可能未設置
+         *xdg=copy_strings(x ? x : "/usr/share:/usr/local/share", NULL);
     size_t n=get_spec_char_num(xdg, ':')+4;
 
     // 規範規定依次搜索如下三個基本目錄：
@@ -493,4 +494,19 @@ void del_icon(WM *wm, Client *c)
     free(c->icon->title_text);
     free(c->icon);
     update_icon_area(wm);
+}
+
+void iconify_all_clients(WM *wm)
+{
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+        if(is_on_cur_desktop(wm, c) && c->area_type!=ICONIFY_AREA)
+            iconify(wm, c);
+}
+
+void deiconify_all_clients(WM *wm)
+{
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+        if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+            deiconify(wm, c);
+    update_layout(wm);
 }

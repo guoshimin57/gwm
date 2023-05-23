@@ -28,5 +28,7 @@ unsigned int get_icon_draw_width(WM *wm, Client *c);
 void draw_icon(WM *wm, Client *c);
 void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);
+void iconify_all_clients(WM *wm);
+void deiconify_all_clients(WM *wm);
 
 #endif

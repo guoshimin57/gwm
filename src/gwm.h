@@ -34,10 +34,26 @@
 #include <X11/Xproto.h>
 
 #define ICCCM_NAMES (const char *[]) {"WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_TAKE_FOCUS"}
-#define EWMH_NAME (const char *[]) {"_NET_WM_WINDOW_TYPE",\
-    "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG",\
-    "_NET_WM_WINDOW_TYPE_UTILITY",\
-    "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_ICON"} 
+#define EWMH_NAME (const char *[]) \
+{ \
+    "_NET_SUPPORTED", "_NET_CLIENT_LIST", "_NET_CLIENT_LIST_STACKING", \
+    "_NET_NUMBER_OF_DESKTOPS", "_NET_DESKTOP_GEOMETRY", \
+    "_NET_DESKTOP_VIEWPORT", "_NET_CURRENT_DESKTOP", "_NET_DESKTOP_NAMES", \
+    "_NET_ACTIVE_WINDOW", "_NET_WORKAREA", "_NET_SUPPORTING_WM_CHECK", \
+    "_NET_SHOWING_DESKTOP", "_NET_CLOSE_WINDOW", "_NET_MOVERESIZE_WINDOW", \
+    "_NET_WM_MOVERE$IZE", "_NET_RESTACK_WINDOW", "_NET_REQUEST_FRAME_EXTENTS", \
+    "_NET_WM_NAME", "_NET_WM_DESKTOP", \
+    "_NET_WM_WINDOW_TYPE", \
+    "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG", \
+    "_NET_WM_WINDOW_TYPE_UTILITY", \
+    "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_STATE_STICKY", \
+    "_NET_WM_STATE_MAXIMIZED_VERT", "_NET_WM_STATE_MAXIMIZED_HORZ", \
+    "_NET_WM_STATE_SHADED", "_NET_WM_STATE_SKIP_TASKBAR", \
+    "_NET_WM_STATE_PAGER", "_NET_WM_STATE_HIDDEN", "_NET_WM_STATE_FULLSCREEN", \
+    "_NET_WM_STATE_ABOVE", "_NET_WM_STATE_BELOW", \
+    "_NET_WM_STATE_DEMANDS_ATTENTION", "_NET_WM_STATE_FOCUSED", \
+    "_NET_WM_ICON", \
+} 
 
 #define _(s) gettext(s)
 
@@ -179,9 +195,21 @@ typedef enum icccm_atom_tag Icccm_atom;
 
 enum ewmh_atom_tag // EWMH規範的標識符
 {
+    _NET_SUPPORTED, _NET_CLIENT_LIST, _NET_CLIENT_LIST_STACKING,
+    _NET_NUMBER_OF_DESKTOPS, _NET_DESKTOP_GEOMETRY, _NET_DESKTOP_VIEWPORT,
+    _NET_CURRENT_DESKTOP, _NET_DESKTOP_NAMES, _NET_ACTIVE_WINDOW, _NET_WORKAREA,
+    _NET_SUPPORTING_WM_CHECK, _NET_SHOWING_DESKTOP, _NET_CLOSE_WINDOW,
+    _NET_MOVERESIZE_WINDOW, _NET_WM_MOVERESIZE, _NET_RESTACK_WINDOW,
+    _NET_REQUEST_FRAME_EXTENTS, _NET_WM_NAME, _NET_WM_DESKTOP,
     _NET_WM_WINDOW_TYPE, _NET_WM_WINDOW_TYPE_NORMAL, _NET_WM_WINDOW_TYPE_DIALOG,
     _NET_WM_WINDOW_TYPE_UTILITY,
-    _NET_WM_STATE, _NET_WM_STATE_MODAL, _NET_WM_ICON, EWMH_ATOM_N
+    _NET_WM_STATE, _NET_WM_STATE_MODAL, _NET_WM_STATE_STICKY,
+    _NET_WM_STATE_MAXIMIZED_VERT, _NET_WM_STATE_MAXIMIZED_HORZ,
+    _NET_WM_STATE_SHADED, _NET_WM_STATE_SKIP_TASKBAR,
+    _NET_WM_STATE_PAGER, _NET_WM_STATE_HIDDEN, _NET_WM_STATE_FULLSCREEN,
+    _NET_WM_STATE_ABOVE, _NET_WM_STATE_BELOW,
+    _NET_WM_STATE_DEMANDS_ATTENTION, _NET_WM_STATE_FOCUSED,
+    _NET_WM_ICON, EWMH_ATOM_N
 };
 typedef enum ewmh_atom_tag Ewmh_atom;
 
@@ -229,10 +257,10 @@ struct wm_tag // 窗口管理器相關信息
     Display *display; // 顯示器
     int screen; // 屏幕
     unsigned int screen_width, screen_height; // 屏幕寬度、高度
-    unsigned int cur_desktop; // 當前虛擬桌面編號
+    unsigned int cur_desktop; // 當前虛擬桌面編號，從1開始編號
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
-    Window root_win, hint_win; // 根窗口、提示窗口
+    Window root_win, hint_win, wm_check_win; // 根窗口、提示窗口、WM檢測窗口
     GC gc; // 窗口管理器的圖形信息
     Visual *visual; // 着色類型
     Colormap colormap; // 着色圖
@@ -271,7 +299,7 @@ union func_arg_tag // 函數參數類型
     Layout layout; // 窗口布局模式
     Pointer_act pointer_act; // 窗口操作類型
     int n; // 表示數量
-    unsigned int desktop_n; // 虛擬桌面編號
+    unsigned int desktop_n; // 虛擬桌面編號，從1開始編號
     Area_type area_type; // 窗口區域類型
     double change_ratio; // 變化率
 };
