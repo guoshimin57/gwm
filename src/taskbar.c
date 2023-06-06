@@ -19,8 +19,8 @@ static void create_cmd_center(WM *wm);
 void create_taskbar(WM *wm)
 {
     Taskbar *b=wm->taskbar=malloc_s(sizeof(Taskbar));
-    b->x=0, b->y=wm->screen_height-wm->cfg->taskbar_height;
     b->w=wm->screen_width, b->h=wm->cfg->taskbar_height;
+    b->x=0, b->y=(wm->cfg->taskbar_on_top ? 0 : wm->screen_height-b->h);
     b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
         b->w, b->h, 0, 0, 0);
     set_override_redirect(wm, b->win);
@@ -29,9 +29,9 @@ void create_taskbar(WM *wm)
     create_status_area(wm);
     create_icon_area(wm);
     create_cmd_center(wm);
-    XMapRaised(wm->display, b->win);
-    XMapWindow(wm->display, b->win);
     XMapSubwindows(wm->display, b->win);
+    if(wm->cfg->show_taskbar)
+        XMapWindow(wm->display, b->win);
 }
 
 static void create_taskbar_buttons(WM *wm)

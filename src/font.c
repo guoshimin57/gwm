@@ -15,14 +15,16 @@ void load_font(WM *wm)
 {
     for(size_t i=0; i<FONT_N; i++)
     {
-        bool flag=true;
-        for(size_t j=0; j<i && flag; j++)
+        XftFont *p=NULL;
+        for(size_t j=0; j<i && !p; j++)
             if(strcmp(wm->cfg->font_name[j], wm->cfg->font_name[i]) == 0)
-                wm->font[i]=wm->font[j], flag=false;
-        if(flag)
-            if(!(wm->font[i]=XftFontOpenName(wm->display, wm->screen, wm->cfg->font_name[i])))
-                if(!(wm->font[i]=XftFontOpenName(wm->display, wm->screen, wm->cfg->default_font_name)))
-                    exit_with_msg(_("錯誤：不能加載必要的字體。"));
+                p=wm->font[j];
+        if(!p)
+            p=XftFontOpenName(wm->display, wm->screen, wm->cfg->font_name[i]);
+        if(p)
+            wm->font[i]=p;
+        else
+            exit_with_msg(_("錯誤：不能加載必要的字體。"));
     }
 }
 

@@ -17,7 +17,7 @@ struct config_tag
 {
     bool set_frame_prop; // true表示把窗口特性復制到窗口框架（代價是每個窗口可能要多消耗幾十到幾百KB內存），false表示不復制
     bool use_image_icon; // true表示使用圖像形式的圖標，false表示使用文字形式的圖標
-    char default_font_name[FONT_NAME_MAX]; // 默認字體名
+    bool show_taskbar, taskbar_on_top; // 是否顯示任務欄、是否在屏幕頂部顯示
     char font_name[FONT_N][FONT_NAME_MAX]; // 本窗口管理器所使用的字庫名稱列表。注意：每增加一種不同的字體，就會增加2M左右的內存佔用
     Focus_mode focus_mode; // 聚焦模式
     Layout default_layout; // 默認的窗口布局模式
@@ -51,11 +51,11 @@ struct config_tag
     unsigned int entry_text_indent; // 文字縮進量
     unsigned int run_cmd_entry_width; // 運行命令的輸入構件的寬度
     unsigned int run_cmd_entry_height; // 運行命令的輸入構件的寬度
-    unsigned int hint_win_line_height; // 提示窗口的行高度
     int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
 
     unsigned int cursor_shape[POINTER_ACT_N]; // 定位器相關的光標字體
 
+    double font_pad_ratio; // 文字與構件邊緣的間距與字體高度的比值
     double default_main_area_ratio; // 默認的主區域比例
     double default_fixed_area_ratio; // 默認的固定區域比例
     const char *autostart; // 在gwm剛啓動時執行的腳本

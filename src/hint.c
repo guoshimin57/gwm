@@ -267,11 +267,12 @@ void set_net_active_window(WM *wm)
 
 static void set_net_workarea(WM *wm)
 {
-    unsigned int w=wm->screen_width, h=wm->screen_height-wm->taskbar->h;
+    int x=wm->workarea.x, y=wm->workarea.y;
+    unsigned int w=wm->workarea.w, h=wm->workarea.h;
     int32_t rect[DESKTOP_N][4];
 
     for(size_t i=0; i<DESKTOP_N; i++)
-        rect[i][0]=0, rect[i][1]=0, rect[i][2]=w, rect[i][3]=h;
+        rect[i][0]=x, rect[i][1]=y, rect[i][2]=w, rect[i][3]=h;
     XChangeProperty(wm->display, wm->root_win,
         wm->ewmh_atom[_NET_WORKAREA], XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)rect, DESKTOP_N*4);

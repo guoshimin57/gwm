@@ -74,11 +74,12 @@ static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
     char *paths=getenv("PATH");
     if(paths && pattern && *pattern)
     {
-        unsigned int w=wm->cfg->run_cmd_entry_width, h=wm->cfg->hint_win_line_height;
+        unsigned int bw=wm->cfg->border_width, w=wm->cfg->run_cmd_entry_width,
+                     h=wm->cfg->font_size[HINT_FONT]*(1+wm->cfg->font_pad_ratio*2);
         String_format fmt={{0, 0, w, h}, CENTER_LEFT,
             false, 0, wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
-        int x=wm->run_cmd->x+wm->cfg->border_width, y=wm->run_cmd->y+wm->run_cmd->h+wm->cfg->border_width, *py=&fmt.r.y;
-        size_t i, n, max=(wm->screen_height-wm->taskbar->h-y)/h;
+        int x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+bw, *py=&fmt.r.y;
+        size_t i, n, max=(wm->workarea.h-y)/h;
         const char *reg=copy_strings(pattern, "*", NULL);
         File *f, *files=get_files_in_paths(paths, reg, RISE, false, &n);
         if(n)

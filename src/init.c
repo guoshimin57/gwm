@@ -12,6 +12,7 @@
 #include "gwm.h"
 
 static void set_locale(WM *wm);
+static void set_workarea(WM *wm);
 static void set_atoms(WM *wm);
 static void create_cursors(WM *wm);
 static void create_run_cmd_entry(WM *wm);
@@ -51,11 +52,24 @@ void init_wm(WM *wm)
     create_cursors(wm);
     XDefineCursor(wm->display, wm->root_win, wm->cursors[NO_OP]);
     create_taskbar(wm);
+    set_workarea(wm);
     create_run_cmd_entry(wm);
     create_hint_win(wm);
     create_clients(wm);
     grab_keys(wm);
     exec_autostart(wm);
+}
+
+static void set_workarea(WM *wm)
+{
+    long sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar->h;
+    wm->workarea=(Rect){0, 0, sw, sh};
+    if(wm->cfg->show_taskbar)
+    {
+        wm->workarea.h-=th;
+        if(wm->cfg->taskbar_on_top)
+            wm->workarea.y=th;
+    }
 }
 
 static void exec_autostart(WM *wm)

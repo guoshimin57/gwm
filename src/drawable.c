@@ -240,9 +240,6 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
 
 void show_tooltip(WM *wm, Window hover)
 {
-    Window r, c;
-    unsigned int m, w, h=wm->cfg->hint_win_line_height;
-    int x, y, rx, ry;
     Widget_type type=get_widget_type(wm, hover);
     const char *s=NULL;
 
@@ -253,16 +250,8 @@ void show_tooltip(WM *wm, Window hover)
         default: s=wm->cfg->tooltip[type]; break;
     }
 
-    if(s && XQueryPointer(wm->display, hover, &r, &c, &rx, &ry, &x, &y, &m))
-    {
-        get_string_size(wm, wm->font[HINT_FONT], s, &w, NULL);
-        set_pos_for_click(wm, hover, rx, &x, &y, w, h);
-        XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
-        XMapRaised(wm->display, wm->hint_win);
-        String_format f={{0, 0, w, h}, CENTER,
-            false, 0, wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
-        draw_string(wm, wm->hint_win, s, &f);
-    }
+    if(s)
+        update_hint_win_for_info(wm, hover, s);
 }
 
 void close_win(WM *wm, Window win)

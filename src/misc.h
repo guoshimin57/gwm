@@ -36,5 +36,6 @@ void free_files(File *head);
 int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
 void exec_cmd(WM *wm, char *const*cmd);
+void update_hint_win_for_info(WM *wm, Window hover, const char *info);
 
 #endif

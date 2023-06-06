@@ -304,7 +304,6 @@ static void config_widget_size(WM *wm)
     c->entry_text_indent=ROUND(c->font_size[ENTRY_FONT]/4.0);
     c->run_cmd_entry_width=c->font_size[CMD_CENTER_FONT]*15+c->entry_text_indent*2;
     c->run_cmd_entry_height=ROUND(c->font_size[CMD_CENTER_FONT]*4/3.0);
-    c->hint_win_line_height=ROUND(c->font_size[HINT_FONT]*4/3.0);
     c->resize_inc=c->font_size[TITLE_FONT];
 }
 
@@ -571,8 +570,10 @@ static void config_tooltip(WM *wm)
 static void config_misc(WM *wm)
 {
     Config *c=wm->cfg;
-    c->set_frame_prop=0;
-    c->use_image_icon=1;
+    c->set_frame_prop=false;
+    c->use_image_icon=true;
+    c->show_taskbar=true;
+    c->taskbar_on_top=true;
     c->focus_mode=CLICK_FOCUS;
     c->default_layout=TILE;
     c->default_area_type=MAIN_AREA;
@@ -583,6 +584,7 @@ static void config_misc(WM *wm)
     c->default_cur_desktop=1;
     c->default_n_main_max=1;
     c->cmd_center_col=4;
+    c->font_pad_ratio=0.5;
     c->default_main_area_ratio=0.6;
     c->default_fixed_area_ratio=0.15;
     c->autostart="~/.config/gwm/autostart.sh";

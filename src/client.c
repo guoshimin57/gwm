@@ -17,9 +17,9 @@ static void set_win_rect_by_attr(WM *wm, Client *c);
 static void fix_win_pos(WM *wm, Client *c);
 static bool fix_win_pos_by_hint(Client *c);
 static void fix_win_pos_by_prop(WM *wm, Client *c);
-static void fix_win_pos_by_screen(WM *wm, Client *c);
+static void fix_win_pos_by_workarea(WM *wm, Client *c);
 static void fix_win_size(WM *wm, Client *c);
-static void fix_win_size_by_screen(WM *wm, Client *c);
+static void fix_win_size_by_workarea(WM *wm, Client *c);
 static void frame_client(WM *wm, Client *c);
 static Rect get_button_rect(WM *wm, Client *c, size_t index);
 static Rect get_frame_rect(Client *c);
@@ -130,7 +130,8 @@ void set_default_win_rect(WM *wm, Client *c)
 
 static void set_win_rect_by_attr(WM *wm, Client *c)
 {
-    XWindowAttributes a={.x=0, .y=0, .width=wm->screen_width/4, .height=wm->screen_height/4};
+    XWindowAttributes a={.x=wm->workarea.x, .y=wm->workarea.y,
+        .width=wm->workarea.w/4, .height=wm->workarea.h/4};
     XGetWindowAttributes(wm->display, c->win, &a);
     c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
 }
@@ -138,7 +139,7 @@ static void set_win_rect_by_attr(WM *wm, Client *c)
 static void fix_win_pos(WM *wm, Client *c)
 {
     if(!fix_win_pos_by_hint(c))
-        fix_win_pos_by_prop(wm, c), fix_win_pos_by_screen(wm, c);
+        fix_win_pos_by_prop(wm, c), fix_win_pos_by_workarea(wm, c);
 }
 
 static bool fix_win_pos_by_hint(Client *c)
@@ -153,42 +154,43 @@ static void fix_win_pos_by_prop(WM *wm, Client *c)
 {
     Client *oc;
     // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
-    int w=c->w, h=c->h, bh=c->title_bar_h, sw=wm->screen_width, sh=wm->screen_height;
+    long ow, oh, w=c->w, h=c->h, wx=wm->workarea.x, wy=wm->workarea.y,
+         ww=wm->workarea.w, wh=wm->workarea.h;
     if((oc=win_to_client(wm, get_transient_for(wm, c->win))))
-        c->x=oc->x+(oc->w-w)/2, c->y=oc->y+(oc->h-h)/2;
+        ow=oc->w, oh=oc->h, c->x=oc->x+(ow-w)/2, c->y=oc->y+(oh-h)/2;
     if( get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE])
         == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG])
-        c->x=(sw-w)/2, c->y=(sh-h-bh)/2+bh;
+        c->x=wx+(ww-w)/2, c->y=wy+(wh-h)/2;
 }
 
-static void fix_win_pos_by_screen(WM *wm, Client *c)
+static void fix_win_pos_by_workarea(WM *wm, Client *c)
 {
     // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
-    int w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h,
-        sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar->h;
-    if(c->x >= sw-w-bw)
-        c->x=sw-w-bw;
-    if(c->x < bw)
-        c->x=bw;
-    if(c->y >= sh-th-bw-h)
-        c->y=sh-th-bw-h;
-    if(c->y < bw+bh)
-        c->y=bw+bh;
+    long w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h, wx=wm->workarea.x,
+         wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
+    if(c->x >= wx+ww-w-bw) // 窗口在工作區右邊出界
+        c->x=wx+ww-w-bw;
+    if(c->x < wx+bw) // 窗口在工作區左邊出界
+        c->x=wx+bw;
+    if(c->y >= wy+wh-bw-h) // 窗口在工作區下邊出界
+        c->y=wy+wh-bw-h;
+    if(c->y < wy+bw+bh) // 窗口在工作區上邊出界
+        c->y=wy+bw+bh;
 }
 
 static void fix_win_size(WM *wm, Client *c)
 {
     fix_win_size_by_hint(c);
-    fix_win_size_by_screen(wm, c);
+    fix_win_size_by_workarea(wm, c);
 }
 
-static void fix_win_size_by_screen(WM *wm, Client *c)
+static void fix_win_size_by_workarea(WM *wm, Client *c)
 {
-    unsigned int sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar->h;
-    if(c->w+2*c->border_w > sw)
-        c->w=sw-2*c->border_w;
-    if(c->h+c->title_bar_h+2*c->border_w > sh-th)
-        c->h=sh-th-c->title_bar_h-2*c->border_w;
+    long ww=wm->workarea.w, wh=wm->workarea.h, bh=c->title_bar_h, bw=c->border_w;
+    if(c->w+2*bw > ww)
+        c->w=ww-2*bw;
+    if(c->h+bh+2*bw > wh)
+        c->h=wh-bh-2*bw;
 }
 
 static void frame_client(WM *wm, Client *c)
@@ -225,8 +227,8 @@ void create_title_bar(WM *wm, Client *c)
 
 static Rect get_frame_rect(Client *c)
 {
-    return (Rect){c->x-c->border_w, c->y-c->title_bar_h-c->border_w,
-        c->w, c->h+c->title_bar_h};
+    long bw=c->border_w, bh=c->title_bar_h;
+    return (Rect){c->x-bw, c->y-bh-bw, c->w, c->h+bh};
 }
 
 Rect get_title_area_rect(WM *wm, Client *c)
@@ -238,9 +240,8 @@ Rect get_title_area_rect(WM *wm, Client *c)
 
 static Rect get_button_rect(WM *wm, Client *c, size_t index)
 {
-    return (Rect){c->w-wm->cfg->title_button_width*(TITLE_BUTTON_N-index),
-        (c->title_bar_h-wm->cfg->title_button_height)/2,
-        wm->cfg->title_button_width, wm->cfg->title_button_height};
+    long cw=c->w, w=wm->cfg->title_button_width, h=wm->cfg->title_button_height;
+    return (Rect){cw-w*(TITLE_BUTTON_N-index), (c->title_bar_h-h)/2, w, h};
 }
 
 unsigned int get_typed_clients_n(WM *wm, Area_type type)

@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.1.0\n"
+"Project-Id-Version: gwm 2.2.0\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-05-23 16:56+0800\n"
+"POT-Creation-Date: 2023-06-06 17:24+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -18,177 +18,177 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. 以下爲操作中心按鈕的文字，翻譯時應保持簡潔，長度不宜超過原文最長者，否則可能顯示不全
-#: src/config.c:511
+#: src/config.c:510
 msgid "幫助"
 msgstr "Help"
 
-#: src/config.c:512
+#: src/config.c:511
 msgid "文件"
 msgstr "File"
 
-#: src/config.c:513
+#: src/config.c:512
 msgid "終端模擬器"
 msgstr "Terminal"
 
-#: src/config.c:514
+#: src/config.c:513
 msgid "網絡瀏覽器"
 msgstr "Web browser"
 
-#: src/config.c:516
+#: src/config.c:515
 msgid "播放影音"
 msgstr "Start Play"
 
-#: src/config.c:517
+#: src/config.c:516
 msgid "切換播放狀態"
 msgstr "Toggle Play"
 
-#: src/config.c:518
+#: src/config.c:517
 msgid "關閉影音"
 msgstr "Quit Play"
 
-#: src/config.c:519
+#: src/config.c:518
 msgid "减小音量"
 msgstr "Volume down"
 
-#: src/config.c:521
+#: src/config.c:520
 msgid "增大音量"
 msgstr "Volume up"
 
-#: src/config.c:522
+#: src/config.c:521
 msgid "最大音量"
 msgstr "Volume max"
 
-#: src/config.c:523
+#: src/config.c:522
 msgid "靜音切換"
 msgstr "Mute toggle"
 
-#: src/config.c:524
+#: src/config.c:523
 msgid "暫主區開窗"
 msgstr "Main next"
 
-#: src/config.c:526
+#: src/config.c:525
 msgid "暫次區開窗"
 msgstr "Sec next"
 
-#: src/config.c:527
+#: src/config.c:526
 msgid "暫固定區開窗"
 msgstr "Fixed next"
 
-#: src/config.c:528
+#: src/config.c:527
 msgid "暫懸浮區開窗"
 msgstr "Floating next"
 
-#: src/config.c:529
+#: src/config.c:528
 msgid "暫縮微區開窗"
 msgstr "Icon next"
 
-#: src/config.c:531
+#: src/config.c:530
 msgid "增大主區容量"
 msgstr "Main area n+"
 
-#: src/config.c:532
+#: src/config.c:531
 msgid "减小主區容量"
 msgstr "Main area n-"
 
-#: src/config.c:533
+#: src/config.c:532
 msgid "切換聚焦模式"
 msgstr "Toggle focus"
 
-#: src/config.c:534
+#: src/config.c:533
 msgid "退出gwm"
 msgstr "Quit gwm"
 
-#: src/config.c:536
+#: src/config.c:535
 msgid "注銷"
 msgstr "Logout"
 
-#: src/config.c:537
+#: src/config.c:536
 msgid "重啓"
 msgstr "Reboot"
 
-#: src/config.c:538
+#: src/config.c:537
 msgid "關機"
 msgstr "Shutdown"
 
 #. 最後一個操作中心按鈕項
-#: src/config.c:540
+#: src/config.c:539
 msgid "運行"
 msgstr "Run"
 
-#: src/config.c:549
+#: src/config.c:548
 msgid "拖動以調整窗口尺寸"
 msgstr "Drag to resize"
 
-#: src/config.c:550
+#: src/config.c:549
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: src/config.c:551
+#: src/config.c:550
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: src/config.c:552
+#: src/config.c:551
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: src/config.c:553
+#: src/config.c:552
 msgid "切換到懸浮區域"
 msgstr "To floating area"
 
-#: src/config.c:554
+#: src/config.c:553
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: src/config.c:555
+#: src/config.c:554
 msgid "切換到懸浮區域並最大化窗口"
 msgstr "Maximize window"
 
-#: src/config.c:556
+#: src/config.c:555
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: src/config.c:557
+#: src/config.c:556
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: src/config.c:558
+#: src/config.c:557
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: src/config.c:559
+#: src/config.c:558
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: src/config.c:560
+#: src/config.c:559
 msgid "切換到全屏模式"
 msgstr "To full screen mode"
 
-#: src/config.c:561
+#: src/config.c:560
 msgid "切換到預覽模式"
 msgstr "To preview mode"
 
-#: src/config.c:562
+#: src/config.c:561
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: src/config.c:563
+#: src/config.c:562
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: src/config.c:564
+#: src/config.c:563
 msgid "顯示桌面"
 msgstr "show desktop"
 
-#: src/config.c:565
+#: src/config.c:564
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: src/config.c:594
+#: src/config.c:596
 #, fuzzy
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
-#: src/font.c:25
+#: src/font.c:27
 msgid "錯誤：不能加載必要的字體。"
 msgstr "Error: Unable to load necessary fonts."
 
@@ -222,12 +222,12 @@ msgstr "SIGQUIT signal handler cannot be installed"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 
-#: src/init.c:81
+#: src/init.c:95
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: src/init.c:131
+#: src/init.c:145
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 

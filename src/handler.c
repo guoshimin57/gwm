@@ -19,7 +19,6 @@ static void handle_client_message(WM *wm, XEvent *e);
 static void activate_win(WM *wm, Window win, unsigned long src);
 static void toggle_showing_desktop_mode(WM *wm, bool show_mode);
 static void change_desktop(WM *wm, Window win, unsigned int desktop);
-static void update_hint_win_for_info(WM *wm, const char *info);
 static void handle_config_request(WM *wm, XEvent *e);
 static void config_managed_client(WM *wm, Client *c);
 static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
@@ -60,7 +59,7 @@ void reg_event_handlers(WM *wm)
         wm->event_handlers[i]=ignore_event;
 
     wm->event_handlers[ButtonPress]      = handle_button_press;
-    wm->event_handlers[ClientMessage]    = handle_client_message;;
+    wm->event_handlers[ClientMessage]    = handle_client_message;
     wm->event_handlers[ConfigureRequest] = handle_config_request;
     wm->event_handlers[EnterNotify]      = handle_enter_notify;
     wm->event_handlers[Expose]           = handle_expose;
@@ -132,38 +131,35 @@ static void handle_client_message(WM *wm, XEvent *e)
     Window win=e->xclient.window;
     Atom type=e->xclient.message_type;
     if(type == wm->ewmh_atom[_NET_NUMBER_OF_DESKTOPS])
-        update_hint_win_for_info(wm, "gwm不支持動態更改虛擬桌面數量！");
+        update_hint_win_for_info(wm, None, "gwm不支持動態更改虛擬桌面數量！");
     else if(type == wm->ewmh_atom[_NET_DESKTOP_GEOMETRY])
-        update_hint_win_for_info(wm, "gwm不支持大型桌面，故不支持動態更改虛擬桌面尺寸！");
+        update_hint_win_for_info(wm, None, "gwm不支持大型桌面，故不支持動態更改虛擬桌面尺寸！");
     else if(type == wm->ewmh_atom[_NET_DESKTOP_VIEWPORT])
-        update_hint_win_for_info(wm, "gwm不支持大型桌面，故不支持動態更改當前虛擬桌面視口！");
+        update_hint_win_for_info(wm, None, "gwm不支持大型桌面，故不支持動態更改當前虛擬桌面視口！");
     if(type == wm->ewmh_atom[_NET_CURRENT_DESKTOP])
         focus_desktop_n(wm, e->xclient.data.l[0]+1);
     else if(type == wm->ewmh_atom[_NET_DESKTOP_NAMES])
-        update_hint_win_for_info(wm, "gwm不支持動態更改虛擬桌面名稱！");
+        update_hint_win_for_info(wm, None, "gwm不支持動態更改虛擬桌面名稱！");
     else if(type == wm->ewmh_atom[_NET_ACTIVE_WINDOW])
         activate_win(wm, win, e->xclient.data.l[0]);
     else if(type == wm->ewmh_atom[_NET_SHOWING_DESKTOP])
         toggle_showing_desktop_mode(wm, e->xclient.data.l[0]);
+    else if(type == wm->ewmh_atom[_NET_WM_DESKTOP])
+        change_desktop(wm, win, e->xclient.data.l[0]);
+    else if(type == wm->ewmh_atom[_NET_WM_MOVERESIZE])
+        update_hint_win_for_info(wm, None, "稍後支持_NET_WM_MOVERESIZE特性，敬請期待！");
+    // 尚未知道有哪些分頁器支持以下這些特性，誰要是知道的話，煩請告知我
     else if(type == wm->ewmh_atom[_NET_CLOSE_WINDOW])
     {
-        // 尚未知道有哪些分頁器支持此特性，誰要是知道的話，煩請告知我
-        update_hint_win_for_info(wm, "此分頁器支持_NET_CLOSE_WINDOW特性");
+        update_hint_win_for_info(wm, None, "此分頁器支持_NET_CLOSE_WINDOW特性");
         close_win(wm, win);
     }
     else if(type == wm->ewmh_atom[_NET_MOVERESIZE_WINDOW])
-        // 尚未知道有哪些分頁器支持此特性，誰要是知道的話，煩請告知我
-        update_hint_win_for_info(wm, "此分頁器支持_NET_MOVERESIZE_WINDOW特性");
-    else if(type == wm->ewmh_atom[_NET_WM_MOVERESIZE])
-        update_hint_win_for_info(wm, "稍後支持_NET_WM_MOVERESIZE特性，敬請期待！");
+        update_hint_win_for_info(wm, None, "此分頁器支持_NET_MOVERESIZE_WINDOW特性");
     else if(type == wm->ewmh_atom[_NET_RESTACK_WINDOW])
-        // 尚未知道有哪些分頁器支持此特性，誰要是知道的話，煩請告知我
-        update_hint_win_for_info(wm, "此分頁器支持_NET_RESTACK_WINDOW特性");
+        update_hint_win_for_info(wm, None, "此分頁器支持_NET_RESTACK_WINDOW特性");
     else if(type == wm->ewmh_atom[_NET_REQUEST_FRAME_EXTENTS])
-        // 尚未知道有哪些分頁器支持此特性，誰要是知道的話，煩請告知我
-        update_hint_win_for_info(wm, "此分頁器支持_NET_REQUEST_FRAME_EXTENTS特性");
-    else if(type == wm->ewmh_atom[_NET_WM_DESKTOP])
-        change_desktop(wm, win, e->xclient.data.l[0]);
+        update_hint_win_for_info(wm, None, "此分頁器支持_NET_REQUEST_FRAME_EXTENTS特性");
 }
 
 static void activate_win(WM *wm, Window win, unsigned long src)
@@ -194,19 +190,6 @@ static void change_desktop(WM *wm, Window win, unsigned int desktop)
         else
             move_to_desktop_n(wm, c, desktop+1);
     }
-}
-
-static void update_hint_win_for_info(WM *wm, const char *info)
-{
-    unsigned int w=0, h=wm->cfg->hint_win_line_height;
-    get_string_size(wm, wm->font[HINT_FONT], info, &w, NULL);
-    w+=h, h+=h;
-    int x=(wm->screen_width-w)/2, y=(wm->screen_height-h)/2;
-    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
-    XMapRaised(wm->display, wm->hint_win);
-    String_format f={{0, 0, w, h}, CENTER, false, 0,
-        wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
-    draw_string(wm, wm->hint_win, info, &f);
 }
 
 static void handle_config_request(WM *wm, XEvent *e)

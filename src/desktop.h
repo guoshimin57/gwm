@@ -18,7 +18,7 @@ struct desktop_tag // 虛擬桌面相關信息
     Client *cur_focus_client, *prev_focus_client; // 分別爲當前聚焦結點、前一個聚焦結點
     Layout cur_layout, prev_layout; // 分別爲當前布局模式和前一個布局模式
     Area_type default_area_type; // 默認的窗口區域類型
-    double main_area_ratio, fixed_area_ratio; // 分別爲主要和固定區域屏佔比
+    double main_area_ratio, fixed_area_ratio; // 分別爲主要和固定區域與工作區寬度的比值
 };
 
 void init_desktop(WM *wm);

@@ -308,3 +308,27 @@ void exec_cmd(WM *wm, char *const *cmd)
     else if(pid == -1)
         perror(_("未能成功地爲命令創建新進程"));
 }
+
+void update_hint_win_for_info(WM *wm, Window hover, const char *info)
+{
+    int x, y;
+    unsigned int w, h=wm->cfg->font_size[HINT_FONT], pad=h*wm->cfg->font_pad_ratio;
+    get_string_size(wm, wm->font[HINT_FONT], info, &w, NULL);
+    w+=pad*2, h+=pad*2;
+    if(hover)
+    {
+        Window r, c;
+        int rx, ry;
+        unsigned int m;
+        if(!XQueryPointer(wm->display, hover, &r, &c, &rx, &ry, &x, &y, &m))
+            return;
+        set_pos_for_click(wm, hover, rx, &x, &y, w, h);
+    }
+    else
+        x=(wm->screen_width-w)/2, y=(wm->screen_height-h)/2;
+    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
+    XMapRaised(wm->display, wm->hint_win);
+    String_format f={{0, 0, w, h}, CENTER, false, 0,
+        wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
+    draw_string(wm, wm->hint_win, info, &f);
+}

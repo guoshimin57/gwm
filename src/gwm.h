@@ -41,7 +41,8 @@
     "_NET_DESKTOP_VIEWPORT", "_NET_CURRENT_DESKTOP", "_NET_DESKTOP_NAMES", \
     "_NET_ACTIVE_WINDOW", "_NET_WORKAREA", "_NET_SUPPORTING_WM_CHECK", \
     "_NET_SHOWING_DESKTOP", "_NET_CLOSE_WINDOW", "_NET_MOVERESIZE_WINDOW", \
-    "_NET_WM_MOVERE$IZE", "_NET_RESTACK_WINDOW", "_NET_REQUEST_FRAME_EXTENTS", \
+    "_NET_WM_MOVERESIZE", "_NET_WM_MOVERESIZE_SIZE_RIGHT", \
+    "_NET_RESTACK_WINDOW", "_NET_REQUEST_FRAME_EXTENTS", \
     "_NET_WM_NAME", "_NET_WM_DESKTOP", \
     "_NET_WM_WINDOW_TYPE", \
     "_NET_WM_WINDOW_TYPE_NORMAL", "_NET_WM_WINDOW_TYPE_DIALOG", \
@@ -166,7 +167,7 @@ enum font_type_tag // 字體類型, 按字符顯示位置分類
 };
 typedef enum font_type_tag Font_type;
 
-struct rectangle_tag // 矩形窗口的坐標和尺寸
+struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 {
     int x, y; // 坐標
     unsigned int w, h; // 尺寸
@@ -199,7 +200,9 @@ enum ewmh_atom_tag // EWMH規範的標識符
     _NET_NUMBER_OF_DESKTOPS, _NET_DESKTOP_GEOMETRY, _NET_DESKTOP_VIEWPORT,
     _NET_CURRENT_DESKTOP, _NET_DESKTOP_NAMES, _NET_ACTIVE_WINDOW, _NET_WORKAREA,
     _NET_SUPPORTING_WM_CHECK, _NET_SHOWING_DESKTOP, _NET_CLOSE_WINDOW,
-    _NET_MOVERESIZE_WINDOW, _NET_WM_MOVERESIZE, _NET_RESTACK_WINDOW,
+    _NET_MOVERESIZE_WINDOW, _NET_WM_MOVERESIZE, 
+    _NET_WM_MOVERESIZE_SIZE_RIGHT,
+    _NET_RESTACK_WINDOW,
     _NET_REQUEST_FRAME_EXTENTS, _NET_WM_NAME, _NET_WM_DESKTOP,
     _NET_WM_WINDOW_TYPE, _NET_WM_WINDOW_TYPE_NORMAL, _NET_WM_WINDOW_TYPE_DIALOG,
     _NET_WM_WINDOW_TYPE_UTILITY,
@@ -260,6 +263,7 @@ struct wm_tag // 窗口管理器相關信息
     unsigned int cur_desktop; // 當前虛擬桌面編號，從1開始編號
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
+    Rect workarea; // 工作區坐標和尺寸
     Window root_win, hint_win, wm_check_win; // 根窗口、提示窗口、WM檢測窗口
     GC gc; // 窗口管理器的圖形信息
     Visual *visual; // 着色類型
