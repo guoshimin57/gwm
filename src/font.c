@@ -41,10 +41,13 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
     if(str)
     {
         XftFont *font=wm->font[f->font_type];
-        unsigned int w=f->r.w, h=f->r.h, lw, lh, n=strlen(str);
+        int w, h, lw, lh, n, x, y, cx, cy, sx, sy, left, right, top, bottom;
+
         get_string_size(wm, font, str, &lw, &lh);
-        int x=f->r.x, y=f->r.y, cx=x+w/2-lw/2, cy=y+h/2-lh/2+font->ascent,
-            sx, sy, left=x, right=x+w-lw, top=y+lh, bottom=y+h;
+        n=strlen(str);
+        x=f->r.x, y=f->r.y, w=f->r.w, h=f->r.h;
+        cx=x+w/2-lw/2, cy=y+h/2-lh/2+font->ascent;
+        left=x, right=x+w-lw, top=y+lh, bottom=y+h;
         switch(f->align)
         {
             case TOP_LEFT: sx=left, sy=top; break;
@@ -69,7 +72,7 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
     }
 }
 
-void get_string_size(WM *wm, XftFont *font, const char *str, unsigned int *w, unsigned int *h)
+void get_string_size(WM *wm, XftFont *font, const char *str, int *w, int *h)
 {
     /* libXrender文檔沒有解釋XGlyphInfo結構體成員的含義。
        猜測xOff指字符串原點到字符串限定框最右邊的偏移量。*/
@@ -77,8 +80,10 @@ void get_string_size(WM *wm, XftFont *font, const char *str, unsigned int *w, un
     XftTextExtentsUtf8(wm->display, font, (const FcChar8 *)str, strlen(str), &e);
     if(w)
         *w=e.xOff;
+    /* Xft文檔沒有解析font->height的含義，但font->ascent+font->descent的確比
+     * font->height大1，且前者看上去似乎才是實際的字體高度 */
     if(h)
-        *h=font->height;
+        *h=font->ascent+font->descent;
 }
 
 void close_fonts(WM *wm)
@@ -119,7 +124,7 @@ void close_fonts(WM *wm)
  * Hfb=a*Hf=a*3*HEf=a*hE*DPM/0.3=a*hE*DPI/7.62。
  * 對於近視的人，字體尺寸還應調大一點。
  */
-unsigned int get_min_font_size(WM *wm)
+int get_min_font_size(WM *wm)
 {
     int w=DisplayWidthMM(wm->display, wm->screen),
         h=DisplayHeightMM(wm->display, wm->screen),
@@ -129,7 +134,17 @@ unsigned int get_min_font_size(WM *wm)
     return ceil(0.9248*dpi/7.62);
 }
 
-unsigned int get_scale_font_size(WM *wm, double scale)
+int get_scale_font_size(WM *wm, double scale)
 {
     return scale*get_min_font_size(wm);
+}
+
+int get_font_pad(WM *wm, Font_type type)
+{
+    return wm->cfg->font_size[type]*wm->cfg->font_pad_ratio+0.5;
+}
+
+int get_font_height_by_pad(WM *wm, Font_type type)
+{
+    return wm->cfg->font_size[type]*(1+wm->cfg->font_pad_ratio*2)+0.5;
 }

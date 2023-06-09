@@ -12,12 +12,12 @@
 #ifndef HINT_H
 #define HINT_H
 
-unsigned int get_client_col(Client *c);
-unsigned int get_client_row(Client *c);
+int get_client_col(Client *c);
+int get_client_row(Client *c);
 void update_size_hint(WM *wm, Client *c);
 void fix_win_size_by_hint(Client *c);
 bool is_prefer_resize(WM *wm, Client *c, Delta_rect *d);
-bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint);
+bool is_prefer_size(int w, int h, XSizeHints *hint);
 void set_ewmh(WM *wm);
 void set_all_net_client_list(WM *wm);
 void set_net_current_desktop(WM *wm);

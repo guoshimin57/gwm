@@ -69,7 +69,7 @@
 
 #define TITLE_BUTTON_N (TITLE_BUTTON_END-TITLE_BUTTON_BEGIN+1)
 #define TASKBAR_BUTTON_N (TASKBAR_BUTTON_END-TASKBAR_BUTTON_BEGIN+1)
-#define CMD_CENTER_ITEM_N (CMD_CENTER_ITEM_END-CMD_CENTER_ITEM_BEGIN+1)
+#define ACT_CENTER_ITEM_N (ACT_CENTER_ITEM_END-ACT_CENTER_ITEM_BEGIN+1)
 #define DESKTOP_N (DESKTOP_BUTTON_END-DESKTOP_BUTTON_BEGIN+1)
 #define FONT_NAME_MAX 64
 
@@ -94,9 +94,9 @@
 #define IS_TASKBAR_BUTTON(type) \
     ((type)>=TASKBAR_BUTTON_BEGIN && (type)<=TASKBAR_BUTTON_END)
 
-#define CMD_CENTER_ITEM_INDEX(type) ((type)-CMD_CENTER_ITEM_BEGIN)
-#define IS_CMD_CENTER_ITEM(type) \
-    ((type)>=CMD_CENTER_ITEM_BEGIN && (type)<=CMD_CENTER_ITEM_END)
+#define ACT_CENTER_ITEM_INDEX(type) ((type)-ACT_CENTER_ITEM_BEGIN)
+#define IS_ACT_CENTER_ITEM(type) \
+    ((type)>=ACT_CENTER_ITEM_BEGIN && (type)<=ACT_CENTER_ITEM_END)
 
 #define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
 #define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client
@@ -142,7 +142,7 @@ enum widget_type_tag // 構件類型
 
     FULL_BUTTON, PREVIEW_BUTTON, STACK_BUTTON, TILE_BUTTON, DESKTOP_BUTTON,
 
-    CMD_CENTER_ITEM,
+    ACT_CENTER_ITEM,
     HELP_BUTTON, FILE_BUTTON, TERM_BUTTON, BROWSER_BUTTON, 
     PLAY_START_BUTTON, PLAY_TOGGLE_BUTTON, PLAY_QUIT_BUTTON,
     VOLUME_DOWN_BUTTON, VOLUME_UP_BUTTON, VOLUME_MAX_BUTTON, VOLUME_TOGGLE_BUTTON,
@@ -152,16 +152,16 @@ enum widget_type_tag // 構件類型
 
     WIDGET_N,
     TITLE_BUTTON_BEGIN=SECOND_BUTTON, TITLE_BUTTON_END=CLOSE_BUTTON,
-    TASKBAR_BUTTON_BEGIN=DESKTOP1_BUTTON, TASKBAR_BUTTON_END=CMD_CENTER_ITEM,
+    TASKBAR_BUTTON_BEGIN=DESKTOP1_BUTTON, TASKBAR_BUTTON_END=ACT_CENTER_ITEM,
     LAYOUT_BUTTON_BEGIN=FULL_BUTTON, LAYOUT_BUTTON_END=TILE_BUTTON, 
     DESKTOP_BUTTON_BEGIN=DESKTOP1_BUTTON, DESKTOP_BUTTON_END=DESKTOP3_BUTTON,
-    CMD_CENTER_ITEM_BEGIN=HELP_BUTTON, CMD_CENTER_ITEM_END=RUN_BUTTON,
+    ACT_CENTER_ITEM_BEGIN=HELP_BUTTON, ACT_CENTER_ITEM_END=RUN_BUTTON,
 };
 typedef enum widget_type_tag Widget_type;
 
 enum font_type_tag // 字體類型, 按字符顯示位置分類
 {
-    DEFAULT_FONT, TITLE_BUTTON_FONT, CMD_CENTER_FONT, TASKBAR_BUTTON_FONT,
+    DEFAULT_FONT, TITLE_BUTTON_FONT, ACT_CENTER_FONT, TASKBAR_BUTTON_FONT,
     CLASS_FONT, TITLE_FONT, STATUS_AREA_FONT, ENTRY_FONT, HINT_FONT,
     FONT_N
 };
@@ -170,7 +170,7 @@ typedef enum font_type_tag Font_type;
 struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 {
     int x, y; // 坐標
-    unsigned int w, h; // 尺寸
+    int w, h; // 尺寸
 };
 typedef struct rectangle_tag Rect;
 
@@ -223,7 +223,7 @@ enum widget_color_tag // 構件顏色類型
     NORMAL_TITLE_BUTTON_COLOR, CURRENT_TITLE_BUTTON_COLOR,
     ENTERED_NORMAL_BUTTON_COLOR, ENTERED_CLOSE_BUTTON_COLOR,
     NORMAL_TASKBAR_BUTTON_COLOR, CHOSEN_TASKBAR_BUTTON_COLOR,
-    CMD_CENTER_COLOR, ICON_COLOR, ICON_AREA_COLOR, STATUS_AREA_COLOR,
+    ACT_CENTER_COLOR, ICON_COLOR, ICON_AREA_COLOR, STATUS_AREA_COLOR,
     ENTRY_COLOR, HINT_WIN_COLOR, ROOT_WIN_COLOR,
     WIDGET_COLOR_N 
 };
@@ -234,7 +234,7 @@ enum text_color_tag // 文本顏色類型
     NORMAL_TITLE_TEXT_COLOR, CURRENT_TITLE_TEXT_COLOR,
     NORMAL_TITLE_BUTTON_TEXT_COLOR, CURRENT_TITLE_BUTTON_TEXT_COLOR,
     TASKBAR_BUTTON_TEXT_COLOR, STATUS_AREA_TEXT_COLOR, CLASS_TEXT_COLOR,
-    CMD_CENTER_ITEM_TEXT_COLOR, ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
+    ACT_CENTER_ITEM_TEXT_COLOR, ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
     TEXT_COLOR_N 
 };
 typedef enum text_color_tag Text_color;
@@ -259,7 +259,7 @@ struct wm_tag // 窗口管理器相關信息
 {
     Display *display; // 顯示器
     int screen; // 屏幕
-    unsigned int screen_width, screen_height; // 屏幕寬度、高度
+    int screen_width, screen_height; // 屏幕寬度、高度
     unsigned int cur_desktop; // 當前虛擬桌面編號，從1開始編號
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
@@ -276,7 +276,7 @@ struct wm_tag // 窗口管理器相關信息
     File *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
     Cursor cursors[POINTER_ACT_N]; // 光標
     Taskbar *taskbar; // 任務欄
-    Menu *cmd_center; // 操作中心
+    Menu *act_center; // 操作中心
     Entry *run_cmd; // 輸入命令並執行的構件
     XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
     XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色

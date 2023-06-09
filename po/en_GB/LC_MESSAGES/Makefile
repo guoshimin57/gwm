@@ -9,11 +9,12 @@
 # <http://www.gnu.org/licenses/>。
 #*************************************************************************
 
-srcs := $(wildcard ../../../src/*.[ch])
+srcs = $(wildcard ../../../src/*.[ch])
 po = $(wildcard *.po)
 pot = $(po:.po=.pot)
 mo = $(po:.po=.mo)
-install_path= $(prefix)/share/locale/en_GB/LC_MESSAGES
+ln_mo = /usr/share/locale/en_US/LC_MESSAGES/$(mo)
+install_path = $(prefix)/share/locale/en_GB/LC_MESSAGES
 
 .PHONY : all install install-strip uninstall clean
 all : $(mo)
@@ -24,10 +25,10 @@ $(po) : $(srcs)
 install :
 	install -d $(install_path) ;
 	install -m 644 $(mo) $(install_path) ;
+	$(RM) $(ln_mo) ;
+	ln -s $(install_path)/$(mo) $(ln_mo)
 install-strip:
 uninstall :
-	cd $(install_path) ;
-	$(RM) $(mo) ;
-	cd - ;
+	$(RM) $(install_path)/$(mo) $(ln_mo)
 clean:
 	$(RM) $(mo) $(pot) *~

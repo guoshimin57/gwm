@@ -17,7 +17,6 @@
     "ps -o stat= $pid | head -n1 | grep T > /dev/null ; } " \
     "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
 #define DESKTOPN_BUTTON(n) DESKTOP ## n ##_BUTTON // 獲取虛擬桌面按鈕類型
-#define ROUND(value) ((int)((value)+0.5)) // 把浮點數四舍五入後轉換爲整數
 #define SET_FONT(wm, type, family, size) /* 設置字體 */ \
     sprintf(wm->cfg->font_name[type], "%s:pixelsize=%u", \
         family, wm->cfg->font_size[type]=size)
@@ -31,8 +30,8 @@
     wm->cfg->title_button_text[type-TITLE_BUTTON_BEGIN]=text
 #define SET_TASKBAR_BUTTON_TEXT(wm, type, text) /* 設置任務欄按鈕文字 */ \
     wm->cfg->taskbar_button_text[type-TASKBAR_BUTTON_BEGIN]=text
-#define SET_CMD_CENTER_ITEM_TEXT(wm, type, text) /* 設置操作中心文字 */ \
-    wm->cfg->cmd_center_item_text[type-CMD_CENTER_ITEM_BEGIN]=text
+#define SET_ACT_CENTER_ITEM_TEXT(wm, type, text) /* 設置操作中心文字 */ \
+    wm->cfg->act_center_item_text[type-ACT_CENTER_ITEM_BEGIN]=text
 #define SET_TOOLTIP(wm, type, text) /* 設置構件提示 */ \
     wm->cfg->tooltip[type]=text
 
@@ -192,7 +191,7 @@ static const Buttonbind buttonbind[] =
     {TILE_BUTTON,               0, Button1,  change_layout,              {.layout=TILE}},
     {DESKTOP_BUTTON,            0, Button1,  show_desktop,               {0}},
     {DESKTOP_BUTTON,       WM_KEY, Button2,  close_all_clients,          {0}},
-    {CMD_CENTER_ITEM,           0, Button1,  open_cmd_center,            {0}},
+    {ACT_CENTER_ITEM,           0, Button1,  open_act_center,            {0}},
     {HELP_BUTTON,               0, Button1,  exec,                       SH_CMD(HELP)},
     {FILE_BUTTON,               0, Button1,  exec,                       SH_CMD(FILE_MANAGER)},
     {TERM_BUTTON,               0, Button1,  exec,                       SH_CMD(TERMINAL)},
@@ -262,17 +261,18 @@ static const Rule rule[] =
 };
 
 /* 功能：設置字體。
- * 說明：每增加一種不同的字體，就會增加2M左右的內存佔用。
- * 縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
+ * 說明：每增加一種不同的字體，就會增加2M左右的內存佔用。可通過以下命令查看可用字體：
+ *         fc-list -f "%{fullname}\n" :lang=zh | sed 's/,/\n/g' | sort -u
+ *     縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
  * 近視之人應按近視程度設置大於1.0的合適值。
  * 用戶設置：    字體類型(詳gwm.h)    字體系列     字號
  */
 static void config_font(WM *wm)
 {
-    unsigned int size=get_scale_font_size(wm, 2.0);
+    int size=get_scale_font_size(wm, 2.0);
     SET_FONT(wm, DEFAULT_FONT,        "monospace", size);
     SET_FONT(wm, TITLE_BUTTON_FONT,   "monospace", size);
-    SET_FONT(wm, CMD_CENTER_FONT,     "monospace", size);
+    SET_FONT(wm, ACT_CENTER_FONT,     "monospace", size);
     SET_FONT(wm, TASKBAR_BUTTON_FONT, "monospace", size);
     SET_FONT(wm, CLASS_FONT,          "monospace", size);
     SET_FONT(wm, TITLE_FONT,          "monospace", size);
@@ -287,24 +287,16 @@ static void config_font(WM *wm)
 static void config_widget_size(WM *wm)
 {
     Config *c=wm->cfg;
-    c->border_width=ROUND(c->font_size[DEFAULT_FONT]/8.0);
-    c->title_bar_height=ROUND(c->font_size[TITLE_FONT]*4/3.0);
-    c->title_button_width=c->title_bar_height;
-    c->title_button_height=c->title_button_width;
+    c->border_width=c->font_size[DEFAULT_FONT]/8.0+0.5;
+    c->title_button_width=get_font_height_by_pad(wm, TITLE_BUTTON_FONT);
     c->win_gap=c->border_width*2;
     c->status_area_width_max=c->font_size[STATUS_AREA_FONT]*30;
-    c->taskbar_button_width=c->font_size[TASKBAR_BUTTON_FONT]*2;
-    c->taskbar_button_height=ROUND(c->taskbar_button_width*2/3.0);
-    c->taskbar_height=c->taskbar_button_height;
-    c->icon_size=c->taskbar_height;
-    c->icon_win_width_max=c->icon_size*10;
-    c->icons_space=ROUND(c->icon_size/2.0);
-    c->cmd_center_item_width=c->font_size[CMD_CENTER_FONT]*8;
-    c->cmd_center_item_height=ROUND(c->font_size[CMD_CENTER_FONT]*1.5);
-    c->entry_text_indent=ROUND(c->font_size[ENTRY_FONT]/4.0);
-    c->run_cmd_entry_width=c->font_size[CMD_CENTER_FONT]*15+c->entry_text_indent*2;
-    c->run_cmd_entry_height=ROUND(c->font_size[CMD_CENTER_FONT]*4/3.0);
-    c->resize_inc=c->font_size[TITLE_FONT];
+    c->taskbar_button_width=get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT)/0.618+0.5;
+    c->icon_win_width_max=c->font_size[TASKBAR_BUTTON_FONT]*10;
+    c->icon_gap=c->font_size[TASKBAR_BUTTON_FONT]/2.0+0.5;
+    c->act_center_item_width=c->font_size[ACT_CENTER_FONT]*8;
+    c->run_cmd_entry_width=c->font_size[ACT_CENTER_FONT]*16;
+    c->resize_inc=c->font_size[DEFAULT_FONT];
 }
 
 /* 功能：設置與定位器操作類型相對應的光標符號。
@@ -347,7 +339,7 @@ static void config_widget_color_for_dark(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_TASKBAR_BUTTON_COLOR, "grey21");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CHOSEN_TASKBAR_BUTTON_COLOR, "DeepSkyBlue4");
-    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CMD_CENTER_COLOR,            "grey31");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ACT_CENTER_COLOR,            "grey31");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ICON_COLOR,                  "grey21");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ICON_AREA_COLOR,             "grey21");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, STATUS_AREA_COLOR,           "grey21");
@@ -371,7 +363,7 @@ static void config_widget_color_for_normal(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_TASKBAR_BUTTON_COLOR, "grey21");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CHOSEN_TASKBAR_BUTTON_COLOR, "DeepSkyBlue4");
-    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CMD_CENTER_COLOR,            "grey31");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ACT_CENTER_COLOR,            "grey31");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ICON_COLOR,                  "grey21");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ICON_AREA_COLOR,             "grey21");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, STATUS_AREA_COLOR,           "grey21");
@@ -395,7 +387,7 @@ static void config_widget_color_for_light(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_TASKBAR_BUTTON_COLOR, "grey81");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CHOSEN_TASKBAR_BUTTON_COLOR, "LightSkyBlue");
-    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CMD_CENTER_COLOR,            "grey61");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ACT_CENTER_COLOR,            "grey61");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ICON_COLOR,                  "grey81");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ICON_AREA_COLOR,             "grey81");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, STATUS_AREA_COLOR,           "grey81");
@@ -424,7 +416,7 @@ static void config_text_color_for_dark(WM *wm)
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, TASKBAR_BUTTON_TEXT_COLOR,       "white");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, STATUS_AREA_TEXT_COLOR,          "white");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, CLASS_TEXT_COLOR,                "RosyBrown");
-    SET_TEXT_COLOR_NAME(wm, DARK_THEME, CMD_CENTER_ITEM_TEXT_COLOR,      "white");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, ACT_CENTER_ITEM_TEXT_COLOR,      "white");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, ENTRY_TEXT_COLOR,                "black");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, HINT_TEXT_COLOR,                 "grey41");
 }
@@ -441,7 +433,7 @@ static void config_text_color_for_normal(WM *wm)
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, TASKBAR_BUTTON_TEXT_COLOR,       "white");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, STATUS_AREA_TEXT_COLOR,          "white");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CLASS_TEXT_COLOR,                "RosyBrown");
-    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CMD_CENTER_ITEM_TEXT_COLOR,      "white");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, ACT_CENTER_ITEM_TEXT_COLOR,      "white");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, ENTRY_TEXT_COLOR,                "black");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, HINT_TEXT_COLOR,                 "grey61");
 }
@@ -458,7 +450,7 @@ static void config_text_color_for_light(WM *wm)
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, TASKBAR_BUTTON_TEXT_COLOR,       "black");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, STATUS_AREA_TEXT_COLOR,          "black");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CLASS_TEXT_COLOR,                "RosyBrown");
-    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CMD_CENTER_ITEM_TEXT_COLOR,      "black");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, ACT_CENTER_ITEM_TEXT_COLOR,      "black");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, ENTRY_TEXT_COLOR,                "white");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, HINT_TEXT_COLOR,                 "grey61");
 }
@@ -498,45 +490,45 @@ static void config_taskbar_button_text(WM *wm)
     SET_TASKBAR_BUTTON_TEXT(wm, STACK_BUTTON,            "▣");
     SET_TASKBAR_BUTTON_TEXT(wm, TILE_BUTTON,             "▥");
     SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP_BUTTON,          "■");
-    SET_TASKBAR_BUTTON_TEXT(wm, CMD_CENTER_ITEM,         "^");
+    SET_TASKBAR_BUTTON_TEXT(wm, ACT_CENTER_ITEM,         "^");
 }
 
 /* 功能：設置操作中心的文字。
  * 用戶設置：                    操作中心按鈕類型(詳gwm.h)  按鈕文字
  */
-static void config_cmd_center_item_text(WM *wm)
+static void config_act_center_item_text(WM *wm)
 {
     // 以下爲操作中心按鈕的文字，翻譯時應保持簡潔，長度不宜超過原文最長者，否則可能顯示不全
-    SET_CMD_CENTER_ITEM_TEXT(wm, HELP_BUTTON,               _("幫助"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, FILE_BUTTON,               _("文件"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, TERM_BUTTON,               _("終端模擬器"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, BROWSER_BUTTON,            _("網絡瀏覽器"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, HELP_BUTTON,               _("幫助"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, FILE_BUTTON,               _("文件"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, TERM_BUTTON,               _("終端模擬器"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, BROWSER_BUTTON,            _("網絡瀏覽器"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_START_BUTTON,         _("播放影音"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_TOGGLE_BUTTON,        _("切換播放狀態"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, PLAY_QUIT_BUTTON,          _("關閉影音"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_DOWN_BUTTON,        _("减小音量"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_START_BUTTON,         _("播放影音"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_TOGGLE_BUTTON,        _("切換播放狀態"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_QUIT_BUTTON,          _("關閉影音"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_DOWN_BUTTON,        _("减小音量"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_UP_BUTTON,          _("增大音量"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_MAX_BUTTON,         _("最大音量"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, VOLUME_TOGGLE_BUTTON,      _("靜音切換"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, MAIN_NEW_BUTTON,           _("暫主區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_UP_BUTTON,          _("增大音量"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_MAX_BUTTON,         _("最大音量"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_TOGGLE_BUTTON,      _("靜音切換"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, MAIN_NEW_BUTTON,           _("暫主區開窗"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, SEC_NEW_BUTTON,            _("暫次區開窗"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, FIX_NEW_BUTTON,            _("暫固定區開窗"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, FLOAT_NEW_BUTTON,          _("暫懸浮區開窗"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, ICON_NEW_BUTTON,           _("暫縮微區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, SEC_NEW_BUTTON,            _("暫次區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, FIX_NEW_BUTTON,            _("暫固定區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, FLOAT_NEW_BUTTON,          _("暫懸浮區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, ICON_NEW_BUTTON,           _("暫縮微區開窗"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, N_MAIN_UP_BUTTON,          _("增大主區容量"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, N_MAIN_DOWN_BUTTON,        _("减小主區容量"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, FOCUS_MODE_BUTTON,         _("切換聚焦模式"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, QUIT_WM_BUTTON,            _("退出gwm"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_UP_BUTTON,          _("增大主區容量"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_DOWN_BUTTON,        _("减小主區容量"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, FOCUS_MODE_BUTTON,         _("切換聚焦模式"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, QUIT_WM_BUTTON,            _("退出gwm"));
 
-    SET_CMD_CENTER_ITEM_TEXT(wm, LOGOUT_BUTTON,             _("注銷"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, REBOOT_BUTTON,             _("重啓"));
-    SET_CMD_CENTER_ITEM_TEXT(wm, POWEROFF_BUTTON,           _("關機"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, LOGOUT_BUTTON,             _("注銷"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, REBOOT_BUTTON,             _("重啓"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, POWEROFF_BUTTON,           _("關機"));
     // 最後一個操作中心按鈕項
-    SET_CMD_CENTER_ITEM_TEXT(wm, RUN_BUTTON,                _("運行"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, RUN_BUTTON,                _("運行"));
 }
 
 /* 功能：設置構件功能提示。
@@ -561,7 +553,7 @@ static void config_tooltip(WM *wm)
     SET_TOOLTIP(wm, STACK_BUTTON,      _("切換到堆疊模式"));
     SET_TOOLTIP(wm, TILE_BUTTON,       _("切換到平鋪模式"));
     SET_TOOLTIP(wm, DESKTOP_BUTTON,    _("顯示桌面"));
-    SET_TOOLTIP(wm, CMD_CENTER_ITEM,   _("打開操作中心"));
+    SET_TOOLTIP(wm, ACT_CENTER_ITEM,   _("打開操作中心"));
 }
 
 /* 功能：設置其他雜項。
@@ -573,7 +565,7 @@ static void config_misc(WM *wm)
     c->set_frame_prop=false;
     c->use_image_icon=true;
     c->show_taskbar=true;
-    c->taskbar_on_top=true;
+    c->taskbar_on_top=false;
     c->focus_mode=CLICK_FOCUS;
     c->default_layout=TILE;
     c->default_area_type=MAIN_AREA;
@@ -583,8 +575,8 @@ static void config_misc(WM *wm)
     c->hover_time=300;
     c->default_cur_desktop=1;
     c->default_n_main_max=1;
-    c->cmd_center_col=4;
-    c->font_pad_ratio=0.5;
+    c->act_center_col=4;
+    c->font_pad_ratio=0.25;
     c->default_main_area_ratio=0.6;
     c->default_fixed_area_ratio=0.15;
     c->autostart="~/.config/gwm/autostart.sh";
@@ -606,6 +598,7 @@ void config(WM *wm)
     wm->cfg=malloc_s(sizeof(Config));
     SET_NULL(wm->cfg->tooltip, WIDGET_N);
 
+    config_misc(wm);
     config_font(wm);
     config_widget_size(wm);
     config_cursor_shape(wm);
@@ -613,7 +606,6 @@ void config(WM *wm)
     config_text_color(wm);
     config_title_button_text(wm);
     config_taskbar_button_text(wm);
-    config_cmd_center_item_text(wm);
+    config_act_center_item_text(wm);
     config_tooltip(wm);
-    config_misc(wm);
 }

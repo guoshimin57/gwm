@@ -66,7 +66,7 @@ static void apply_rules(WM *wm, Client *c)
         || state == wm->ewmh_atom[_NET_WM_STATE_MODAL])
         c->area_type=FLOATING_AREA;
     c->border_w=wm->cfg->border_width;
-    c->title_bar_h=wm->cfg->title_bar_height;
+    c->title_bar_h=get_font_height_by_pad(wm, TITLE_FONT);
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     if(XGetClassHint(wm->display, c->win, &c->class_hint))
@@ -240,31 +240,31 @@ Rect get_title_area_rect(WM *wm, Client *c)
 
 static Rect get_button_rect(WM *wm, Client *c, size_t index)
 {
-    long cw=c->w, w=wm->cfg->title_button_width, h=wm->cfg->title_button_height;
+    long cw=c->w, w=wm->cfg->title_button_width, h=get_font_height_by_pad(wm, TITLE_FONT);
     return (Rect){cw-w*(TITLE_BUTTON_N-index), (c->title_bar_h-h)/2, w, h};
 }
 
-unsigned int get_typed_clients_n(WM *wm, Area_type type)
+int get_typed_clients_n(WM *wm, Area_type type)
 {
-    unsigned int n=0;
+    int n=0;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(is_on_cur_desktop(wm, c) && c->area_type==type)
             n++;
     return n;
 }
 
-unsigned int get_clients_n(WM *wm)
+int get_clients_n(WM *wm)
 {
-    unsigned int n=0;
+    int n=0;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(is_on_cur_desktop(wm, c))
             n++;
     return n;
 }
 
-unsigned int get_all_clients_n(WM *wm)
+int get_all_clients_n(WM *wm)
 {
-    unsigned int n=0;
+    int n=0;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         n++;
     return n;

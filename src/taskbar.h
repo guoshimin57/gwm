@@ -17,7 +17,7 @@ struct taskbar_tag // 窗口管理器的任務欄
     /* 分別爲任務欄的窗口、按鈕、縮微區域、狀態區域 */
     Window win, buttons[TASKBAR_BUTTON_N], icon_area, status_area;
     int x, y; // win的坐標
-    unsigned int w, h, status_area_w; // win的尺寸、按鈕的尺寸和狀態區域的寬度
+    int w, h, status_area_w; // win的尺寸、按鈕的尺寸和狀態區域的寬度
     char *status_text; // 狀態區域要顯示的文字
 };
 
@@ -25,7 +25,7 @@ void create_taskbar(WM *wm);
 void update_taskbar_button(WM *wm, Widget_type type, bool change_bg);
 void hint_leave_taskbar_button(WM *wm, Widget_type type);
 void update_icon_text(WM *wm, Window win);
-void update_cmd_center_button_text(WM *wm, size_t index);
+void update_act_center_button_text(WM *wm, size_t index);
 void update_status_area_text(WM *wm);
 void update_status_area(WM *wm);
 

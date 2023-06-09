@@ -12,9 +12,9 @@
 #include "gwm.h"
 
 static void fix_limit_size_hint(XSizeHints *h);
-static bool is_prefer_width(unsigned int w, XSizeHints *hint);
-static bool is_prefer_height(unsigned int h, XSizeHints *hint);
-static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint);
+static bool is_prefer_width(int w, XSizeHints *hint);
+static bool is_prefer_height(int h, XSizeHints *hint);
+static bool is_prefer_aspect(int w, int h, XSizeHints *hint);
 static void set_net_supported(WM *wm);
 static void set_net_client_list(WM *wm);
 static void set_net_client_list_stacking(WM *wm);
@@ -26,12 +26,12 @@ static void set_net_desktop_names(WM *wm);
 static void set_net_workarea(WM *wm);
 static void set_net_supporting_wm_check(WM *wm);
 
-unsigned int get_client_col(Client *c)
+int get_client_col(Client *c)
 {
     return (c->w-c->size_hint.base_width)/c->size_hint.width_inc;
 }
 
-unsigned int get_client_row(Client *c)
+int get_client_row(Client *c)
 {
     return (c->h-c->size_hint.base_height)/c->size_hint.height_inc;
 }
@@ -48,7 +48,7 @@ void update_size_hint(WM *wm, Client *c)
 
     if(XGetWMNormalHints(wm->display, c->win, &hint, &flags))
     {
-        unsigned int basew=0, baseh=0, minw=0, minh=0;
+        int basew=0, baseh=0, minw=0, minh=0;
         if(hint.flags & PBaseSize)
             basew=hint.base_width, baseh=hint.base_height;
         if(hint.flags & PMinSize)
@@ -113,14 +113,14 @@ void fix_win_size_by_hint(Client *c)
     }
 }
 
-bool is_prefer_size(unsigned int w, unsigned int h, XSizeHints *hint)
+bool is_prefer_size(int w, int h, XSizeHints *hint)
 {
     return is_prefer_width(w, hint)
         && is_prefer_height(h, hint)
         && is_prefer_aspect(w, h, hint);
 }
 
-static bool is_prefer_width(unsigned int w, XSizeHints *hint)
+static bool is_prefer_width(int w, XSizeHints *hint)
 {
     long f=0, wl=w;
     return !hint || !(f=hint->flags) ||
@@ -130,7 +130,7 @@ static bool is_prefer_width(unsigned int w, XSizeHints *hint)
            || (wl-hint->base_width)%hint->width_inc == 0));
 }
 
-static bool is_prefer_height(unsigned int h, XSizeHints *hint)
+static bool is_prefer_height(int h, XSizeHints *hint)
 {
     long f=0, hl=h;
     return !hint || !(f=hint->flags) ||
@@ -140,7 +140,7 @@ static bool is_prefer_height(unsigned int h, XSizeHints *hint)
            || (hl-hint->base_height)%hint->height_inc == 0));
 }
 
-static bool is_prefer_aspect(unsigned int w, unsigned int h, XSizeHints *hint)
+static bool is_prefer_aspect(int w, int h, XSizeHints *hint)
 {
     return !hint || !(hint->flags & PAspect) || !w || !h
         || !hint->min_aspect.x || !hint->min_aspect.y
@@ -179,7 +179,7 @@ static void set_net_client_list(WM *wm)
 {
     Window root=wm->root_win;
     Atom a = wm->ewmh_atom[_NET_CLIENT_LIST];
-    unsigned long i=0, n=get_all_clients_n(wm);
+    int i=0, n=get_all_clients_n(wm);
     if(n == 0)
         XDeleteProperty(wm->display, root, a);
     else
@@ -267,8 +267,7 @@ void set_net_active_window(WM *wm)
 
 static void set_net_workarea(WM *wm)
 {
-    int x=wm->workarea.x, y=wm->workarea.y;
-    unsigned int w=wm->workarea.w, h=wm->workarea.h;
+    int x=wm->workarea.x, y=wm->workarea.y, w=wm->workarea.w, h=wm->workarea.h;
     int32_t rect[DESKTOP_N][4];
 
     for(size_t i=0; i<DESKTOP_N; i++)

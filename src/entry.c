@@ -43,11 +43,10 @@ void show_entry(WM *wm, Entry *e)
 
 void update_entry_text(WM *wm, Entry *e)
 {
-    String_format f={{wm->cfg->entry_text_indent, 0, e->w-2*wm->cfg->entry_text_indent, e->h},
-        CENTER_LEFT, false, 0,
+    int x=get_entry_cursor_x(wm, e), pad=get_font_pad(wm, ENTRY_FONT);
+    String_format f={{pad, 0, e->w-2*pad, e->h}, CENTER_LEFT, false, 0,
         e->text[0]==L'\0' ? wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR] :
         wm->text_color[wm->cfg->color_theme][ENTRY_TEXT_COLOR], ENTRY_FONT};
-    int x=get_entry_cursor_x(wm, e);
     XClearArea(wm->display, e->win, 0, 0, e->w, e->h, False); 
     if(e->text[0] == L'\0')
         draw_string(wm, e->win, e->hint, &f);
@@ -58,29 +57,33 @@ void update_entry_text(WM *wm, Entry *e)
 
 static int get_entry_cursor_x(WM *wm, Entry *e)
 {
-    unsigned int n=e->cursor_offset*MB_CUR_MAX+1, w=0;
+    size_t n=e->cursor_offset*MB_CUR_MAX+1;
+    int w=0;
     wchar_t wc=e->text[e->cursor_offset]; 
     char mbs[n]; 
+
     e->text[e->cursor_offset]=L'\0'; 
     if(wcstombs(mbs, e->text, n) != (size_t)-1)
         get_string_size(wm, wm->font[ENTRY_FONT], mbs, &w, NULL);
     e->text[e->cursor_offset]=wc; 
-    return wm->cfg->entry_text_indent+w;
+    return get_font_pad(wm, ENTRY_FONT)+w;
 }
 
 static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
 {
     Window win=wm->hint_win;
     char *paths=getenv("PATH");
+
     if(paths && pattern && *pattern)
     {
-        unsigned int bw=wm->cfg->border_width, w=wm->cfg->run_cmd_entry_width,
-                     h=wm->cfg->font_size[HINT_FONT]*(1+wm->cfg->font_pad_ratio*2);
-        String_format fmt={{0, 0, w, h}, CENTER_LEFT,
-            false, 0, wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
-        int x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+bw, *py=&fmt.r.y;
-        size_t i, n, max=(wm->workarea.h-y)/h;
+        int bw=wm->cfg->border_width, w=wm->cfg->run_cmd_entry_width,
+            h=wm->cfg->font_size[HINT_FONT]*(1+wm->cfg->font_pad_ratio*2),
+            x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+bw,
+            i, n, max=(wm->workarea.h-y)/h;
+        String_format fmt={{0, 0, w, h}, CENTER_LEFT, false, 0,
+            wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
         const char *reg=copy_strings(pattern, "*", NULL);
+
         File *f, *files=get_files_in_paths(paths, reg, RISE, false, &n);
         if(n)
         {
@@ -88,7 +91,7 @@ static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
             XMapWindow(wm->display, win);
             XClearWindow(wm->display, win);
             for(i=0, f=files->next; f && i<max; f=f->next, i++)
-                draw_string(wm, win, i<max-1 ? f->name : "...", &fmt), *py+=h;
+                draw_string(wm, win, i<max-1 ? f->name : "...", &fmt), fmt.r.y+=h;
             free_files(files);
             return;
         }

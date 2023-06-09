@@ -16,7 +16,7 @@ struct entry_tag // 輸入構件
 {
     Window win;  // 輸入構件的窗口
     int x, y; // 坐標
-    unsigned int w, h; // 寬和高
+    int w, h; // 寬和高
     wchar_t text[BUFSIZ]; // 構件上的文字
     const char *hint; // 構件的提示文字
     size_t cursor_offset; // 光標位置

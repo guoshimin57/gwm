@@ -103,12 +103,12 @@ bool send_event(WM *wm, Atom protocol, Window win)
 bool is_pointer_on_win(WM *wm, Window win)
 {
     Window r, c;
-    int rx, ry, x, y;
-    unsigned int w, h, state;
+    int rx, ry, x, y, w, h;
+    unsigned int mask;
     
     return get_geometry(wm, win, NULL, NULL, &w, &h, NULL, NULL)
-        && XQueryPointer(wm->display, win, &r, &c, &rx, &ry, &x, &y, &state)
-        && x>=0 && x<(long)w && y>=0 && y<(long)h;
+        && XQueryPointer(wm->display, win, &r, &c, &rx, &ry, &x, &y, &mask)
+        && x>=0 && x<w && y>=0 && y<h;
 }
 
 /* 通過求窗口與屏幕是否有交集來判斷窗口是否已經在屏幕外。
@@ -116,13 +116,13 @@ bool is_pointer_on_win(WM *wm, Window win)
  * 即：|x+w/2-0-sw/2|＜|w/2+sw/2| 且 |y+h/2-0-sh/2|＜|h/2+sh/2|。
  * 兩邊同乘以2，得：|2*x+w-sw|＜|w+sw| 且 |2*y+h-sh|＜|h+sh|。
  */
-bool is_on_screen(WM *wm, int x, int y, unsigned int w, unsigned int h)
+bool is_on_screen(WM *wm, int x, int y, int w, int h)
 {
     long sw=wm->screen_width, sh=wm->screen_height, wl=w, hl=h;
     return labs(2*x+wl-sw)<wl+sw && labs(2*y+hl-sh)<hl+sh;
 }
 
-void print_area(WM *wm, Drawable d, int x, int y, unsigned int w, unsigned int h)
+void print_area(WM *wm, Drawable d, int x, int y, int w, int h)
 {
     imlib_context_set_drawable(d);
     Imlib_Image image=imlib_create_image_from_drawable(None, x, y, w, h, 0);
@@ -187,20 +187,21 @@ void set_override_redirect(WM *wm, Window win)
     XChangeWindowAttributes(wm->display, win, CWOverrideRedirect, &attr);
 }
 
-bool get_geometry(WM *wm, Drawable drw, int *x, int *y, unsigned int *w, unsigned int *h, unsigned int *bw, unsigned int *depth)
+bool get_geometry(WM *wm, Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth)
 {
     Window r;
     int xt, yt;
     unsigned int wt, ht, bwt, dt;
+
     return XGetGeometry(wm->display, drw, &r, x ? x : &xt, y ? y : &yt,
-        w ? w : &wt, h ? h : &ht, bw ? bw : &bwt, depth ? depth : &dt);
+        w ? (unsigned int *)w : &wt, h ? (unsigned int *)h : &ht,
+        bw ? (unsigned int *)bw : &bwt, depth ? depth : &dt);
 }
 
 /* 坐標均相對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
-void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, unsigned int pw, unsigned int ph)
+void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, int pw, int ph)
 {
-    int x=0, y=0;
-    unsigned int w=0, h=0, bw=0, sw=wm->screen_width, sh=wm->screen_height;
+    int x=0, y=0, w=0, h=0, bw=0, sw=wm->screen_width, sh=wm->screen_height;
     Window child;
 
     XTranslateCoordinates(wm->display, click, wm->root_win, 0, 0, &x, &y, &child);
@@ -216,7 +217,7 @@ bool is_win_exist(WM *wm, Window win, Window parent)
     Window root, pwin, *child=NULL;
     unsigned int n;
     if(XQueryTree(wm->display, parent, &root, &pwin, &child, &n))
-        for(size_t i=0; i<n; i++)
+        for(unsigned int i=0; i<n; i++)
             if(win == child[i])
                 { XFree(child); return true; }
     return false;
@@ -224,7 +225,8 @@ bool is_win_exist(WM *wm, Window win, Window parent)
 
 Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
 {
-    unsigned int w, h, d;
+    int w, h;
+    unsigned int d;
     Imlib_Image image=imlib_load_image(filename);
     if(image && get_geometry(wm, win, NULL, NULL, &w, &h, NULL, &d))
     {

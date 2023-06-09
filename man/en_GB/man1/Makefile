@@ -9,10 +9,11 @@
 # <http://www.gnu.org/licenses/>。
 # *************************************************************************
 
-orig := $(wildcard ../../zh_HK/man1/*.1)
-srcs := $(wildcard *.1)
-objs := $(srcs:.1=.1.gz)
-install_path := $(prefix)/share/man/en_GB/man1
+orig = $(wildcard ../../zh_HK/man1/*.1)
+srcs = $(wildcard *.1)
+objs = $(srcs:.1=.1.gz)
+ln_objs = /usr/share/man/man1/$(objs)
+install_path = $(prefix)/share/man/en_GB/man1
 
 .PHONY : all install install-strip uninstall clean
 all : $(objs)
@@ -23,10 +24,10 @@ $(srcs) : $(orig)
 install :
 	install -d  $(install_path) ;
 	install -m 644 $(objs) $(install_path) ;
+	$(RM) $(ln_objs) ;
+	ln -s $(install_path)/$(objs) $(ln_objs)
 install-strip:
 uninstall :
-	cd $(install_path) ;
-	rm -f $(objs) ;
-	cd - ;
+	$(RM) $(install_path)/$(objs) $(ln_objs)
 clean:
-	rm -f $(objs) *~
+	$(RM) $(objs) *~

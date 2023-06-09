@@ -36,7 +36,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg);
 void show_desktop(WM *wm, XEvent *e, Func_arg arg);
 void change_default_area_type(WM *wm, XEvent *e, Func_arg arg);
 void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg);
-void open_cmd_center(WM *wm, XEvent *e, Func_arg arg);
+void open_act_center(WM *wm, XEvent *e, Func_arg arg);
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg);
 void toggle_title_bar_visibility(WM *wm, XEvent *e, Func_arg arg);
 void focus_desktop(WM *wm, XEvent *e, Func_arg arg);

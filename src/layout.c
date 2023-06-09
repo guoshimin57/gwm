@@ -168,8 +168,7 @@ void update_taskbar_buttons(WM *wm)
     {
         size_t i=TASKBAR_BUTTON_INDEX(b);
         String_format f={{0, 0, wm->cfg->taskbar_button_width,
-            wm->cfg->taskbar_button_height},
-            CENTER, true,
+            get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT)}, CENTER, true,
             wm->widget_color[wm->cfg->color_theme][NORMAL_TASKBAR_BUTTON_COLOR].pixel,
             wm->text_color[wm->cfg->color_theme][TASKBAR_BUTTON_TEXT_COLOR], TASKBAR_BUTTON_FONT};
         if(is_chosen_button(wm, b))

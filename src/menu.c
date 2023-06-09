@@ -11,20 +11,20 @@
 
 #include "gwm.h"
 
-Menu *create_menu(WM *wm, unsigned int n, unsigned int col, unsigned int w, unsigned int h, unsigned long bg)
+Menu *create_menu(WM *wm, int n, int col, int w, int h, int pad, unsigned long bg)
 {
     Menu *menu=malloc_s(sizeof(Menu));
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
-    menu->w=w, menu->h=h, menu->bg=bg;
+    menu->w=w, menu->h=h, menu->pad=pad, menu->bg=bg;
     menu->win=XCreateSimpleWindow(wm->display, wm->root_win,
-        0, 0, w*col, h*menu->row, 0, 0, bg);
+        0, 0, w*col+2*pad, h*menu->row+2*pad, 0, 0, bg);
     set_override_redirect(wm, menu->win);
 
     menu->items=malloc_s(n*sizeof(Window));
-    for(size_t i=0; i<n; i++)
+    for(int i=0; i<n; i++)
     {
         menu->items[i]=XCreateSimpleWindow(wm->display, menu->win,
-            w*(i%col), h*(i/col), w, h, 0, 0, bg);
+            pad+w*(i%col), pad+h*(i/col), w, h, 0, 0, bg);
         XSelectInput(wm->display, menu->items[i], BUTTON_EVENT_MASK);
     }
 
@@ -38,7 +38,7 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
     {
         XButtonEvent *b=&e->xbutton;
         set_pos_for_click(wm, bind, b->x_root-b->x, &menu->x, &menu->y,
-            menu->w*menu->col, menu->h*menu->row);
+            menu->w*menu->col+2*menu->pad, menu->h*menu->row+2*menu->pad);
     }
     XMoveWindow(wm->display, menu->win, menu->x, menu->y);
     XMapRaised(wm->display, menu->win);

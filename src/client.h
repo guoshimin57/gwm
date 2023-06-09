@@ -16,8 +16,8 @@ struct client_tag // 客戶窗口相關信息
 {   /* 分別爲客戶窗口、父窗口、標題區、標題區按鈕、臨時窗口對應的主窗口 */
     Window win, frame, title_area, buttons[TITLE_BUTTON_N], owner;
     int x, y; // win的橫、縱坐標
-    /* win的寬、高、標題欄高、邊框寬、所属虚拟桌面的掩碼 */
-    unsigned int w, h, title_bar_h, border_w, desktop_mask;
+    int w, h, title_bar_h, border_w; // win的寬、高、標題欄高、邊框寬
+    unsigned int desktop_mask; // 所属虚拟桌面的掩碼
     Area_type area_type; // 區域類型
     char *title_text; // 標題的文字
     Icon *icon; // 圖符信息
@@ -35,9 +35,9 @@ void fix_area_type(WM *wm);
 void set_default_win_rect(WM *wm, Client *c);
 void create_title_bar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
-unsigned int get_typed_clients_n(WM *wm, Area_type type);
-unsigned int get_clients_n(WM *wm);
-unsigned int get_all_clients_n(WM *wm);
+int get_typed_clients_n(WM *wm, Area_type type);
+int get_clients_n(WM *wm);
+int get_all_clients_n(WM *wm);
 Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c, bool is_for_quit);
 void del_client_node(Client *c);

@@ -70,8 +70,8 @@ Widget_type get_widget_type(WM *wm, Window win)
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(c->area_type==ICONIFY_AREA && win==c->icon->win)
             return CLIENT_ICON;
-    for(type=CMD_CENTER_ITEM_BEGIN; type<=CMD_CENTER_ITEM_END; type++)
-        if(win == wm->cmd_center->items[CMD_CENTER_ITEM_INDEX(type)])
+    for(type=ACT_CENTER_ITEM_BEGIN; type<=ACT_CENTER_ITEM_END; type++)
+        if(win == wm->act_center->items[ACT_CENTER_ITEM_INDEX(type)])
             return type;
     if((c=win_to_client(wm, win)))
     {
@@ -189,9 +189,9 @@ void vfree(void *ptr, ...) // 調用時須以NULL結尾
     va_end(ap);
 }
 
-File *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, size_t *n)
+File *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, int *n)
 {
-    size_t sum=0;
+    int sum=0;
     char *p=NULL, *ps=dedup_paths(paths);
     File *head=malloc_s(sizeof(File));
     head->next=NULL, head->name=NULL;
@@ -311,14 +311,13 @@ void exec_cmd(WM *wm, char *const *cmd)
 
 void update_hint_win_for_info(WM *wm, Window hover, const char *info)
 {
-    int x, y;
-    unsigned int w, h=wm->cfg->font_size[HINT_FONT], pad=h*wm->cfg->font_pad_ratio;
+    int x, y, rx, ry, pad=get_font_pad(wm, HINT_FONT),
+        w=0, h=get_font_height_by_pad(wm, HINT_FONT);
     get_string_size(wm, wm->font[HINT_FONT], info, &w, NULL);
-    w+=pad*2, h+=pad*2;
+    w+=pad*2;
     if(hover)
     {
         Window r, c;
-        int rx, ry;
         unsigned int m;
         if(!XQueryPointer(wm->display, hover, &r, &c, &rx, &ry, &x, &y, &m))
             return;

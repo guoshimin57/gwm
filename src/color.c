@@ -46,11 +46,11 @@ void update_widget_color(WM *wm)
     XClearWindow(wm->display, wm->taskbar->icon_area);
     update_win_background(wm, wm->taskbar->status_area,
         wm->widget_color[wm->cfg->color_theme][STATUS_AREA_COLOR].pixel, None);
-    update_win_background(wm, wm->cmd_center->win,
-        wm->widget_color[wm->cfg->color_theme][CMD_CENTER_COLOR].pixel, None);
-    for(size_t i=0; i<CMD_CENTER_ITEM_N; i++)
-        update_win_background(wm, wm->cmd_center->items[i],
-            wm->widget_color[wm->cfg->color_theme][CMD_CENTER_COLOR].pixel,None);
+    update_win_background(wm, wm->act_center->win,
+        wm->widget_color[wm->cfg->color_theme][ACT_CENTER_COLOR].pixel, None);
+    for(size_t i=0; i<ACT_CENTER_ITEM_N; i++)
+        update_win_background(wm, wm->act_center->items[i],
+            wm->widget_color[wm->cfg->color_theme][ACT_CENTER_COLOR].pixel,None);
     update_win_background(wm, wm->hint_win,
         wm->widget_color[wm->cfg->color_theme][HINT_WIN_COLOR].pixel, None);
     update_win_background(wm, wm->run_cmd->win,

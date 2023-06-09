@@ -152,7 +152,7 @@ void clear_wm(WM *wm)
         del_client(wm, c, true);
     }
     XDestroyWindow(wm->display, wm->taskbar->win);
-    XDestroyWindow(wm->display, wm->cmd_center->win);
+    XDestroyWindow(wm->display, wm->act_center->win);
     XDestroyWindow(wm->display, wm->run_cmd->win);
     XDestroyWindow(wm->display, wm->hint_win);
     XDestroyWindow(wm->display, wm->wm_check_win);
@@ -173,7 +173,7 @@ void clear_wm(WM *wm)
     free_files(wm->wallpapers);
     for(size_t i=0; i<DESKTOP_N; i++)
         free(wm->desktop[i]);
-    vfree(wm->taskbar->status_text, wm->taskbar, wm->cmd_center, wm->run_cmd,
+    vfree(wm->taskbar->status_text, wm->taskbar, wm->act_center, wm->run_cmd,
         wm->cfg, NULL);
 }
 
@@ -292,7 +292,7 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
     {
-        unsigned int bw=c->border_w, th=c->title_bar_h;
+        int bw=c->border_w, th=c->title_bar_h;
         c->x=wm->workarea.x+bw, c->y=wm->workarea.y+bw+th;
         c->w=wm->workarea.w-2*bw, c->h=wm->workarea.w-th-2*bw;
         if(DESKTOP(wm)->cur_layout == TILE)
@@ -546,10 +546,10 @@ void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)
     wm->cfg->focus_mode = wm->cfg->focus_mode==ENTER_FOCUS ? CLICK_FOCUS : ENTER_FOCUS;
 }
 
-void open_cmd_center(WM *wm, XEvent *e, Func_arg arg)
+void open_act_center(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(arg);
-    show_menu(wm, e, wm->cmd_center, wm->taskbar->buttons[TASKBAR_BUTTON_INDEX(CMD_CENTER_ITEM)]);
+    show_menu(wm, e, wm->act_center, wm->taskbar->buttons[TASKBAR_BUTTON_INDEX(ACT_CENTER_ITEM)]);
 }
 
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
@@ -565,7 +565,7 @@ void toggle_title_bar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    c->title_bar_h = c->title_bar_h ? 0 : wm->cfg->title_bar_height;
+    c->title_bar_h = c->title_bar_h ? 0 : get_font_height_by_pad(wm, TITLE_FONT);
     if(c->title_bar_h)
     {
         create_title_bar(wm, c);

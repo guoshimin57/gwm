@@ -20,7 +20,7 @@ struct icon_dir_info_tag
 typedef struct icon_dir_info_tag Icon_dir_info;
 
 static void draw_icon_image(WM *wm, Client *c);
-static void draw_image(Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h);
+static void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h);
 static void set_icon_image(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c);
@@ -46,10 +46,13 @@ static bool is_accessible(const char *filename);
 static void draw_icon_image(WM *wm, Client *c)
 {
     if(c && c->icon && c->image)
-        draw_image(c->image, c->icon->win, 0, 0, wm->cfg->icon_size, wm->cfg->icon_size);
+    {
+        int size=get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
+        draw_image(c->image, c->icon->win, 0, 0, size, size);
+    }
 }
 
-static void draw_image(Imlib_Image image, Drawable d, int x, int y, unsigned int w, unsigned int h)
+static void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
     imlib_context_set_image(image);
     imlib_context_set_drawable(d);   
@@ -70,7 +73,7 @@ static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
 {
     if(c->wm_hint && (c->wm_hint->flags & IconPixmapHint))
     {
-        unsigned int w, h;
+        int w, h;
         Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
         if(!get_geometry(wm, pixmap, NULL, NULL, &w, &h, NULL, NULL))
             return NULL;
@@ -107,7 +110,8 @@ static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 
 static Imlib_Image get_icon_image_from_file(WM *wm, Client *c)
 {
-    char *filename=find_icon(wm, c->class_hint.res_name, wm->cfg->icon_size, 1, "apps");
+    int size=get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
+    char *filename=find_icon(wm, c->class_hint.res_name, size, 1, "apps");
     return filename ? imlib_load_image(filename) : NULL;
 }
 
@@ -409,7 +413,7 @@ void iconify(WM *wm, Client *c)
 static void create_icon(WM *wm, Client *c)
 {
     Icon *p=c->icon=malloc_s(sizeof(Icon));
-    p->w=p->h=wm->cfg->icon_size;
+    p->w=p->h=get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
     p->x=0, p->y=wm->taskbar->h/2-p->h/2;
     p->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
     c->area_type=ICONIFY_AREA;
@@ -426,7 +430,7 @@ static void create_icon(WM *wm, Client *c)
 
 void update_icon_area(WM *wm)
 {
-    unsigned int x=0, w=0;
+    int x=0, w=0;
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
         if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
@@ -442,17 +446,18 @@ void update_icon_area(WM *wm)
             else
                 i->is_short_text=true;
             i->x=x;
-            x+=i->w+wm->cfg->icons_space;
+            x+=i->w+wm->cfg->icon_gap;
             XMoveResizeWindow(wm->display, i->win, i->x, i->y, i->w, i->h); 
         }
     }
 }
 
-unsigned int get_icon_draw_width(WM *wm, Client *c)
+int get_icon_draw_width(WM *wm, Client *c)
 {
     if(wm->cfg->use_image_icon)
-        return wm->cfg->icon_size;
-    unsigned int w=0;
+        return get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
+
+    int w=0;
     get_string_size(wm, wm->font[CLASS_FONT], c->class_name, &w, NULL);
     return w;
 }

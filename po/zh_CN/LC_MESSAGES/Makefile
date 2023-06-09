@@ -9,7 +9,7 @@
 # <http://www.gnu.org/licenses/>。
 #*************************************************************************
 
-srcs := $(wildcard ../../../src/*.[ch])
+srcs = $(wildcard ../../../src/*.[ch])
 po = $(wildcard *.po)
 pot = $(po:.po=.pot)
 mo = $(po:.po=.mo)
@@ -26,8 +26,6 @@ install :
 	install -m 644 $(mo) $(install_path) ;
 install-strip:
 uninstall :
-	cd $(install_path) ;
-	$(RM) $(mo) ;
-	cd - ;
+	$(RM) $(mo) $(install_path)
 clean:
 	$(RM) $(mo) $(pot) *~

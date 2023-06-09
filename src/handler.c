@@ -86,10 +86,10 @@ static void handle_button_press(WM *wm, XEvent *e)
         if( is_func_click(wm, type, b, e)
             && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
-            if( type == CMD_CENTER_ITEM
-                && XGetWindowAttributes(wm->display, wm->cmd_center->win, &a)
+            if( type == ACT_CENTER_ITEM
+                && XGetWindowAttributes(wm->display, wm->act_center->win, &a)
                 && a.map_state==IsViewable)
-                XUnmapWindow(wm->display, wm->cmd_center->win);
+                XUnmapWindow(wm->display, wm->act_center->win);
             else
             {
                 focus_clicked_client(wm, win);
@@ -101,8 +101,8 @@ static void handle_button_press(WM *wm, XEvent *e)
         }
     }
 
-    if(type != CMD_CENTER_ITEM)
-        XUnmapWindow(wm->display, wm->cmd_center->win);
+    if(type != ACT_CENTER_ITEM)
+        XUnmapWindow(wm->display, wm->act_center->win);
     if(type!=RUN_CMD_ENTRY && type!=RUN_BUTTON)
     {
         XUnmapWindow(wm->display, wm->run_cmd->win);
@@ -243,7 +243,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     else if(type == CLIENT_ICON)
         update_win_background(wm, win,
             wm->widget_color[wm->cfg->color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
-    else if(IS_CMD_CENTER_ITEM(type))
+    else if(IS_ACT_CENTER_ITEM(type))
         update_win_background(wm, win,
             wm->widget_color[wm->cfg->color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
     else if(type == CLIENT_FRAME)
@@ -304,8 +304,8 @@ static void handle_expose(WM *wm, XEvent *e)
         update_icon_text(wm, win);
     else if(IS_TASKBAR_BUTTON(type))
         update_taskbar_button(wm, type, !e->xexpose.send_event);
-    else if(IS_CMD_CENTER_ITEM(type))
-        update_cmd_center_button_text(wm, CMD_CENTER_ITEM_INDEX(type));
+    else if(IS_ACT_CENTER_ITEM(type))
+        update_act_center_button_text(wm, ACT_CENTER_ITEM_INDEX(type));
     else if(type == STATUS_AREA)
         update_status_area_text(wm);
     else if(type == TITLE_AREA)
@@ -333,7 +333,7 @@ static void update_title_button_text(WM *wm, Client *c, size_t index)
     if(c->title_bar_h)
     {
         String_format f={{0, 0, wm->cfg->title_button_width,
-            wm->cfg->title_button_height}, CENTER, false, 0,
+            get_font_height_by_pad(wm, TITLE_BUTTON_FONT)}, CENTER, false, 0,
             wm->text_color[wm->cfg->color_theme][c==CUR_FOC_CLI(wm) ? CURRENT_TITLE_BUTTON_TEXT_COLOR
                 : NORMAL_TITLE_BUTTON_TEXT_COLOR], TITLE_BUTTON_FONT};
         draw_string(wm, c->buttons[index], wm->cfg->title_button_text[index], &f);
@@ -376,8 +376,8 @@ static void handle_leave_notify(WM *wm, XEvent *e)
         hint_leave_taskbar_button(wm, type);
     else if(type == CLIENT_ICON)
         update_win_background(wm, win, wm->widget_color[wm->cfg->color_theme][ICON_AREA_COLOR].pixel, None);
-    else if(IS_CMD_CENTER_ITEM(type))
-        update_win_background(wm, win, wm->widget_color[wm->cfg->color_theme][CMD_CENTER_COLOR].pixel, None);
+    else if(IS_ACT_CENTER_ITEM(type))
+        update_win_background(wm, win, wm->widget_color[wm->cfg->color_theme][ACT_CENTER_COLOR].pixel, None);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
     if(type != UNDEFINED)
