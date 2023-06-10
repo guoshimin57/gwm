@@ -114,8 +114,7 @@ static void create_cursors(WM *wm)
 static void create_run_cmd_entry(WM *wm)
 {
     int sw=wm->screen_width, sh=wm->screen_height, bw=wm->cfg->border_width,
-        ew=wm->cfg->run_cmd_entry_width,
-        eh=get_font_height_by_pad(wm, ENTRY_FONT);
+        ew=wm->cfg->run_cmd_entry_width, eh=ENTRY_HEIGHT(wm);
     Rect r={(sw-ew)/2-bw, (sh-eh)/2-bw, ew, eh};
     wm->run_cmd=create_entry(wm, &r, wm->cfg->run_cmd_entry_hint);
 }
@@ -123,7 +122,7 @@ static void create_run_cmd_entry(WM *wm)
 static void create_hint_win(WM *wm)
 {
     wm->hint_win=XCreateSimpleWindow(wm->display, wm->root_win, 0, 0, 1,
-        1, 0, 0, wm->widget_color[wm->cfg->color_theme][HINT_WIN_COLOR].pixel);
+        1, 0, 0, WIDGET_COLOR(wm, HINT_WIN));
     set_override_redirect(wm, wm->hint_win);
     XSelectInput(wm->display, wm->hint_win, ExposureMask);
 }
@@ -165,11 +164,11 @@ static void init_wallpaper_files(WM *wm)
 
 void init_root_win_background(WM *wm)
 {
-    unsigned long color=wm->widget_color[wm->cfg->color_theme][ROOT_WIN_COLOR].pixel;
     Pixmap pixmap=None;
-    if(wm->cfg->wallpaper_filename)
-        pixmap=create_pixmap_from_file(wm, wm->root_win, wm->cfg->wallpaper_filename);
-    update_win_background(wm, wm->root_win, color, pixmap);
-    if(wm->cfg->wallpaper_filename && pixmap)
+    const char *name=wm->cfg->wallpaper_filename;
+    if(name)
+        pixmap=create_pixmap_from_file(wm, wm->root_win, name);
+    update_win_bg(wm, wm->root_win, WIDGET_COLOR(wm, ROOT_WIN), pixmap);
+    if(name && pixmap)
         XFreePixmap(wm->display, pixmap);
 }

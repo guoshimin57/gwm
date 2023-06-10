@@ -66,7 +66,7 @@ static void apply_rules(WM *wm, Client *c)
         || state == wm->ewmh_atom[_NET_WM_STATE_MODAL])
         c->area_type=FLOATING_AREA;
     c->border_w=wm->cfg->border_width;
-    c->title_bar_h=get_font_height_by_pad(wm, TITLE_FONT);
+    c->title_bar_h=TITLE_BAR_HEIGHT(wm);
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     if(XGetClassHint(wm->display, c->win, &c->class_hint))
@@ -197,8 +197,7 @@ static void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c);
     c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y, fr.w,
-        fr.h, c->border_w,
-        wm->widget_color[wm->cfg->color_theme][CURRENT_BORDER_COLOR].pixel, 0);
+        fr.h, c->border_w, WIDGET_COLOR(wm, CURRENT_BORDER), 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
     if(wm->cfg->set_frame_prop)
         copy_prop(wm, c->frame, c->win);
@@ -210,18 +209,16 @@ static void frame_client(WM *wm, Client *c)
 
 void create_title_bar(WM *wm, Client *c)
 {
-    unsigned long bc=wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel,
-                  ac=wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_AREA_COLOR].pixel;
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(wm, c, i);
-        c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame,
-            br.x, br.y, br.w, br.h, 0, 0, bc);
+        c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame, br.x, br.y,
+            br.w, br.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLE_BUTTON));
         XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
     }
-    c->title_area=XCreateSimpleWindow(wm->display, c->frame,
-        tr.x, tr.y, tr.w, tr.h, 0, 0, ac);
+    c->title_area=XCreateSimpleWindow(wm->display, c->frame, tr.x, tr.y,
+        tr.w, tr.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLE_AREA));
     XSelectInput(wm->display, c->title_area, TITLE_AREA_EVENT_MASK);
 }
 
@@ -240,7 +237,7 @@ Rect get_title_area_rect(WM *wm, Client *c)
 
 static Rect get_button_rect(WM *wm, Client *c, size_t index)
 {
-    long cw=c->w, w=wm->cfg->title_button_width, h=get_font_height_by_pad(wm, TITLE_FONT);
+    long cw=c->w, w=wm->cfg->title_button_width, h=TITLE_BAR_HEIGHT(wm);
     return (Rect){cw-w*(TITLE_BUTTON_N-index), (c->title_bar_h-h)/2, w, h};
 }
 
@@ -344,20 +341,17 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
 
 void update_frame(WM *wm, unsigned int desktop_n, Client *c)
 {
-    bool flag=(c==wm->desktop[desktop_n-1]->cur_focus_client);
+    bool cur=(c==wm->desktop[desktop_n-1]->cur_focus_client);
     if(c->border_w)
-        XSetWindowBorder(wm->display, c->frame, flag ?
-            wm->widget_color[wm->cfg->color_theme][CURRENT_BORDER_COLOR].pixel :
-            wm->widget_color[wm->cfg->color_theme][NORMAL_BORDER_COLOR].pixel);
+        XSetWindowBorder(wm->display, c->frame,
+            NC_WIDGET_COLOR(wm, cur, BORDER));
     if(c->title_bar_h)
     {
-        update_win_background(wm, c->title_area, flag ?
-            wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_AREA_COLOR].pixel :
-            wm->widget_color[wm->cfg->color_theme][NORMAL_TITLE_AREA_COLOR].pixel, None);
+        update_win_bg(wm, c->title_area,
+            NC_WIDGET_COLOR(wm, cur, TITLE_AREA), None);
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            update_win_background(wm, c->buttons[i], flag ?
-                wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel :
-                wm->widget_color[wm->cfg->color_theme][NORMAL_TITLE_BUTTON_COLOR].pixel, None);
+            update_win_bg(wm, c->buttons[i],
+                NC_WIDGET_COLOR(wm, cur, TITLE_BUTTON), None);
     }
 }
 

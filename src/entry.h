@@ -12,6 +12,8 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
+#define ENTRY_HEIGHT(wm) get_font_height_by_pad(wm, ENTRY_FONT)
+
 struct entry_tag // 輸入構件
 {
     Window win;  // 輸入構件的窗口

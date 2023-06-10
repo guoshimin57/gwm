@@ -166,7 +166,7 @@ static bool is_wm_win_type(WM *wm, Window win)
         || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG]);
 }
 
-void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap)
+void update_win_bg(WM *wm, Window win, unsigned long color, Pixmap pixmap)
 {
     XEvent event={.xexpose={.type=Expose, .window=win}};
     if(pixmap)

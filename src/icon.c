@@ -47,7 +47,7 @@ static void draw_icon_image(WM *wm, Client *c)
 {
     if(c && c->icon && c->image)
     {
-        int size=get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
+        int size=TASKBAR_HEIGHT(wm);
         draw_image(c->image, c->icon->win, 0, 0, size, size);
     }
 }
@@ -110,7 +110,7 @@ static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 
 static Imlib_Image get_icon_image_from_file(WM *wm, Client *c)
 {
-    int size=get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
+    int size=TASKBAR_HEIGHT(wm);
     char *filename=find_icon(wm, c->class_hint.res_name, size, 1, "apps");
     return filename ? imlib_load_image(filename) : NULL;
 }
@@ -413,12 +413,12 @@ void iconify(WM *wm, Client *c)
 static void create_icon(WM *wm, Client *c)
 {
     Icon *p=c->icon=malloc_s(sizeof(Icon));
-    p->w=p->h=get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
+    p->w=p->h=TASKBAR_HEIGHT(wm);
     p->x=0, p->y=wm->taskbar->h/2-p->h/2;
     p->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
     c->area_type=ICONIFY_AREA;
     p->win=XCreateSimpleWindow(wm->display, wm->taskbar->icon_area, p->x, p->y,
-        p->w, p->h, 0, 0, wm->widget_color[wm->cfg->color_theme][ICON_COLOR].pixel);
+        p->w, p->h, 0, 0, WIDGET_COLOR(wm, ICON));
     XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
     if(wm->cfg->use_image_icon)
         set_icon_image(wm, c);
@@ -455,7 +455,7 @@ void update_icon_area(WM *wm)
 int get_icon_draw_width(WM *wm, Client *c)
 {
     if(wm->cfg->use_image_icon)
-        return get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
+        return TASKBAR_HEIGHT(wm);
 
     int w=0;
     get_string_size(wm, wm->font[CLASS_FONT], c->class_name, &w, NULL);
@@ -466,7 +466,7 @@ void draw_icon(WM *wm, Client *c)
 {
     Icon *i=c->icon;
     String_format f={{0, 0, i->w, i->h}, CENTER_LEFT, false, 0,
-        wm->text_color[wm->cfg->color_theme][CLASS_TEXT_COLOR], CLASS_FONT};
+        TEXT_COLOR(wm, CLASS), CLASS_FONT};
     if(wm->cfg->use_image_icon && c->image)
         draw_string(wm, i->win, "", &f), draw_icon_image(wm, c);
     else

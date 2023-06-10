@@ -22,7 +22,7 @@ bool is_pointer_on_win(WM *wm, Window win);
 bool is_on_screen(WM *wm, int x, int y, int w, int h);
 void print_area(WM *wm, Drawable d, int x, int y, int w, int h);
 bool is_wm_win(WM *wm, Window win, bool before_wm);
-void update_win_background(WM *wm, Window win, unsigned long color, Pixmap pixmap);
+void update_win_bg(WM *wm, Window win, unsigned long color, Pixmap pixmap);
 void set_override_redirect(WM *wm, Window win);
 bool get_geometry(WM *wm, Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth);
 void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, int pw, int ph);

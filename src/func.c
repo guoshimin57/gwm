@@ -294,7 +294,7 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     {
         int bw=c->border_w, th=c->title_bar_h;
         c->x=wm->workarea.x+bw, c->y=wm->workarea.y+bw+th;
-        c->w=wm->workarea.w-2*bw, c->h=wm->workarea.w-th-2*bw;
+        c->w=wm->workarea.w-2*bw, c->h=wm->workarea.h-th-2*bw;
         if(DESKTOP(wm)->cur_layout == TILE)
             move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
         move_resize_client(wm, c, NULL);
@@ -565,7 +565,7 @@ void toggle_title_bar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    c->title_bar_h = c->title_bar_h ? 0 : get_font_height_by_pad(wm, TITLE_FONT);
+    c->title_bar_h = c->title_bar_h ? 0 : TITLE_BAR_HEIGHT(wm);
     if(c->title_bar_h)
     {
         create_title_bar(wm, c);
@@ -654,7 +654,7 @@ void change_wallpaper(WM *wm, XEvent *e, Func_arg arg)
             pixmap=create_pixmap_from_file(wm, wm->root_win, f->name);
         }
     }
-    update_win_background(wm, wm->root_win, color, pixmap);
+    update_win_bg(wm, wm->root_win, color, pixmap);
     if(pixmap)
         XFreePixmap(wm->display, pixmap);
 }

@@ -22,9 +22,8 @@ Entry *create_entry(WM *wm, Rect *r, const char *hint)
     Entry *e=wm->run_cmd=malloc_s(sizeof(Entry));
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h;
     e->win=XCreateSimpleWindow(wm->display, wm->root_win, e->x, e->y,
-        e->w, e->h, wm->cfg->border_width,
-        wm->widget_color[wm->cfg->color_theme][CURRENT_BORDER_COLOR].pixel,
-        wm->widget_color[wm->cfg->color_theme][ENTRY_COLOR].pixel);
+        e->w, e->h, wm->cfg->border_width, WIDGET_COLOR(wm, CURRENT_BORDER),
+        WIDGET_COLOR(wm, ENTRY));
     set_override_redirect(wm, e->win);
     XSelectInput(wm->display, e->win, ENTRY_EVENT_MASK);
     e->hint=hint;
@@ -44,11 +43,13 @@ void show_entry(WM *wm, Entry *e)
 void update_entry_text(WM *wm, Entry *e)
 {
     int x=get_entry_cursor_x(wm, e), pad=get_font_pad(wm, ENTRY_FONT);
-    String_format f={{pad, 0, e->w-2*pad, e->h}, CENTER_LEFT, false, 0,
-        e->text[0]==L'\0' ? wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR] :
-        wm->text_color[wm->cfg->color_theme][ENTRY_TEXT_COLOR], ENTRY_FONT};
+    bool empty = e->text[0]==L'\0';
+    XftColor color = empty ? TEXT_COLOR(wm, HINT) : TEXT_COLOR(wm, ENTRY);
+    String_format f={{pad, 0, e->w-2*pad, e->h}, CENTER_LEFT, false, 0, color,
+        ENTRY_FONT};
+
     XClearArea(wm->display, e->win, 0, 0, e->w, e->h, False); 
-    if(e->text[0] == L'\0')
+    if(empty)
         draw_string(wm, e->win, e->hint, &f);
     else
         draw_wcs(wm, e->win, e->text, &f);
@@ -81,7 +82,7 @@ static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
             x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+bw,
             i, n, max=(wm->workarea.h-y)/h;
         String_format fmt={{0, 0, w, h}, CENTER_LEFT, false, 0,
-            wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
+            TEXT_COLOR(wm, HINT), HINT_FONT};
         const char *reg=copy_strings(pattern, "*", NULL);
 
         File *f, *files=get_files_in_paths(paths, reg, RISE, false, &n);

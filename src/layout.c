@@ -164,15 +164,12 @@ void update_title_bar_layout(WM *wm)
 
 void update_taskbar_buttons(WM *wm)
 {
-    for(size_t b=TASKBAR_BUTTON_BEGIN; b<=TASKBAR_BUTTON_END; b++)
+    for(size_t h=TASKBAR_HEIGHT(wm), b=TASKBAR_BUTTON_BEGIN; b<=TASKBAR_BUTTON_END; b++)
     {
         size_t i=TASKBAR_BUTTON_INDEX(b);
-        String_format f={{0, 0, wm->cfg->taskbar_button_width,
-            get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT)}, CENTER, true,
-            wm->widget_color[wm->cfg->color_theme][NORMAL_TASKBAR_BUTTON_COLOR].pixel,
-            wm->text_color[wm->cfg->color_theme][TASKBAR_BUTTON_TEXT_COLOR], TASKBAR_BUTTON_FONT};
-        if(is_chosen_button(wm, b))
-            f.bg=wm->widget_color[wm->cfg->color_theme][CHOSEN_TASKBAR_BUTTON_COLOR].pixel;
+        String_format f={{0, 0, wm->cfg->taskbar_button_width, h}, CENTER, true,
+            TASKBAR_BUTTON_COLOR(wm, b),
+            TEXT_COLOR(wm, TASKBAR_BUTTON), TASKBAR_BUTTON_FONT};
         draw_string(wm, wm->taskbar->buttons[i], wm->cfg->taskbar_button_text[i], &f);
     }
 }

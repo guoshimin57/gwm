@@ -328,6 +328,6 @@ void update_hint_win_for_info(WM *wm, Window hover, const char *info)
     XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
     XMapRaised(wm->display, wm->hint_win);
     String_format f={{0, 0, w, h}, CENTER, false, 0,
-        wm->text_color[wm->cfg->color_theme][HINT_TEXT_COLOR], HINT_FONT};
+        TEXT_COLOR(wm, HINT), HINT_FONT};
     draw_string(wm, wm->hint_win, info, &f);
 }

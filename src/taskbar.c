@@ -19,7 +19,7 @@ static void create_act_center(WM *wm);
 void create_taskbar(WM *wm)
 {
     Taskbar *b=wm->taskbar=malloc_s(sizeof(Taskbar));
-    b->w=wm->screen_width, b->h=get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT);
+    b->w=wm->screen_width, b->h=TASKBAR_HEIGHT(wm);
     b->x=0, b->y=(wm->cfg->taskbar_on_top ? 0 : wm->screen_height-b->h);
     b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
         b->w, b->h, 0, 0, 0);
@@ -37,14 +37,11 @@ void create_taskbar(WM *wm)
 static void create_taskbar_buttons(WM *wm)
 {
     Taskbar *b=wm->taskbar;
+    int w=wm->cfg->taskbar_button_width, h=TASKBAR_HEIGHT(wm);
     for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
     {
-        unsigned long color = is_chosen_button(wm, TASKBAR_BUTTON_BEGIN+i) ?
-            wm->widget_color[wm->cfg->color_theme][CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
-            wm->widget_color[wm->cfg->color_theme][NORMAL_TASKBAR_BUTTON_COLOR].pixel ;
-        b->buttons[i]=XCreateSimpleWindow(wm->display, b->win,
-            wm->cfg->taskbar_button_width*i, 0, wm->cfg->taskbar_button_width,
-            get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT), 0, 0, color);
+        b->buttons[i]=XCreateSimpleWindow(wm->display, b->win, w*i, 0, w, h,
+            0, 0, TASKBAR_BUTTON_COLOR(wm, TASKBAR_BUTTON_BEGIN+i));
         XSelectInput(wm->display, b->buttons[i], BUTTON_EVENT_MASK);
     }
 }
@@ -55,7 +52,7 @@ static void create_icon_area(WM *wm)
     int bw=wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N,
         w=b->w-bw-b->status_area_w;
     b->icon_area=XCreateSimpleWindow(wm->display, b->win,
-        bw, 0, w, b->h, 0, 0, wm->widget_color[wm->cfg->color_theme][ICON_AREA_COLOR].pixel);
+        bw, 0, w, b->h, 0, 0, WIDGET_COLOR(wm, ICON_AREA));
 }
 
 static void create_status_area(WM *wm)
@@ -71,7 +68,7 @@ static void create_status_area(WM *wm)
         b->status_area_w=1;
     wm->taskbar->status_area=XCreateSimpleWindow(wm->display, b->win,
         b->w-b->status_area_w, 0, b->status_area_w, b->h,
-        0, 0, wm->widget_color[wm->cfg->color_theme][STATUS_AREA_COLOR].pixel);
+        0, 0, WIDGET_COLOR(wm, STATUS_AREA));
     XSelectInput(wm->display, b->status_area, ExposureMask);
 }
 
@@ -80,7 +77,7 @@ static void create_act_center(WM *wm)
     int n=ACT_CENTER_ITEM_N, col=wm->cfg->act_center_col,
         w=wm->cfg->act_center_item_width, pad=get_font_pad(wm, ACT_CENTER_FONT),
         h=get_font_height_by_pad(wm, ACT_CENTER_FONT);
-    unsigned long color=wm->widget_color[wm->cfg->color_theme][ACT_CENTER_COLOR].pixel;
+    unsigned long color=WIDGET_COLOR(wm, ACT_CENTER);
 
     wm->act_center=create_menu(wm, n, col, w, h, pad, color);
 }
@@ -88,12 +85,9 @@ static void create_act_center(WM *wm)
 void update_taskbar_button(WM *wm, Widget_type type, bool change_bg)
 {
     size_t i=TASKBAR_BUTTON_INDEX(type);
-    String_format f={{0, 0, wm->cfg->taskbar_button_width,
-        get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT)},
-        CENTER, change_bg, is_chosen_button(wm, type) ?
-        wm->widget_color[wm->cfg->color_theme][CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
-        wm->widget_color[wm->cfg->color_theme][NORMAL_TASKBAR_BUTTON_COLOR].pixel,
-        wm->text_color[wm->cfg->color_theme][TASKBAR_BUTTON_TEXT_COLOR], TASKBAR_BUTTON_FONT};
+    String_format f={{0, 0, wm->cfg->taskbar_button_width, TASKBAR_HEIGHT(wm)},
+        CENTER, change_bg, TASKBAR_BUTTON_COLOR(wm, type),
+        TEXT_COLOR(wm, TASKBAR_BUTTON), TASKBAR_BUTTON_FONT};
     draw_string(wm, wm->taskbar->buttons[i], wm->cfg->taskbar_button_text[i], &f);
 }
 
@@ -101,17 +95,14 @@ void update_status_area_text(WM *wm)
 {
     Taskbar *b=wm->taskbar;
     String_format f={{0, 0, b->status_area_w, b->h}, CENTER_RIGHT, false, 0,
-        wm->text_color[wm->cfg->color_theme][STATUS_AREA_TEXT_COLOR], STATUS_AREA_FONT};
+        TEXT_COLOR(wm, STATUS_AREA), STATUS_AREA_FONT};
     draw_string(wm, b->status_area, b->status_text, &f);
 }
 
 void hint_leave_taskbar_button(WM *wm, Widget_type type)
 {
-    unsigned long color = is_chosen_button(wm, type) ?
-        wm->widget_color[wm->cfg->color_theme][CHOSEN_TASKBAR_BUTTON_COLOR].pixel :
-        wm->widget_color[wm->cfg->color_theme][NORMAL_TASKBAR_BUTTON_COLOR].pixel ;
     Window win=wm->taskbar->buttons[TASKBAR_BUTTON_INDEX(type)];
-    update_win_background(wm, win, color, None);
+    update_win_bg(wm, win, TASKBAR_BUTTON_COLOR(wm, type), None);
 }
 
 void update_status_area(WM *wm)
@@ -141,8 +132,8 @@ void update_icon_text(WM *wm, Window win)
         if(!i->is_short_text)
         {
             String_format f={{w, 0, i->w, i->h}, CENTER_LEFT, false, 0,
-                wm->text_color[wm->cfg->color_theme][c==CUR_FOC_CLI(wm) ? CURRENT_TITLE_TEXT_COLOR
-                    : NORMAL_TITLE_TEXT_COLOR], TITLE_FONT};
+                c==CUR_FOC_CLI(wm) ? TEXT_COLOR(wm, CURRENT_TITLE) :
+                TEXT_COLOR(wm, NORMAL_TITLE), TITLE_FONT};
             draw_string(wm, i->win, i->title_text, &f);
         }
     }
@@ -152,11 +143,10 @@ void update_act_center_button_text(WM *wm, size_t index)
 {
     Window win=wm->act_center->items[index];
     int h=get_font_height_by_pad(wm, ACT_CENTER_FONT),
-        pad=get_font_pad(wm, ACT_CENTER_FONT);
-    String_format f={{pad, 0, wm->cfg->act_center_item_width-pad, h},
-        CENTER_LEFT, false, 0,
-        wm->text_color[wm->cfg->color_theme][ACT_CENTER_ITEM_TEXT_COLOR],
-        ACT_CENTER_FONT};
+        pad=get_font_pad(wm, ACT_CENTER_FONT),
+        w=wm->cfg->act_center_item_width-pad;
+    String_format f={{pad, 0, w, h}, CENTER_LEFT, false, 0,
+        TEXT_COLOR(wm, ACT_CENTER_ITEM), ACT_CENTER_FONT};
 
     XClearArea(wm->display, win, 0, 0, pad, h, False); 
     draw_string(wm, win, wm->cfg->act_center_item_text[index], &f);

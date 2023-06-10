@@ -238,22 +238,19 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     if(is_layout_adjust_area(wm, win, x) && get_typed_clients_n(wm, MAIN_AREA))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_TASKBAR_BUTTON(type))
-        update_win_background(wm, win,
-            wm->widget_color[wm->cfg->color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
+        update_win_bg(wm, win, WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON), None);
     else if(type == CLIENT_ICON)
-        update_win_background(wm, win,
-            wm->widget_color[wm->cfg->color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
+        update_win_bg(wm, win, WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON), None);
     else if(IS_ACT_CENTER_ITEM(type))
-        update_win_background(wm, win,
-            wm->widget_color[wm->cfg->color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
+        update_win_bg(wm, win, WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON), None);
     else if(type == CLIENT_FRAME)
         act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
         act=MOVE;
     else if(IS_TITLE_BUTTON(type))
-        update_win_background(wm, win, type==CLOSE_BUTTON ?
-            wm->widget_color[wm->cfg->color_theme][ENTERED_CLOSE_BUTTON_COLOR].pixel :
-            wm->widget_color[wm->cfg->color_theme][ENTERED_NORMAL_BUTTON_COLOR].pixel, None);
+        update_win_bg(wm, win, type==CLOSE_BUTTON ?
+            WIDGET_COLOR(wm, ENTERED_CLOSE_BUTTON) :
+            WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON), None);
     if(type != UNDEFINED)
         XDefineCursor(wm->display, win, wm->cursors[act]);
     handle_pointer_hover(wm, win, show_tooltip);
@@ -322,8 +319,7 @@ static void update_title_area_text(WM *wm, Client *c)
     if(c->title_bar_h)
     {
         String_format f={get_title_area_rect(wm, c), CENTER_LEFT, false, 0,
-            wm->text_color[wm->cfg->color_theme][c==CUR_FOC_CLI(wm) ?  CURRENT_TITLE_TEXT_COLOR
-                : NORMAL_TITLE_TEXT_COLOR], TITLE_FONT};
+            CTEXT_COLOR(wm, c, TITLE), TITLE_FONT};
         draw_string(wm, c->title_area, c->title_text, &f);
     }
 }
@@ -334,8 +330,7 @@ static void update_title_button_text(WM *wm, Client *c, size_t index)
     {
         String_format f={{0, 0, wm->cfg->title_button_width,
             get_font_height_by_pad(wm, TITLE_BUTTON_FONT)}, CENTER, false, 0,
-            wm->text_color[wm->cfg->color_theme][c==CUR_FOC_CLI(wm) ? CURRENT_TITLE_BUTTON_TEXT_COLOR
-                : NORMAL_TITLE_BUTTON_TEXT_COLOR], TITLE_BUTTON_FONT};
+            CTEXT_COLOR(wm, c, TITLE_BUTTON), TITLE_BUTTON_FONT};
         draw_string(wm, c->buttons[index], wm->cfg->title_button_text[index], &f);
     }
 }
@@ -375,9 +370,9 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     if(IS_TASKBAR_BUTTON(type))
         hint_leave_taskbar_button(wm, type);
     else if(type == CLIENT_ICON)
-        update_win_background(wm, win, wm->widget_color[wm->cfg->color_theme][ICON_AREA_COLOR].pixel, None);
+        update_win_bg(wm, win, WIDGET_COLOR(wm, ICON_AREA), None);
     else if(IS_ACT_CENTER_ITEM(type))
-        update_win_background(wm, win, wm->widget_color[wm->cfg->color_theme][ACT_CENTER_COLOR].pixel, None);
+        update_win_bg(wm, win, WIDGET_COLOR(wm, ACT_CENTER), None);
     else if(IS_TITLE_BUTTON(type))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
     if(type != UNDEFINED)
@@ -387,9 +382,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
 {
     Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
-    update_win_background(wm, win, c==CUR_FOC_CLI(wm) ?
-        wm->widget_color[wm->cfg->color_theme][CURRENT_TITLE_BUTTON_COLOR].pixel :
-        wm->widget_color[wm->cfg->color_theme][NORMAL_TITLE_BUTTON_COLOR].pixel, None);
+    update_win_bg(wm, win, CWIDGET_COLOR(wm, c, TITLE_BUTTON), None);
 }
 
 static void handle_map_request(WM *wm, XEvent *e)

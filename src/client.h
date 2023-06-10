@@ -12,6 +12,8 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#define TITLE_BAR_HEIGHT(wm) get_font_height_by_pad(wm, TITLE_FONT)
+
 struct client_tag // 客戶窗口相關信息
 {   /* 分別爲客戶窗口、父窗口、標題區、標題區按鈕、臨時窗口對應的主窗口 */
     Window win, frame, title_area, buttons[TITLE_BUTTON_N], owner;

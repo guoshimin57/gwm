@@ -12,6 +12,22 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+/* 以下带参宏中的type只允许是gwm.h中的枚举常量的构成部分 */
+#define WIDGET_COLOR(wm, type) wm->widget_color[wm->cfg->color_theme][type ## _COLOR].pixel
+#define TEXT_COLOR(wm, type) wm->text_color[wm->cfg->color_theme][type ## _TEXT_COLOR]
+#define TASKBAR_BUTTON_COLOR(wm, type) /* 根據是否選中而得出任務欄按鈕顏色 */ \
+    wm->widget_color[wm->cfg->color_theme][is_chosen_button(wm, type) ? \
+    CHOSEN_TASKBAR_BUTTON_COLOR : NORMAL_TASKBAR_BUTTON_COLOR].pixel
+#define NC_WIDGET_COLOR(wm, cur, type) /* 根據是否當前客戶窗口的條件而得出構件顏色 */ \
+    wm->widget_color[wm->cfg->color_theme][cur ? \
+    CURRENT_ ## type ## _COLOR : NORMAL_ ## type ## _COLOR].pixel
+#define CWIDGET_COLOR(wm, c, type) /* 根據是否當前桌面的當前客戶窗口而得出構件顏色 */ \
+    wm->widget_color[wm->cfg->color_theme][c==CUR_FOC_CLI(wm) ? \
+    CURRENT_ ## type ## _COLOR : NORMAL_ ## type ## _COLOR].pixel
+#define CTEXT_COLOR(wm, c, type) /* 根據是否當前桌面的當前客戶窗口而得出文字顏色 */ \
+    wm->text_color[wm->cfg->color_theme][c==CUR_FOC_CLI(wm) ? \
+    CURRENT_ ## type ## _TEXT_COLOR : NORMAL_ ## type ## _TEXT_COLOR]
+
 void alloc_color(WM *wm);
 void update_widget_color(WM *wm);
 
