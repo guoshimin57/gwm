@@ -112,7 +112,7 @@ void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
         if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
             update_win_bg(wm, c->icon->win, c==d->cur_focus_client ?
                 WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON) :
-                WIDGET_COLOR(wm, ICON_AREA), None);
+                WIDGET_COLOR(wm, TASKBAR), None);
         else
             update_frame(wm, desktop_n, c);
     }

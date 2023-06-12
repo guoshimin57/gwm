@@ -40,6 +40,7 @@ void add_client(WM *wm, Window win)
     add_client_node(get_area_head(wm, c->area_type), c);
     fix_area_type(wm);
     set_default_win_rect(wm, c);
+    create_icon(wm, c);
     if(c->area_type == ICONIFY_AREA)
         iconify(wm, c);
     grab_buttons(wm, c);
@@ -56,17 +57,17 @@ void add_client(WM *wm, Window win)
 
 static void apply_rules(WM *wm, Client *c)
 {
-    Atom type=get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE]),
-         state=get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_STATE]);
+    Atom type=get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_WINDOW_TYPE]),
+         state=get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_STATE]);
 
     Window tw=get_transient_for(wm, c->win);
     c->area_type=DESKTOP(wm)->default_area_type;
     if( (tw && tw!=wm->root_win)
-        || type != wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
-        || state == wm->ewmh_atom[_NET_WM_STATE_MODAL])
+        || type != wm->ewmh_atom[NET_WM_WINDOW_TYPE_NORMAL]
+        || state == wm->ewmh_atom[NET_WM_STATE_MODAL])
         c->area_type=FLOATING_AREA;
     c->border_w=wm->cfg->border_width;
-    c->title_bar_h=TITLE_BAR_HEIGHT(wm);
+    c->titlebar_h=TITLEBAR_HEIGHT(wm);
     c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     if(XGetClassHint(wm->display, c->win, &c->class_hint))
@@ -79,8 +80,8 @@ static void apply_rules(WM *wm, Client *c)
                 c->area_type=r->area_type;
                 if(!r->show_border)
                     c->border_w=0;
-                if(!r->show_title_bar)
-                    c->title_bar_h=0;
+                if(!r->show_titlebar)
+                    c->titlebar_h=0;
                 c->desktop_mask = r->desktop_mask ?
                     r->desktop_mask : get_desktop_mask(wm->cur_desktop);
                 if(r->class_alias)
@@ -158,15 +159,15 @@ static void fix_win_pos_by_prop(WM *wm, Client *c)
          ww=wm->workarea.w, wh=wm->workarea.h;
     if((oc=win_to_client(wm, get_transient_for(wm, c->win))))
         ow=oc->w, oh=oc->h, c->x=oc->x+(ow-w)/2, c->y=oc->y+(oh-h)/2;
-    if( get_atom_prop(wm, c->win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE])
-        == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG])
+    if( get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_WINDOW_TYPE])
+        == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DIALOG])
         c->x=wx+(ww-w)/2, c->y=wy+(wh-h)/2;
 }
 
 static void fix_win_pos_by_workarea(WM *wm, Client *c)
 {
     // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
-    long w=c->w, h=c->h, bw=c->border_w, bh=c->title_bar_h, wx=wm->workarea.x,
+    long w=c->w, h=c->h, bw=c->border_w, bh=c->titlebar_h, wx=wm->workarea.x,
          wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
     if(c->x >= wx+ww-w-bw) // 窗口在工作區右邊出界
         c->x=wx+ww-w-bw;
@@ -186,7 +187,7 @@ static void fix_win_size(WM *wm, Client *c)
 
 static void fix_win_size_by_workarea(WM *wm, Client *c)
 {
-    long ww=wm->workarea.w, wh=wm->workarea.h, bh=c->title_bar_h, bw=c->border_w;
+    long ww=wm->workarea.w, wh=wm->workarea.h, bh=c->titlebar_h, bw=c->border_w;
     if(c->w+2*bw > ww)
         c->w=ww-2*bw;
     if(c->h+bh+2*bw > wh)
@@ -201,44 +202,47 @@ static void frame_client(WM *wm, Client *c)
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
     if(wm->cfg->set_frame_prop)
         copy_prop(wm, c->frame, c->win);
-    if(c->title_bar_h)
-        create_title_bar(wm, c);
+    if(c->titlebar_h)
+        create_titlebar(wm, c);
     XAddToSaveSet(wm->display, c->win);
-    XReparentWindow(wm->display, c->win, c->frame, 0, c->title_bar_h);
+    XReparentWindow(wm->display, c->win, c->frame, 0, c->titlebar_h);
 }
 
-void create_title_bar(WM *wm, Client *c)
+void create_titlebar(WM *wm, Client *c)
 {
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(wm, c, i);
         c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame, br.x, br.y,
-            br.w, br.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLE_BUTTON));
+            br.w, br.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
         XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
     }
     c->title_area=XCreateSimpleWindow(wm->display, c->frame, tr.x, tr.y,
-        tr.w, tr.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLE_AREA));
+        tr.w, tr.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
     XSelectInput(wm->display, c->title_area, TITLE_AREA_EVENT_MASK);
+    c->logo=XCreateSimpleWindow(wm->display, c->frame, 0, 0,
+        c->titlebar_h, c->titlebar_h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
+    XSelectInput(wm->display, c->logo, ExposureMask);
 }
 
 static Rect get_frame_rect(Client *c)
 {
-    long bw=c->border_w, bh=c->title_bar_h;
+    long bw=c->border_w, bh=c->titlebar_h;
     return (Rect){c->x-bw, c->y-bh-bw, c->w, c->h+bh};
 }
 
 Rect get_title_area_rect(WM *wm, Client *c)
 {
     int buttons_n[]={[FULL]=0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
-        n=buttons_n[DESKTOP(wm)->cur_layout];
-    return (Rect){0, 0, c->w-wm->cfg->title_button_width*n, c->title_bar_h};
+        n=buttons_n[DESKTOP(wm)->cur_layout], size=TITLEBAR_HEIGHT(wm);
+    return (Rect){size, 0, c->w-wm->cfg->title_button_width*n, size};
 }
 
 static Rect get_button_rect(WM *wm, Client *c, size_t index)
 {
-    long cw=c->w, w=wm->cfg->title_button_width, h=TITLE_BAR_HEIGHT(wm);
-    return (Rect){cw-w*(TITLE_BUTTON_N-index), (c->title_bar_h-h)/2, w, h};
+    int cw=c->w, w=wm->cfg->title_button_width, h=TITLEBAR_HEIGHT(wm);
+    return (Rect){cw-w*(TITLE_BUTTON_N-index), 0, w, h};
 }
 
 int get_typed_clients_n(WM *wm, Area_type type)
@@ -272,7 +276,7 @@ Client *win_to_client(WM *wm, Window win)
     // 當隱藏標題欄時，標題區和按鈕的窗口ID爲0。故win爲0時，不應視爲找到
     for(Client *c=wm->clients->next; win && c!=wm->clients; c=c->next)
     {
-        if(win==c->win || win==c->frame || win==c->title_area)
+        if(win==c->win || win==c->frame || win==c->logo || win==c->title_area)
             return c;
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             if(win == c->buttons[i])
@@ -289,20 +293,13 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
         if(is_win_exist(wm, c->win, c->frame))
             XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
         XDestroyWindow(wm->display, c->frame);
-        if(c->area_type == ICONIFY_AREA)
-            del_icon(wm, c);
+        del_icon(wm, c);
         del_client_node(c);
         fix_area_type(wm);
         if(!is_for_quit)
             for(size_t i=1; i<=DESKTOP_N; i++)
                 if(is_on_desktop_n(i, c))
                     focus_client(wm, i, NULL);
-
-        if(wm->cfg->use_image_icon && c->image)
-        {
-            imlib_context_set_image(c->image);
-            imlib_free_image();
-        }
 
         XFree(c->class_hint.res_class);
         XFree(c->class_hint.res_name);
@@ -326,8 +323,8 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
     if(d)
         c->x+=d->dx, c->y+=d->dy, c->w+=d->dw, c->h+=d->dh;
     Rect fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
-    XMoveResizeWindow(wm->display, c->win, 0, c->title_bar_h, c->w, c->h);
-    if(c->title_bar_h)
+    XMoveResizeWindow(wm->display, c->win, 0, c->titlebar_h, c->w, c->h);
+    if(c->titlebar_h)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
         {
@@ -345,13 +342,16 @@ void update_frame(WM *wm, unsigned int desktop_n, Client *c)
     if(c->border_w)
         XSetWindowBorder(wm->display, c->frame,
             NC_WIDGET_COLOR(wm, cur, BORDER));
-    if(c->title_bar_h)
+    if(c->titlebar_h)
     {
+        update_win_bg(wm, c->logo,
+            NC_WIDGET_COLOR(wm, cur, TITLEBAR), None);
+        for(size_t i=0; i<TITLE_BUTTON_N; i++)
         update_win_bg(wm, c->title_area,
-            NC_WIDGET_COLOR(wm, cur, TITLE_AREA), None);
+            NC_WIDGET_COLOR(wm, cur, TITLEBAR), None);
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             update_win_bg(wm, c->buttons[i],
-                NC_WIDGET_COLOR(wm, cur, TITLE_BUTTON), None);
+                NC_WIDGET_COLOR(wm, cur, TITLEBAR), None);
     }
 }
 

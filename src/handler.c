@@ -25,6 +25,7 @@ static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
 static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window));
 static void handle_expose(WM *wm, XEvent *e);
+static void update_title_logo(WM *wm, Client *c);
 static void update_title_area_text(WM *wm, Client *c);
 static void update_title_button_text(WM *wm, Client *c, size_t index);
 static void handle_key_press(WM *wm, XEvent *e);
@@ -130,35 +131,35 @@ static void handle_client_message(WM *wm, XEvent *e)
 {
     Window win=e->xclient.window;
     Atom type=e->xclient.message_type;
-    if(type == wm->ewmh_atom[_NET_NUMBER_OF_DESKTOPS])
+    if(type == wm->ewmh_atom[NET_NUMBER_OF_DESKTOPS])
         update_hint_win_for_info(wm, None, "gwm不支持動態更改虛擬桌面數量！");
-    else if(type == wm->ewmh_atom[_NET_DESKTOP_GEOMETRY])
+    else if(type == wm->ewmh_atom[NET_DESKTOP_GEOMETRY])
         update_hint_win_for_info(wm, None, "gwm不支持大型桌面，故不支持動態更改虛擬桌面尺寸！");
-    else if(type == wm->ewmh_atom[_NET_DESKTOP_VIEWPORT])
+    else if(type == wm->ewmh_atom[NET_DESKTOP_VIEWPORT])
         update_hint_win_for_info(wm, None, "gwm不支持大型桌面，故不支持動態更改當前虛擬桌面視口！");
-    if(type == wm->ewmh_atom[_NET_CURRENT_DESKTOP])
+    if(type == wm->ewmh_atom[NET_CURRENT_DESKTOP])
         focus_desktop_n(wm, e->xclient.data.l[0]+1);
-    else if(type == wm->ewmh_atom[_NET_DESKTOP_NAMES])
+    else if(type == wm->ewmh_atom[NET_DESKTOP_NAMES])
         update_hint_win_for_info(wm, None, "gwm不支持動態更改虛擬桌面名稱！");
-    else if(type == wm->ewmh_atom[_NET_ACTIVE_WINDOW])
+    else if(type == wm->ewmh_atom[NET_ACTIVE_WINDOW])
         activate_win(wm, win, e->xclient.data.l[0]);
-    else if(type == wm->ewmh_atom[_NET_SHOWING_DESKTOP])
+    else if(type == wm->ewmh_atom[NET_SHOWING_DESKTOP])
         toggle_showing_desktop_mode(wm, e->xclient.data.l[0]);
-    else if(type == wm->ewmh_atom[_NET_WM_DESKTOP])
+    else if(type == wm->ewmh_atom[NET_WM_DESKTOP])
         change_desktop(wm, win, e->xclient.data.l[0]);
-    else if(type == wm->ewmh_atom[_NET_WM_MOVERESIZE])
+    else if(type == wm->ewmh_atom[NET_WM_MOVERESIZE])
         update_hint_win_for_info(wm, None, "稍後支持_NET_WM_MOVERESIZE特性，敬請期待！");
     // 尚未知道有哪些分頁器支持以下這些特性，誰要是知道的話，煩請告知我
-    else if(type == wm->ewmh_atom[_NET_CLOSE_WINDOW])
+    else if(type == wm->ewmh_atom[NET_CLOSE_WINDOW])
     {
         update_hint_win_for_info(wm, None, "此分頁器支持_NET_CLOSE_WINDOW特性");
         close_win(wm, win);
     }
-    else if(type == wm->ewmh_atom[_NET_MOVERESIZE_WINDOW])
+    else if(type == wm->ewmh_atom[NET_MOVERESIZE_WINDOW])
         update_hint_win_for_info(wm, None, "此分頁器支持_NET_MOVERESIZE_WINDOW特性");
-    else if(type == wm->ewmh_atom[_NET_RESTACK_WINDOW])
+    else if(type == wm->ewmh_atom[NET_RESTACK_WINDOW])
         update_hint_win_for_info(wm, None, "此分頁器支持_NET_RESTACK_WINDOW特性");
-    else if(type == wm->ewmh_atom[_NET_REQUEST_FRAME_EXTENTS])
+    else if(type == wm->ewmh_atom[NET_REQUEST_FRAME_EXTENTS])
         update_hint_win_for_info(wm, None, "此分頁器支持_NET_REQUEST_FRAME_EXTENTS特性");
 }
 
@@ -298,13 +299,15 @@ static void handle_expose(WM *wm, XEvent *e)
     Window win=e->xexpose.window;
     Widget_type type=get_widget_type(wm, win);
     if(type == CLIENT_ICON)
-        update_icon_text(wm, win);
+        update_client_icon_win(wm, win);
     else if(IS_TASKBAR_BUTTON(type))
         update_taskbar_button(wm, type, !e->xexpose.send_event);
     else if(IS_ACT_CENTER_ITEM(type))
         update_act_center_button_text(wm, ACT_CENTER_ITEM_INDEX(type));
     else if(type == STATUS_AREA)
         update_status_area_text(wm);
+    else if(type == TITLE_LOGO)
+        update_title_logo(wm, win_to_client(wm, win));
     else if(type == TITLE_AREA)
         update_title_area_text(wm, win_to_client(wm, win));
     else if(IS_TITLE_BUTTON(type))
@@ -314,23 +317,37 @@ static void handle_expose(WM *wm, XEvent *e)
         update_entry_text(wm, wm->run_cmd);
 }
 
+static void update_title_logo(WM *wm, Client *c)
+{
+    Icon *i=c->icon;
+    if(c->icon->image)
+        draw_image(wm, i->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
+    else
+    {
+        String_format f={{0, 0, c->titlebar_h, c->titlebar_h}, CENTER_LEFT, false,
+            0, TEXT_COLOR(wm, CLASS), CLASS_FONT};
+        draw_string(wm, c->logo, c->class_name, &f);
+    }
+}
+
 static void update_title_area_text(WM *wm, Client *c)
 {
-    if(c->title_bar_h)
+    if(c->titlebar_h)
     {
-        String_format f={get_title_area_rect(wm, c), CENTER_LEFT, false, 0,
-            CTEXT_COLOR(wm, c, TITLE), TITLE_FONT};
+        Rect r=get_title_area_rect(wm, c);
+        String_format f={{0, 0, r.w, r.h}, CENTER_LEFT,
+            false, 0, CTEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
         draw_string(wm, c->title_area, c->title_text, &f);
     }
 }
 
 static void update_title_button_text(WM *wm, Client *c, size_t index)
 {
-    if(c->title_bar_h)
+    if(c->titlebar_h)
     {
         String_format f={{0, 0, wm->cfg->title_button_width,
-            get_font_height_by_pad(wm, TITLE_BUTTON_FONT)}, CENTER, false, 0,
-            CTEXT_COLOR(wm, c, TITLE_BUTTON), TITLE_BUTTON_FONT};
+            get_font_height_by_pad(wm, TITLEBAR_FONT)}, CENTER, false, 0,
+            CTEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
         draw_string(wm, c->buttons[index], wm->cfg->title_button_text[index], &f);
     }
 }
@@ -370,7 +387,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     if(IS_TASKBAR_BUTTON(type))
         hint_leave_taskbar_button(wm, type);
     else if(type == CLIENT_ICON)
-        update_win_bg(wm, win, WIDGET_COLOR(wm, ICON_AREA), None);
+        update_win_bg(wm, win, WIDGET_COLOR(wm, TASKBAR), None);
     else if(IS_ACT_CENTER_ITEM(type))
         update_win_bg(wm, win, WIDGET_COLOR(wm, ACT_CENTER), None);
     else if(IS_TITLE_BUTTON(type))
@@ -382,7 +399,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
 {
     Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
-    update_win_bg(wm, win, CWIDGET_COLOR(wm, c, TITLE_BUTTON), None);
+    update_win_bg(wm, win, CWIDGET_COLOR(wm, c, TITLEBAR), None);
 }
 
 static void handle_map_request(WM *wm, XEvent *e)

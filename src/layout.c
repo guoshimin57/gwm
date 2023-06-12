@@ -129,8 +129,8 @@ static void fix_win_rect_for_frame(WM *wm)
         return;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(should_fix_win_rect(wm, c))
-            c->x+=c->border_w, c->y+=c->title_bar_h+c->border_w,
-            c->w-=2*c->border_w, c->h-=c->title_bar_h+2*c->border_w;
+            c->x+=c->border_w, c->y+=c->titlebar_h+c->border_w,
+            c->w-=2*c->border_w, c->h-=c->titlebar_h+2*c->border_w;
 }
 
 static bool should_fix_win_rect(WM *wm, Client *c)
@@ -150,11 +150,11 @@ static void fix_cur_focus_client_rect(WM *wm)
 }
 
 
-void update_title_bar_layout(WM *wm)
+void update_titlebar_layout(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        if(c->title_bar_h && is_on_cur_desktop(wm, c))
+        if(c->titlebar_h && is_on_cur_desktop(wm, c))
         {
             Rect r=get_title_area_rect(wm, c);
             XResizeWindow(wm->display, c->title_area, r.w, r.h);
@@ -164,12 +164,12 @@ void update_title_bar_layout(WM *wm)
 
 void update_taskbar_buttons(WM *wm)
 {
-    for(size_t h=TASKBAR_HEIGHT(wm), b=TASKBAR_BUTTON_BEGIN; b<=TASKBAR_BUTTON_END; b++)
+    for(Widget_type b=TASKBAR_BUTTON_BEGIN; b<=TASKBAR_BUTTON_END; b++)
     {
         size_t i=TASKBAR_BUTTON_INDEX(b);
-        String_format f={{0, 0, wm->cfg->taskbar_button_width, h}, CENTER, true,
-            TASKBAR_BUTTON_COLOR(wm, b),
-            TEXT_COLOR(wm, TASKBAR_BUTTON), TASKBAR_BUTTON_FONT};
+        String_format f={{0, 0, wm->cfg->taskbar_button_width, wm->taskbar->h},
+            CENTER, true, TASKBAR_BUTTON_COLOR(wm, b),
+            TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
         draw_string(wm, wm->taskbar->buttons[i], wm->cfg->taskbar_button_text[i], &f);
     }
 }

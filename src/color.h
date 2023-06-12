@@ -17,7 +17,7 @@
 #define TEXT_COLOR(wm, type) wm->text_color[wm->cfg->color_theme][type ## _TEXT_COLOR]
 #define TASKBAR_BUTTON_COLOR(wm, type) /* 根據是否選中而得出任務欄按鈕顏色 */ \
     wm->widget_color[wm->cfg->color_theme][is_chosen_button(wm, type) ? \
-    CHOSEN_TASKBAR_BUTTON_COLOR : NORMAL_TASKBAR_BUTTON_COLOR].pixel
+    CHOSEN_BUTTON_COLOR : NORMAL_BUTTON_COLOR].pixel
 #define NC_WIDGET_COLOR(wm, cur, type) /* 根據是否當前客戶窗口的條件而得出構件顏色 */ \
     wm->widget_color[wm->cfg->color_theme][cur ? \
     CURRENT_ ## type ## _COLOR : NORMAL_ ## type ## _COLOR].pixel

@@ -16,7 +16,6 @@
 struct config_tag
 {
     bool set_frame_prop; // true表示把窗口特性復制到窗口框架（代價是每個窗口可能要多消耗幾十到幾百KB內存），false表示不復制
-    bool use_image_icon; // true表示使用圖像形式的圖標，false表示使用文字形式的圖標
     bool show_taskbar, taskbar_on_top; // 是否顯示任務欄、是否在屏幕頂部顯示
     char font_name[FONT_N][FONT_NAME_MAX]; // 本窗口管理器所使用的字庫名稱列表。注意：每增加一種不同的字體，就會增加2M左右的內存佔用
     Focus_mode focus_mode; // 聚焦模式

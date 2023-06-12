@@ -79,6 +79,8 @@ Widget_type get_widget_type(WM *wm, Window win)
             return CLIENT_WIN;
         else if(win == c->frame)
             return CLIENT_FRAME;
+        else if(win == c->logo)
+            return TITLE_LOGO;
         else if(win == c->title_area)
             return TITLE_AREA;
         else
@@ -92,7 +94,7 @@ Widget_type get_widget_type(WM *wm, Window win)
 Pointer_act get_resize_act(Client *c, const Move_info *m)
 {   // 窗口邊框寬度、標題欄調試、可調整尺寸區域的寬度、高度
     // 以及窗口框架左、右橫坐標和上、下縱坐標
-    int bw=c->border_w, bh=c->title_bar_h, rw=c->w/4, rh=c->h/4,
+    int bw=c->border_w, bh=c->titlebar_h, rw=c->w/4, rh=c->h/4,
         lx=c->x-bw, rx=c->x+c->w+bw, ty=c->y-bh-bw, by=c->y+c->h+bw;
 
     if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=ty && m->oy<ty+bw+rh)

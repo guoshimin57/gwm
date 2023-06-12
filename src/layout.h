@@ -13,7 +13,7 @@
 #define LAYOUT_H
 
 void update_layout(WM *wm);
-void update_title_bar_layout(WM *wm);
+void update_titlebar_layout(WM *wm);
 void update_taskbar_buttons(WM *wm);
 bool is_main_sec_gap(WM *wm, int x);
 bool is_main_fix_gap(WM *wm, int x);

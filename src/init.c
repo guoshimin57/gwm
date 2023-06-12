@@ -18,6 +18,7 @@ static void create_cursors(WM *wm);
 static void create_run_cmd_entry(WM *wm);
 static void create_hint_win(WM *wm);
 static void create_clients(WM *wm);
+static void init_imlib(WM *wm);
 static void init_wallpaper_files(WM *wm);
 static void exec_autostart(WM *wm);
 
@@ -40,6 +41,7 @@ void init_wm(WM *wm)
         -1, -1, 1, 1, 0, 0, 0);
 
     config(wm);
+    init_imlib(wm);
     if(wm->cfg->wallpaper_paths)
         init_wallpaper_files(wm);
     init_desktop(wm);
@@ -149,7 +151,7 @@ static void create_clients(WM *wm)
     XFree(child);
 }
 
-void init_imlib(WM *wm)
+static void init_imlib(WM *wm)
 {
     imlib_context_set_dither(1);
     imlib_context_set_display(wm->display);
@@ -158,7 +160,8 @@ void init_imlib(WM *wm)
 
 static void init_wallpaper_files(WM *wm)
 {
-    wm->wallpapers=get_files_in_paths(wm->cfg->wallpaper_paths, "*.png|*.jpg", NOSORT, true, NULL);
+    const char *paths=wm->cfg->wallpaper_paths, *reg="*.png|*.jpg|*.svg|*.webp";
+    wm->wallpapers=get_files_in_paths(paths, reg, NOSORT, true, NULL);
     wm->cur_wallpaper=wm->wallpapers->next;
 }
 

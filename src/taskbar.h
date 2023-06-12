@@ -12,7 +12,7 @@
 #ifndef TASKBAR_H
 #define TASKBAR_H
 
-#define TASKBAR_HEIGHT(wm) get_font_height_by_pad(wm, TASKBAR_BUTTON_FONT)
+#define TASKBAR_HEIGHT(wm) get_font_height_by_pad(wm, TASKBAR_FONT)
 
 struct taskbar_tag // 窗口管理器的任務欄
 {
@@ -26,7 +26,7 @@ struct taskbar_tag // 窗口管理器的任務欄
 void create_taskbar(WM *wm);
 void update_taskbar_button(WM *wm, Widget_type type, bool change_bg);
 void hint_leave_taskbar_button(WM *wm, Widget_type type);
-void update_icon_text(WM *wm, Window win);
+void update_client_icon_win(WM *wm, Window win);
 void update_act_center_button_text(WM *wm, size_t index);
 void update_status_area_text(WM *wm);
 void update_status_area(WM *wm);

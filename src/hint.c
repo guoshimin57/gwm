@@ -165,7 +165,7 @@ void set_ewmh(WM *wm)
 static void set_net_supported(WM *wm)
 {
 	XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_SUPPORTED], XA_ATOM, 32,
+        wm->ewmh_atom[NET_SUPPORTED], XA_ATOM, 32,
         PropModeReplace, (unsigned char *)wm->ewmh_atom, EWMH_ATOM_N);
 }
 
@@ -178,7 +178,7 @@ void set_all_net_client_list(WM *wm)
 static void set_net_client_list(WM *wm)
 {
     Window root=wm->root_win;
-    Atom a = wm->ewmh_atom[_NET_CLIENT_LIST];
+    Atom a = wm->ewmh_atom[NET_CLIENT_LIST];
     int i=0, n=get_all_clients_n(wm);
     if(n == 0)
         XDeleteProperty(wm->display, root, a);
@@ -200,7 +200,7 @@ static int cmp_win(const void *pwin1, const void *pwin2)
 
 static void set_net_client_list_stacking(WM *wm)
 {
-    Atom a = wm->ewmh_atom[_NET_CLIENT_LIST_STACKING];
+    Atom a = wm->ewmh_atom[NET_CLIENT_LIST_STACKING];
     unsigned int n=0, na=0;
     Window root, parent, *child=NULL;
     if(XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &na))
@@ -219,7 +219,7 @@ static void set_net_number_of_desktops(WM *wm)
 {
     int32_t desktop_n=DESKTOP_N;
 	XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32,
+        wm->ewmh_atom[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)&desktop_n, 1);
 }
 
@@ -227,7 +227,7 @@ static void set_net_desktop_geometry(WM *wm)
 {
     int32_t size[2]={wm->screen_width, wm->screen_height};
 	XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_DESKTOP_GEOMETRY], XA_CARDINAL, 32,
+        wm->ewmh_atom[NET_DESKTOP_GEOMETRY], XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)size, 2);
 }
 
@@ -235,7 +235,7 @@ static void set_net_desktop_viewport(WM *wm)
 {
     int32_t pos[2]={0, 0};
 	XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_DESKTOP_GEOMETRY], XA_CARDINAL, 32,
+        wm->ewmh_atom[NET_DESKTOP_GEOMETRY], XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)pos, 2);
 }
 
@@ -243,7 +243,7 @@ void set_net_current_desktop(WM *wm)
 {
     int32_t n=wm->cur_desktop-1;
 	XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_CURRENT_DESKTOP], XA_CARDINAL, 32,
+        wm->ewmh_atom[NET_CURRENT_DESKTOP], XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)&n, 1);
 }
 
@@ -254,14 +254,14 @@ static void set_net_desktop_names(WM *wm)
     for(size_t i=0; i<DESKTOP_N; i++)
         n += strlen(wm->cfg->taskbar_button_text[begin+i])+1;
     XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_DESKTOP_NAMES], wm->utf8, 8, PropModeReplace,
+        wm->ewmh_atom[NET_DESKTOP_NAMES], wm->utf8, 8, PropModeReplace,
         (unsigned char *)wm->cfg->taskbar_button_text[begin], n);
 }
 
 void set_net_active_window(WM *wm)
 {
     XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_ACTIVE_WINDOW], XA_WINDOW, 32, PropModeReplace,
+        wm->ewmh_atom[NET_ACTIVE_WINDOW], XA_WINDOW, 32, PropModeReplace,
         (unsigned char *)&CUR_FOC_CLI(wm)->win, 1);
 }
 
@@ -273,31 +273,31 @@ static void set_net_workarea(WM *wm)
     for(size_t i=0; i<DESKTOP_N; i++)
         rect[i][0]=x, rect[i][1]=y, rect[i][2]=w, rect[i][3]=h;
     XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_WORKAREA], XA_CARDINAL, 32,
+        wm->ewmh_atom[NET_WORKAREA], XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)rect, DESKTOP_N*4);
 }
 
 static void set_net_supporting_wm_check(WM *wm)
 {
 	XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
+        wm->ewmh_atom[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
         PropModeReplace, (unsigned char *)&wm->wm_check_win, 1);
 
     /* FIXME: 此項設置會導致firefox不能全屏顯示，也許是因爲gwm不支持真正的全屏，確切原因未明
 	XChangeProperty(wm->display, wm->wm_check_win,
-        wm->ewmh_atom[_NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
+        wm->ewmh_atom[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
         PropModeReplace, (unsigned char *)&wm->wm_check_win, 1);
         */
 
 	XChangeProperty(wm->display, wm->wm_check_win,
-        wm->ewmh_atom[_NET_WM_NAME], wm->utf8, 8,
+        wm->ewmh_atom[NET_WM_NAME], wm->utf8, 8,
         PropModeReplace, (unsigned char *)"gwm", 3);
 }
 
 void set_net_showing_desktop(WM *wm, bool show)
 {
 	XChangeProperty(wm->display, wm->root_win,
-        wm->ewmh_atom[_NET_SHOWING_DESKTOP], XA_CARDINAL, 32,
+        wm->ewmh_atom[NET_SHOWING_DESKTOP], XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)&show, 1);
 }
 

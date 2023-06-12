@@ -14,17 +14,18 @@
 
 struct icon_tag // 縮微窗口相關信息
 {
-    Window win; // 縮微窗口
-    int x, y, w, h; // 無邊框時縮微窗口的坐標、尺寸
+    Window win; // 位於任務欄的縮微窗口（可能含有圖標名）
+    int x, y, w, h; // 無邊框時win的坐標、尺寸
     Area_type area_type; // 窗口微縮之前的區域類型
-    bool is_short_text; // 是否只爲縮微窗口顯示簡短的文字
-    char *title_text; // 縮微窗口標題文字，即XA_WM_ICON_NAME，理論上應比XA_WM_NAME簡短，實際上很多客戶窗口的都是與它一模一樣。
+    bool show_text; // 當存在圖標映像時，是否顯示圖標名
+    char *title_text; // 圖標名，即XA_WM_ICON_NAME，理論上應比XA_WM_NAME簡短，實際上很多客戶窗口的都是與它一模一樣。
+    Imlib_Image image; // 圖標映像
 };
 
+void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h);
 void iconify(WM *wm, Client *c);
+void create_icon(WM *wm, Client *c);
 void update_icon_area(WM *wm);
-int get_icon_draw_width(WM *wm, Client *c);
-void draw_icon(WM *wm, Client *c);
 void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);
 void iconify_all_clients(WM *wm);

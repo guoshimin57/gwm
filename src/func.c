@@ -292,7 +292,7 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
     {
-        int bw=c->border_w, th=c->title_bar_h;
+        int bw=c->border_w, th=c->titlebar_h;
         c->x=wm->workarea.x+bw, c->y=wm->workarea.y+bw+th;
         c->w=wm->workarea.w-2*bw, c->h=wm->workarea.h-th-2*bw;
         if(DESKTOP(wm)->cur_layout == TILE)
@@ -491,7 +491,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
                 if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
                     XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
         update_layout(wm);
-        update_title_bar_layout(wm);
+        update_titlebar_layout(wm);
         update_taskbar_buttons(wm);
     }
 }
@@ -524,7 +524,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
 void show_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    Atom mtype=wm->ewmh_atom[_NET_SHOWING_DESKTOP];
+    Atom mtype=wm->ewmh_atom[NET_SHOWING_DESKTOP];
     unsigned char *p=get_prop(wm, wm->root_win, mtype, NULL);
     int32_t show=*(int32_t *)p;
     XFree(p);
@@ -561,14 +561,14 @@ void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
     update_layout(wm);
 }
 
-void toggle_title_bar_visibility(WM *wm, XEvent *e, Func_arg arg)
+void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    c->title_bar_h = c->title_bar_h ? 0 : TITLE_BAR_HEIGHT(wm);
-    if(c->title_bar_h)
+    c->titlebar_h = c->titlebar_h ? 0 : TITLEBAR_HEIGHT(wm);
+    if(c->titlebar_h)
     {
-        create_title_bar(wm, c);
+        create_titlebar(wm, c);
         XMapSubwindows(wm->display, c->frame);
     }
     else

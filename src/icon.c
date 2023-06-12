@@ -19,8 +19,6 @@ struct icon_dir_info_tag
 };
 typedef struct icon_dir_info_tag Icon_dir_info;
 
-static void draw_icon_image(WM *wm, Client *c);
-static void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h);
 static void set_icon_image(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c);
@@ -43,17 +41,9 @@ static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
 static bool is_accessible(const char *filename);
 
-static void draw_icon_image(WM *wm, Client *c)
+void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
-    if(c && c->icon && c->image)
-    {
-        int size=TASKBAR_HEIGHT(wm);
-        draw_image(c->image, c->icon->win, 0, 0, size, size);
-    }
-}
-
-static void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
-{
+    XClearArea(wm->display, d, x, y, w, h, False); 
     imlib_context_set_image(image);
     imlib_context_set_drawable(d);   
     imlib_render_image_on_drawable_at_size(x, y, w, h);
@@ -62,11 +52,10 @@ static void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h
 static void set_icon_image(WM *wm, Client *c)
 {
     /* 根據加載效率依次嘗試 */
-    if( c && !c->image
-        && !( (c->image=get_icon_image_from_hint(wm, c))
-        || (c->image=get_icon_image_from_prop(wm, c))
-        || (c->image=get_icon_image_from_file(wm, c))))
-        c->image=NULL;
+    if( c && !( (c->icon->image=get_icon_image_from_hint(wm, c))
+        || (c->icon->image=get_icon_image_from_prop(wm, c))
+        || (c->icon->image=get_icon_image_from_file(wm, c))))
+        c->icon->image=NULL;
 }
 
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
@@ -86,7 +75,7 @@ static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 {
     unsigned long i, n=0, w=0, h=0, *data=NULL;
-    unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[_NET_WM_ICON], &n);
+    unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[NET_WM_ICON], &n);
     if(!p)
         return NULL;
     
@@ -110,9 +99,8 @@ static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 
 static Imlib_Image get_icon_image_from_file(WM *wm, Client *c)
 {
-    int size=TASKBAR_HEIGHT(wm);
-    char *filename=find_icon(wm, c->class_hint.res_name, size, 1, "apps");
-    return filename ? imlib_load_image(filename) : NULL;
+    char *fn=find_icon(wm, c->class_hint.res_name, wm->taskbar->h, 1, "apps");
+    return fn ? imlib_load_image(fn) : NULL;
 }
 
 /* 根據圖標名稱、尺寸、縮放比例和規範中context對應的目錄名來搜索圖標文件全名。
@@ -395,12 +383,16 @@ static bool is_accessible(const char *filename)
     return !stat(filename, &buf);
 }
 
-static void create_icon(WM *wm, Client *c);
 static bool have_same_class_icon_client(WM *wm, Client *c);
 
 void iconify(WM *wm, Client *c)
 {
-    create_icon(wm, c);
+    c->icon->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
+    c->area_type=ICONIFY_AREA;
+    c->icon->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
+    if(!c->icon->title_text)
+        c->icon->title_text=copy_string(c->title_text);
+    update_icon_area(wm);
     XMapWindow(wm->display, c->icon->win);
     XUnmapWindow(wm->display, c->frame);
     if(c == DESKTOP(wm)->cur_focus_client)
@@ -410,22 +402,14 @@ void iconify(WM *wm, Client *c)
     }
 }
 
-static void create_icon(WM *wm, Client *c)
+void create_icon(WM *wm, Client *c)
 {
-    Icon *p=c->icon=malloc_s(sizeof(Icon));
-    p->w=p->h=TASKBAR_HEIGHT(wm);
-    p->x=0, p->y=wm->taskbar->h/2-p->h/2;
-    p->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
-    c->area_type=ICONIFY_AREA;
-    p->win=XCreateSimpleWindow(wm->display, wm->taskbar->icon_area, p->x, p->y,
-        p->w, p->h, 0, 0, WIDGET_COLOR(wm, ICON));
+    Icon *i=c->icon=malloc_s(sizeof(Icon));
+    i->x=0, i->y=0, i->w=i->h=wm->taskbar->h, i->title_text=NULL;
+    i->win=XCreateSimpleWindow(wm->display, wm->taskbar->icon_area, i->x, i->y,
+        i->w, i->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
-    if(wm->cfg->use_image_icon)
-        set_icon_image(wm, c);
-    p->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
-    if(!p->title_text)
-        p->title_text=copy_string(c->title_text);
-    update_icon_area(wm);
+    set_icon_image(wm, c);
 }
 
 void update_icon_area(WM *wm)
@@ -436,41 +420,20 @@ void update_icon_area(WM *wm)
         if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
         {
             Icon *i=c->icon;
-            i->w=MIN(get_icon_draw_width(wm, c), wm->cfg->icon_win_width_max);
+            i->w=wm->taskbar->h;
             if(have_same_class_icon_client(wm, c))
             {
-                get_string_size(wm, wm->font[TITLE_FONT], i->title_text, &w, NULL);
+                get_string_size(wm, wm->font[TITLEBAR_FONT], i->title_text, &w, NULL);
                 i->w=MIN(i->w+w, wm->cfg->icon_win_width_max);
-                i->is_short_text=false;
+                i->show_text=true;
             }
             else
-                i->is_short_text=true;
+                i->show_text=false;
             i->x=x;
             x+=i->w+wm->cfg->icon_gap;
             XMoveResizeWindow(wm->display, i->win, i->x, i->y, i->w, i->h); 
         }
     }
-}
-
-int get_icon_draw_width(WM *wm, Client *c)
-{
-    if(wm->cfg->use_image_icon)
-        return TASKBAR_HEIGHT(wm);
-
-    int w=0;
-    get_string_size(wm, wm->font[CLASS_FONT], c->class_name, &w, NULL);
-    return w;
-}
-
-void draw_icon(WM *wm, Client *c)
-{
-    Icon *i=c->icon;
-    String_format f={{0, 0, i->w, i->h}, CENTER_LEFT, false, 0,
-        TEXT_COLOR(wm, CLASS), CLASS_FONT};
-    if(wm->cfg->use_image_icon && c->image)
-        draw_string(wm, i->win, "", &f), draw_icon_image(wm, c);
-    else
-        draw_string(wm, i->win, c->class_name, &f);
 }
 
 static bool have_same_class_icon_client(WM *wm, Client *c)
@@ -487,7 +450,9 @@ void deiconify(WM *wm, Client *c)
     if(c)
     {
         XMapWindow(wm->display, c->frame);
-        del_icon(wm, c);
+        XUnmapWindow(wm->display, c->icon->win);
+        c->area_type=c->icon->area_type;
+        update_icon_area(wm);
         focus_client(wm, wm->cur_desktop, c);
     }
 }
@@ -496,8 +461,12 @@ void del_icon(WM *wm, Client *c)
 {
     XDestroyWindow(wm->display, c->icon->win);
     c->area_type=c->icon->area_type;
-    free(c->icon->title_text);
-    free(c->icon);
+    if(c->icon->image)
+    {
+        imlib_context_set_image(c->icon->image);
+        imlib_free_image();
+    }
+    vfree(c->icon->title_text, c->icon, NULL);
     update_icon_area(wm);
 }
 

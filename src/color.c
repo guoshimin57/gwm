@@ -40,14 +40,12 @@ void alloc_color(WM *wm)
 void update_widget_color(WM *wm)
 {
     update_taskbar_buttons(wm);
-    update_win_bg(wm, wm->taskbar->icon_area, 
-        WIDGET_COLOR(wm, ICON_AREA), None);
+    update_win_bg(wm, wm->taskbar->icon_area, WIDGET_COLOR(wm, TASKBAR), None);
     /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
      * 雖然給icon_area發送了Expose事件，但實際上沒更新背景。也許當窗口沒有內容
      * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
     XClearWindow(wm->display, wm->taskbar->icon_area);
-    update_win_bg(wm, wm->taskbar->status_area,
-        WIDGET_COLOR(wm, STATUS_AREA), None);
+    update_win_bg(wm, wm->taskbar->status_area, WIDGET_COLOR(wm, TASKBAR), None);
     update_win_bg(wm, wm->act_center->win, WIDGET_COLOR(wm, ACT_CENTER), None);
     for(size_t i=0; i<ACT_CENTER_ITEM_N; i++)
         update_win_bg(wm, wm->act_center->items[i],

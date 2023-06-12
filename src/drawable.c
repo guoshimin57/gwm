@@ -159,11 +159,11 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
 
 static bool is_wm_win_type(WM *wm, Window win)
 {
-    Atom type=get_atom_prop(wm, win, wm->ewmh_atom[_NET_WM_WINDOW_TYPE]);
+    Atom type=get_atom_prop(wm, win, wm->ewmh_atom[NET_WM_WINDOW_TYPE]);
     return(type == None
-        || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_NORMAL]
-        || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_UTILITY]
-        || type == wm->ewmh_atom[_NET_WM_WINDOW_TYPE_DIALOG]);
+        || type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_NORMAL]
+        || type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_UTILITY]
+        || type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DIALOG]);
 }
 
 void update_win_bg(WM *wm, Window win, unsigned long color, Pixmap pixmap)
