@@ -56,17 +56,15 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
     }
 
     XftDraw *draw=XftDrawCreate(wm->display, d, wm->visual, wm->colormap);
-    const char *es="︙";
+    XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
     if(f->trunc && sw+2*pad>w)
     {
+        const char *es="︙";
         int ew, en=strlen(es);
         get_string_size(wm, font, es, &ew, NULL);
-        XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
         XClearArea(wm->display, d, x+w-ew, 0, ew, h, False); 
         XftDrawStringUtf8(draw, &TEXT_COLOR(wm, HINT), font, x+w-ew, sy, (const FcChar8 *)es, en);
     }
-    else
-        XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
     XftDrawDestroy(draw);
 }
 

@@ -40,6 +40,8 @@ static FILE *open_index_theme(const char *base_dir, const char *theme);
 static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
 static bool is_accessible(const char *filename);
+static bool have_same_class_icon_client(WM *wm, Client *c);
+
 
 void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
@@ -383,17 +385,15 @@ static bool is_accessible(const char *filename)
     return !stat(filename, &buf);
 }
 
-static bool have_same_class_icon_client(WM *wm, Client *c);
-
 void iconify(WM *wm, Client *c)
 {
-    c->icon->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
+    Icon *i=c->icon;
+
+    update_win_bg(wm, i->win, WIDGET_COLOR(wm, TASKBAR), None);
+    i->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
     c->area_type=ICONIFY_AREA;
-    c->icon->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
-    if(!c->icon->title_text)
-        c->icon->title_text=copy_string(c->title_text);
     update_icon_area(wm);
-    XMapWindow(wm->display, c->icon->win);
+    XMapWindow(wm->display, i->win);
     XUnmapWindow(wm->display, c->frame);
     if(c == DESKTOP(wm)->cur_focus_client)
     {
@@ -405,8 +405,11 @@ void iconify(WM *wm, Client *c)
 void create_icon(WM *wm, Client *c)
 {
     Icon *i=c->icon=malloc_s(sizeof(Icon));
-    i->x=0, i->y=0, i->w=i->h=wm->taskbar->h, i->title_text=NULL;
-    i->win=XCreateSimpleWindow(wm->display, wm->taskbar->icon_area, i->x, i->y,
+    i->x=i->y=0, i->w=i->h=wm->taskbar->h;
+    i->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
+    if(!i->title_text)
+        i->title_text=copy_string(c->title_text);
+    i->win=XCreateSimpleWindow(wm->display, wm->taskbar->icon_area, 0, 0,
         i->w, i->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
     set_icon_image(wm, c);
@@ -459,15 +462,18 @@ void deiconify(WM *wm, Client *c)
 
 void del_icon(WM *wm, Client *c)
 {
-    XDestroyWindow(wm->display, c->icon->win);
-    c->area_type=c->icon->area_type;
     if(c->icon->image)
     {
         imlib_context_set_image(c->icon->image);
         imlib_free_image();
     }
-    vfree(c->icon->title_text, c->icon, NULL);
-    update_icon_area(wm);
+    if(c->area_type == ICONIFY_AREA)
+    {
+        XDestroyWindow(wm->display, c->icon->win);
+        c->area_type=c->icon->area_type;
+        vfree(c->icon->title_text, c->icon, NULL);
+        update_icon_area(wm);
+    }
 }
 
 void iconify_all_clients(WM *wm)

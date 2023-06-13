@@ -132,9 +132,8 @@ void update_client_icon_win(WM *wm, Window win)
         if(i->show_text)
         {
             String_format f={{wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h},
-                CENTER_LEFT, true, true, false, 0, c==CUR_FOC_CLI(wm) ?
-                TEXT_COLOR(wm, CURRENT_TITLEBAR)
-                : TEXT_COLOR(wm, NORMAL_TITLEBAR), TITLEBAR_FONT};
+                CENTER, true, false, false, 0, 
+                TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
             draw_string(wm, i->win, i->title_text, &f);
         }
     }

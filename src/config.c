@@ -290,7 +290,7 @@ static void config_widget_size(WM *wm)
     c->win_gap=c->border_width*2;
     c->status_area_width_max=c->font_size[TASKBAR_FONT]*30;
     c->taskbar_button_width=get_font_height_by_pad(wm, TASKBAR_FONT)/0.618+0.5;
-    c->icon_win_width_max=c->font_size[TASKBAR_FONT]*10;
+    c->icon_win_width_max=c->font_size[TASKBAR_FONT]*15;
     c->icon_gap=c->font_size[TASKBAR_FONT]/2.0+0.5;
     c->act_center_item_width=c->font_size[ACT_CENTER_FONT]*8;
     c->run_cmd_entry_width=c->font_size[ACT_CENTER_FONT]*16;
@@ -327,10 +327,10 @@ static void config_cursor_shape(WM *wm)
  */
 static void config_widget_color_for_dark(WM *wm)
 {
-    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_BORDER_COLOR,         "grey31");
-    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_BORDER_COLOR,        "grey11");
-    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLEBAR_COLOR,       "grey31");
-    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLEBAR_COLOR,      "grey11");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_BORDER_COLOR,         "grey11");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_BORDER_COLOR,        "grey31");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLEBAR_COLOR,       "grey11");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLEBAR_COLOR,      "grey31");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTERED_NORMAL_BUTTON_COLOR, "DarkOrange");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_BUTTON_COLOR,         "grey21");
@@ -338,7 +338,7 @@ static void config_widget_color_for_dark(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ACT_CENTER_COLOR,            "grey31");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, TASKBAR_COLOR,               "grey21");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTRY_COLOR,                 "white");
-    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, HINT_WIN_COLOR,              "grey91");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, HINT_WIN_COLOR,              "grey81");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ROOT_WIN_COLOR,              "black");
 }
 
@@ -395,13 +395,13 @@ static void config_widget_color(WM *wm)
  */
 static void config_text_color_for_dark(WM *wm)
 {
-    SET_TEXT_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLEBAR_TEXT_COLOR,  "grey61");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, NORMAL_TITLEBAR_TEXT_COLOR,  "grey71");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLEBAR_TEXT_COLOR, "LightGreen");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, TASKBAR_TEXT_COLOR,          "white");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, CLASS_TEXT_COLOR,            "RosyBrown");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, ACT_CENTER_ITEM_TEXT_COLOR,  "white");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, ENTRY_TEXT_COLOR,            "black");
-    SET_TEXT_COLOR_NAME(wm, DARK_THEME, HINT_TEXT_COLOR,             "grey41");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, HINT_TEXT_COLOR,             "SkyBlue4");
 }
 
 /* 功能：爲默認顏色主題設置文字顏色。
