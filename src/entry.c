@@ -42,13 +42,12 @@ void show_entry(WM *wm, Entry *e)
 
 void update_entry_text(WM *wm, Entry *e)
 {
-    int x=get_entry_cursor_x(wm, e), pad=get_font_pad(wm, ENTRY_FONT);
+    int x=get_entry_cursor_x(wm, e);
     bool empty = e->text[0]==L'\0';
     XftColor color = empty ? TEXT_COLOR(wm, HINT) : TEXT_COLOR(wm, ENTRY);
-    String_format f={{pad, 0, e->w-2*pad, e->h}, CENTER_LEFT, false, 0, color,
-        ENTRY_FONT};
+    String_format f={{0, 0, e->w, e->h}, CENTER_LEFT, false, true, false, 0,
+        color, ENTRY_FONT};
 
-    XClearArea(wm->display, e->win, 0, 0, e->w, e->h, False); 
     if(empty)
         draw_string(wm, e->win, e->hint, &f);
     else
@@ -78,10 +77,9 @@ static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
     if(paths && pattern && *pattern)
     {
         int bw=wm->cfg->border_width, w=wm->cfg->run_cmd_entry_width,
-            h=wm->cfg->font_size[HINT_FONT]*(1+wm->cfg->font_pad_ratio*2),
-            x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+bw,
-            i, n, max=(wm->workarea.h-y)/h;
-        String_format fmt={{0, 0, w, h}, CENTER_LEFT, false, 0,
+            h=ENTRY_HEIGHT(wm), x=wm->run_cmd->x+bw,
+            y=wm->run_cmd->y+wm->run_cmd->h+bw, i, n, max=(wm->workarea.h-y)/h;
+        String_format fmt={{0, 0, w, h}, CENTER_LEFT, false, true, false, 0,
             TEXT_COLOR(wm, HINT), HINT_FONT};
         const char *reg=copy_strings(pattern, "*", NULL);
 

@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.2.3\n"
+"Project-Id-Version: gwm 2.2.4\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-06-12 23:52+0800\n"
+"POT-Creation-Date: 2023-06-13 16:05+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -188,7 +188,7 @@ msgstr "Open action center"
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
-#: src/font.c:27
+#: src/font.c:29
 msgid "錯誤：不能加載必要的字體。"
 msgstr "Error: Unable to load necessary fonts."
 

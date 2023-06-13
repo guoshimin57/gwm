@@ -87,7 +87,7 @@ void update_taskbar_button(WM *wm, Widget_type type, bool change_bg)
 {
     size_t i=TASKBAR_BUTTON_INDEX(type);
     String_format f={{0, 0, wm->cfg->taskbar_button_width, wm->taskbar->h},
-        CENTER, change_bg, TASKBAR_BUTTON_COLOR(wm, type),
+        CENTER, true, false, change_bg, TASKBAR_BUTTON_COLOR(wm, type),
         TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
     draw_string(wm, wm->taskbar->buttons[i], wm->cfg->taskbar_button_text[i], &f);
 }
@@ -95,8 +95,8 @@ void update_taskbar_button(WM *wm, Widget_type type, bool change_bg)
 void update_status_area_text(WM *wm)
 {
     Taskbar *b=wm->taskbar;
-    String_format f={{0, 0, b->status_area_w, b->h}, CENTER_RIGHT, false, 0,
-        TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
+    String_format f={{0, 0, b->status_area_w, b->h}, CENTER_RIGHT, true,
+        false, false, 0, TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
     draw_string(wm, b->status_area, b->status_text, &f);
 }
 
@@ -106,7 +106,7 @@ void hint_leave_taskbar_button(WM *wm, Widget_type type)
     update_win_bg(wm, win, TASKBAR_BUTTON_COLOR(wm, type), None);
 }
 
-void update_status_area(WM *wm)
+void update_icon_status_area(WM *wm)
 {
     int w, bw=wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N;
     Taskbar *b=wm->taskbar;
@@ -131,8 +131,9 @@ void update_client_icon_win(WM *wm, Window win)
         draw_client_icon(wm, c);
         if(i->show_text)
         {
-            String_format f={{wm->taskbar->h, 0, i->w, i->h}, CENTER_LEFT,
-                false, 0, c==CUR_FOC_CLI(wm) ? TEXT_COLOR(wm, CURRENT_TITLEBAR)
+            String_format f={{wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h},
+                CENTER_LEFT, true, true, false, 0, c==CUR_FOC_CLI(wm) ?
+                TEXT_COLOR(wm, CURRENT_TITLEBAR)
                 : TEXT_COLOR(wm, NORMAL_TITLEBAR), TITLEBAR_FONT};
             draw_string(wm, i->win, i->title_text, &f);
         }
@@ -147,7 +148,7 @@ static void draw_client_icon(WM *wm, Client *c)
         draw_image(wm, i->image, i->win, 0, 0, size, size);
     else
     {
-        String_format f={{0, 0, size, size}, CENTER_LEFT, false, 0,
+        String_format f={{0, 0, size, size}, CENTER, true, false, false, 0,
             TEXT_COLOR(wm, CLASS), CLASS_FONT};
         draw_string(wm, i->win, c->class_name, &f);
     }
@@ -157,11 +158,8 @@ void update_act_center_button_text(WM *wm, size_t index)
 {
     Window win=wm->act_center->items[index];
     int h=get_font_height_by_pad(wm, ACT_CENTER_FONT),
-        pad=get_font_pad(wm, ACT_CENTER_FONT),
-        w=wm->cfg->act_center_item_width-pad;
-    String_format f={{pad, 0, w, h}, CENTER_LEFT, false, 0,
+        w=wm->cfg->act_center_item_width;
+    String_format f={{0, 0, w, h}, CENTER_LEFT, true, true, false, 0,
         TEXT_COLOR(wm, ACT_CENTER_ITEM), ACT_CENTER_FONT};
-
-    XClearArea(wm->display, win, 0, 0, pad, h, False); 
     draw_string(wm, win, wm->cfg->act_center_item_text[index], &f);
 }

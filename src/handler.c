@@ -324,29 +324,29 @@ static void update_title_logo(WM *wm, Client *c)
         draw_image(wm, i->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
     else
     {
-        String_format f={{0, 0, c->titlebar_h, c->titlebar_h}, CENTER_LEFT, false,
-            0, TEXT_COLOR(wm, CLASS), CLASS_FONT};
+        String_format f={{0, 0, c->titlebar_h, c->titlebar_h}, CENTER, true,
+            false, false, 0, TEXT_COLOR(wm, CLASS), CLASS_FONT};
         draw_string(wm, c->logo, c->class_name, &f);
     }
 }
 
 static void update_title_area_text(WM *wm, Client *c)
 {
-    if(c->titlebar_h)
-    {
-        Rect r=get_title_area_rect(wm, c);
-        String_format f={{0, 0, r.w, r.h}, CENTER_LEFT,
-            false, 0, CTEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
-        draw_string(wm, c->title_area, c->title_text, &f);
-    }
+    if(c->titlebar_h <= 0)
+        return;
+
+    Rect r=get_title_area_rect(wm, c);
+    String_format f={{0, 0, r.w, r.h}, CENTER, true, true, false, 0,
+        CTEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
+    draw_string(wm, c->title_area, c->title_text, &f);
 }
 
 static void update_title_button_text(WM *wm, Client *c, size_t index)
 {
     if(c->titlebar_h)
     {
-        String_format f={{0, 0, wm->cfg->title_button_width,
-            get_font_height_by_pad(wm, TITLEBAR_FONT)}, CENTER, false, 0,
+        int w=wm->cfg->title_button_width, h=TITLEBAR_HEIGHT(wm);
+        String_format f={{0, 0, w, h}, CENTER, true, false, false, 0,
             CTEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
         draw_string(wm, c->buttons[index], wm->cfg->title_button_text[index], &f);
     }
@@ -501,7 +501,7 @@ static void handle_wm_name_notify(WM *wm, Window win)
         {
             free(wm->taskbar->status_text);
             wm->taskbar->status_text=s;
-            update_status_area(wm);
+            update_icon_status_area(wm);
         }
         else
         {

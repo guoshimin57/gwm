@@ -16,7 +16,7 @@ struct string_format_tag // 字符串格式
 {
     Rect r; // 坐標和尺寸信息
     Align_type align; // 對齊方式
-    bool change_bg; // 是否改變背景色的標志
+    bool trunc, pad, change_bg; // 當字符串寬度大於r.w時是否截斷顯示的標志，兩端是否留白, 是否改變背景色的標志
     unsigned long bg; // r區域的背景色
     XftColor fg; // 字符串的前景色
     Font_type font_type; // 字體類型

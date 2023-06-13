@@ -29,6 +29,6 @@ void hint_leave_taskbar_button(WM *wm, Widget_type type);
 void update_client_icon_win(WM *wm, Window win);
 void update_act_center_button_text(WM *wm, size_t index);
 void update_status_area_text(WM *wm);
-void update_status_area(WM *wm);
+void update_icon_status_area(WM *wm);
 
 #endif

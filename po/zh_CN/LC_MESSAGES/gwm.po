@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.2.3\n"
+"Project-Id-Version: gwm 2.2.4\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-06-12 23:52+0800\n"
+"POT-Creation-Date: 2023-06-13 16:05+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -188,7 +188,7 @@ msgstr "打开操作中心"
 msgid "請輸入命令，然後按回車執行"
 msgstr "请输入命令，然后按回车执行"
 
-#: src/font.c:27
+#: src/font.c:29
 #, fuzzy
 msgid "錯誤：不能加載必要的字體。"
 msgstr "错误：不能加载必要的字体。"

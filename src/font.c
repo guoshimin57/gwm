@@ -11,6 +11,8 @@
 
 #include "gwm.h"
 
+static int get_str_rect_by_fmt(WM *wm, const String_format *f, const char *str, int *x, int *y, int *w, int *h);
+
 void load_font(WM *wm)
 {
     for(size_t i=0; i<FONT_N; i++)
@@ -38,38 +40,62 @@ void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f)
 
 void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
 {
-    if(str)
-    {
-        XftFont *font=wm->font[f->font_type];
-        int w, h, lw, lh, n, x, y, cx, cy, sx, sy, left, right, top, bottom;
+    if(!str)
+        return;
 
-        get_string_size(wm, font, str, &lw, &lh);
-        n=strlen(str);
-        x=f->r.x, y=f->r.y, w=f->r.w, h=f->r.h;
-        cx=x+w/2-lw/2, cy=y+h/2-lh/2+font->ascent;
-        left=x, right=x+w-lw, top=y+lh, bottom=y+h;
-        switch(f->align)
-        {
-            case TOP_LEFT: sx=left, sy=top; break;
-            case TOP_CENTER: sx=cx, sy=top; break;
-            case TOP_RIGHT: sx=right, sy=top; break;
-            case CENTER_LEFT: sx=left, sy=cy; break;
-            case CENTER: sx=cx, sy=cy; break;
-            case CENTER_RIGHT: sx=right, sy=cy; break;
-            case BOTTOM_LEFT: sx=left, sy=bottom; break;
-            case BOTTOM_CENTER: sx=cx, sy=bottom; break;
-            case BOTTOM_RIGHT: sx=right, sy=bottom; break;
-        }
-        XClearArea(wm->display, d, x, y, w, h, False); 
-        if(f->change_bg)
-        {
-            XSetForeground(wm->display, wm->gc, f->bg);
-            XFillRectangle(wm->display, d, wm->gc, x, y, w, h);
-        }
-        XftDraw *draw=XftDrawCreate(wm->display, d, wm->visual, wm->colormap);
-        XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
-        XftDrawDestroy(draw);
+    XftFont *font=wm->font[f->font_type];
+    int x=f->r.x, y=f->r.y, w=f->r.w, h=f->r.h, sx, sy, sw, sh, pad, n;
+
+    pad=get_str_rect_by_fmt(wm, f, str, &sx, &sy, &sw, &sh);
+    n=strlen(str);
+    XClearArea(wm->display, d, x, y, w, h, False); 
+    if(f->change_bg)
+    {
+        XSetForeground(wm->display, wm->gc, f->bg);
+        XFillRectangle(wm->display, d, wm->gc, x, y, w, h);
     }
+
+    XftDraw *draw=XftDrawCreate(wm->display, d, wm->visual, wm->colormap);
+    const char *es="︙";
+    if(f->trunc && sw+2*pad>w)
+    {
+        int ew, en=strlen(es);
+        get_string_size(wm, font, es, &ew, NULL);
+        XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
+        XClearArea(wm->display, d, x+w-ew, 0, ew, h, False); 
+        XftDrawStringUtf8(draw, &TEXT_COLOR(wm, HINT), font, x+w-ew, sy, (const FcChar8 *)es, en);
+    }
+    else
+        XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
+    XftDrawDestroy(draw);
+}
+
+static int get_str_rect_by_fmt(WM *wm, const String_format *f, const char *str, int *x, int *y, int *w, int *h)
+{
+    XftFont *font=wm->font[f->font_type];
+    int cx, cy, pad, left, right, top, bottom;
+
+    pad = f->pad ? get_font_pad(wm, f->font_type) : 0;
+    get_string_size(wm, font, str, w, h);
+    cx=f->r.x+f->r.w/2-*w/2, cy=f->r.y+f->r.h/2-*h/2+font->ascent;
+    left=f->r.x+pad, right=f->r.x+f->r.w-*w-pad;
+    top=f->r.y+*h, bottom=f->r.y+f->r.h;
+
+    switch(f->align)
+    {
+        case TOP_LEFT: *x=left, *y=top; break;
+        case TOP_CENTER: *x=cx, *y=top; break;
+        case TOP_RIGHT: *x=right, *y=top; break;
+        case CENTER_LEFT: *x=left, *y=cy; break;
+        case CENTER: *x=cx, *y=cy; break;
+        case CENTER_RIGHT: *x=right, *y=cy; break;
+        case BOTTOM_LEFT: *x=left, *y=bottom; break;
+        case BOTTOM_CENTER: *x=cx, *y=bottom; break;
+        case BOTTOM_RIGHT: *x=right, *y=bottom; break;
+    }
+    if(f->trunc && *w+2*pad>f->r.w)
+        *x=left;
+    return pad;
 }
 
 void get_string_size(WM *wm, XftFont *font, const char *str, int *w, int *h)
