@@ -106,14 +106,14 @@ void set_input_focus(WM *wm, XWMHints *hint, Window win)
 
 void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
 {
-    if(c && c!=wm->clients)
-    {
-        Desktop *d=wm->desktop[desktop_n-1];
-        if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
-            update_win_bg(wm, c->icon->win, c==d->cur_focus_client ?
-                WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON) :
-                WIDGET_COLOR(wm, TASKBAR), None);
-        else
-            update_frame(wm, desktop_n, c);
-    }
+    if(!c || c==wm->clients)
+        return;
+
+    Desktop *d=wm->desktop[desktop_n-1];
+    if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
+        update_win_bg(wm, c->icon->win, c==d->cur_focus_client ?
+            WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON) :
+            WIDGET_COLOR(wm, TASKBAR), None);
+    else
+        update_frame(wm, desktop_n, c);
 }

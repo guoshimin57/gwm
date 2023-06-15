@@ -79,6 +79,7 @@ static void fix_limit_size_hint(XSizeHints *h)
         minh_incs=base_n_ceil(h->min_height-h->base_height, h->height_inc),
         maxw_incs=base_n_floor(h->max_width-h->base_width, h->width_inc),
         maxh_incs=base_n_floor(h->max_height-h->base_height, h->height_inc);
+
     h->min_width=h->base_width+minw_incs;
     h->min_height=h->base_height+minh_incs;
     h->max_width=h->base_width+maxw_incs;
@@ -89,6 +90,7 @@ void fix_win_size_by_hint(Client *c)
 {
     XSizeHints *p=&c->size_hint;
     long col=get_client_col(c), row=get_client_row(c);
+
     c->w = (p->flags & USSize) && p->width ?
         p->width : p->base_width+col*p->width_inc;
     c->h = (p->flags & USSize) && p->height ?
@@ -180,6 +182,7 @@ static void set_net_client_list(WM *wm)
     Window root=wm->root_win;
     Atom a = wm->ewmh_atom[NET_CLIENT_LIST];
     int i=0, n=get_all_clients_n(wm);
+
     if(n == 0)
         XDeleteProperty(wm->display, root, a);
     else
@@ -203,16 +206,17 @@ static void set_net_client_list_stacking(WM *wm)
     Atom a = wm->ewmh_atom[NET_CLIENT_LIST_STACKING];
     unsigned int n=0, na=0;
     Window root, parent, *child=NULL;
-    if(XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &na))
-    {
-        Client *c=NULL;
-        for(unsigned int i=0; i<na; i++)
-            if((c=win_to_client(wm, child[i])) && is_on_cur_desktop(wm, c))
-                child[n++]=child[i];
-        XChangeProperty(wm->display, wm->root_win, a, XA_WINDOW, 32,
-            PropModeReplace, (unsigned char *)child, n);
-        XFree(child);
-    }
+
+    if(!XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &na))
+        return;
+
+    Client *c=NULL;
+    for(unsigned int i=0; i<na; i++)
+        if((c=win_to_client(wm, child[i])) && is_on_cur_desktop(wm, c))
+            child[n++]=child[i];
+    XChangeProperty(wm->display, wm->root_win, a, XA_WINDOW, 32,
+        PropModeReplace, (unsigned char *)child, n);
+    XFree(child);
 }
 
 static void set_net_number_of_desktops(WM *wm)
@@ -306,6 +310,7 @@ void set_urgency(WM *wm, Client *c, bool urg)
     XWMHints *h=XGetWMHints(wm->display, c->win);
     if(!h)
         return;
+
     h->flags = urg ? (h->flags | XUrgencyHint) : (h->flags & ~XUrgencyHint);
     XSetWMHints(wm->display, c->win, h);
     XFree(h);

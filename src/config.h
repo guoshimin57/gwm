@@ -39,7 +39,7 @@ struct config_tag
     int taskbar_button_width; // 任務欄按鈕的寬度
     int icon_win_width_max; // 縮微窗口的最大寬度
     int icon_gap; // 縮微化窗口的間隔
-    int act_center_item_width; // 操作中心按鈕的寬度
+    int menu_item_width; // 菜單按鈕的最大寬度
     int run_cmd_entry_width; // 運行命令的輸入構件的寬度
     int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
 
@@ -61,7 +61,8 @@ struct config_tag
     const char *text_color_name[COLOR_THEME_N][TEXT_COLOR_N]; // 構件顏色名
     const char *title_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
     const char *taskbar_button_text[TASKBAR_BUTTON_N]; // 任務欄按鈕的標籤
-    const char *act_center_item_text[ACT_CENTER_ITEM_N]; // 操作中心按鈕的標籤
+    const char *act_center_item_text[ACT_CENTER_ITEM_N]; // 操作中心菜單項的標籤
+    const char *client_menu_item_text[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的標籤
     const char *run_cmd_entry_hint; // 運行輸入框的提示文字
     const Keybind *keybind; // 按鍵功能綁定。有的鍵盤同時按多個鍵會衝突，故組合鍵宜盡量少
     const Buttonbind *buttonbind; // 定位器按鈕功能綁定。

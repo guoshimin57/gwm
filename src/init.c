@@ -17,6 +17,7 @@ static void set_atoms(WM *wm);
 static void create_cursors(WM *wm);
 static void create_run_cmd_entry(WM *wm);
 static void create_hint_win(WM *wm);
+static void create_client_menu(WM *wm);
 static void create_clients(WM *wm);
 static void init_imlib(WM *wm);
 static void init_wallpaper_files(WM *wm);
@@ -57,6 +58,7 @@ void init_wm(WM *wm)
     set_workarea(wm);
     create_run_cmd_entry(wm);
     create_hint_win(wm);
+    create_client_menu(wm);
     create_clients(wm);
     grab_keys(wm);
     exec_autostart(wm);
@@ -65,12 +67,13 @@ void init_wm(WM *wm)
 static void set_workarea(WM *wm)
 {
     long sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar->h;
+
     wm->workarea=(Rect){0, 0, sw, sh};
     if(wm->cfg->show_taskbar)
     {
-        wm->workarea.h-=th;
+        wm->workarea.h-=th+wm->cfg->win_gap;
         if(wm->cfg->taskbar_on_top)
-            wm->workarea.y=th;
+            wm->workarea.y=th+wm->cfg->win_gap;
     }
 }
 
@@ -127,6 +130,15 @@ static void create_hint_win(WM *wm)
         1, 0, 0, WIDGET_COLOR(wm, HINT_WIN));
     set_override_redirect(wm, wm->hint_win);
     XSelectInput(wm->display, wm->hint_win, ExposureMask);
+}
+
+static void create_client_menu(WM *wm)
+{
+    int n=CLIENT_MENU_ITEM_N, col=1, w=wm->cfg->menu_item_width,
+        pad=get_font_pad(wm, MENU_FONT), h=MENU_ITEM_HEIGHT(wm);
+    unsigned long color=WIDGET_COLOR(wm, MENU);
+
+    wm->client_menu=create_menu(wm, n, col, w, h, pad, color);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */

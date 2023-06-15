@@ -46,10 +46,10 @@ void update_widget_color(WM *wm)
      * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
     XClearWindow(wm->display, wm->taskbar->icon_area);
     update_win_bg(wm, wm->taskbar->status_area, WIDGET_COLOR(wm, TASKBAR), None);
-    update_win_bg(wm, wm->act_center->win, WIDGET_COLOR(wm, ACT_CENTER), None);
+    update_win_bg(wm, wm->act_center->win, WIDGET_COLOR(wm, MENU), None);
     for(size_t i=0; i<ACT_CENTER_ITEM_N; i++)
         update_win_bg(wm, wm->act_center->items[i],
-            WIDGET_COLOR(wm, ACT_CENTER) ,None);
+            WIDGET_COLOR(wm, MENU) ,None);
     update_win_bg(wm, wm->hint_win, WIDGET_COLOR(wm, HINT_WIN), None);
     update_win_bg(wm, wm->run_cmd->win, WIDGET_COLOR(wm, ENTRY), None);
     XSetWindowBorder(wm->display, wm->run_cmd->win,

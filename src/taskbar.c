@@ -39,6 +39,7 @@ static void create_taskbar_buttons(WM *wm)
 {
     Taskbar *b=wm->taskbar;
     int w=wm->cfg->taskbar_button_width, h=b->h;
+
     for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
     {
         b->buttons[i]=XCreateSimpleWindow(wm->display, b->win, w*i, 0, w, h,
@@ -76,9 +77,9 @@ static void create_status_area(WM *wm)
 static void create_act_center(WM *wm)
 {
     int n=ACT_CENTER_ITEM_N, col=wm->cfg->act_center_col,
-        w=wm->cfg->act_center_item_width, pad=get_font_pad(wm, ACT_CENTER_FONT),
-        h=get_font_height_by_pad(wm, ACT_CENTER_FONT);
-    unsigned long color=WIDGET_COLOR(wm, ACT_CENTER);
+        w=wm->cfg->menu_item_width, pad=get_font_pad(wm, MENU_FONT),
+        h=MENU_ITEM_HEIGHT(wm);
+    unsigned long color=WIDGET_COLOR(wm, MENU);
 
     wm->act_center=create_menu(wm, n, col, w, h, pad, color);
 }
@@ -110,6 +111,7 @@ void update_icon_status_area(WM *wm)
 {
     int w, bw=wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N;
     Taskbar *b=wm->taskbar;
+
     get_string_size(wm, wm->font[TASKBAR_FONT], b->status_text, &w, NULL);
     if(w > wm->cfg->status_area_width_max)
         w=wm->cfg->status_area_width_max;
@@ -125,17 +127,17 @@ void update_icon_status_area(WM *wm)
 void update_client_icon_win(WM *wm, Window win)
 {
     Client *c=win_to_iconic_state_client(wm, win);
-    if(c)
+    if(!c)
+        return;
+
+    Icon *i=c->icon;
+    draw_client_icon(wm, c);
+    if(i->show_text)
     {
-        Icon *i=c->icon;
-        draw_client_icon(wm, c);
-        if(i->show_text)
-        {
-            String_format f={{wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h},
-                CENTER, true, false, false, 0, 
-                TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
-            draw_string(wm, i->win, i->title_text, &f);
-        }
+        String_format f={{wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h},
+            CENTER, true, false, false, 0, 
+            TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
+        draw_string(wm, i->win, i->title_text, &f);
     }
 }
 
@@ -151,14 +153,4 @@ static void draw_client_icon(WM *wm, Client *c)
             TEXT_COLOR(wm, CLASS), CLASS_FONT};
         draw_string(wm, i->win, c->class_name, &f);
     }
-}
-
-void update_act_center_button_text(WM *wm, size_t index)
-{
-    Window win=wm->act_center->items[index];
-    int h=get_font_height_by_pad(wm, ACT_CENTER_FONT),
-        w=wm->cfg->act_center_item_width;
-    String_format f={{0, 0, w, h}, CENTER_LEFT, true, true, false, 0,
-        TEXT_COLOR(wm, ACT_CENTER_ITEM), ACT_CENTER_FONT};
-    draw_string(wm, win, wm->cfg->act_center_item_text[index], &f);
 }

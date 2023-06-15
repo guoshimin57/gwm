@@ -73,6 +73,9 @@ Widget_type get_widget_type(WM *wm, Window win)
     for(type=ACT_CENTER_ITEM_BEGIN; type<=ACT_CENTER_ITEM_END; type++)
         if(win == wm->act_center->items[ACT_CENTER_ITEM_INDEX(type)])
             return type;
+    for(type=CLIENT_MENU_ITEM_BEGIN; type<=CLIENT_MENU_ITEM_END; type++)
+        if(win == wm->client_menu->items[CLIENT_MENU_ITEM_INDEX(type)])
+            return type;
     if((c=win_to_client(wm, win)))
     {
         if(win == c->win)
@@ -168,6 +171,7 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
     char *result=NULL, *p=NULL;
     size_t len=strlen(s);
     va_list ap;
+
     va_start(ap, s);
     while((p=va_arg(ap, char *)))
         len+=strlen(p);
@@ -196,8 +200,8 @@ File *get_files_in_paths(const char *paths, const char *regex, Order order, bool
     int sum=0;
     char *p=NULL, *ps=dedup_paths(paths);
     File *head=malloc_s(sizeof(File));
-    head->next=NULL, head->name=NULL;
 
+    head->next=NULL, head->name=NULL;
     for(p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
         sum+=get_files_in_path(p, regex, head, order, is_fullname);
     free(ps);
@@ -211,9 +215,11 @@ static char *dedup_paths(const char *paths)
     ssize_t readlink(const char *restrict, char *restrict, size_t);
     size_t n=1, i=0, j=0, len=strlen(paths);
     char *p=NULL, *ps=copy_string(paths);
+
     for(p=ps; *p; p++)
         if(*p == ':')
             n++;
+
     char list[n][len+1], buf[len+1], *result=malloc_s(len+1);
     for(*result='\0', p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
     {
@@ -234,6 +240,7 @@ static size_t get_files_in_path(const char *path, const char *regex, File *head,
     size_t n=0;
     char *fn;
     DIR *dir=opendir(path);
+
     for(struct dirent *d=NULL; dir && (d=readdir(dir));)
         if(strcmp(".", fn=d->d_name) && strcmp("..", fn) && regcmp(fn, regex))
             for(File *f=head; f; f=f->next)
@@ -315,6 +322,7 @@ void update_hint_win_for_info(WM *wm, Window hover, const char *info)
 {
     int x, y, rx, ry, pad=get_font_pad(wm, HINT_FONT),
         w=0, h=get_font_height_by_pad(wm, HINT_FONT);
+
     get_string_size(wm, wm->font[HINT_FONT], info, &w, NULL);
     w+=pad*2;
     if(hover)

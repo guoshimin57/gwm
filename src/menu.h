@@ -12,6 +12,8 @@
 #ifndef MENU_H
 #define MENU_H
 
+#define MENU_ITEM_HEIGHT(wm) get_font_height_by_pad(wm, MENU_FONT)
+
 struct menu_tag // 一級多行多列菜單 
 {
     Window win, *items; // 菜單窗口和菜單項
@@ -23,5 +25,6 @@ struct menu_tag // 一級多行多列菜單
 Menu *create_menu(WM *wm, int n, int col, int w, int h, int pad, unsigned long bg);
 void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind);
 void set_menu_pos_for_click(WM *wm, Window win, int x, int y, Menu *menu);
+void update_menu_item_text(WM *wm, Window win, const char *text);
 
 #endif

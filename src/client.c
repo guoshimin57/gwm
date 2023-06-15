@@ -31,9 +31,7 @@ void add_client(WM *wm, Window win)
     memset(c, 0, sizeof(Client));
     c->win=win;
     c->owner=get_transient_for(wm, win);
-    c->title_text=get_text_prop(wm, win, XA_WM_NAME);
-    if(!c->title_text)
-        c->title_text=copy_string("?");
+    c->title_text=get_title_text(wm, win, "");
     c->wm_hint=XGetWMHints(wm->display, win);
     update_size_hint(wm, c);
     apply_rules(wm, c);
@@ -223,7 +221,7 @@ void create_titlebar(WM *wm, Client *c)
     XSelectInput(wm->display, c->title_area, TITLE_AREA_EVENT_MASK);
     c->logo=XCreateSimpleWindow(wm->display, c->frame, 0, 0,
         c->titlebar_h, c->titlebar_h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
-    XSelectInput(wm->display, c->logo, ExposureMask);
+    XSelectInput(wm->display, c->logo, BUTTON_EVENT_MASK);
 }
 
 static Rect get_frame_rect(Client *c)
@@ -288,28 +286,28 @@ Client *win_to_client(WM *wm, Window win)
 
 void del_client(WM *wm, Client *c, bool is_for_quit)
 {
-    if(c)
-    {
-        if(is_win_exist(wm, c->win, c->frame))
-            XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
-        XDestroyWindow(wm->display, c->frame);
-        del_icon(wm, c);
-        del_client_node(c);
-        fix_area_type(wm);
-        if(!is_for_quit)
-            for(size_t i=1; i<=DESKTOP_N; i++)
-                if(is_on_desktop_n(i, c))
-                    focus_client(wm, i, NULL);
+    if(!c)
+        return;
 
-        XFree(c->class_hint.res_class);
-        XFree(c->class_hint.res_name);
-        XFree(c->wm_hint);
-        vfree(c->title_text, c, NULL);
+    if(is_win_exist(wm, c->win, c->frame))
+        XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
+    XDestroyWindow(wm->display, c->frame);
+    del_icon(wm, c);
+    del_client_node(c);
+    fix_area_type(wm);
+    if(!is_for_quit)
+        for(size_t i=1; i<=DESKTOP_N; i++)
+            if(is_on_desktop_n(i, c))
+                focus_client(wm, i, NULL);
 
-        if(!is_for_quit)
-            update_layout(wm);
-        set_all_net_client_list(wm);
-    }
+    XFree(c->class_hint.res_class);
+    XFree(c->class_hint.res_name);
+    XFree(c->wm_hint);
+    vfree(c->title_text, c, NULL);
+
+    if(!is_for_quit)
+        update_layout(wm);
+    set_all_net_client_list(wm);
 }
 
 void del_client_node(Client *c)
@@ -344,11 +342,8 @@ void update_frame(WM *wm, unsigned int desktop_n, Client *c)
             NC_WIDGET_COLOR(wm, cur, BORDER));
     if(c->titlebar_h)
     {
-        update_win_bg(wm, c->logo,
-            NC_WIDGET_COLOR(wm, cur, TITLEBAR), None);
-        for(size_t i=0; i<TITLE_BUTTON_N; i++)
-        update_win_bg(wm, c->title_area,
-            NC_WIDGET_COLOR(wm, cur, TITLEBAR), None);
+        update_win_bg(wm, c->logo, NC_WIDGET_COLOR(wm, cur, TITLEBAR), 0);
+        update_win_bg(wm, c->title_area, NC_WIDGET_COLOR(wm, cur, TITLEBAR), 0);
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             update_win_bg(wm, c->buttons[i],
                 NC_WIDGET_COLOR(wm, cur, TITLEBAR), None);
@@ -442,34 +437,34 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type)
 
 void swap_clients(WM *wm, Client *a, Client *b)
 {
-    if(a != b)
-    {
-        Client *aprev=a->prev, *bprev=b->prev;
-        Area_type atype=a->area_type, btype=b->area_type;
+    if(a == b)
+        return;
 
-        del_client_node(a);
-        add_client_node(compare_client_order(wm, a, b)==-1 ? b : bprev, a);
-        if(aprev!=b && bprev!=a) //不相邻
-            del_client_node(b), add_client_node(aprev, b);
+    Client *aprev=a->prev, *bprev=b->prev;
+    Area_type atype=a->area_type, btype=b->area_type;
 
-        a->area_type=btype;
-        if(atype!=ICONIFY_AREA && a->area_type==ICONIFY_AREA)
-            iconify(wm, a);
-        else if(atype==ICONIFY_AREA && a->area_type!=ICONIFY_AREA)
-            a->icon->area_type=btype, deiconify(wm, a);
+    del_client_node(a);
+    add_client_node(compare_client_order(wm, a, b)==-1 ? b : bprev, a);
+    if(aprev!=b && bprev!=a) //不相邻
+        del_client_node(b), add_client_node(aprev, b);
 
-        b->area_type=atype;
-        if(btype!=ICONIFY_AREA && b->area_type==ICONIFY_AREA)
-            iconify(wm, b);
-        else if(btype==ICONIFY_AREA && b->area_type!=ICONIFY_AREA)
-            b->icon->area_type=atype, deiconify(wm, b);
+    a->area_type=btype;
+    if(atype!=ICONIFY_AREA && a->area_type==ICONIFY_AREA)
+        iconify(wm, a);
+    else if(atype==ICONIFY_AREA && a->area_type!=ICONIFY_AREA)
+        a->icon->area_type=btype, deiconify(wm, a);
 
-        if(atype==ICONIFY_AREA && btype==ICONIFY_AREA)
-            update_icon_area(wm);
+    b->area_type=atype;
+    if(btype!=ICONIFY_AREA && b->area_type==ICONIFY_AREA)
+        iconify(wm, b);
+    else if(btype==ICONIFY_AREA && b->area_type!=ICONIFY_AREA)
+        b->icon->area_type=atype, deiconify(wm, b);
 
-        raise_client(wm, wm->cur_desktop);
-        update_layout(wm);
-    }
+    if(atype==ICONIFY_AREA && btype==ICONIFY_AREA)
+        update_icon_area(wm);
+
+    raise_client(wm, wm->cur_desktop);
+    update_layout(wm);
 }
 
 int compare_client_order(WM *wm, Client *c1, Client *c2)

@@ -12,7 +12,7 @@
 ./" program. Otherwise, see <http://www.gnu.org/licenses/>.
 ./" ************************************************* ***************************/
 
-.TH gwm 1 June 2023 "gwm 2.2.5" gwm
+.TH gwm 1 June 2023 "gwm 2.3.0" gwm
 .
 .SH NAME
 gwm \- gwm (gsm's window manager), is an X11-based dynamic window manager written in C language.
@@ -373,14 +373,10 @@ Pointer hovering means that the pointer does not move for a set period of time. 
 Unless otherwise specified below, moving the window refers to moving the window from the position where the window is clicked to the position where the corresponding pointer button is released. If this operation is performed in the tiling mode, the window will also be turned into a floating window; swapping the window refers to in the tiling mode, the clicked window is exchanged with the window where the cursor is when the corresponding pointer button is released; switching area refers to switching the clicked window to the area indicated by the clicked area button, or switching the clicked window switches to the area where the cursor was when the corresponding pointer button was released and is positioned in front of the window where the cursor was released, with the following exceptions: When released at the left edge of the screen, if a window exists in the secondary area, the window switches to the top of the secondary area, Otherwise, switch to the top of the main area; when the right edge of the screen is released, switch to the top of the fixed area; when the top edge of the screen is released, switch to the top of the floating area; when the root window is released, switch to the top of the main area.
 .
 .TP
+Some "pointer button1 click" commands, which can be understood directly according to the name of the component it operates, or have explained the meaning of the command clearly by the tooltip, won't be described here.
+.
+.TP
 .B Operate the application window (unless otherwise specified, the corresponding pointer command is: pointer button 1 - click)
-    Window "◁" button: switch the window to the main area;
-    Window "▼" button: switch the window to the secondary area;
-    Window "▷" button: switch the window to a fixed area;
-    Window "△" button: switch the window to the floating area;
-    Window "—" button:iconify the window and focus on the previous window;
-    Window "□" button: maximize the window and switch the window to the floating area;
-    Window "×" button: close this window and focus on the previous window;
     Window title area:
         Pointer button 1 - click      Focus the window,
         Pointer button 1 - move       Move the window,
@@ -412,39 +408,8 @@ Unless otherwise specified below, moving the window refers to moving the window 
         Shift+pointer button 2        - click  The current window is attached to all virtual desktops,
         Pointer button 3              - click  The current window to move to that virtual desktop,
         Mod1+pointer button 3         - click  Move all windows to this virtual desktop;
-    Taskbar "□" button: switch to full screen mode;
-    Taskbar "▦" button: switch to preview mode;
-    Taskbar "▣" button: switch to stacking mode;
-    Taskbar "▥" button: switch to tiling mode;
     Taskbar "■" button:
-        Pointer button 1      - click    show the desktop, same as key command "mod4+d",
         Mod4+pointer button 2 - click    Close all windows of all desktops;
-    Taskbar "^" button: open the Action Center;
-    Action Center buttons:
-        "Help" button in Action Center: open the gwm manpage;
-        "File" button in Action Center: open the default file browser;
-        "Terminal Emulator" button: open the emulated terminal;
-        "Web Browser" button: open the default web browser;
-        The "Start Play" button: execute the "mplayer -shuffle ~/music/*" command;
-        "Toggle Play Status" button: toggle the start and stop status of the above commands;
-        "Quit Play" button: terminate the above mplayer command;
-        "Volume down" button: use amixer to reduce the volume;
-        "Volume up" button: use amixer to increase the volume;
-        "Volume max" button: use amixer to set the volume to the maximum;
-        "Mute toggle" button: use amixer to switch between the current volume and mute;
-        "Open in main area" button: set the window to be moved to the top of the main area if it is in the tiling mode when the window is opened next time;
-        "Open in sec area" button: set the window to be moved to the top of the secondary area when the next time the window is opened in tiling mode;
-        "Open in fixed area" button: set the window to be moved to the top of the fixed area when opening the window in tiling mode next time;
-        "Open in floating area" button: set the window to be moved to the top of the floating area when the window is opened in tiling mode next time;
-        "Open in icon area" button: set the window to be moved to the top of the icon area when the window is opened in tiling mode next time;
-        "Main area num up" button: increase the number of windows that can be accommodated in the main area;
-        "Main area num down" button: reduce the number of windows that can be accommodated in the main area;
-        "Toggle focus mode" button: toggle focus mode;
-        "Quit gwm" button: quit gwm;
-        "Logout" button in Action Center: Logout;
-        "Restart" button: restart the operating system;
-        "Shutdown" button in the action center: Shut down;
-        "Run" button: equivalent to the keyboard command Mod4+Control+d;
     icon in the taskbar:
         Pointer button 1      - click   Deiconify the window,
         Pointer button 3      - move    Swap two windows,

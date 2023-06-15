@@ -14,7 +14,7 @@
 static void set_full_layout(WM *wm);
 static void set_preview_layout(WM *wm);
 static void set_tile_layout(WM *wm);
-static void get_area_size(WM *wm, long *mw, long *mh, long *sw, long *sh, long *fw, long *fh);
+static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh);
 static void fix_win_rect_for_frame(WM *wm);
 static bool should_fix_win_rect(WM *wm, Client *c);
 static void fix_cur_focus_client_rect(WM *wm);
@@ -51,26 +51,23 @@ static void set_full_layout(WM *wm)
 
 static void set_preview_layout(WM *wm)
 {
-    long n=get_clients_n(wm), i=n-1, rows, cols, w, h, gap=wm->cfg->win_gap,
-         wx=wm->workarea.x, wy=wm->workarea.y,
-         ww=wm->workarea.w, wh=wm->workarea.h;
+    int n=get_clients_n(wm), i=n-1, rows, cols, w, h, gap=wm->cfg->win_gap,
+        wx=wm->workarea.x, wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
     if(n == 0)
         return;
+
     /* 行、列数量尽量相近，以保证窗口比例基本不变 */
     for(cols=1; cols<=n && cols*cols<n; cols++)
         ;
-    rows=(cols-1)*cols>=n ? cols-1 : cols;
+    rows = (cols-1)*cols>=n ? cols-1 : cols;
     w=ww/cols, h=wh/rows;
-    if(wm->cfg->show_taskbar && wm->cfg->taskbar_on_top)
-        wy+=gap;
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
         if(is_on_cur_desktop(wm, c))
         {
             c->x=wx+(i%cols)*w, c->y=wy+(i/cols)*h;
-            /* 下邊和右邊的窗口佔用剩餘空間 */
-            c->w=(i+1)%cols ? w-gap : w+(ww-w*cols);
-            c->h=i<cols*(rows-1) ? h-gap : h+(wh-h*rows)-gap;
+            c->w = i%cols ? w-gap : w+(ww-w*cols); // 右排窗口佔用剩餘橫向向空間
+            c->h = i>=cols ? h-gap : h+(wh-h*rows); // 底排窗口佔用剩餘縱向空間
             i--;
         }
     }
@@ -83,12 +80,10 @@ static void set_preview_layout(WM *wm)
  *     4、在固定區域內設置其與主區域的窗口間隔。 */
 static void set_tile_layout(WM *wm)
 {
-    long i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=wm->cfg->win_gap,
-         wx=wm->workarea.x, wy=wm->workarea.y, wh=wm->workarea.h;
+    int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=wm->cfg->win_gap,
+        wx=wm->workarea.x, wy=wm->workarea.y, wh=wm->workarea.h;
 
     get_area_size(wm, &mw, &mh, &sw, &sh, &fw, &fh);
-    if(wm->cfg->show_taskbar && wm->cfg->taskbar_on_top)
-        wy+=g;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         Area_type type=c->area_type;
@@ -101,17 +96,17 @@ static void set_tile_layout(WM *wm)
                 c->x=wx+sw, c->y=wy+j++*mh, c->w=mw, c->h=mh-g;
             else if(type == SECOND_AREA)
                 c->x=wx, c->y=wy+k++*sh, c->w=sw-g, c->h=sh-g;
-            // 區末窗口取餘量
-            if(is_last_typed_client(wm, c, type))
-                c->h+=wh%(c->h+g);
+            if(is_last_typed_client(wm, c, type)) // 區末窗口取餘量
+                c->h+=wh%(c->h+g)+g;
         }
     }
 }
 
-static void get_area_size(WM *wm, long *mw, long *mh, long *sw, long *sh, long *fw, long *fh)
+static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
 {
     double mr=DESKTOP(wm)->main_area_ratio, fr=DESKTOP(wm)->fixed_area_ratio;
-    long n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
+    int n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
+
     n1=get_typed_clients_n(wm, MAIN_AREA),
     n2=get_typed_clients_n(wm, SECOND_AREA),
     n3=get_typed_clients_n(wm, FIXED_AREA),

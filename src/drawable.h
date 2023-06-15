@@ -16,6 +16,8 @@ Window get_transient_for(WM *wm, Window w);
 Atom get_atom_prop(WM *wm, Window win, Atom prop);
 unsigned char *get_prop(WM *wm, Window win, Atom prop, unsigned long *n);
 char *get_text_prop(WM *wm, Window win, Atom atom);
+char *get_title_text(WM *wm, Window win, const char *fallback);
+char *get_icon_title_text(WM *wm, Window win, const char *fallback);
 void copy_prop(WM *wm, Window dest, Window src);
 bool send_event(WM *wm, Atom protocol, Window win);
 bool is_pointer_on_win(WM *wm, Window win);

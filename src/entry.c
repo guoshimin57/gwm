@@ -101,13 +101,15 @@ static void hint_for_run_cmd_entry(WM *wm, const char *pattern)
 static char *get_match_cmd(const char *pattern)
 {
     char *cmd=NULL, *paths=getenv("PATH");
-    if(paths)
-    {
-        char *reg=copy_strings(pattern, "*", NULL);
-        File *files=get_files_in_paths(paths, reg, RISE, false, NULL);
-        if(files->next)
-            cmd=copy_string(files->next->name), free_files(files);
-    }
+
+    if(!paths)
+        return NULL;
+
+    char *reg=copy_strings(pattern, "*", NULL);
+    File *files=get_files_in_paths(paths, reg, RISE, false, NULL);
+
+    if(files->next)
+        cmd=copy_string(files->next->name), free_files(files);
     return cmd;
 }
 
@@ -154,6 +156,7 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
     }
     else if(is_equal_modifier_mask(wm, ShiftMask, ke->state))
         wcsncpy(e->text+n1, keyname, n-n1-1), (*i)+=n2;
+
     char pattern[FILENAME_MAX]={0};
     wcstombs(pattern, e->text, FILENAME_MAX);
     hint_for_run_cmd_entry(wm, pattern);
@@ -164,6 +167,7 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
 static void complete_cmd_for_entry(Entry *e)
 {
     char *cmd, pattern[FILENAME_MAX]={0};
+
     wcstombs(pattern, e->text, FILENAME_MAX);
     if((cmd=get_match_cmd(pattern)))
         mbstowcs(e->text, cmd, FILENAME_MAX), e->cursor_offset=wcslen(e->text);
@@ -183,19 +187,22 @@ void paste_for_entry(WM *wm, Entry *e)
     Atom da;
     int di;
     unsigned long dl;
-    if(XGetWindowProperty(wm->display, e->win, wm->utf8, 0, BUFSIZ/4, True,
-       wm->utf8, &da, &di, &dl, &dl, (unsigned char **)&p) == Success && p)
-    {
-        wchar_t text[BUFSIZ];
-        int n=mbstowcs(text, p, BUFSIZ);
-        XFree(p);
-        if(n > 0)
-        {
-            wchar_t *src=e->text+e->cursor_offset, *dest=src+n;
-            wmemmove(dest, src, wcslen(e->text)-e->cursor_offset);
-            wcsncpy(src, text, n);
-            e->cursor_offset += n;
-            update_entry_text(wm, e);
-        }
-    }
+
+    if( XGetWindowProperty(wm->display, e->win, wm->utf8, 0, BUFSIZ/4, True,
+        wm->utf8, &da, &di, &dl, &dl, (unsigned char **)&p) != Success || !p)
+        return;
+
+    wchar_t text[BUFSIZ];
+    int n=mbstowcs(text, p, BUFSIZ);
+
+    XFree(p);
+    if(n <= 0)
+        return;
+
+    wchar_t *src=e->text+e->cursor_offset, *dest=src+n;
+
+    wmemmove(dest, src, wcslen(e->text)-e->cursor_offset);
+    wcsncpy(src, text, n);
+    e->cursor_offset += n;
+    update_entry_text(wm, e);
 }

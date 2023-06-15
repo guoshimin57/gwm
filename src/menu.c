@@ -44,3 +44,11 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
     XMapRaised(wm->display, menu->win);
     XMapWindow(wm->display, menu->win);
 }
+
+void update_menu_item_text(WM *wm, Window win, const char *text)
+{
+    int h=MENU_ITEM_HEIGHT(wm), w=wm->cfg->menu_item_width;
+    String_format f={{0, 0, w, h}, CENTER_LEFT, true, true, false, 0,
+        TEXT_COLOR(wm, MENU), MENU_FONT};
+    draw_string(wm, win, text, &f);
+}

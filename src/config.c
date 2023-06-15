@@ -30,8 +30,10 @@
     wm->cfg->title_button_text[type-TITLE_BUTTON_BEGIN]=text
 #define SET_TASKBAR_BUTTON_TEXT(wm, type, text) /* 設置任務欄按鈕文字 */ \
     wm->cfg->taskbar_button_text[type-TASKBAR_BUTTON_BEGIN]=text
-#define SET_ACT_CENTER_ITEM_TEXT(wm, type, text) /* 設置操作中心文字 */ \
+#define SET_ACT_CENTER_ITEM_TEXT(wm, type, text) /* 設置操作中心菜單項文字 */ \
     wm->cfg->act_center_item_text[type-ACT_CENTER_ITEM_BEGIN]=text
+#define SET_CLIENT_MENU_ITEM_TEXT(wm, type, text) /* 設置客戶窗口菜單項文字 */ \
+    wm->cfg->client_menu_item_text[type-CLIENT_MENU_ITEM_BEGIN]=text
 #define SET_TOOLTIP(wm, type, text) /* 設置構件提示 */ \
     wm->cfg->tooltip[type]=text
 
@@ -216,13 +218,21 @@ static const Buttonbind buttonbind[] =
     {REBOOT_BUTTON,             0, Button1,  exec,                       SH_CMD("reboot")},
     {POWEROFF_BUTTON,           0, Button1,  exec,                       SH_CMD("poweroff")},
     {RUN_BUTTON,                0, Button1,  enter_and_run_cmd,          {0}},
+    {TITLE_LOGO,                0, Button1,  open_client_menu,           {0}},
+    {IN_SITU_VERT_MAX_BUTTON,   0, Button1,  maximize_client,            {.max_way=IN_SITU_VERT_MAX}},
+    {IN_SITU_HORZ_MAX_BUTTON,   0, Button1,  maximize_client,            {.max_way=IN_SITU_HORZ_MAX}},
+    {TOP_MAX_BUTTON,            0, Button1,  maximize_client,            {.max_way=TOP_MAX}},
+    {BOTTOM_MAX_BUTTON,         0, Button1,  maximize_client,            {.max_way=BOTTOM_MAX}},
+    {LEFT_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=LEFT_MAX}},
+    {RIGHT_MAX_BUTTON,          0, Button1,  maximize_client,            {.max_way=RIGHT_MAX}},
+    {FULL_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=FULL_MAX}},
     {ROOT_WIN,                  0, Button1,  adjust_layout_ratio,        {0}},
     {MAIN_BUTTON,               0, Button1,  change_area,                {.area_type=MAIN_AREA}},
     {SECOND_BUTTON,             0, Button1,  change_area,                {.area_type=SECOND_AREA}},
     {FIXED_BUTTON,              0, Button1,  change_area,                {.area_type=FIXED_AREA}},
     {FLOAT_BUTTON,              0, Button1,  change_area,                {.area_type=FLOATING_AREA}},
     {ICON_BUTTON,               0, Button1,  change_area,                {.area_type=ICONIFY_AREA}},
-    {MAX_BUTTON,                0, Button1,  maximize_client,            {0}},
+    {MAX_BUTTON,                0, Button1,  maximize_client,            {.max_way=FULL_MAX}},
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},
     {TITLE_AREA,                0, Button1,  pointer_move_resize_client, {.resize=false}},
     {TITLE_AREA,                0, Button2,  pointer_change_area,        {0}},
@@ -272,7 +282,7 @@ static void config_font(WM *wm)
     int size=get_scale_font_size(wm, 2.0);
     SET_FONT(wm, DEFAULT_FONT,      "monospace", size);
     SET_FONT(wm, TITLEBAR_FONT,     "monospace", size);
-    SET_FONT(wm, ACT_CENTER_FONT,   "monospace", size);
+    SET_FONT(wm, MENU_FONT,   "monospace", size);
     SET_FONT(wm, TASKBAR_FONT,      "monospace", size);
     SET_FONT(wm, CLASS_FONT,        "monospace", size);
     SET_FONT(wm, ENTRY_FONT,        "monospace", size);
@@ -292,8 +302,8 @@ static void config_widget_size(WM *wm)
     c->taskbar_button_width=get_font_height_by_pad(wm, TASKBAR_FONT)/0.618+0.5;
     c->icon_win_width_max=c->font_size[TASKBAR_FONT]*15;
     c->icon_gap=c->font_size[TASKBAR_FONT]/2.0+0.5;
-    c->act_center_item_width=c->font_size[ACT_CENTER_FONT]*8;
-    c->run_cmd_entry_width=c->font_size[ACT_CENTER_FONT]*16;
+    c->menu_item_width=c->font_size[MENU_FONT]*8;
+    c->run_cmd_entry_width=c->font_size[MENU_FONT]*16;
     c->resize_inc=c->font_size[DEFAULT_FONT];
 }
 
@@ -335,7 +345,7 @@ static void config_widget_color_for_dark(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_BUTTON_COLOR,         "grey21");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CHOSEN_BUTTON_COLOR,         "DeepSkyBlue4");
-    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ACT_CENTER_COLOR,            "grey31");
+    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, MENU_COLOR,                  "grey31");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, TASKBAR_COLOR,               "grey21");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTRY_COLOR,                 "white");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, HINT_WIN_COLOR,              "grey81");
@@ -355,7 +365,7 @@ static void config_widget_color_for_normal(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_BUTTON_COLOR,         "grey21");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CHOSEN_BUTTON_COLOR,         "DeepSkyBlue4");
-    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ACT_CENTER_COLOR,            "grey31");
+    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, MENU_COLOR,                  "grey31");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, TASKBAR_COLOR,               "grey21");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTRY_COLOR,                 "white");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, HINT_WIN_COLOR,              "grey31");
@@ -375,7 +385,7 @@ static void config_widget_color_for_light(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_BUTTON_COLOR,         "grey81");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CHOSEN_BUTTON_COLOR,         "LightSkyBlue");
-    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ACT_CENTER_COLOR,            "grey61");
+    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, MENU_COLOR,                  "grey61");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, TASKBAR_COLOR,               "grey81");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ENTRY_COLOR,                 "black");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, HINT_WIN_COLOR,              "grey31");
@@ -399,7 +409,7 @@ static void config_text_color_for_dark(WM *wm)
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLEBAR_TEXT_COLOR, "LightGreen");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, TASKBAR_TEXT_COLOR,          "white");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, CLASS_TEXT_COLOR,            "RosyBrown");
-    SET_TEXT_COLOR_NAME(wm, DARK_THEME, ACT_CENTER_ITEM_TEXT_COLOR,  "white");
+    SET_TEXT_COLOR_NAME(wm, DARK_THEME, MENU_TEXT_COLOR,             "white");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, ENTRY_TEXT_COLOR,            "black");
     SET_TEXT_COLOR_NAME(wm, DARK_THEME, HINT_TEXT_COLOR,             "SkyBlue4");
 }
@@ -413,7 +423,7 @@ static void config_text_color_for_normal(WM *wm)
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CURRENT_TITLEBAR_TEXT_COLOR, "white");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, TASKBAR_TEXT_COLOR,          "white");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, CLASS_TEXT_COLOR,            "RosyBrown");
-    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, ACT_CENTER_ITEM_TEXT_COLOR,  "white");
+    SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, MENU_TEXT_COLOR,             "white");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, ENTRY_TEXT_COLOR,            "black");
     SET_TEXT_COLOR_NAME(wm, NORMAL_THEME, HINT_TEXT_COLOR,             "grey61");
 }
@@ -427,7 +437,7 @@ static void config_text_color_for_light(WM *wm)
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CURRENT_TITLEBAR_TEXT_COLOR, "black");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, TASKBAR_TEXT_COLOR,          "black");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, CLASS_TEXT_COLOR,            "RosyBrown");
-    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, ACT_CENTER_ITEM_TEXT_COLOR,  "black");
+    SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, MENU_TEXT_COLOR,             "black");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, ENTRY_TEXT_COLOR,            "white");
     SET_TEXT_COLOR_NAME(wm, LIGHT_THEME, HINT_TEXT_COLOR,             "grey61");
 }
@@ -508,6 +518,22 @@ static void config_act_center_item_text(WM *wm)
     SET_ACT_CENTER_ITEM_TEXT(wm, RUN_BUTTON,                _("運行"));
 }
 
+/* 功能：設置客戶窗口菜單的文字。
+ * 用戶設置：                    客戶窗口菜單項類型(詳gwm.h)  按鈕文字
+ */
+static void config_client_menu_item_text(WM *wm)
+{
+    // 以下爲客戶窗口菜單項的文字，翻譯時應保持簡潔，長度不宜超過原文最長者，否則可能顯示不全
+    SET_CLIENT_MENU_ITEM_TEXT(wm, IN_SITU_VERT_MAX_BUTTON,  _("原位縱向最大化"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, IN_SITU_HORZ_MAX_BUTTON,  _("原位橫向最大化"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, TOP_MAX_BUTTON,           _("最大化至上半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, BOTTOM_MAX_BUTTON,        _("最大化至下半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, LEFT_MAX_BUTTON,          _("最大化至左半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, RIGHT_MAX_BUTTON,         _("最大化至右半屏"));
+    // 最後一個操作中心按鈕項
+    SET_CLIENT_MENU_ITEM_TEXT(wm, FULL_MAX_BUTTON,          _("完全最大化"));
+}
+
 /* 功能：設置構件功能提示。
  * 說明：以下未列出的構件要麼不必顯示提示，要麼動態變化而不可在此設置。
  * 用戶設置：       構件類型(詳gwm.h)  構件功能提示文字
@@ -531,6 +557,7 @@ static void config_tooltip(WM *wm)
     SET_TOOLTIP(wm, TILE_BUTTON,       _("切換到平鋪模式"));
     SET_TOOLTIP(wm, DESKTOP_BUTTON,    _("顯示桌面"));
     SET_TOOLTIP(wm, ACT_CENTER_ITEM,   _("打開操作中心"));
+    SET_TOOLTIP(wm, TITLE_LOGO,        _("打開窗口菜單"));
 }
 
 /* 功能：設置其他雜項。
@@ -583,5 +610,6 @@ void config(WM *wm)
     config_title_button_text(wm);
     config_taskbar_button_text(wm);
     config_act_center_item_text(wm);
+    config_client_menu_item_text(wm);
     config_tooltip(wm);
 }

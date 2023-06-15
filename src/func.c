@@ -43,19 +43,18 @@ bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
         return true;
 
     Window win = is_grab_root_act(act) ? wm->root_win : oe->xbutton.window;
-    if(act==NO_OP || grab_pointer(wm, win, act))
+    if(act!=NO_OP && !grab_pointer(wm, win, act))
+        return false;
+
+    XEvent e, *p=(ne ? ne : &e);
+    do
     {
-        XEvent e, *p=(ne ? ne : &e);
-        do
-        {
-            XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, p);
-            wm->event_handlers[p->type](wm, p);
-        }while(!is_match_button_release(oe, p));
-        if(act != NO_OP)
-            XUngrabPointer(wm->display, CurrentTime);
-        return is_valid_click(wm, oe, p);
-    }
-    return false;
+        XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, p);
+        wm->event_handlers[p->type](wm, p);
+    }while(!is_match_button_release(oe, p));
+    if(act != NO_OP)
+        XUngrabPointer(wm->display, CurrentTime);
+    return is_valid_click(wm, oe, p);
 }
 
 static bool is_match_button_release(XEvent *oe, XEvent *ne)
@@ -88,30 +87,32 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Layout lay=DESKTOP(wm)->cur_layout;
     Client *c=CUR_FOC_CLI(wm);
-    if(lay==TILE || lay==STACK || (lay==FULL && c->area_type==FLOATING_AREA))
+
+    if(lay!=TILE && lay!=STACK && (lay!=FULL || c->area_type!=FLOATING_AREA))
+        return;
+
+    Direction dir=arg.direction;
+    bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
+    Delta_rect d=get_key_delta_rect(c, dir);
+
+    if(c->area_type!=FLOATING_AREA && lay==TILE)
+        move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
+    if(fix_move_resize_delta_rect(wm, c, &d, is_move))
     {
-        Direction dir=arg.direction;
-        bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
-        Delta_rect d=get_key_delta_rect(c, dir);
-        if(c->area_type!=FLOATING_AREA && lay==TILE)
-            move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
-        if(fix_move_resize_delta_rect(wm, c, &d, is_move))
+        move_resize_client(wm, c, &d);
+        update_hint_win_for_move_resize(wm, c);
+        while(1)
         {
-            move_resize_client(wm, c, &d);
-            update_hint_win_for_move_resize(wm, c);
-            while(1)
+            XEvent ev;
+            XMaskEvent(wm->display, ROOT_EVENT_MASK|KeyReleaseMask, &ev);
+            if( ev.type==KeyRelease && ev.xkey.state==e->xkey.state
+                && ev.xkey.keycode==e->xkey.keycode)
             {
-                XEvent ev;
-                XMaskEvent(wm->display, ROOT_EVENT_MASK|KeyReleaseMask, &ev);
-                if( ev.type==KeyRelease && ev.xkey.state==e->xkey.state
-                    && ev.xkey.keycode==e->xkey.keycode)
-                {
-                    XUnmapWindow(wm->display, wm->hint_win);
-                    break;
-                }
-                else
-                    wm->event_handlers[ev.type](wm, &ev);
+                XUnmapWindow(wm->display, wm->hint_win);
+                break;
             }
+            else
+                wm->event_handlers[ev.type](wm, &ev);
         }
     }
 }
@@ -153,6 +154,7 @@ void clear_wm(WM *wm)
     }
     XDestroyWindow(wm->display, wm->taskbar->win);
     XDestroyWindow(wm->display, wm->act_center->win);
+    XDestroyWindow(wm->display, wm->client_menu->win);
     XDestroyWindow(wm->display, wm->run_cmd->win);
     XDestroyWindow(wm->display, wm->hint_win);
     XDestroyWindow(wm->display, wm->wm_check_win);
@@ -288,17 +290,28 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 
 void maximize_client(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(e), UNUSED(arg);
+    UNUSED(e);
     Client *c=CUR_FOC_CLI(wm);
-    if(c != wm->clients)
+
+    if(c == wm->clients)
+        return;
+
+    int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
+        ww=wm->workarea.w, wh=wm->workarea.h;
+
+    switch(arg.max_way)
     {
-        int bw=c->border_w, th=c->titlebar_h;
-        c->x=wm->workarea.x+bw, c->y=wm->workarea.y+bw+th;
-        c->w=wm->workarea.w-2*bw, c->h=wm->workarea.h-th-2*bw;
-        if(DESKTOP(wm)->cur_layout == TILE)
-            move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
-        move_resize_client(wm, c, NULL);
+        case IN_SITU_VERT_MAX: c->y=wy+bw+th, c->h=wh-th-2*bw; break;
+        case IN_SITU_HORZ_MAX: c->x=wx+bw, c->w=ww-2*bw; break;
+        case TOP_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
+        case BOTTOM_MAX: c->x=wx+bw, c->y=wy+wh/2+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
+        case LEFT_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
+        case RIGHT_MAX: c->x=ww/2+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
+        case FULL_MAX: c->x=wx+bw, c->y=wy+bw+th; c->w=ww-2*bw, c->h=wh-th-2*bw; break;
     }
+    if(DESKTOP(wm)->cur_layout == TILE)
+        move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
+    move_resize_client(wm, c, NULL);
 }
 
 void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
@@ -307,6 +320,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
     Client *c=CUR_FOC_CLI(wm);
     Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
+
     if( (layout==FULL && c->area_type!=FLOATING_AREA) || layout==PREVIEW
         || !grab_pointer(wm, wm->root_win, act))
         return;
@@ -333,20 +347,21 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act)
 {
     Delta_rect d=get_pointer_delta_rect(m, act);
-    if(fix_move_resize_delta_rect(wm, c, &d, act==MOVE))
+
+    if(!fix_move_resize_delta_rect(wm, c, &d, act==MOVE))
+        return;
+
+    move_resize_client(wm, c, &d);
+    update_hint_win_for_move_resize(wm, c);
+    if(act != MOVE)
     {
-        move_resize_client(wm, c, &d);
-        update_hint_win_for_move_resize(wm, c);
-        if(act != MOVE)
-        {
-            if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
-                m->ox = d.dx ? m->ox-d.dw : m->ox+d.dw;
-            if(d.dh) // dy爲0表示定位器從窗口下邊調整尺寸，非0則表示上邊調整
-                m->oy = d.dy ? m->oy-d.dh : m->oy+d.dh;
-        }
-        else
-            m->ox=m->nx, m->oy=m->ny;
+        if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
+            m->ox = d.dx ? m->ox-d.dw : m->ox+d.dw;
+        if(d.dh) // dy爲0表示定位器從窗口下邊調整尺寸，非0則表示上邊調整
+            m->oy = d.dy ? m->oy-d.dh : m->oy+d.dh;
     }
+    else
+        m->ox=m->nx, m->oy=m->ny;
 }
 
 static bool fix_move_resize_delta_rect(WM *wm, Client *c, Delta_rect *d, bool is_move)
@@ -368,15 +383,15 @@ static bool is_prefer_move(WM *wm, Client *c, Delta_rect *d, bool is_move)
 
 static bool fix_delta_rect_for_nonprefer_size(Client *c, XSizeHints *hint, Delta_rect *d)
 {
-    if((d->dw || d->dh) && !is_prefer_size(c->w, c->h, hint)) // 首次調整尺寸時才要考慮爲偏好而修正尺寸
-    {
-        int ox=c->x, oy=c->y, ow=c->w, oh=c->h;
-        fix_win_size_by_hint(c);
-        d->dx=c->x-ox, d->dy=c->y-oy, d->dw=(int)c->w-ow, d->dh=(int)c->h-oh;
-        c->x=ox, c->y=oy, c->w=ow, c->h=oh;
-        return true;
-    }
-    return false;
+    // 首次調整尺寸時才要考慮爲偏好而修正尺寸
+    if((!d->dw && !d->dh) || is_prefer_size(c->w, c->h, hint))
+        return false;
+
+    int ox=c->x, oy=c->y, ow=c->w, oh=c->h;
+    fix_win_size_by_hint(c);
+    d->dx=c->x-ox, d->dy=c->y-oy, d->dw=(int)c->w-ow, d->dh=(int)c->h-oh;
+    c->x=ox, c->y=oy, c->w=ow, c->h=oh;
+    return true;
 }
 
 static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw)
@@ -407,22 +422,22 @@ static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh)
 
 static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, int dh, Delta_rect *d)
 {
-    if((dw || dh) && is_prefer_size(c->w+dw, c->h+dh, hint))
-    {
-        d->dw=dw, d->dh=dh;
-        if(d->dx)
-            d->dx=-dw;
-        if(d->dy)
-            d->dy=-dh;
-        return true;
-    }
-    return false;
+    if((!dw && !dh) || !is_prefer_size(c->w+dw, c->h+dh, hint))
+        return false;
+
+    d->dw=dw, d->dh=dh;
+    if(d->dx)
+        d->dx=-dw;
+    if(d->dy)
+        d->dy=-dh;
+    return true;
 }
 
 static void update_hint_win_for_move_resize(WM *wm, Client *c)
 {
     char str[BUFSIZ];
     long col=get_client_col(c), row=get_client_row(c);
+
     sprintf(str, "(%d, %d) %ldx%ld", c->x, c->y, col, row);
     update_hint_win_for_info(wm, None, str);
 }
@@ -450,6 +465,7 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
 {
     XEvent ev;
     Client *from=CUR_FOC_CLI(wm), *to;
+
     if( DESKTOP(wm)->cur_layout!=TILE || from==wm->clients
         || !get_valid_click(wm, CHANGE, e, &ev))
         return;
@@ -478,22 +494,23 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
     Layout *cl=&DESKTOP(wm)->cur_layout, *pl=&DESKTOP(wm)->prev_layout;
-    if(*cl != arg.layout)
-    {
-        Display *d=wm->display;
-        *pl=*cl, *cl=arg.layout;
-        if(*pl == PREVIEW)
-            for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-                if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
-                    XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
-        if(*cl == PREVIEW)
-            for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-                if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
-                    XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
-        update_layout(wm);
-        update_titlebar_layout(wm);
-        update_taskbar_buttons(wm);
-    }
+
+    if(*cl == arg.layout)
+        return;
+
+    Display *d=wm->display;
+    *pl=*cl, *cl=arg.layout;
+    if(*pl == PREVIEW)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+                XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
+    if(*cl == PREVIEW)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+                XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
+    update_layout(wm);
+    update_titlebar_layout(wm);
+    update_taskbar_buttons(wm);
 }
 
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
@@ -527,9 +544,10 @@ void show_desktop(WM *wm, XEvent *e, Func_arg arg)
     Atom mtype=wm->ewmh_atom[NET_SHOWING_DESKTOP];
     unsigned char *p=get_prop(wm, wm->root_win, mtype, NULL);
     int32_t show=*(int32_t *)p;
-    XFree(p);
     XEvent ev={.xclient={.type=ClientMessage, .window=wm->root_win,
         .message_type=mtype, .format=32, .data.l[0]=!show}};
+
+    XFree(p);
     XSendEvent(wm->display, wm->root_win, False,
         SubstructureNotifyMask|SubstructureRedirectMask, &ev);
 }
@@ -550,6 +568,12 @@ void open_act_center(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(arg);
     show_menu(wm, e, wm->act_center, wm->taskbar->buttons[TASKBAR_BUTTON_INDEX(ACT_CENTER_ITEM)]);
+}
+
+void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(arg);
+    show_menu(wm, e, wm->client_menu, CUR_FOC_CLI(wm)->logo);
 }
 
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)

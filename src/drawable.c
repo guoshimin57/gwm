@@ -47,31 +47,56 @@ char *get_text_prop(WM *wm, Window win, Atom atom)
     int n;
     char **list=NULL, *result=NULL;
     XTextProperty name;
-    if(XGetTextProperty(wm->display, win, &name, atom))
-    {
-        if(name.encoding == XA_STRING)
-            result=copy_string((char *)name.value);
-        else if(Xutf8TextPropertyToTextList(wm->display, &name, &list, &n) == Success)
-            result=copy_string(*list), XFreeStringList(list);
-        XFree(name.value);
-    }
+
+    if(!XGetTextProperty(wm->display, win, &name, atom))
+        return NULL;
+
+    if(name.encoding == XA_STRING)
+        result=copy_string((char *)name.value);
+    else if(Xutf8TextPropertyToTextList(wm->display, &name, &list, &n) == Success
+        && n && *list) // 與手冊不太一致的是，返回Success並不一定真的成功，狗血！
+        result=copy_string(*list), XFreeStringList(list);
+    XFree(name.value);
     return result;
+}
+
+char *get_title_text(WM *wm, Window win, const char *fallback)
+{
+    char *s=NULL;
+
+    if((s=get_text_prop(wm, win, wm->ewmh_atom[NET_WM_NAME])) && strlen(s))
+        return s;
+    if((s=get_text_prop(wm, win, XA_WM_NAME)) && strlen(s))
+        return s;
+    return copy_string(fallback);
+}
+
+char *get_icon_title_text(WM *wm, Window win, const char *fallback)
+{
+    char *s=NULL;
+
+    if((s=get_text_prop(wm, win, wm->ewmh_atom[NET_WM_ICON_NAME])) && strlen(s))
+        return s;
+    if((s=get_text_prop(wm, win, XA_WM_ICON_NAME)) && strlen(s))
+        return s;
+    return copy_string(fallback);
 }
 
 void copy_prop(WM *wm, Window dest, Window src)
 {
     int i=0, n=0, fmt=0;
     Atom type, *p=XListProperties(wm->display, src, &n);
-    if(p)
-    {
-        unsigned long total, rest;
-        for(unsigned char *prop=NULL; i<n; i++, prop && XFree(prop))
-            if( XGetWindowProperty(wm->display, src, p[i], 0, ~0L, False,
-                AnyPropertyType, &type, &fmt, &total, &rest, &prop) == Success)
-                XChangeProperty(wm->display, dest, p[i], type, fmt,
-                    PropModeReplace, prop, total);
-        XFree(p);
-    }
+
+    if(!p)
+        return;
+
+    unsigned long total, rest;
+    for(unsigned char *prop=NULL; i<n; i++, prop && XFree(prop))
+        if( XGetWindowProperty(wm->display, src, p[i], 0, ~0L, False,
+            AnyPropertyType, &type, &fmt, &total, &rest, &prop) == Success)
+            XChangeProperty(wm->display, dest, p[i], type, fmt,
+                PropModeReplace, prop, total);
+    XFree(p);
 }
 
 bool send_event(WM *wm, Atom protocol, Window win)
@@ -79,25 +104,24 @@ bool send_event(WM *wm, Atom protocol, Window win)
 	int i, n;
 	Atom *protocols;
 
-	if(XGetWMProtocols(wm->display, win, &protocols, &n))
+	if(!XGetWMProtocols(wm->display, win, &protocols, &n))
+        return false;
+
+    XEvent event;
+    for(i=0; i<n && protocols[i]!=protocol; i++)
+        ;
+    XFree(protocols);
+    if(i < n)
     {
-        XEvent event;
-        for(i=0; i<n && protocols[i]!=protocol; i++)
-            ;
-		XFree(protocols);
-        if(i < n)
-        {
-            event.type=ClientMessage;
-            event.xclient.window=win;
-            event.xclient.message_type=wm->icccm_atoms[WM_PROTOCOLS];
-            event.xclient.format=32;
-            event.xclient.data.l[0]=protocol;
-            event.xclient.data.l[1]=CurrentTime;
-            XSendEvent(wm->display, win, False, NoEventMask, &event);
-        }
-        return i<n;
-	}
-    return false;
+        event.type=ClientMessage;
+        event.xclient.window=win;
+        event.xclient.message_type=wm->icccm_atoms[WM_PROTOCOLS];
+        event.xclient.format=32;
+        event.xclient.data.l[0]=protocol;
+        event.xclient.data.l[1]=CurrentTime;
+        XSendEvent(wm->display, win, False, NoEventMask, &event);
+    }
+    return i<n;
 }
 
 bool is_pointer_on_win(WM *wm, Window win)
@@ -126,22 +150,24 @@ void print_area(WM *wm, Drawable d, int x, int y, int w, int h)
 {
     imlib_context_set_drawable(d);
     Imlib_Image image=imlib_create_image_from_drawable(None, x, y, w, h, 0);
-    if(image)
-    {
-        time_t timer=time(NULL), err=-1;
-        char name[FILENAME_MAX];
-        if(wm->cfg->screenshot_path[0] == '~')
-            sprintf(name, "%s%s/gwm-", getenv("HOME"), wm->cfg->screenshot_path+1);
-        else
-            sprintf(name, "%s/gwm-", wm->cfg->screenshot_path);
-        if(timer != err)
-            strftime(name+strlen(name), FILENAME_MAX, "%Y_%m_%d_%H_%M_%S", localtime(&timer));
-        imlib_context_set_image(image);
-        imlib_image_set_format(wm->cfg->screenshot_format);
-        sprintf(name+strlen(name), ".%s", wm->cfg->screenshot_format);
-        imlib_save_image(name);
-        imlib_free_image();
-    }
+
+    if(!image)
+        return;
+
+    time_t timer=time(NULL), err=-1;
+    char name[FILENAME_MAX];
+
+    if(wm->cfg->screenshot_path[0] == '~')
+        sprintf(name, "%s%s/gwm-", getenv("HOME"), wm->cfg->screenshot_path+1);
+    else
+        sprintf(name, "%s/gwm-", wm->cfg->screenshot_path);
+    if(timer != err)
+        strftime(name+strlen(name), FILENAME_MAX, "%Y_%m_%d_%H_%M_%S", localtime(&timer));
+    imlib_context_set_image(image);
+    imlib_image_set_format(wm->cfg->screenshot_format);
+    sprintf(name+strlen(name), ".%s", wm->cfg->screenshot_format);
+    imlib_save_image(name);
+    imlib_free_image();
 }
 
 bool is_wm_win(WM *wm, Window win, bool before_wm)
@@ -208,14 +234,16 @@ void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, int pw, i
     get_geometry(wm, click, NULL, NULL, &w, &h, &bw, NULL);
     // 優先考慮右邊顯示彈窗；若不夠位置，則考慮左邊顯示；再不濟則從屏幕左邊開始顯示
     *px = cx+(int)pw<(int)sw ? cx : (cx-(int)pw>0 ? cx-(int)pw : 0);
-    // 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示
-    *py = y+(int)(h+bw+ph)<(int)sh ? y+(int)(h+bw) : (y-(int)(bw+ph)>0 ? y-(int)(bw+ph) : 0);
+    /* 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示。
+       並且彈出窗口與點擊窗口錯開一個像素，以便從視覺上有所區分。*/
+    *py = y+(int)(h+bw+ph)<(int)sh ? y+(int)(h+bw)+1 : (y-(int)(bw+ph)>0 ? y-(int)(bw+ph)-1 : 0);
 }
 
 bool is_win_exist(WM *wm, Window win, Window parent)
 {
     Window root, pwin, *child=NULL;
     unsigned int n;
+
     if(XQueryTree(wm->display, parent, &root, &pwin, &child, &n))
         for(unsigned int i=0; i<n; i++)
             if(win == child[i])
@@ -228,16 +256,16 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
     int w, h;
     unsigned int d;
     Imlib_Image image=imlib_load_image(filename);
-    if(image && get_geometry(wm, win, NULL, NULL, &w, &h, NULL, &d))
-    {
-        Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
-        imlib_context_set_image(image);
-        imlib_context_set_drawable(bg);   
-        imlib_render_image_on_drawable_at_size(0, 0, w, h);
-        imlib_free_image();
-        return bg;
-    }
-    return None;
+
+    if(!image || !get_geometry(wm, win, NULL, NULL, &w, &h, NULL, &d))
+        return None;
+
+    Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
+    imlib_context_set_image(image);
+    imlib_context_set_drawable(bg);   
+    imlib_render_image_on_drawable_at_size(0, 0, w, h);
+    imlib_free_image();
+    return bg;
 }
 
 void show_tooltip(WM *wm, Window hover)

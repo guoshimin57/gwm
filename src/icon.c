@@ -62,16 +62,16 @@ static void set_icon_image(WM *wm, Client *c)
 
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
 {
-    if(c->wm_hint && (c->wm_hint->flags & IconPixmapHint))
-    {
-        int w, h;
-        Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
-        if(!get_geometry(wm, pixmap, NULL, NULL, &w, &h, NULL, NULL))
-            return NULL;
-        imlib_context_set_drawable(pixmap);   
-        return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
-    }
-    return NULL;
+    if(!c->wm_hint || !(c->wm_hint->flags & IconPixmapHint))
+        return NULL;
+
+    int w, h;
+    Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
+
+    if(!get_geometry(wm, pixmap, NULL, NULL, &w, &h, NULL, NULL))
+        return NULL;
+    imlib_context_set_drawable(pixmap);   
+    return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
 }
 
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
@@ -389,6 +389,7 @@ void iconify(WM *wm, Client *c)
 {
     Icon *i=c->icon;
 
+    i->title_text=get_icon_title_text(wm, c->win, c->title_text);
     update_win_bg(wm, i->win, WIDGET_COLOR(wm, TASKBAR), None);
     i->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
     c->area_type=ICONIFY_AREA;
@@ -406,9 +407,7 @@ void create_icon(WM *wm, Client *c)
 {
     Icon *i=c->icon=malloc_s(sizeof(Icon));
     i->x=i->y=0, i->w=i->h=wm->taskbar->h;
-    i->title_text=get_text_prop(wm, c->win, XA_WM_ICON_NAME);
-    if(!i->title_text)
-        i->title_text=copy_string(c->title_text);
+    i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
     i->win=XCreateSimpleWindow(wm->display, wm->taskbar->icon_area, 0, 0,
         i->w, i->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
@@ -450,14 +449,14 @@ static bool have_same_class_icon_client(WM *wm, Client *c)
 
 void deiconify(WM *wm, Client *c)
 {
-    if(c)
-    {
-        XMapWindow(wm->display, c->frame);
-        XUnmapWindow(wm->display, c->icon->win);
-        c->area_type=c->icon->area_type;
-        update_icon_area(wm);
-        focus_client(wm, wm->cur_desktop, c);
-    }
+    if(!c)
+        return;
+
+    XMapWindow(wm->display, c->frame);
+    XUnmapWindow(wm->display, c->icon->win);
+    c->area_type=c->icon->area_type;
+    update_icon_area(wm);
+    focus_client(wm, wm->cur_desktop, c);
 }
 
 void del_icon(WM *wm, Client *c)
