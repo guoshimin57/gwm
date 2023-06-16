@@ -541,15 +541,18 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
 void show_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    Atom mtype=wm->ewmh_atom[NET_SHOWING_DESKTOP];
-    unsigned char *p=get_prop(wm, wm->root_win, mtype, NULL);
-    int32_t show=*(int32_t *)p;
-    XEvent ev={.xclient={.type=ClientMessage, .window=wm->root_win,
-        .message_type=mtype, .format=32, .data.l[0]=!show}};
+    static bool show=false;
 
-    XFree(p);
-    XSendEvent(wm->display, wm->root_win, False,
-        SubstructureNotifyMask|SubstructureRedirectMask, &ev);
+    toggle_showing_desktop_mode(wm, show=!show);
+}
+
+void toggle_showing_desktop_mode(WM *wm, bool show)
+{
+    if(show)
+        iconify_all_clients(wm);
+    else
+        deiconify_all_clients(wm);
+    set_net_showing_desktop(wm, show);
 }
 
 void change_default_area_type(WM *wm, XEvent *e, Func_arg arg)

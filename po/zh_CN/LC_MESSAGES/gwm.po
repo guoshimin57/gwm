@@ -6,7 +6,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.3.0\n"
+"Project-Id-Version: gwm 2.3.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
 "POT-Creation-Date: 2023-06-15 13:51+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
@@ -130,7 +130,7 @@ msgstr "最大化至上半屏"
 
 #: src/config.c:530
 msgid "最大化至下半屏"
-msgstr " 最大化至下半屏"
+msgstr "最大化至下半屏"
 
 #: src/config.c:531
 msgid "最大化至左半屏"

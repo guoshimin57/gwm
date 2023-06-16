@@ -34,6 +34,7 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg);
 void change_layout(WM *wm, XEvent *e, Func_arg arg);
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg);
 void show_desktop(WM *wm, XEvent *e, Func_arg arg);
+void toggle_showing_desktop_mode(WM *wm, bool show);
 void change_default_area_type(WM *wm, XEvent *e, Func_arg arg);
 void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg);
 void open_act_center(WM *wm, XEvent *e, Func_arg arg);

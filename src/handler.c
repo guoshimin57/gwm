@@ -17,7 +17,6 @@ static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent 
 static void focus_clicked_client(WM *wm, Window win);
 static void handle_client_message(WM *wm, XEvent *e);
 static void activate_win(WM *wm, Window win, unsigned long src);
-static void toggle_showing_desktop_mode(WM *wm, bool show_mode);
 static void change_desktop(WM *wm, Window win, unsigned int desktop);
 static void handle_config_request(WM *wm, XEvent *e);
 static void config_managed_client(WM *wm, Client *c);
@@ -142,15 +141,6 @@ static void activate_win(WM *wm, Window win, unsigned long src)
         set_urgency(wm, c, true);
     if(src==2 && (c=win_to_client(wm, win)) && is_on_cur_desktop(wm, c))
         focus_client(wm, wm->cur_desktop, c);
-}
-
-static void toggle_showing_desktop_mode(WM *wm, bool show_mode)
-{
-    if(show_mode)
-        iconify_all_clients(wm);
-    else
-        deiconify_all_clients(wm);
-    set_net_showing_desktop(wm, show_mode);
 }
 
 static void change_desktop(WM *wm, Window win, unsigned int desktop)
