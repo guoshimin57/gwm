@@ -161,7 +161,7 @@ void update_taskbar_buttons(WM *wm)
 {
     for(Widget_type b=TASKBAR_BUTTON_BEGIN; b<=TASKBAR_BUTTON_END; b++)
     {
-        size_t i=TASKBAR_BUTTON_INDEX(b);
+        size_t i=WIDGET_INDEX(b, TASKBAR_BUTTON);
         String_format f={{0, 0, wm->cfg->taskbar_button_width, wm->taskbar->h},
             CENTER, true, false, true, TASKBAR_BUTTON_COLOR(wm, b),
             TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};

@@ -70,7 +70,6 @@
 #define DESKTOP_N (DESKTOP_BUTTON_END-DESKTOP_BUTTON_BEGIN+1)
 #define FONT_NAME_MAX 64
 
-
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)
 #define CROSSING_MASK (EnterWindowMask|LeaveWindowMask)
@@ -83,21 +82,18 @@
 #define ICON_WIN_EVENT_MASK (BUTTON_EVENT_MASK|PointerMotionMask)
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
 
-#define TITLE_BUTTON_INDEX(type) ((type)-TITLE_BUTTON_BEGIN)
-#define IS_TITLE_BUTTON(type) \
-    ((type)>=TITLE_BUTTON_BEGIN && (type)<=TITLE_BUTTON_END)
-
-#define TASKBAR_BUTTON_INDEX(type) ((type)-TASKBAR_BUTTON_BEGIN)
-#define IS_TASKBAR_BUTTON(type) \
-    ((type)>=TASKBAR_BUTTON_BEGIN && (type)<=TASKBAR_BUTTON_END)
-
-#define ACT_CENTER_ITEM_INDEX(type) ((type)-ACT_CENTER_ITEM_BEGIN)
-#define IS_ACT_CENTER_ITEM(type) \
-    ((type)>=ACT_CENTER_ITEM_BEGIN && (type)<=ACT_CENTER_ITEM_END)
-
-#define CLIENT_MENU_ITEM_INDEX(type) ((type)-CLIENT_MENU_ITEM_BEGIN)
-#define IS_CLIENT_MENU_ITEM(type) \
-    ((type)>=CLIENT_MENU_ITEM_BEGIN && (type)<=CLIENT_MENU_ITEM_END)
+#define WIDGET_INDEX(type_name, type_class) ((type_name) - type_class ## _BEGIN)
+#define IS_WIDGET_CLASS(type_name, type_class) \
+    (type_class ## _BEGIN <= (type_name) && (type_name) <= type_class ## _END)
+#define IS_BUTTON(type) \
+    (  type==CLIENT_ICON || type==TITLE_LOGO \
+    || IS_WIDGET_CLASS(type, TITLE_BUTTON) \
+    || IS_WIDGET_CLASS(type, CLIENT_MENU_ITEM) \
+    || IS_WIDGET_CLASS(type, TASKBAR_BUTTON) \
+    || IS_WIDGET_CLASS(type, ACT_CENTER_ITEM))
+#define IS_MENU_ITEM(type) \
+    (  IS_WIDGET_CLASS(type, CLIENT_MENU_ITEM) \
+    || IS_WIDGET_CLASS(type, ACT_CENTER_ITEM))
 
 #define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
 #define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client
@@ -110,6 +106,7 @@ typedef struct client_tag Client;
 typedef struct menu_tag Menu;
 typedef struct entry_tag Entry;
 typedef struct string_format_tag String_format;
+
 
 struct file_tag
 {

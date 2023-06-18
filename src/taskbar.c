@@ -86,7 +86,7 @@ static void create_act_center(WM *wm)
 
 void update_taskbar_button(WM *wm, Widget_type type, bool change_bg)
 {
-    size_t i=TASKBAR_BUTTON_INDEX(type);
+    size_t i=WIDGET_INDEX(type, TASKBAR_BUTTON);
     String_format f={{0, 0, wm->cfg->taskbar_button_width, wm->taskbar->h},
         CENTER, true, false, change_bg, TASKBAR_BUTTON_COLOR(wm, type),
         TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
@@ -103,7 +103,7 @@ void update_status_area_text(WM *wm)
 
 void hint_leave_taskbar_button(WM *wm, Widget_type type)
 {
-    Window win=wm->taskbar->buttons[TASKBAR_BUTTON_INDEX(type)];
+    Window win=wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
     update_win_bg(wm, win, TASKBAR_BUTTON_COLOR(wm, type), None);
 }
 

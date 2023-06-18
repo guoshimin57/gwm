@@ -63,7 +63,7 @@ Widget_type get_widget_type(WM *wm, Window win)
     if(win == wm->hint_win)
         return HINT_WIN;
     for(type=TASKBAR_BUTTON_BEGIN; type<=TASKBAR_BUTTON_END; type++)
-        if(win == wm->taskbar->buttons[TASKBAR_BUTTON_INDEX(type)])
+        if(win == wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)])
             return type;
     if(win == wm->taskbar->status_area)
         return STATUS_AREA;
@@ -71,10 +71,10 @@ Widget_type get_widget_type(WM *wm, Window win)
         if(c->area_type==ICONIFY_AREA && win==c->icon->win)
             return CLIENT_ICON;
     for(type=ACT_CENTER_ITEM_BEGIN; type<=ACT_CENTER_ITEM_END; type++)
-        if(win == wm->act_center->items[ACT_CENTER_ITEM_INDEX(type)])
+        if(win == wm->act_center->items[WIDGET_INDEX(type, ACT_CENTER_ITEM)])
             return type;
     for(type=CLIENT_MENU_ITEM_BEGIN; type<=CLIENT_MENU_ITEM_END; type++)
-        if(win == wm->client_menu->items[CLIENT_MENU_ITEM_INDEX(type)])
+        if(win == wm->client_menu->items[WIDGET_INDEX(type, CLIENT_MENU_ITEM)])
             return type;
     if((c=win_to_client(wm, win)))
     {
@@ -88,7 +88,7 @@ Widget_type get_widget_type(WM *wm, Window win)
             return TITLE_AREA;
         else
             for(type=TITLE_BUTTON_BEGIN; type<=TITLE_BUTTON_END; type++)
-                if(win == c->buttons[TITLE_BUTTON_INDEX(type)])
+                if(win == c->buttons[WIDGET_INDEX(type, TITLE_BUTTON)])
                     return type;
     }
     return UNDEFINED;

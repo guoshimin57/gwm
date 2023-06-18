@@ -253,13 +253,13 @@ void set_net_current_desktop(WM *wm)
 
 static void set_net_desktop_names(WM *wm)
 {
-    size_t n=0, begin=TASKBAR_BUTTON_INDEX(DESKTOP_BUTTON_BEGIN);
+    size_t n=0;
 
-    for(size_t i=0; i<DESKTOP_N; i++)
-        n += strlen(wm->cfg->taskbar_button_text[begin+i])+1;
+    for(Widget_type i=DESKTOP_BUTTON_BEGIN; i<=DESKTOP_BUTTON_END; i++)
+        n += strlen(wm->cfg->taskbar_button_text[i])+1;
     XChangeProperty(wm->display, wm->root_win,
         wm->ewmh_atom[NET_DESKTOP_NAMES], wm->utf8, 8, PropModeReplace,
-        (unsigned char *)wm->cfg->taskbar_button_text[begin], n);
+        (unsigned char *)wm->cfg->taskbar_button_text[DESKTOP_BUTTON_BEGIN], n);
 }
 
 void set_net_active_window(WM *wm)

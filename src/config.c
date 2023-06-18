@@ -27,13 +27,13 @@
 #define SET_TEXT_COLOR_NAME(wm, theme, type, name) /* 設置文字顏色 */ \
     wm->cfg->text_color_name[theme][type]=name
 #define SET_TITLE_BUTTON_TEXT(wm, type, text) /* 設置標題按鈕文字 */ \
-    wm->cfg->title_button_text[type-TITLE_BUTTON_BEGIN]=text
+    wm->cfg->title_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
 #define SET_TASKBAR_BUTTON_TEXT(wm, type, text) /* 設置任務欄按鈕文字 */ \
-    wm->cfg->taskbar_button_text[type-TASKBAR_BUTTON_BEGIN]=text
+    wm->cfg->taskbar_button_text[WIDGET_INDEX(type, TASKBAR_BUTTON)]=text
 #define SET_ACT_CENTER_ITEM_TEXT(wm, type, text) /* 設置操作中心菜單項文字 */ \
-    wm->cfg->act_center_item_text[type-ACT_CENTER_ITEM_BEGIN]=text
+    wm->cfg->act_center_item_text[WIDGET_INDEX(type, ACT_CENTER_ITEM)]=text
 #define SET_CLIENT_MENU_ITEM_TEXT(wm, type, text) /* 設置客戶窗口菜單項文字 */ \
-    wm->cfg->client_menu_item_text[type-CLIENT_MENU_ITEM_BEGIN]=text
+    wm->cfg->client_menu_item_text[WIDGET_INDEX(type, CLIENT_MENU_ITEM)]=text
 #define SET_TOOLTIP(wm, type, text) /* 設置構件提示 */ \
     wm->cfg->tooltip[type]=text
 
@@ -275,14 +275,14 @@ static const Rule rule[] =
  *         fc-list -f "%{fullname}\n" :lang=zh | sed 's/,/\n/g' | sort -u
  *     縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
  * 近視之人應按近視程度設置大於1.0的合適值。
- * 用戶設置：    字體類型(詳gwm.h)    字體系列     字號
+ * 用戶設置：    字體類型(詳gwm.h)  字體系列     字號
  */
 static void config_font(WM *wm)
 {
     int size=get_scale_font_size(wm, 2.0);
     SET_FONT(wm, DEFAULT_FONT,      "monospace", size);
     SET_FONT(wm, TITLEBAR_FONT,     "monospace", size);
-    SET_FONT(wm, MENU_FONT,   "monospace", size);
+    SET_FONT(wm, MENU_FONT,         "monospace", size);
     SET_FONT(wm, TASKBAR_FONT,      "monospace", size);
     SET_FONT(wm, CLASS_FONT,        "monospace", size);
     SET_FONT(wm, ENTRY_FONT,        "monospace", size);

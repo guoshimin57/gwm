@@ -570,13 +570,13 @@ void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)
 void open_act_center(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(arg);
-    show_menu(wm, e, wm->act_center, wm->taskbar->buttons[TASKBAR_BUTTON_INDEX(ACT_CENTER_ITEM)]);
+    show_menu(wm, e, wm->act_center, e->xbutton.window);
 }
 
 void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(arg);
-    show_menu(wm, e, wm->client_menu, CUR_FOC_CLI(wm)->logo);
+    show_menu(wm, e, wm->client_menu, e->xbutton.window);
 }
 
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)

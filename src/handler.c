@@ -201,17 +201,14 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         focus_client(wm, wm->cur_desktop, c);
     if(is_layout_adjust_area(wm, win, x) && get_typed_clients_n(wm, MAIN_AREA))
         act=ADJUST_LAYOUT_RATIO;
-    else if(IS_TASKBAR_BUTTON(type) || type==CLIENT_ICON || type==TITLE_LOGO
-        || IS_ACT_CENTER_ITEM(type) || IS_CLIENT_MENU_ITEM(type))
+    else if(type == CLOSE_BUTTON)
+        update_win_bg(wm, win, WIDGET_COLOR(wm, ENTERED_CLOSE_BUTTON), None);
+    else if(IS_BUTTON(type))
         update_win_bg(wm, win, WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON), None);
     else if(type == CLIENT_FRAME)
         act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
         act=MOVE;
-    else if(IS_TITLE_BUTTON(type))
-        update_win_bg(wm, win, type==CLOSE_BUTTON ?
-            WIDGET_COLOR(wm, ENTERED_CLOSE_BUTTON) :
-            WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON), None);
     if(type != UNDEFINED)
         XDefineCursor(wm->display, win, wm->cursors[act]);
     handle_pointer_hover(wm, win, show_tooltip);
@@ -263,23 +260,19 @@ static void handle_expose(WM *wm, XEvent *e)
 
     if(type == CLIENT_ICON)
         update_client_icon_win(wm, win);
-    else if(IS_TASKBAR_BUTTON(type))
+    else if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
         update_taskbar_button(wm, type, !e->xexpose.send_event);
-    else if(IS_ACT_CENTER_ITEM(type))
-        update_menu_item_text(wm, win,
-            wm->cfg->act_center_item_text[ACT_CENTER_ITEM_INDEX(type)]);
-    else if(IS_CLIENT_MENU_ITEM(type))
-        update_menu_item_text(wm, win,
-            wm->cfg->client_menu_item_text[CLIENT_MENU_ITEM_INDEX(type)]);
+    else if(IS_MENU_ITEM(type))
+        update_menu_item_text(wm, win);
     else if(type == STATUS_AREA)
         update_status_area_text(wm);
     else if(type == TITLE_LOGO)
         update_title_logo(wm, win_to_client(wm, win));
     else if(type == TITLE_AREA)
         update_title_area_text(wm, win_to_client(wm, win));
-    else if(IS_TITLE_BUTTON(type))
+    else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
         update_title_button_text(wm, win_to_client(wm, win),
-            TITLE_BUTTON_INDEX(type));
+            WIDGET_INDEX(type, TITLE_BUTTON));
     else if(type == RUN_CMD_ENTRY)
         update_entry_text(wm, wm->run_cmd);
 }
@@ -352,16 +345,16 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     Window win=e->xcrossing.window;
     Widget_type type=get_widget_type(wm, win);
 
-    if(IS_TASKBAR_BUTTON(type))
+    if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
         hint_leave_taskbar_button(wm, type);
     else if(type == CLIENT_ICON)
         update_win_bg(wm, win, WIDGET_COLOR(wm, TASKBAR), None);
-    else if(IS_ACT_CENTER_ITEM(type) || IS_CLIENT_MENU_ITEM(type))
+    else if(IS_MENU_ITEM(type))
         update_win_bg(wm, win, WIDGET_COLOR(wm, MENU), None);
     else if(type == TITLE_LOGO)
         update_win_bg(wm, win,
             CWIDGET_COLOR(wm, win_to_client(wm, win), TITLEBAR), None);
-    else if(IS_TITLE_BUTTON(type))
+    else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
         hint_leave_title_button(wm, win_to_client(wm, win), type);
     if(type != UNDEFINED)
         XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
@@ -369,7 +362,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 
 static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
 {
-    Window win=c->buttons[TITLE_BUTTON_INDEX(type)];
+    Window win=c->buttons[WIDGET_INDEX(type, TITLE_BUTTON)];
     update_win_bg(wm, win, CWIDGET_COLOR(wm, c, TITLEBAR), None);
 }
 

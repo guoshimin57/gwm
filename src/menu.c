@@ -45,10 +45,17 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
     XMapWindow(wm->display, menu->win);
 }
 
-void update_menu_item_text(WM *wm, Window win, const char *text)
+void update_menu_item_text(WM *wm, Window win)
 {
+    const char *text=NULL;
     int h=MENU_ITEM_HEIGHT(wm), w=wm->cfg->menu_item_width;
     String_format f={{0, 0, w, h}, CENTER_LEFT, true, true, false, 0,
         TEXT_COLOR(wm, MENU), MENU_FONT};
+    Widget_type t=get_widget_type(wm, win);
+
+    if(IS_WIDGET_CLASS(t, ACT_CENTER_ITEM))
+        text=wm->cfg->act_center_item_text[WIDGET_INDEX(t, ACT_CENTER_ITEM)];
+    else
+        text=wm->cfg->client_menu_item_text[WIDGET_INDEX(t, CLIENT_MENU_ITEM)];
     draw_string(wm, win, text, &f);
 }

@@ -480,7 +480,7 @@ int compare_client_order(WM *wm, Client *c1, Client *c2)
 bool is_last_typed_client(WM *wm, Client *c, Area_type type)
 {
     for(Client *p=wm->clients->prev; p!=c; p=p->prev)
-        if(p->area_type == type)
+        if(is_on_cur_desktop(wm, p) && p->area_type==type)
             return false;
     return true;
 }

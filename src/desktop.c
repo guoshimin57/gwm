@@ -29,10 +29,9 @@ unsigned int get_desktop_n(WM *wm, XEvent *e, Func_arg arg)
 {
     if(e->type == KeyPress)
         return (arg.n>=0 && arg.n<=DESKTOP_N) ? arg.n : 1;
-    else if(e->type == ButtonPress)
-        return TASKBAR_BUTTON_INDEX(get_widget_type(wm, e->xbutton.window))+1;
-    else
-        return 1;
+    if(e->type == ButtonPress)
+        return WIDGET_INDEX(get_widget_type(wm, e->xbutton.window), TASKBAR_BUTTON)+1;
+    return 1;
 }
 
 void focus_desktop_n(WM *wm, unsigned int n)
