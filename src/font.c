@@ -51,8 +51,9 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
     XClearArea(wm->display, d, x, y, w, h, False); 
     if(f->change_bg)
     {
-        XSetForeground(wm->display, wm->gc, f->bg);
-        XFillRectangle(wm->display, d, wm->gc, x, y, w, h);
+        GC gc=XCreateGC(wm->display, d, 0, NULL);
+        XSetForeground(wm->display, gc, f->bg);
+        XFillRectangle(wm->display, d, gc, x, y, w, h);
     }
 
     XftDraw *draw=XftDrawCreate(wm->display, d, wm->visual, wm->colormap);

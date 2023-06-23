@@ -22,9 +22,8 @@ void create_taskbar(WM *wm)
     Taskbar *b=wm->taskbar=malloc_s(sizeof(Taskbar));
     b->w=wm->screen_width, b->h=TASKBAR_HEIGHT(wm);
     b->x=0, b->y=(wm->cfg->taskbar_on_top ? 0 : wm->screen_height-b->h);
-    b->win=XCreateSimpleWindow(wm->display, wm->root_win, b->x, b->y,
-        b->w, b->h, 0, 0, 0);
-    set_override_redirect(wm, b->win);
+    b->win=create_widget_win(wm, wm->root_win, b->x, b->y, b->w, b->h,
+        0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(wm->display, b->win, CROSSING_MASK);
     create_taskbar_buttons(wm);
     create_status_area(wm);
@@ -42,8 +41,8 @@ static void create_taskbar_buttons(WM *wm)
 
     for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
     {
-        b->buttons[i]=XCreateSimpleWindow(wm->display, b->win, w*i, 0, w, h,
-            0, 0, TASKBAR_BUTTON_COLOR(wm, TASKBAR_BUTTON_BEGIN+i));
+        b->buttons[i]=create_widget_win(wm, b->win, w*i, 0, w, h, 0, 0,
+            NCHOSEN_BUTTON_COLOR(wm, TASKBAR_BUTTON_BEGIN+i, TASKBAR_COLOR));
         XSelectInput(wm->display, b->buttons[i], BUTTON_EVENT_MASK);
     }
 }
@@ -53,7 +52,7 @@ static void create_icon_area(WM *wm)
     Taskbar *b=wm->taskbar;
     int bw=wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N,
         w=b->w-bw-b->status_area_w;
-    b->icon_area=XCreateSimpleWindow(wm->display, b->win,
+    b->icon_area=create_widget_win(wm, b->win,
         bw, 0, w, b->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
 }
 
@@ -68,7 +67,7 @@ static void create_status_area(WM *wm)
         b->status_area_w=wm->cfg->status_area_width_max;
     else if(b->status_area_w == 0)
         b->status_area_w=1;
-    wm->taskbar->status_area=XCreateSimpleWindow(wm->display, b->win,
+    wm->taskbar->status_area=create_widget_win(wm, b->win,
         b->w-b->status_area_w, 0, b->status_area_w, b->h,
         0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(wm->display, b->status_area, ExposureMask);
@@ -79,32 +78,37 @@ static void create_act_center(WM *wm)
     int n=ACT_CENTER_ITEM_N, col=wm->cfg->act_center_col,
         w=wm->cfg->menu_item_width, pad=get_font_pad(wm, MENU_FONT),
         h=MENU_ITEM_HEIGHT(wm);
-    unsigned long color=WIDGET_COLOR(wm, MENU);
 
-    wm->act_center=create_menu(wm, n, col, w, h, pad, color);
+    wm->act_center=create_menu(wm, n, col, w, h, pad);
 }
 
-void update_taskbar_button(WM *wm, Widget_type type, bool change_bg)
+void update_taskbar_buttons_bg(WM *wm)
+{
+    for(Widget_type t=TASKBAR_BUTTON_BEGIN; t<=TASKBAR_BUTTON_END; t++)
+        update_taskbar_button_bg(wm, t);
+}
+
+void update_taskbar_button_bg(WM *wm, Widget_type type)
+{
+    Window win=wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
+    update_win_bg(wm, win, NCHOSEN_BUTTON_COLOR(wm, type, TASKBAR_COLOR), None);
+}
+
+void update_taskbar_button_fg(WM *wm, Widget_type type)
 {
     size_t i=WIDGET_INDEX(type, TASKBAR_BUTTON);
     String_format f={{0, 0, wm->cfg->taskbar_button_width, wm->taskbar->h},
-        CENTER, true, false, change_bg, TASKBAR_BUTTON_COLOR(wm, type),
+        CENTER, true, false, false, NCHOSEN_BUTTON_COLOR(wm, type, TASKBAR_COLOR),
         TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
     draw_string(wm, wm->taskbar->buttons[i], wm->cfg->taskbar_button_text[i], &f);
 }
 
-void update_status_area_text(WM *wm)
+void update_status_area_fg(WM *wm)
 {
     Taskbar *b=wm->taskbar;
     String_format f={{0, 0, b->status_area_w, b->h}, CENTER_RIGHT, true,
         false, false, 0, TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
     draw_string(wm, b->status_area, b->status_text, &f);
-}
-
-void hint_leave_taskbar_button(WM *wm, Widget_type type)
-{
-    Window win=wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
-    update_win_bg(wm, win, TASKBAR_BUTTON_COLOR(wm, type), None);
 }
 
 void update_icon_status_area(WM *wm)
@@ -121,10 +125,10 @@ void update_icon_status_area(WM *wm)
         XMoveResizeWindow(wm->display, b->icon_area, bw, 0, b->w-bw-w, b->h);
     }
     b->status_area_w=w;
-    update_status_area_text(wm);
+    update_status_area_fg(wm);
 }
 
-void update_client_icon_win(WM *wm, Window win)
+void update_client_icon_fg(WM *wm, Window win)
 {
     Client *c=win_to_iconic_state_client(wm, win);
     if(!c)

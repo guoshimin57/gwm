@@ -195,8 +195,8 @@ static void fix_win_size_by_workarea(WM *wm, Client *c)
 static void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c);
-    c->frame=XCreateSimpleWindow(wm->display, wm->root_win, fr.x, fr.y, fr.w,
-        fr.h, c->border_w, WIDGET_COLOR(wm, CURRENT_BORDER), 0);
+    c->frame=create_widget_win(wm, wm->root_win, fr.x, fr.y, fr.w, fr.h,
+        c->border_w, WIDGET_COLOR(wm, CURRENT_BORDER), 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
     if(wm->cfg->set_frame_prop)
         copy_prop(wm, c->frame, c->win);
@@ -204,6 +204,13 @@ static void frame_client(WM *wm, Client *c)
         create_titlebar(wm, c);
     XAddToSaveSet(wm->display, c->win);
     XReparentWindow(wm->display, c->win, c->frame, 0, c->titlebar_h);
+
+    /* 以下是同時設置窗口前景和背景透明度的非EWMH標準方法：
+    unsigned long opacity = (unsigned long)(0xfffffffful);
+    Atom XA_NET_WM_WINDOW_OPACITY = XInternAtom(wm->display, "_NET_WM_WINDOW_OPACITY", False);
+    XChangeProperty(wm->display, c->frame, XA_NET_WM_WINDOW_OPACITY, XA_CARDINAL, 32,
+        PropModeReplace, (unsigned char *)&opacity, 1L);
+    */
 }
 
 void create_titlebar(WM *wm, Client *c)
@@ -212,15 +219,15 @@ void create_titlebar(WM *wm, Client *c)
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(wm, c, i);
-        c->buttons[i]=XCreateSimpleWindow(wm->display, c->frame, br.x, br.y,
+        c->buttons[i]=create_widget_win(wm, c->frame, br.x, br.y,
             br.w, br.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
         XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
     }
-    c->title_area=XCreateSimpleWindow(wm->display, c->frame, tr.x, tr.y,
+    c->title_area=create_widget_win(wm, c->frame, tr.x, tr.y,
         tr.w, tr.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
     XSelectInput(wm->display, c->title_area, TITLE_AREA_EVENT_MASK);
-    c->logo=XCreateSimpleWindow(wm->display, c->frame, 0, 0,
-        c->titlebar_h, c->titlebar_h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
+    c->logo=create_widget_win(wm, c->frame, 0, 0, c->titlebar_h,
+        c->titlebar_h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
     XSelectInput(wm->display, c->logo, BUTTON_EVENT_MASK);
 }
 
@@ -332,22 +339,6 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
         XResizeWindow(wm->display, c->title_area, tr.w, tr.h);
     }
     XMoveResizeWindow(wm->display, c->frame, fr.x, fr.y, fr.w, fr.h);
-}
-
-void update_frame(WM *wm, unsigned int desktop_n, Client *c)
-{
-    bool cur=(c==wm->desktop[desktop_n-1]->cur_focus_client);
-    if(c->border_w)
-        XSetWindowBorder(wm->display, c->frame,
-            NC_WIDGET_COLOR(wm, cur, BORDER));
-    if(c->titlebar_h)
-    {
-        update_win_bg(wm, c->logo, NC_WIDGET_COLOR(wm, cur, TITLEBAR), 0);
-        update_win_bg(wm, c->title_area, NC_WIDGET_COLOR(wm, cur, TITLEBAR), 0);
-        for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            update_win_bg(wm, c->buttons[i],
-                NC_WIDGET_COLOR(wm, cur, TITLEBAR), None);
-    }
 }
 
 Client *win_to_iconic_state_client(WM *wm, Window win)

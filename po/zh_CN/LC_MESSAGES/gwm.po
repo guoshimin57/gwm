@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.3.2\n"
+"Project-Id-Version: gwm 2.4.0\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-06-15 13:51+0800\n"
+"POT-Creation-Date: 2023-06-23 15:46+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -257,12 +257,12 @@ msgstr "不能安装SIGQUIT信号处理函数"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 
-#: src/init.c:100
+#: src/init.c:108
 #, fuzzy, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "错误： 不能设置输入法"
 
-#: src/init.c:159
+#: src/init.c:165
 #, fuzzy
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"

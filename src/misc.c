@@ -341,3 +341,13 @@ void update_hint_win_for_info(WM *wm, Window hover, const char *info)
         TEXT_COLOR(wm, HINT), HINT_FONT};
     draw_string(wm, wm->hint_win, info, &f);
 }
+
+bool have_compositor(WM *wm) // 判斷是否存在（遵從EWMH標準的）合成器
+{
+    char prop_name[32];
+
+    // 遵守EWMH標準的合成器都會獲取名爲_NET_WM_CM_Sn的選擇區所有權
+    snprintf(prop_name, 32, "_NET_WM_CM_S%d", wm->screen);
+    Atom prop_atom = XInternAtom(wm->display, prop_name, False);
+    return XGetSelectionOwner(wm->display, prop_atom) != None;
+}

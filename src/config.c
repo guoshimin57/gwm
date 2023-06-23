@@ -343,7 +343,6 @@ static void config_widget_color_for_dark(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CURRENT_TITLEBAR_COLOR,      "grey31");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTERED_NORMAL_BUTTON_COLOR, "DarkOrange");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
-    SET_WIDGET_COLOR_NAME(wm, DARK_THEME, NORMAL_BUTTON_COLOR,         "grey21");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, CHOSEN_BUTTON_COLOR,         "DeepSkyBlue4");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, MENU_COLOR,                  "grey31");
     SET_WIDGET_COLOR_NAME(wm, DARK_THEME, TASKBAR_COLOR,               "grey21");
@@ -363,7 +362,6 @@ static void config_widget_color_for_normal(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CURRENT_TITLEBAR_COLOR,      "DodgerBlue");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTERED_NORMAL_BUTTON_COLOR, "DarkOrange");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
-    SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, NORMAL_BUTTON_COLOR,         "grey21");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, CHOSEN_BUTTON_COLOR,         "DeepSkyBlue4");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, MENU_COLOR,                  "grey31");
     SET_WIDGET_COLOR_NAME(wm, NORMAL_THEME, TASKBAR_COLOR,               "grey21");
@@ -383,7 +381,6 @@ static void config_widget_color_for_light(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CURRENT_TITLEBAR_COLOR,      "grey91");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ENTERED_NORMAL_BUTTON_COLOR, "white");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ENTERED_CLOSE_BUTTON_COLOR,  "red");
-    SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, NORMAL_BUTTON_COLOR,         "grey81");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, CHOSEN_BUTTON_COLOR,         "LightSkyBlue");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, MENU_COLOR,                  "grey61");
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, TASKBAR_COLOR,               "grey81");
@@ -392,12 +389,15 @@ static void config_widget_color_for_light(WM *wm)
     SET_WIDGET_COLOR_NAME(wm, LIGHT_THEME, ROOT_WIN_COLOR,              "black");
 }
 
-/* 功能：爲各種主題設置構件顏色。*/
+/* 功能：爲各種主題設置構件顏色及不透明度。*/
 static void config_widget_color(WM *wm)
 {
     config_widget_color_for_dark(wm);
     config_widget_color_for_normal(wm);
     config_widget_color_for_light(wm);
+    wm->cfg->widget_alpha[DARK_THEME]=0.8;
+    wm->cfg->widget_alpha[NORMAL_THEME]=0.8;
+    wm->cfg->widget_alpha[LIGHT_THEME]=0.8;
 }
 
 /* 功能：爲深色主題設置文字顏色。

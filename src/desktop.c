@@ -62,7 +62,7 @@ void focus_desktop_n(WM *wm, unsigned int n)
     focus_client(wm, wm->cur_desktop, CUR_FOC_CLI(wm));
     update_layout(wm);
     update_icon_area(wm);
-    update_taskbar_buttons(wm);
+    update_taskbar_buttons_bg(wm);
     set_all_net_client_list(wm);
 }
 

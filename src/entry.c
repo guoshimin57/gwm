@@ -20,13 +20,11 @@ static bool close_entry(WM *wm, Entry *e, bool result);
 Entry *create_entry(WM *wm, Rect *r, const char *hint)
 {
     Entry *e=wm->run_cmd=malloc_s(sizeof(Entry));
-    e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h;
-    e->win=XCreateSimpleWindow(wm->display, wm->root_win, e->x, e->y,
-        e->w, e->h, wm->cfg->border_width, WIDGET_COLOR(wm, CURRENT_BORDER),
+    e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h, e->hint=hint;
+    e->win=create_widget_win(wm, wm->root_win, e->x, e->y, e->w, e->h,
+        wm->cfg->border_width, WIDGET_COLOR(wm, CURRENT_BORDER), 
         WIDGET_COLOR(wm, ENTRY));
-    set_override_redirect(wm, e->win);
     XSelectInput(wm->display, e->win, ENTRY_EVENT_MASK);
-    e->hint=hint;
     set_xic(wm, e->win, &e->xic);
     return e;
 }

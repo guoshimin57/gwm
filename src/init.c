@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 
+static void set_visual_info(WM *wm);
 static void set_locale(WM *wm);
 static void set_workarea(WM *wm);
 static void set_atoms(WM *wm);
@@ -28,19 +29,17 @@ void init_wm(WM *wm)
     memset(wm, 0, sizeof(WM));
     if(!(wm->display=XOpenDisplay(NULL)))
         exit_with_msg("error: cannot open display");
-    set_locale(wm);
 
+    set_locale(wm);
     wm->screen=DefaultScreen(wm->display);
     wm->screen_width=DisplayWidth(wm->display, wm->screen);
     wm->screen_height=DisplayHeight(wm->display, wm->screen);
     wm->mod_map=XGetModifierMapping(wm->display);
     wm->root_win=RootWindow(wm->display, wm->screen);
-    wm->gc=XCreateGC(wm->display, wm->root_win, 0, NULL);
-    wm->visual=DefaultVisual(wm->display, wm->screen);
-    wm->colormap=DefaultColormap(wm->display, wm->screen);
-    wm->wm_check_win=XCreateSimpleWindow(wm->display, wm->root_win,
+    set_visual_info(wm);
+    wm->wm_check_win=create_widget_win(wm, wm->root_win,
         -1, -1, 1, 1, 0, 0, 0);
-
+    wm->gc=XCreateGC(wm->display, wm->wm_check_win, 0, NULL);
     config(wm);
     init_imlib(wm);
     if(wm->cfg->wallpaper_paths)
@@ -62,6 +61,15 @@ void init_wm(WM *wm)
     create_clients(wm);
     grab_keys(wm);
     exec_autostart(wm);
+}
+
+static void set_visual_info(WM *wm)
+{
+    XVisualInfo v;
+    XMatchVisualInfo(wm->display, wm->screen, 32, TrueColor, &v);
+    wm->depth=v.depth;
+    wm->visual=v.visual;
+    wm->colormap=XCreateColormap(wm->display, wm->root_win, v.visual, AllocNone);
 }
 
 static void set_workarea(WM *wm)
@@ -126,9 +134,8 @@ static void create_run_cmd_entry(WM *wm)
 
 static void create_hint_win(WM *wm)
 {
-    wm->hint_win=XCreateSimpleWindow(wm->display, wm->root_win, 0, 0, 1,
-        1, 0, 0, WIDGET_COLOR(wm, HINT_WIN));
-    set_override_redirect(wm, wm->hint_win);
+    wm->hint_win=create_widget_win(wm, wm->root_win, 0, 0, 1, 1, 0, 0,
+        WIDGET_COLOR(wm, HINT_WIN));
     XSelectInput(wm->display, wm->hint_win, ExposureMask);
 }
 
@@ -136,9 +143,8 @@ static void create_client_menu(WM *wm)
 {
     int n=CLIENT_MENU_ITEM_N, col=1, w=wm->cfg->menu_item_width,
         pad=get_font_pad(wm, MENU_FONT), h=MENU_ITEM_HEIGHT(wm);
-    unsigned long color=WIDGET_COLOR(wm, MENU);
 
-    wm->client_menu=create_menu(wm, n, col, w, h, pad, color);
+    wm->client_menu=create_menu(wm, n, col, w, h, pad);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */
@@ -168,6 +174,7 @@ static void init_imlib(WM *wm)
     imlib_context_set_dither(1);
     imlib_context_set_display(wm->display);
     imlib_context_set_visual(wm->visual);
+    imlib_context_set_colormap(wm->colormap);
 }
 
 static void init_wallpaper_files(WM *wm)
@@ -179,11 +186,12 @@ static void init_wallpaper_files(WM *wm)
 
 void init_root_win_background(WM *wm)
 {
-    Pixmap pixmap=None;
     const char *name=wm->cfg->wallpaper_filename;
-    if(name)
-        pixmap=create_pixmap_from_file(wm, wm->root_win, name);
+    if(!name)
+        return;
+
+    Pixmap pixmap=create_pixmap_from_file(wm, wm->root_win, name);
     update_win_bg(wm, wm->root_win, WIDGET_COLOR(wm, ROOT_WIN), pixmap);
-    if(name && pixmap)
+    if(pixmap && !have_compositor(wm))
         XFreePixmap(wm->display, pixmap);
 }

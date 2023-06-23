@@ -13,6 +13,11 @@
 
 static void alloc_widget_color(WM *wm, const char *color_name, XColor *color);
 static void alloc_text_color(WM *wm, const char *color_name, XftColor *color);
+static void update_taskbar_bg(WM *wm);
+static void update_act_center_bg(WM *wm);
+static void update_run_cmd_bg(WM *wm);
+static void update_client_menu_bg(WM *wm);
+static void update_clients_bg(WM *wm);
 
 static void alloc_widget_color(WM *wm, const char *color_name, XColor *color)
 {
@@ -39,21 +44,88 @@ void alloc_color(WM *wm)
 
 void update_widget_color(WM *wm)
 {
-    update_taskbar_buttons(wm);
-    update_win_bg(wm, wm->taskbar->icon_area, WIDGET_COLOR(wm, TASKBAR), None);
+    update_taskbar_bg(wm);
+    update_act_center_bg(wm);
+    update_run_cmd_bg(wm);
+    update_win_bg(wm, wm->hint_win, WIDGET_COLOR(wm, HINT_WIN), None);
+    update_client_menu_bg(wm);
+    update_clients_bg(wm);
+}
+
+static void update_taskbar_bg(WM *wm)
+{
+    unsigned long bg=WIDGET_COLOR(wm, TASKBAR);
+    update_taskbar_buttons_bg(wm);
+    update_win_bg(wm, wm->taskbar->icon_area, bg, None);
     /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
      * 雖然給icon_area發送了Expose事件，但實際上沒更新背景。也許當窗口沒有內容
      * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
     XClearWindow(wm->display, wm->taskbar->icon_area);
-    update_win_bg(wm, wm->taskbar->status_area, WIDGET_COLOR(wm, TASKBAR), None);
-    update_win_bg(wm, wm->act_center->win, WIDGET_COLOR(wm, MENU), None);
+    update_win_bg(wm, wm->taskbar->status_area, bg, None);
+}
+
+static void update_act_center_bg(WM *wm)
+{
+    unsigned long bg=WIDGET_COLOR(wm, MENU);
+    update_win_bg(wm, wm->act_center->win, bg, None);
     for(size_t i=0; i<ACT_CENTER_ITEM_N; i++)
-        update_win_bg(wm, wm->act_center->items[i],
-            WIDGET_COLOR(wm, MENU) ,None);
-    update_win_bg(wm, wm->hint_win, WIDGET_COLOR(wm, HINT_WIN), None);
-    update_win_bg(wm, wm->run_cmd->win, WIDGET_COLOR(wm, ENTRY), None);
-    XSetWindowBorder(wm->display, wm->run_cmd->win,
-        WIDGET_COLOR(wm, CURRENT_BORDER));
+        update_win_bg(wm, wm->act_center->items[i], bg,None);
+}
+
+static void update_run_cmd_bg(WM *wm)
+{
+    Window win=wm->run_cmd->win;
+    update_win_bg(wm, win, WIDGET_COLOR(wm, ENTRY), None);
+    XSetWindowBorder(wm->display, win, WIDGET_COLOR(wm, CURRENT_BORDER));
+}
+
+static void update_client_menu_bg(WM *wm)
+{
+    unsigned long bg=WIDGET_COLOR(wm, MENU);
+    update_win_bg(wm, wm->client_menu->win, bg, None);
+    for(size_t i=0; i<CLIENT_MENU_ITEM_N; i++)
+        update_win_bg(wm, wm->client_menu->items[i], bg, None);
+}
+
+static void update_clients_bg(WM *wm)
+{
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        update_client_look(wm, wm->cur_desktop, c);
+        update_client_bg(wm, wm->cur_desktop, c);
+}
+
+void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
+{
+    if(!c || c==wm->clients)
+        return;
+
+    Desktop *d=wm->desktop[desktop_n-1];
+    if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
+        update_win_bg(wm, c->icon->win, c==d->cur_focus_client ?
+            WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON) :
+            WIDGET_COLOR(wm, TASKBAR), None);
+    else
+        update_frame_bg(wm, desktop_n, c);
+}
+
+void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
+{
+    bool cur=(c==wm->desktop[desktop_n-1]->cur_focus_client);
+    unsigned long color=NCUR_WIDGET_COLOR(wm, cur, BORDER);
+
+    if(c->border_w)
+        XSetWindowBorder(wm->display, c->frame, color);
+    if(c->titlebar_h)
+    {
+        color=NCUR_WIDGET_COLOR(wm, cur, TITLEBAR);
+        update_win_bg(wm, c->logo, color, 0);
+        update_win_bg(wm, c->title_area, color, 0);
+        for(size_t i=0; i<TITLE_BUTTON_N; i++)
+            update_win_bg(wm, c->buttons[i], color, None);
+    }
+}
+
+unsigned long get_widget_color(WM *wm, Widget_color index)
+{
+    return (wm->widget_color[wm->cfg->color_theme][index].pixel & 0x00ffffff) |
+        ((unsigned long)(0xff*wm->cfg->widget_alpha[wm->cfg->color_theme]))<<24;
 }

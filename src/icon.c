@@ -46,6 +46,7 @@ static bool have_same_class_icon_client(WM *wm, Client *c);
 void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
     XClearArea(wm->display, d, x, y, w, h, False); 
+    set_visual_for_imlib(wm, d);
     imlib_context_set_image(image);
     imlib_context_set_drawable(d);   
     imlib_render_image_on_drawable_at_size(x, y, w, h);
@@ -399,7 +400,7 @@ void iconify(WM *wm, Client *c)
     if(c == DESKTOP(wm)->cur_focus_client)
     {
         focus_client(wm, wm->cur_desktop, NULL);
-        update_frame(wm, wm->cur_desktop, c);
+        update_frame_bg(wm, wm->cur_desktop, c);
     }
 }
 
@@ -408,7 +409,7 @@ void create_icon(WM *wm, Client *c)
     Icon *i=c->icon=malloc_s(sizeof(Icon));
     i->x=i->y=0, i->w=i->h=wm->taskbar->h;
     i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
-    i->win=XCreateSimpleWindow(wm->display, wm->taskbar->icon_area, 0, 0,
+    i->win=create_widget_win(wm, wm->taskbar->icon_area, 0, 0,
         i->w, i->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
     set_icon_image(wm, c);

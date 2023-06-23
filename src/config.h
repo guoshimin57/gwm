@@ -50,6 +50,7 @@ struct config_tag
     double font_pad_ratio; // 文字與構件邊緣的間距與字體高度的比值
     double default_main_area_ratio; // 默認的主區域比例
     double default_fixed_area_ratio; // 默認的固定區域比例
+    double widget_alpha[COLOR_THEME_N]; // 構件背景色不透明度
     const char *autostart; // 在gwm剛啓動時執行的腳本
     const char *cur_icon_theme; // 當前圖標主題
     const char *screenshot_path; // 屏幕截圖的文件保存路徑，請自行確保路徑存在

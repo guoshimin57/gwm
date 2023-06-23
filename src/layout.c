@@ -157,18 +157,6 @@ void update_titlebar_layout(WM *wm)
     }
 }
 
-void update_taskbar_buttons(WM *wm)
-{
-    for(Widget_type b=TASKBAR_BUTTON_BEGIN; b<=TASKBAR_BUTTON_END; b++)
-    {
-        size_t i=WIDGET_INDEX(b, TASKBAR_BUTTON);
-        String_format f={{0, 0, wm->cfg->taskbar_button_width, wm->taskbar->h},
-            CENTER, true, false, true, TASKBAR_BUTTON_COLOR(wm, b),
-            TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
-        draw_string(wm, wm->taskbar->buttons[i], wm->cfg->taskbar_button_text[i], &f);
-    }
-}
-
 bool is_main_sec_gap(WM *wm, int x)
 {
     Desktop *d=DESKTOP(wm);

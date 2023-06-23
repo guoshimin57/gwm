@@ -35,8 +35,8 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
         else if(pc->area_type != ICONIFY_AREA)
             set_input_focus(wm, pc->wm_hint, pc->win);
     }
-    update_client_look(wm, desktop_n, pc);
-    update_client_look(wm, desktop_n, d->prev_focus_client);
+    update_client_bg(wm, desktop_n, pc);
+    update_client_bg(wm, desktop_n, d->prev_focus_client);
     if(pc->area_type!=ICONIFY_AREA || d->cur_layout==PREVIEW)
         raise_client(wm, desktop_n);
     set_net_active_window(wm);
@@ -102,18 +102,4 @@ void set_input_focus(WM *wm, XWMHints *hint, Window win)
     if(!hint || ((hint->flags & InputHint) && hint->input)) // 不抗拒鍵盤輸入
         XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
     send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
-}
-
-void update_client_look(WM *wm, unsigned int desktop_n, Client *c)
-{
-    if(!c || c==wm->clients)
-        return;
-
-    Desktop *d=wm->desktop[desktop_n-1];
-    if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
-        update_win_bg(wm, c->icon->win, c==d->cur_focus_client ?
-            WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON) :
-            WIDGET_COLOR(wm, TASKBAR), None);
-    else
-        update_frame(wm, desktop_n, c);
 }

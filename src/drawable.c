@@ -12,6 +12,8 @@
 #include "gwm.h"
 
 static bool is_wm_win_type(WM *wm, Window win);
+static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color);
+static void change_prop_for_root_bg(WM *wm, Pixmap pixmap);
 
 Window get_transient_for(WM *wm, Window w)
 {
@@ -163,6 +165,7 @@ void print_area(WM *wm, Drawable d, int x, int y, int w, int h)
         sprintf(name, "%s/gwm-", wm->cfg->screenshot_path);
     if(timer != err)
         strftime(name+strlen(name), FILENAME_MAX, "%Y_%m_%d_%H_%M_%S", localtime(&timer));
+    set_visual_for_imlib(wm, d);
     imlib_context_set_image(image);
     imlib_image_set_format(wm->cfg->screenshot_format);
     sprintf(name+strlen(name), ".%s", wm->cfg->screenshot_format);
@@ -192,19 +195,92 @@ static bool is_wm_win_type(WM *wm, Window win)
         || type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DIALOG]);
 }
 
+/* 當存在合成器時，合成器會在根窗口上放置特效，即使用XSetWindowBackground*設置
+ * 了背景，也會被合成器的特效擋着，目前還沒有標準的方法來設置背景。要給根窗口
+ * 設置顏色，就得借助pixmap。這種情況下，若要真正地設置背景，得用E方法。這種方
+ * 法是事實上的標準，它通過設置非標準的窗口特性_XROOTPMAP_ID和ESETROOT_PMAP_ID
+ * 來達到此目的。通常設置其中之一便可，爲了保險起見，通常同時設置。這種方法的一
+ * 個弊端是，不能在設置完背景後馬上釋放pixmap，否則背景設置失效，這會佔用一定的
+ * 內存空間。修改背景時，應通過XKillClient來釋放舊的pixmap。通常_XROOTPMAP_ID和
+ * ESETROOT_PMAP_ID特性指向相同的pixmap，有非標準化的文檔說兩者指向相同的pixmap
+ * 時才應釋放它。詳見：
+ *     https://metacpan.org/pod/X11::Protocol::XSetRoot
+ *     https://lists.gnome.org/archives/wm-spec-list/2002-January/msg00003.html
+ *     https://mail.gnome.org/archives/wm-spec-list/2002-January/msg00011.html
+ */
 void update_win_bg(WM *wm, Window win, unsigned long color, Pixmap pixmap)
 {
     XEvent event={.xexpose={.type=Expose, .window=win}};
+    bool compos_root = (win==wm->root_win && have_compositor(wm));
+
+    if(compos_root && !pixmap)
+        pixmap=create_pixmap_with_color(wm, win, color);
+
     if(pixmap)
         XSetWindowBackgroundPixmap(wm->display, win, pixmap);
     else
         XSetWindowBackground(wm->display, win, color);
+
     /* XSetWindowBackgroundPixmap或XSetWindowBackground不改變窗口當前內容，
        應通過發送顯露事件或調用XClearWindow來立即改變背景。*/
     if(pixmap || win==wm->root_win)
         XClearWindow(wm->display, win);
     else
         XSendEvent(wm->display, win, False, NoEventMask, &event);
+
+    if(compos_root)
+        change_prop_for_root_bg(wm, pixmap);
+}
+
+static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color)
+{
+    int w, h, red=(color & 0x00ff0000UL)>>16, green=(color & 0x0000ff00UL)>>8,
+        blue=(color & 0x000000ffUL), alpha=(color & 0xff000000UL)>>24;
+    unsigned int depth;
+    Imlib_Image image=NULL;
+
+    if( !get_geometry(wm, d, NULL, NULL, &w, &h, NULL, &depth)
+        || !(image=imlib_create_image(w, h)))
+        return None;
+
+    Pixmap pixmap=XCreatePixmap(wm->display, d, w, h, depth);
+    if(!pixmap)
+        return None;
+
+    set_visual_for_imlib(wm, d);
+    imlib_context_set_image(image);
+    imlib_context_set_drawable(pixmap);
+    imlib_context_set_color(0, 0, 0, 255);
+    imlib_image_fill_rectangle(0, 0, w, h);
+    imlib_context_set_color(red, green, blue , alpha);
+    imlib_image_fill_rectangle(0, 0, w, h);
+    imlib_render_image_on_drawable(0, 0);
+    imlib_free_image();
+    return pixmap;
+}
+
+static void change_prop_for_root_bg(WM *wm, Pixmap pixmap)
+{
+    Window win=wm->root_win;
+    Atom prop_root=XInternAtom(wm->display, "_XROOTPMAP_ID", True);
+    Atom prop_esetroot=XInternAtom(wm->display, "ESETROOT_PMAP_ID", True);
+
+    if(prop_root && prop_esetroot)
+    {
+        unsigned char *rdata=get_prop(wm, win, prop_root, NULL),
+                      *edata=get_prop(wm, win, prop_esetroot, NULL);
+        Pixmap rid=*((Pixmap *)rdata), eid=*((Pixmap *)edata);
+
+        if(rid && eid && eid!=rid)
+            XKillClient(wm->display, rid), XFree(rdata), XFree(edata);
+    }
+
+    prop_root=XInternAtom(wm->display, "_XROOTPMAP_ID", False);
+    prop_esetroot=XInternAtom(wm->display, "ESETROOT_PMAP_ID", False);
+    XChangeProperty(wm->display, win, prop_root, XA_PIXMAP, 32,
+        PropModeReplace, (unsigned char *)&pixmap, 1);
+    XChangeProperty(wm->display, win, prop_esetroot, XA_PIXMAP, 32,
+        PropModeReplace, (unsigned char *)&pixmap, 1);
 }
 
 void set_override_redirect(WM *wm, Window win)
@@ -261,6 +337,7 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
         return None;
 
     Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
+    set_visual_for_imlib(wm, win);
     imlib_context_set_image(image);
     imlib_context_set_drawable(bg);   
     imlib_render_image_on_drawable_at_size(0, 0, w, h);
@@ -288,4 +365,24 @@ void close_win(WM *wm, Window win)
 {
     if(!send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], win))
         XDestroyWindow(wm->display, win);
+}
+
+Window create_widget_win(WM *wm, Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
+{
+    XSetWindowAttributes attr;
+    attr.colormap=wm->colormap;
+    attr.border_pixel=border_pixel;
+    attr.background_pixel=bg_pixel;
+    attr.override_redirect=True;
+    return XCreateWindow(wm->display, parent, x, y, w, h, border_w, wm->depth,
+        InputOutput, wm->visual,
+        CWColormap | CWBorderPixel | CWBackPixel | CWOverrideRedirect, &attr);
+}
+
+void set_visual_for_imlib(WM *wm, Drawable d)
+{
+    if(d == wm->root_win)
+        imlib_context_set_visual(DefaultVisual(wm->display, wm->screen));
+    else
+        imlib_context_set_visual(wm->visual);
 }

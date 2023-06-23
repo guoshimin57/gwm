@@ -510,7 +510,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
                 XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
     update_layout(wm);
     update_titlebar_layout(wm);
-    update_taskbar_buttons(wm);
+    update_taskbar_buttons_bg(wm);
 }
 
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
@@ -682,7 +682,7 @@ void change_wallpaper(WM *wm, XEvent *e, Func_arg arg)
         }
     }
     update_win_bg(wm, wm->root_win, color, pixmap);
-    if(pixmap)
+    if(pixmap && !have_compositor(wm))
         XFreePixmap(wm->display, pixmap);
 }
 

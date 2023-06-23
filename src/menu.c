@@ -11,20 +11,18 @@
 
 #include "gwm.h"
 
-Menu *create_menu(WM *wm, int n, int col, int w, int h, int pad, unsigned long bg)
+Menu *create_menu(WM *wm, int n, int col, int w, int h, int pad)
 {
     Menu *menu=malloc_s(sizeof(Menu));
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
-    menu->w=w, menu->h=h, menu->pad=pad, menu->bg=bg;
-    menu->win=XCreateSimpleWindow(wm->display, wm->root_win,
-        0, 0, w*col+2*pad, h*menu->row+2*pad, 0, 0, bg);
-    set_override_redirect(wm, menu->win);
-
+    menu->w=w, menu->h=h, menu->pad=pad, menu->bg=WIDGET_COLOR(wm, MENU);
+    menu->win=create_widget_win(wm, wm->root_win, 0, 0, w*col+2*pad,
+        h*menu->row+2*pad, 0, 0, menu->bg);
     menu->items=malloc_s(n*sizeof(Window));
     for(int i=0; i<n; i++)
     {
-        menu->items[i]=XCreateSimpleWindow(wm->display, menu->win,
-            pad+w*(i%col), pad+h*(i/col), w, h, 0, 0, bg);
+         menu->items[i]=create_widget_win(wm, menu->win,
+            pad+w*(i%col), pad+h*(i/col), w, h, 0, 0, menu->bg);
         XSelectInput(wm->display, menu->items[i], BUTTON_EVENT_MASK);
     }
 
@@ -45,7 +43,7 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
     XMapWindow(wm->display, menu->win);
 }
 
-void update_menu_item_text(WM *wm, Window win)
+void update_menu_item_fg(WM *wm, Window win)
 {
     const char *text=NULL;
     int h=MENU_ITEM_HEIGHT(wm), w=wm->cfg->menu_item_width;

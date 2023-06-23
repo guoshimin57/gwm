@@ -216,12 +216,10 @@ typedef enum ewmh_atom_tag Ewmh_atom;
 
 enum widget_color_tag // 構件顏色類型
 {
-    NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR,
-    NORMAL_TITLEBAR_COLOR, CURRENT_TITLEBAR_COLOR,
-    ENTERED_NORMAL_BUTTON_COLOR, ENTERED_CLOSE_BUTTON_COLOR,
-    NORMAL_BUTTON_COLOR, CHOSEN_BUTTON_COLOR,
-    MENU_COLOR, TASKBAR_COLOR, ENTRY_COLOR, HINT_WIN_COLOR,
-    ROOT_WIN_COLOR, WIDGET_COLOR_N 
+    NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR, NORMAL_TITLEBAR_COLOR,
+    CURRENT_TITLEBAR_COLOR, ENTERED_NORMAL_BUTTON_COLOR,
+    ENTERED_CLOSE_BUTTON_COLOR, CHOSEN_BUTTON_COLOR, MENU_COLOR, TASKBAR_COLOR,
+    ENTRY_COLOR, HINT_WIN_COLOR, ROOT_WIN_COLOR, WIDGET_COLOR_N 
 };
 typedef enum widget_color_tag Widget_color;
 
@@ -252,8 +250,8 @@ typedef struct rule_tag Rule;
 struct wm_tag // 窗口管理器相關信息
 {
     Display *display; // 顯示器
-    int screen; // 屏幕
-    int screen_width, screen_height; // 屏幕寬度、高度
+    int screen, screen_width, screen_height; // 屏幕號、屏幕寬度和高度
+    int depth; // 窗口的深度
     unsigned int cur_desktop; // 當前虛擬桌面編號，從1開始編號
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射

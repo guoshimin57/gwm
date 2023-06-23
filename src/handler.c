@@ -24,13 +24,12 @@ static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
 static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window));
 static void handle_expose(WM *wm, XEvent *e);
-static void update_title_logo(WM *wm, Client *c);
-static void update_title_area_text(WM *wm, Client *c);
-static void update_title_button_text(WM *wm, Client *c, size_t index);
+static void update_title_logo_fg(WM *wm, Client *c);
+static void update_title_area_fg(WM *wm, Client *c);
+static void update_title_button_fg(WM *wm, Client *c, size_t index);
 static void handle_key_press(WM *wm, XEvent *e);
 static void key_run_cmd(WM *wm, XKeyEvent *e);
 static void handle_leave_notify(WM *wm, XEvent *e);
-static void hint_leave_title_button(WM *wm, Client *c, Widget_type type);
 static void handle_map_request(WM *wm, XEvent *e);
 static void handle_unmap_notify(WM *wm, XEvent *e);
 static void handle_property_notify(WM *wm, XEvent *e);
@@ -201,10 +200,8 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         focus_client(wm, wm->cur_desktop, c);
     if(is_layout_adjust_area(wm, win, x) && get_typed_clients_n(wm, MAIN_AREA))
         act=ADJUST_LAYOUT_RATIO;
-    else if(type == CLOSE_BUTTON)
-        update_win_bg(wm, win, WIDGET_COLOR(wm, ENTERED_CLOSE_BUTTON), None);
     else if(IS_BUTTON(type))
-        update_win_bg(wm, win, WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON), None);
+        update_win_bg(wm, win, ENTERED_NCLOSE_BUTTON_COLOR(wm, type), None);
     else if(type == CLIENT_FRAME)
         act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
@@ -256,28 +253,28 @@ static void handle_expose(WM *wm, XEvent *e)
         return;
 
     Window win=e->xexpose.window;
+    Client *c=win_to_client(wm, win);
     Widget_type type=get_widget_type(wm, win);
 
     if(type == CLIENT_ICON)
-        update_client_icon_win(wm, win);
+        update_client_icon_fg(wm, win);
     else if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
-        update_taskbar_button(wm, type, !e->xexpose.send_event);
+        update_taskbar_button_fg(wm, type);
     else if(IS_MENU_ITEM(type))
-        update_menu_item_text(wm, win);
+        update_menu_item_fg(wm, win);
     else if(type == STATUS_AREA)
-        update_status_area_text(wm);
+        update_status_area_fg(wm);
     else if(type == TITLE_LOGO)
-        update_title_logo(wm, win_to_client(wm, win));
+        update_title_logo_fg(wm, c);
     else if(type == TITLE_AREA)
-        update_title_area_text(wm, win_to_client(wm, win));
+        update_title_area_fg(wm, c);
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
-        update_title_button_text(wm, win_to_client(wm, win),
-            WIDGET_INDEX(type, TITLE_BUTTON));
+        update_title_button_fg(wm, c, WIDGET_INDEX(type, TITLE_BUTTON));
     else if(type == RUN_CMD_ENTRY)
         update_entry_text(wm, wm->run_cmd);
 }
 
-static void update_title_logo(WM *wm, Client *c)
+static void update_title_logo_fg(WM *wm, Client *c)
 {
     Icon *i=c->icon;
     if(c->icon->image)
@@ -290,25 +287,25 @@ static void update_title_logo(WM *wm, Client *c)
     }
 }
 
-static void update_title_area_text(WM *wm, Client *c)
+static void update_title_area_fg(WM *wm, Client *c)
 {
     if(c->titlebar_h <= 0)
         return;
 
     Rect r=get_title_area_rect(wm, c);
     String_format f={{0, 0, r.w, r.h}, CENTER, true, true, false, 0,
-        CTEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
+        CLI_TEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
     draw_string(wm, c->title_area, c->title_text, &f);
 }
 
-static void update_title_button_text(WM *wm, Client *c, size_t index)
+static void update_title_button_fg(WM *wm, Client *c, size_t index)
 {
     if(c->titlebar_h <= 0)
         return;
 
     int w=wm->cfg->title_button_width, h=TITLEBAR_HEIGHT(wm);
     String_format f={{0, 0, w, h}, CENTER, true, false, false, 0,
-        CTEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
+        CLI_TEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
     draw_string(wm, c->buttons[index], wm->cfg->title_button_text[index], &f);
 }
 
@@ -344,26 +341,20 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 {
     Window win=e->xcrossing.window;
     Widget_type type=get_widget_type(wm, win);
+    Client *c=win_to_client(wm, win);
 
     if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
-        hint_leave_taskbar_button(wm, type);
+        update_taskbar_button_bg(wm, type);
     else if(type == CLIENT_ICON)
         update_win_bg(wm, win, WIDGET_COLOR(wm, TASKBAR), None);
     else if(IS_MENU_ITEM(type))
         update_win_bg(wm, win, WIDGET_COLOR(wm, MENU), None);
     else if(type == TITLE_LOGO)
-        update_win_bg(wm, win,
-            CWIDGET_COLOR(wm, win_to_client(wm, win), TITLEBAR), None);
+        update_win_bg(wm, win, CLI_WIDGET_COLOR(wm, c, TITLEBAR), None);
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
-        hint_leave_title_button(wm, win_to_client(wm, win), type);
+        update_win_bg(wm, win, CLI_WIDGET_COLOR(wm, c, TITLEBAR), None);
     if(type != UNDEFINED)
         XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
-}
-
-static void hint_leave_title_button(WM *wm, Client *c, Widget_type type)
-{
-    Window win=c->buttons[WIDGET_INDEX(type, TITLE_BUTTON)];
-    update_win_bg(wm, win, CWIDGET_COLOR(wm, c, TITLEBAR), None);
 }
 
 static void handle_map_request(WM *wm, XEvent *e)
@@ -466,7 +457,7 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
     {
         free(c->title_text);
         c->title_text=s;
-        update_title_area_text(wm, c);
+        update_title_area_fg(wm, c);
     }
 }
 

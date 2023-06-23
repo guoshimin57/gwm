@@ -43,7 +43,6 @@ Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c, bool is_for_quit);
 void del_client_node(Client *c);
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
-void update_frame(WM *wm, unsigned int desktop_n, Client *c);
 Client *win_to_iconic_state_client(WM *wm, Window win);
 void raise_client(WM *wm, unsigned int desktop_n);
 Client *get_next_client(WM *wm, Client *c);

@@ -24,10 +24,10 @@ struct taskbar_tag // 窗口管理器的任務欄
 };
 
 void create_taskbar(WM *wm);
-void update_taskbar_button(WM *wm, Widget_type type, bool change_bg);
-void hint_leave_taskbar_button(WM *wm, Widget_type type);
-void update_client_icon_win(WM *wm, Window win);
-void update_status_area_text(WM *wm);
+void update_taskbar_button_bg(WM *wm, Widget_type type);
+void update_taskbar_button_fg(WM *wm, Widget_type type);
+void update_client_icon_fg(WM *wm, Window win);
+void update_status_area_fg(WM *wm);
 void update_icon_status_area(WM *wm);
 
 #endif
