@@ -12,44 +12,44 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-/* 以下带参宏中的type是Widget_color和Text_color枚舉常量中的構件成分。
- * 譬如：CURRENT_TITLEBAR_COLOR，type就是TITLEBAR。 */
+/* 以下带参宏中的ctype是Widget_color和Text_color枚舉常量中的構件成分。
+ * 譬如：CURRENT_TITLEBAR_COLOR，ctype就是TITLEBAR。 */
 
 // 獲取無狀態（即不區分是否當前的或被選中）構件的顏色
-#define WIDGET_COLOR(wm, type) get_widget_color(wm, type ##_COLOR)
+#define WIDGET_COLOR(wm, ctype) get_widget_color(wm, ctype ##_COLOR)
 
 // 獲取無狀態（即不區分是否當前的或被選中）構件上的文字顏色
-#define TEXT_COLOR(wm, type) \
-    wm->text_color[wm->cfg->color_theme][type ## _TEXT_COLOR]
+#define TEXT_COLOR(wm, ctype) \
+    wm->text_color[wm->cfg->color_theme][ctype ## _TEXT_COLOR]
 
 // 根據選中與否的條件而得出按鈕的顏色
-#define NCHOSEN_BUTTON_COLOR(wm, type, normal_index) \
-    get_widget_color(wm, is_chosen_button(wm, type) \
-        ? CHOSEN_BUTTON_COLOR : normal_index)
+#define NCHOSEN_BUTTON_COLOR(wm, wtype, normal_wcolor) \
+    get_widget_color(wm, is_chosen_button(wm, wtype) \
+        ? CHOSEN_BUTTON_COLOR : normal_wcolor)
 
 // 根據是否進入關閉按鈕的條件而得出按鈕的顏色
-#define ENTERED_NCLOSE_BUTTON_COLOR(wm, type) \
-    get_widget_color(wm, type==CLOSE_BUTTON \
+#define ENTERED_NCLOSE_BUTTON_COLOR(wm, wtype) \
+    get_widget_color(wm, wtype==CLOSE_BUTTON \
         ? ENTERED_CLOSE_BUTTON_COLOR : ENTERED_NORMAL_BUTTON_COLOR)
 
 // 根據是否當前客戶窗口的條件而得出構件顏色
-#define NCUR_WIDGET_COLOR(wm, cur, type) \
+#define NCUR_WIDGET_COLOR(wm, cur, ctype) \
     get_widget_color(wm, cur ? \
-        CURRENT_ ## type ## _COLOR : NORMAL_ ## type ## _COLOR)
+        CURRENT_ ## ctype ## _COLOR : NORMAL_ ## ctype ## _COLOR)
 
 // 根據是否當前桌面的當前客戶窗口而得出構件顏色
-#define CLI_WIDGET_COLOR(wm, c, type) \
+#define CLI_WIDGET_COLOR(wm, c, ctype) \
     get_widget_color(wm, c==CUR_FOC_CLI(wm) ? \
-        CURRENT_ ## type ## _COLOR : NORMAL_ ## type ## _COLOR)
+        CURRENT_ ## ctype ## _COLOR : NORMAL_ ## ctype ## _COLOR)
 
 // 根據是否當前桌面的當前客戶窗口而得出文字顏色
-#define CLI_TEXT_COLOR(wm, c, type) \
+#define CLI_TEXT_COLOR(wm, c, ctype) \
     wm->text_color[wm->cfg->color_theme][c==CUR_FOC_CLI(wm) ? \
-    CURRENT_ ## type ## _TEXT_COLOR : NORMAL_ ## type ## _TEXT_COLOR]
+    CURRENT_ ## ctype ## _TEXT_COLOR : NORMAL_ ## ctype ## _TEXT_COLOR]
 
 void alloc_color(WM *wm);
-void update_widget_color(WM *wm);
-unsigned long get_widget_color(WM *wm, Widget_color index);
+void update_widget_bg(WM *wm);
+unsigned long get_widget_color(WM *wm, Widget_color wc);
 void update_taskbar_buttons_bg(WM *wm);
 void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);
 void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c);

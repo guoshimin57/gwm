@@ -666,11 +666,11 @@ void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg)
     show_entry(wm, wm->run_cmd);
 }
 
-void change_wallpaper(WM *wm, XEvent *e, Func_arg arg)
+void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     srand((unsigned int)time(NULL));
-    unsigned long r1=rand(), r2=rand(), color=(r1<<32)|r2;
+    unsigned long r1=rand(), r2=rand(), color=(r1<<16)|r2|0xff000000UL;
     Pixmap pixmap=None;
     if(wm->cfg->wallpaper_paths)
     {
@@ -709,5 +709,16 @@ void switch_color_theme(WM *wm, XEvent *e, Func_arg arg)
         wm->cfg->color_theme=0;
     // 以下函數會產生Expose事件，而處理Expose事件時會更新窗口的文字
     // 內容及其顏色，故此處不必更新構件文字顏色。
-    update_widget_color(wm);
+    update_widget_bg(wm);
+}
+
+void toggle_compositor(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    Window win=get_compositor(wm);
+
+    if(win)
+        XKillClient(wm->display, win);
+    else
+        exec(wm, e, (Func_arg)SH_CMD((char *)wm->cfg->compositor));
 }

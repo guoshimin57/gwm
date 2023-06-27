@@ -12,7 +12,7 @@
 ./" program. Otherwise, see <http://www.gnu.org/licenses/>.
 ./" ************************************************* ***************************/
 
-.TH gwm 1 June 2023 "gwm 2.4.0" gwm
+.TH gwm 1 June 2023 "gwm 2.4.1" gwm
 .
 .SH NAME
 gwm \- gwm (gsm's window manager), is an X11-based dynamic window manager written in C language.
@@ -213,26 +213,6 @@ Move the current window to the top of the floating area.
 iconify the current window.
 .
 .TP
-.B Mod4+Shift+F1
-Set to move the window to the top of the main area when the window is opened in tiling mode next time.
-.
-.TP
-.B Mod4+Shift+F2
-Sets to move the window to the top of the secondary area when the window is opened in tiling mode next time.
-.
-.TP
-.B Mod4+Shift+F3
-Set to move the window to the top of the fixed area when the window is opened in tiling mode next time.
-.
-.TP
-.B Mod4+Shift+F4
-Set to move the window to the top of the floating area when the window is opened in tiling mode next time.
-.
-.TP
-.B Mod4+Shift+F5
-Set to iconify the window when the window is opened in tiling mode or floating mode next time.
-.
-.TP
 .B Mod4+Return
 If the current window is a iconified window, the window will be deiconified; if the current window is in preview mode, it will also switch to the previous layout mode.
 .
@@ -245,24 +225,12 @@ Switches to the next window, which has a higher stacking order.
 Switch to the previous window, which has a lower stacking order.
 .
 .TP
-.B Mod4+b
-Toggles the visibility of window border.
-.
-.TP
 .B Mod4+c
 Close the current window.
 .
 .TP
-.B Mod4+Shift+c
-Close all windows.
-.
-.TP
 .B Mod4+d
 Show the desktop, i.e. when WM is in "showing the desktop" mode, iconify all windows; otherwise deconify all windows.
-.
-.TP
-.B Mod4+e
-Toggle focus mode. There are two focus modes, one focuses the window when the cursor enters the non-iconified window, and the other focuses the window when the pointer button clicks on the window.
 .
 .TP
 .B Mod4+f
@@ -279,10 +247,6 @@ Switch to stacking mode.
 .TP
 .B Mod4+t
 Switch to tiling mode.
-.
-.TP
-.B Mod4+Shift+t
-Toggles the visibility of the current window's title bar.
 .
 .TP
 .B Mod4+i
@@ -309,10 +273,6 @@ If there is a fixed area, increase the fixed area rate and decrease the main are
 If there is a fixed area, decrease the fixed area rate and increase the main area rate accordingly.
 .
 .TP
-.B Mod1+w
-Change the wallpaper.
-.
-.TP
 .B Mod4+PageDown
 Switches to the next virtual desktop. Can be cycled.
 .
@@ -327,10 +287,6 @@ Take full screen screenshots and save to file.
 .TP
 .B Mod4+Print
 Take a screenshot of the current window and save it to file.
-.
-.TP
-.B Mod4+\e
-Switch color theme.
 .
 .TP
 .B Mod4+Shift+number N key

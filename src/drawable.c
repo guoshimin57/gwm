@@ -250,8 +250,6 @@ static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color)
     set_visual_for_imlib(wm, d);
     imlib_context_set_image(image);
     imlib_context_set_drawable(pixmap);
-    imlib_context_set_color(0, 0, 0, 255);
-    imlib_image_fill_rectangle(0, 0, w, h);
     imlib_context_set_color(red, green, blue , alpha);
     imlib_image_fill_rectangle(0, 0, w, h);
     imlib_render_image_on_drawable(0, 0);

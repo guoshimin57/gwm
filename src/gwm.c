@@ -21,7 +21,6 @@ int main(void)
     WM wm;
     clear_zombies(0);
     init_wm(&wm);
-    init_root_win_background(&wm);
     XSetScreenSaver(wm.display, wm.cfg->screen_saver_time_out,
         wm.cfg->screen_saver_interval, PreferBlanking, AllowExposures);
     set_signals();

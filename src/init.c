@@ -22,6 +22,7 @@ static void create_client_menu(WM *wm);
 static void create_clients(WM *wm);
 static void init_imlib(WM *wm);
 static void init_wallpaper_files(WM *wm);
+static void init_root_win_background(WM *wm);
 static void exec_autostart(WM *wm);
 
 void init_wm(WM *wm)
@@ -51,6 +52,7 @@ void init_wm(WM *wm)
     set_atoms(wm);
     load_font(wm);
     alloc_color(wm);
+    init_root_win_background(wm);
     create_cursors(wm);
     XDefineCursor(wm->display, wm->root_win, wm->cursors[NO_OP]);
     create_taskbar(wm);
@@ -141,10 +143,7 @@ static void create_hint_win(WM *wm)
 
 static void create_client_menu(WM *wm)
 {
-    int n=CLIENT_MENU_ITEM_N, col=1, w=wm->cfg->menu_item_width,
-        pad=get_font_pad(wm, MENU_FONT), h=MENU_ITEM_HEIGHT(wm);
-
-    wm->client_menu=create_menu(wm, n, col, w, h, pad);
+    wm->client_menu=create_menu(wm, wm->cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */
@@ -184,13 +183,11 @@ static void init_wallpaper_files(WM *wm)
     wm->cur_wallpaper=wm->wallpapers->next;
 }
 
-void init_root_win_background(WM *wm)
+static void init_root_win_background(WM *wm)
 {
     const char *name=wm->cfg->wallpaper_filename;
-    if(!name)
-        return;
 
-    Pixmap pixmap=create_pixmap_from_file(wm, wm->root_win, name);
+    Pixmap pixmap=create_pixmap_from_file(wm, wm->root_win, name ? name : "");
     update_win_bg(wm, wm->root_win, WIDGET_COLOR(wm, ROOT_WIN), pixmap);
     if(pixmap && !have_compositor(wm))
         XFreePixmap(wm->display, pixmap);

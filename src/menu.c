@@ -11,18 +11,25 @@
 
 #include "gwm.h"
 
-Menu *create_menu(WM *wm, int n, int col, int w, int h, int pad)
+Menu *create_menu(WM *wm, const char *item_text[], int n, int col)
 {
     Menu *menu=malloc_s(sizeof(Menu));
+    int w=0, maxw=0, sw=wm->screen_width, pad=get_font_pad(wm, MENU_FONT);
+
+    for(int i=0; i<n; i++, maxw = w>maxw ? w : maxw)
+        get_string_size(wm, wm->font[MENU_FONT], item_text[i], &w, NULL);
+    w = ((maxw+2*pad)*col > sw) ? sw/col : maxw+2*pad;
+
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
-    menu->w=w, menu->h=h, menu->pad=pad, menu->bg=WIDGET_COLOR(wm, MENU);
-    menu->win=create_widget_win(wm, wm->root_win, 0, 0, w*col+2*pad,
-        h*menu->row+2*pad, 0, 0, menu->bg);
+    menu->x=menu->y=0, menu->w=w, menu->h=MENU_ITEM_HEIGHT(wm), menu->pad=pad;
+    menu->bg=WIDGET_COLOR(wm, MENU);
+    menu->win=create_widget_win(wm, wm->root_win, 0, 0, w*col,
+        menu->h*menu->row, 0, 0, menu->bg);
     menu->items=malloc_s(n*sizeof(Window));
     for(int i=0; i<n; i++)
     {
-         menu->items[i]=create_widget_win(wm, menu->win,
-            pad+w*(i%col), pad+h*(i/col), w, h, 0, 0, menu->bg);
+         menu->items[i]=create_widget_win(wm, menu->win, w*(i%col),
+             menu->h*(i/col), w, menu->h, 0, 0, menu->bg);
         XSelectInput(wm->display, menu->items[i], BUTTON_EVENT_MASK);
     }
 
@@ -45,15 +52,21 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
 
 void update_menu_item_fg(WM *wm, Window win)
 {
+    Menu *m=NULL;
     const char *text=NULL;
-    int h=MENU_ITEM_HEIGHT(wm), w=wm->cfg->menu_item_width;
-    String_format f={{0, 0, w, h}, CENTER_LEFT, true, true, false, 0,
-        TEXT_COLOR(wm, MENU), MENU_FONT};
     Widget_type t=get_widget_type(wm, win);
-
     if(IS_WIDGET_CLASS(t, ACT_CENTER_ITEM))
+    {
         text=wm->cfg->act_center_item_text[WIDGET_INDEX(t, ACT_CENTER_ITEM)];
+        m=wm->act_center;
+    }
     else
+    {
         text=wm->cfg->client_menu_item_text[WIDGET_INDEX(t, CLIENT_MENU_ITEM)];
+        m=wm->client_menu;
+    }
+
+    String_format f={{0, 0, m->w, m->h}, CENTER_LEFT, true, true, false, 0,
+        TEXT_COLOR(wm, MENU), MENU_FONT};
     draw_string(wm, win, text, &f);
 }

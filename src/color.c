@@ -42,7 +42,7 @@ void alloc_color(WM *wm)
                 &wm->text_color[i][j]);
 }
 
-void update_widget_color(WM *wm)
+void update_widget_bg(WM *wm)
 {
     update_taskbar_bg(wm);
     update_act_center_bg(wm);
@@ -124,8 +124,10 @@ void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
     }
 }
 
-unsigned long get_widget_color(WM *wm, Widget_color index)
+unsigned long get_widget_color(WM *wm, Widget_color wc)
 {
-    return (wm->widget_color[wm->cfg->color_theme][index].pixel & 0x00ffffff) |
-        ((unsigned long)(0xff*wm->cfg->widget_alpha[wm->cfg->color_theme]))<<24;
+    float wo=wm->cfg->widget_opacity[wm->cfg->color_theme][wc];
+    unsigned long rgb=wm->widget_color[wm->cfg->color_theme][wc].pixel;
+
+    return ((rgb & 0x00ffffff) | ((unsigned long)(0xff*wo))<<24);
 }

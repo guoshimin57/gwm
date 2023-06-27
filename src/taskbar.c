@@ -75,11 +75,8 @@ static void create_status_area(WM *wm)
 
 static void create_act_center(WM *wm)
 {
-    int n=ACT_CENTER_ITEM_N, col=wm->cfg->act_center_col,
-        w=wm->cfg->menu_item_width, pad=get_font_pad(wm, MENU_FONT),
-        h=MENU_ITEM_HEIGHT(wm);
-
-    wm->act_center=create_menu(wm, n, col, w, h, pad);
+    wm->act_center=create_menu(wm, wm->cfg->act_center_item_text,
+        ACT_CENTER_ITEM_N, wm->cfg->act_center_col);
 }
 
 void update_taskbar_buttons_bg(WM *wm)

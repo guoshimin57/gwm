@@ -204,7 +204,7 @@ static void frame_client(WM *wm, Client *c)
         create_titlebar(wm, c);
     XAddToSaveSet(wm->display, c->win);
     XReparentWindow(wm->display, c->win, c->frame, 0, c->titlebar_h);
-
+    
     /* 以下是同時設置窗口前景和背景透明度的非EWMH標準方法：
     unsigned long opacity = (unsigned long)(0xfffffffful);
     Atom XA_NET_WM_WINDOW_OPACITY = XInternAtom(wm->display, "_NET_WM_WINDOW_OPACITY", False);

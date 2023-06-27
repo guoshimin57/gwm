@@ -39,7 +39,6 @@ struct config_tag
     int taskbar_button_width; // 任務欄按鈕的寬度
     int icon_win_width_max; // 縮微窗口的最大寬度
     int icon_gap; // 縮微化窗口的間隔
-    int menu_item_width; // 菜單按鈕的最大寬度
     int run_cmd_entry_width; // 運行命令的輸入構件的寬度
     int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
 
@@ -50,7 +49,8 @@ struct config_tag
     double font_pad_ratio; // 文字與構件邊緣的間距與字體高度的比值
     double default_main_area_ratio; // 默認的主區域比例
     double default_fixed_area_ratio; // 默認的固定區域比例
-    double widget_alpha[COLOR_THEME_N]; // 構件背景色不透明度
+    float global_opacity; // 全局構件背景色不透明度
+    float widget_opacity[COLOR_THEME_N][WIDGET_COLOR_N]; // 各種構件背景色的不透明度
     const char *autostart; // 在gwm剛啓動時執行的腳本
     const char *cur_icon_theme; // 當前圖標主題
     const char *screenshot_path; // 屏幕截圖的文件保存路徑，請自行確保路徑存在
@@ -65,6 +65,7 @@ struct config_tag
     const char *act_center_item_text[ACT_CENTER_ITEM_N]; // 操作中心菜單項的標籤
     const char *client_menu_item_text[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的標籤
     const char *run_cmd_entry_hint; // 運行輸入框的提示文字
+    const char *compositor; // 合成管理器命令
     const Keybind *keybind; // 按鍵功能綁定。有的鍵盤同時按多個鍵會衝突，故組合鍵宜盡量少
     const Buttonbind *buttonbind; // 定位器按鈕功能綁定。
     const Rule *rule; // 窗口管理器對窗口的管理規則
