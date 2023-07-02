@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.4.1\n"
+"Project-Id-Version: gwm 2.4.2\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-06-27 18:35+0800\n"
+"POT-Creation-Date: 2023-07-02 14:23+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -177,78 +177,74 @@ msgstr "完全最大化"
 
 #. 構件類型             構件功能提示文字
 #: src/config.c:619
-msgid "拖動以調整窗口尺寸"
-msgstr "拖动以调整窗口尺寸"
-
-#: src/config.c:620
 msgid "切換到次要區域"
 msgstr "切换到次要区域"
 
-#: src/config.c:621
+#: src/config.c:620
 msgid "切換到主要區域"
 msgstr "切换到主要区域"
 
-#: src/config.c:622
+#: src/config.c:621
 msgid "切換到固定區域"
 msgstr "切换到固定区域"
 
-#: src/config.c:623
+#: src/config.c:622
 msgid "切換到懸浮區域"
 msgstr "切换到悬浮区域"
 
-#: src/config.c:624
+#: src/config.c:623
 msgid "切換到圖符區域"
 msgstr "切换到图符区域"
 
-#: src/config.c:625
+#: src/config.c:624
 msgid "切換到懸浮區域並最大化窗口"
 msgstr "切换到悬浮区域并最大化窗口"
 
-#: src/config.c:626
+#: src/config.c:625
 msgid "關閉窗口"
 msgstr "关闭窗口"
 
-#: src/config.c:627
+#: src/config.c:626
 msgid "切換到虛擬桌面1"
 msgstr "切换到虚拟桌面1"
 
-#: src/config.c:628
+#: src/config.c:627
 msgid "切換到虛擬桌面2"
 msgstr "切换到虚拟桌面2"
 
-#: src/config.c:629
+#: src/config.c:628
 msgid "切換到虛擬桌面3"
 msgstr "切换到虚拟桌面3"
 
-#: src/config.c:630
+#: src/config.c:629
 msgid "切換到全屏模式"
 msgstr "切换到全屏模式"
 
-#: src/config.c:631
+#: src/config.c:630
 msgid "切換到預覽模式"
 msgstr "切换到预览模式"
 
-#: src/config.c:632
+#: src/config.c:631
 msgid "切換到堆疊模式"
 msgstr "切换到堆叠模式"
 
-#: src/config.c:633
+#: src/config.c:632
 msgid "切換到平鋪模式"
 msgstr "切换到平铺模式"
 
-#: src/config.c:634
+#: src/config.c:633
 msgid "顯示桌面"
 msgstr "显示桌面"
 
-#: src/config.c:635
+#: src/config.c:634
 msgid "打開操作中心"
 msgstr "打开操作中心"
 
-#: src/config.c:636
+#: src/config.c:635
 msgid "打開窗口菜單"
 msgstr "打开窗口菜单"
 
-#: src/config.c:667
+#: src/config.c:666
 #, fuzzy
 msgid "請輸入命令，然後按回車執行"
 msgstr "请输入命令，然后按回车执行"
@@ -330,3 +326,6 @@ msgstr "命令执行错误"
 #: src/misc.c:318
 msgid "未能成功地爲命令創建新進程"
 msgstr "未能成功地为命令创建新进程"
+
+#~ msgid "拖動以調整窗口尺寸"
+#~ msgstr "拖动以调整窗口尺寸"

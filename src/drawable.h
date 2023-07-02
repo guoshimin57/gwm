@@ -30,7 +30,6 @@ bool get_geometry(WM *wm, Drawable drw, int *x, int *y, int *w, int *h, int *bw,
 void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, int pw, int ph);
 bool is_win_exist(WM *wm, Window win, Window parent);
 Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename);
-void show_tooltip(WM *wm, Window hover);
 void close_win(WM *wm, Window win);
 Window create_widget_win(WM *wm, Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void set_visual_for_imlib(WM *wm, Drawable d);

@@ -343,22 +343,6 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
     return bg;
 }
 
-void show_tooltip(WM *wm, Window hover)
-{
-    Widget_type type=get_widget_type(wm, hover);
-    const char *s=NULL;
-
-    switch(type)
-    {
-        case CLIENT_ICON: s=win_to_iconic_state_client(wm, hover)->icon->title_text; break;
-        case TITLE_AREA: s=win_to_client(wm, hover)->title_text; break;
-        default: s=wm->cfg->tooltip[type]; break;
-    }
-
-    if(s)
-        update_hint_win_for_info(wm, hover, s);
-}
-
 void close_win(WM *wm, Window win)
 {
     if(!send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], win))

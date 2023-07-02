@@ -616,7 +616,6 @@ static void config_tooltip(WM *wm)
     const char **tooltip=wm->cfg->tooltip;
 
     /*      構件類型             構件功能提示文字 */
-    tooltip[CLIENT_FRAME]    = _("拖動以調整窗口尺寸");
     tooltip[SECOND_BUTTON]   = _("切換到次要區域");
     tooltip[MAIN_BUTTON]     = _("切換到主要區域");
     tooltip[FIXED_BUTTON]    = _("切換到固定區域");

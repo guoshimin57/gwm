@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.4.1\n"
+"Project-Id-Version: gwm 2.4.2\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-06-27 18:36+0800\n"
+"POT-Creation-Date: 2023-07-02 14:23+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -177,78 +177,74 @@ msgstr "fully max"
 
 #. 構件類型             構件功能提示文字
 #: src/config.c:619
-msgid "拖動以調整窗口尺寸"
-msgstr "Drag to resize"
-
-#: src/config.c:620
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: src/config.c:621
+#: src/config.c:620
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: src/config.c:622
+#: src/config.c:621
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: src/config.c:623
+#: src/config.c:622
 msgid "切換到懸浮區域"
 msgstr "To floating area"
 
-#: src/config.c:624
+#: src/config.c:623
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: src/config.c:625
+#: src/config.c:624
 msgid "切換到懸浮區域並最大化窗口"
 msgstr "Maximize window"
 
-#: src/config.c:626
+#: src/config.c:625
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: src/config.c:627
+#: src/config.c:626
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: src/config.c:628
+#: src/config.c:627
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: src/config.c:629
+#: src/config.c:628
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: src/config.c:630
+#: src/config.c:629
 msgid "切換到全屏模式"
 msgstr "To full screen mode"
 
-#: src/config.c:631
+#: src/config.c:630
 msgid "切換到預覽模式"
 msgstr "To preview mode"
 
-#: src/config.c:632
+#: src/config.c:631
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: src/config.c:633
+#: src/config.c:632
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: src/config.c:634
+#: src/config.c:633
 msgid "顯示桌面"
 msgstr "Show desktop"
 
-#: src/config.c:635
+#: src/config.c:634
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: src/config.c:636
+#: src/config.c:635
 msgid "打開窗口菜單"
 msgstr "Open window menu"
 
-#: src/config.c:667
+#: src/config.c:666
 #, fuzzy
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
@@ -325,3 +321,6 @@ msgstr "Command execution error"
 #: src/misc.c:318
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
+
+#~ msgid "拖動以調整窗口尺寸"
+#~ msgstr "Drag to resize"

@@ -22,7 +22,8 @@ static void handle_config_request(WM *wm, XEvent *e);
 static void config_managed_client(WM *wm, Client *c);
 static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
-static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window));
+static void handle_pointer_hover(WM *wm, Window hover, Widget_type type);
+static const char *get_tooltip(WM *wm, Window win, Widget_type type);
 static void handle_expose(WM *wm, XEvent *e);
 static void update_title_logo_fg(WM *wm, Client *c);
 static void update_title_area_fg(WM *wm, Client *c);
@@ -208,11 +209,16 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         act=MOVE;
     if(type != UNDEFINED)
         XDefineCursor(wm->display, win, wm->cursors[act]);
-    handle_pointer_hover(wm, win, show_tooltip);
+    handle_pointer_hover(wm, win, type);
 }
 
-static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Window))
+static void handle_pointer_hover(WM *wm, Window hover, Widget_type type)
 {
+    const char *tooltip=get_tooltip(wm, hover, type);
+
+    if(!tooltip)
+        return;
+
     XEvent ev;
     bool done=false;
     struct timeval t={wm->cfg->hover_time/1000, wm->cfg->hover_time%1000*1000}, t0=t;
@@ -240,11 +246,21 @@ static void handle_pointer_hover(WM *wm, Window hover, void (*handler)(WM *, Win
             {
                 t=t0;
                 if(!done)
-                    handler(wm, hover), done=true;
+                    update_hint_win_for_info(wm, hover, tooltip), done=true;
             }
         }
     }
     XUnmapWindow(wm->display, wm->hint_win);
+}
+
+static const char *get_tooltip(WM *wm, Window win, Widget_type type)
+{
+    switch(type)
+    {
+        case CLIENT_ICON: return win_to_iconic_state_client(wm, win)->icon->title_text;
+        case TITLE_AREA: return win_to_client(wm, win)->title_text;
+        default: return wm->cfg->tooltip[type];
+    }
 }
 
 static void handle_expose(WM *wm, XEvent *e)
