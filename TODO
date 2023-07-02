@@ -9,6 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+第2.4.3版的下一步的開發計劃：
+    * 支持EWMH的_NET_WM_DESKTOP、_NET_WM_WINDOW_TYPE、_NET_WM_STATE、_NET_WM_ALLOWED_ACTIONS應用程序窗口特性。
+
 第2.4.2版的下一步的開發計劃：
     * 支持EWMH的_NET_WM_DESKTOP、_NET_WM_WINDOW_TYPE、_NET_WM_STATE、_NET_WM_ALLOWED_ACTIONS應用程序窗口特性。
 
