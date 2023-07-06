@@ -41,7 +41,8 @@
     "_NET_CURRENT_DESKTOP", "_NET_DESKTOP_NAMES", "_NET_ACTIVE_WINDOW", \
     "_NET_WORKAREA", "_NET_SUPPORTING_WM_CHECK", "_NET_SHOWING_DESKTOP", \
     "_NET_CLOSE_WINDOW", "_NET_WM_NAME", "_NET_WM_ICON_NAME", \
-    "_NET_WM_DESKTOP", "_NET_WM_WINDOW_TYPE", "_NET_WM_WINDOW_TYPE_NORMAL", \
+    "_NET_WM_DESKTOP", "_NET_WM_WINDOW_TYPE",  "_NET_WM_WINDOW_TYPE_DESKTOP", \
+    "_NET_WM_WINDOW_TYPE_DOCK", "_NET_WM_WINDOW_TYPE_NORMAL", \
     "_NET_WM_WINDOW_TYPE_DIALOG", "_NET_WM_WINDOW_TYPE_UTILITY", \
     "_NET_WM_STATE", "_NET_WM_STATE_MODAL", "_NET_WM_STATE_STICKY", \
     "_NET_WM_STATE_MAXIMIZED_VERT", "_NET_WM_STATE_MAXIMIZED_HORZ", \
@@ -205,6 +206,7 @@ enum ewmh_atom_tag // EWMH規範的標識符
     NET_DESKTOP_NAMES, NET_ACTIVE_WINDOW, NET_WORKAREA,
     NET_SUPPORTING_WM_CHECK, NET_SHOWING_DESKTOP, NET_CLOSE_WINDOW,
     NET_WM_NAME, NET_WM_ICON_NAME, NET_WM_DESKTOP, NET_WM_WINDOW_TYPE,
+    NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK,
     NET_WM_WINDOW_TYPE_NORMAL, NET_WM_WINDOW_TYPE_DIALOG,
     NET_WM_WINDOW_TYPE_UTILITY, NET_WM_STATE, NET_WM_STATE_MODAL,
     NET_WM_STATE_STICKY, NET_WM_STATE_MAXIMIZED_VERT,
@@ -239,6 +241,12 @@ enum color_theme_tag // 顏色主題
 };
 typedef enum color_theme_tag Color_theme;
 
+enum top_win_type_tag // 窗口疊次序分層類型
+{
+    DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, DOCK_TOP, ABOVE_TOP, FULLSCREEN_TOP, TOP_WIN_TYPE_N
+};
+typedef enum top_win_type_tag Top_win_type;
+
 struct rule_tag // 窗口管理器的規則
 {
     const char *app_class, *app_name; // 分別爲客戶窗口的程序類型和程序名稱
@@ -259,6 +267,7 @@ struct wm_tag // 窗口管理器相關信息
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
     Rect workarea; // 工作區坐標和尺寸
     Window root_win, hint_win, wm_check_win; // 根窗口、提示窗口、WM檢測窗口
+    Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
     GC gc; // 窗口管理器的圖形信息
     Visual *visual; // 着色類型
     Colormap colormap; // 着色圖

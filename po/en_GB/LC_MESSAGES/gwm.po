@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.4.3\n"
+"Project-Id-Version: gwm 2.5.0\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-07-02 14:23+0800\n"
+"POT-Creation-Date: 2023-07-06 20:05+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -283,12 +283,12 @@ msgstr "SIGQUIT signal handler cannot be installed"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 
-#: src/init.c:110
+#: src/init.c:117
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: src/init.c:164
+#: src/init.c:171
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 

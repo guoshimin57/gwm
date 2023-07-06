@@ -150,7 +150,7 @@ static void change_desktop(WM *wm, Window win, unsigned int desktop)
     if(!c || c==wm->clients)
         return;
 
-    if(desktop== 0xFFFFFFFF)
+    if(desktop == 0xFFFFFFFF)
         attach_to_desktop_all(wm, c);
     else
         move_to_desktop_n(wm, c, desktop+1);
@@ -376,13 +376,13 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 static void handle_map_request(WM *wm, XEvent *e)
 {
     Window win=e->xmaprequest.window;
+
     if(is_wm_win(wm, win, false))
     {
         add_client(wm, win);
         DESKTOP(wm)->default_area_type=wm->cfg->default_area_type;
     }
-    else // 不受WM控制的窗口要放在窗口疊頂部才能確保可見，如截圖、通知窗口
-        XRaiseWindow(wm->display, win);
+    restack_win(wm, win);
     XMapWindow(wm->display, win);
 }
 

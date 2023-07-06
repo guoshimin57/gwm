@@ -25,6 +25,9 @@ void create_taskbar(WM *wm)
     b->win=create_widget_win(wm, wm->root_win, b->x, b->y, b->w, b->h,
         0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(wm->display, b->win, CROSSING_MASK);
+
+    Window wins[]={wm->top_wins[DOCK_TOP], b->win};
+    XRestackWindows(wm->display, wins, 2);
     create_taskbar_buttons(wm);
     create_status_area(wm);
     create_icon_area(wm);

@@ -176,14 +176,15 @@ void print_area(WM *wm, Drawable d, int x, int y, int w, int h)
 bool is_wm_win(WM *wm, Window win, bool before_wm)
 {
     XWindowAttributes a;
-    if( !XGetWindowAttributes(wm->display, win, &a) || a.override_redirect
-        || !is_wm_win_type(wm, win))
+    bool status=XGetWindowAttributes(wm->display, win, &a);
+    if(!status || a.override_redirect || !is_wm_win_type(wm, win))
         return false;
-    if(before_wm)
-        return a.map_state == IsViewable
-            || get_atom_prop(wm, win, wm->icccm_atoms[WM_STATE]) == IconicState;
-    else
+
+    if(!before_wm)
         return !win_to_client(wm, win);
+
+    unsigned char *p=get_prop(wm, win, wm->icccm_atoms[WM_STATE], NULL);
+    return (p && (*(unsigned long *)p)==IconicState) || a.map_state==IsViewable;
 }
 
 static bool is_wm_win_type(WM *wm, Window win)
@@ -302,15 +303,15 @@ bool get_geometry(WM *wm, Drawable drw, int *x, int *y, int *w, int *h, int *bw,
 void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, int pw, int ph)
 {
     int x=0, y=0, w=0, h=0, bw=0, sw=wm->screen_width, sh=wm->screen_height;
-    Window child;
+    Window child, root=wm->root_win;
 
-    XTranslateCoordinates(wm->display, click, wm->root_win, 0, 0, &x, &y, &child);
+    XTranslateCoordinates(wm->display, click, root, 0, 0, &x, &y, &child);
     get_geometry(wm, click, NULL, NULL, &w, &h, &bw, NULL);
     // 優先考慮右邊顯示彈窗；若不夠位置，則考慮左邊顯示；再不濟則從屏幕左邊開始顯示
-    *px = cx+(int)pw<(int)sw ? cx : (cx-(int)pw>0 ? cx-(int)pw : 0);
+    *px = cx+pw<sw ? cx : (cx-pw>0 ? cx-pw : 0);
     /* 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示。
        並且彈出窗口與點擊窗口錯開一個像素，以便從視覺上有所區分。*/
-    *py = y+(int)(h+bw+ph)<(int)sh ? y+(int)(h+bw)+1 : (y-(int)(bw+ph)>0 ? y-(int)(bw+ph)-1 : 0);
+    *py = y+(h+bw+ph)<sh ? y+h+bw+1: (y-bw-ph>0 ? y-bw-ph-1 : 0);
 }
 
 bool is_win_exist(WM *wm, Window win, Window parent)
@@ -367,4 +368,23 @@ void set_visual_for_imlib(WM *wm, Drawable d)
         imlib_context_set_visual(DefaultVisual(wm->display, wm->screen));
     else
         imlib_context_set_visual(wm->visual);
+}
+
+void restack_win(WM *wm, Window win)
+{
+    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
+        if(win==wm->top_wins[i])
+            return;
+
+    Client *c=win_to_client(wm, win);
+    Atom type=get_atom_prop(wm, win, wm->ewmh_atom[NET_WM_WINDOW_TYPE]);
+    Window wins[2]={None, c ? c->frame : win};
+
+    if(type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DESKTOP])
+        wins[0]=wm->top_wins[DESKTOP_TOP];
+    else if(type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DOCK])
+        wins[0]=wm->top_wins[DOCK_TOP];
+    else
+        wins[0]=wm->top_wins[NORMAL_TOP];
+    XRestackWindows(wm->display, wins, 2);
 }

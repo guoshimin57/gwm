@@ -43,7 +43,7 @@ void show_menu(WM *wm, XEvent *e, Menu *menu, Window bind)
     {
         XButtonEvent *b=&e->xbutton;
         set_pos_for_click(wm, bind, b->x_root-b->x, &menu->x, &menu->y,
-            menu->w*menu->col+2*menu->pad, menu->h*menu->row+2*menu->pad);
+            menu->w*menu->col, menu->h*menu->row);
     }
     XMoveWindow(wm->display, menu->win, menu->x, menu->y);
     XMapRaised(wm->display, menu->win);

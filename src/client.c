@@ -12,6 +12,8 @@
 #include "gwm.h"
 
 static void apply_rules(WM *wm, Client *c);
+static void set_default_desktop_mask(WM *wm, Client *c);
+static void set_default_area_type(WM *wm, Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static void set_win_rect_by_attr(WM *wm, Client *c);
 static void fix_win_pos(WM *wm, Client *c);
@@ -55,19 +57,13 @@ void add_client(WM *wm, Window win)
 
 static void apply_rules(WM *wm, Client *c)
 {
-    Atom type=get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_WINDOW_TYPE]),
-         state=get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_STATE]);
-
-    Window tw=get_transient_for(wm, c->win);
-    c->area_type=DESKTOP(wm)->default_area_type;
-    if( (tw && tw!=wm->root_win)
-        || type != wm->ewmh_atom[NET_WM_WINDOW_TYPE_NORMAL]
-        || state == wm->ewmh_atom[NET_WM_STATE_MODAL])
-        c->area_type=FLOATING_AREA;
+    set_default_area_type(wm, c);
+    set_default_desktop_mask(wm, c);
     c->border_w=wm->cfg->border_width;
     c->titlebar_h=TITLEBAR_HEIGHT(wm);
-    c->desktop_mask=get_desktop_mask(wm->cur_desktop);
+    set_default_desktop_mask(wm, c);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
+
     if(XGetClassHint(wm->display, c->win, &c->class_hint))
     {
         c->class_name=c->class_hint.res_class;
@@ -80,13 +76,36 @@ static void apply_rules(WM *wm, Client *c)
                     c->border_w=0;
                 if(!r->show_titlebar)
                     c->titlebar_h=0;
-                c->desktop_mask = r->desktop_mask ?
-                    r->desktop_mask : get_desktop_mask(wm->cur_desktop);
+                if(r->desktop_mask)
+                    c->desktop_mask=r->desktop_mask;
                 if(r->class_alias)
                     c->class_name=r->class_alias;
             }
         }
     }
+}
+
+static void set_default_area_type(WM *wm, Client *c)
+{
+    Atom type=get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_WINDOW_TYPE]),
+         state=get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_STATE]);
+    Window tw=get_transient_for(wm, c->win);
+
+    c->area_type=DESKTOP(wm)->default_area_type;
+    if( (tw && tw!=wm->root_win)
+        || type != wm->ewmh_atom[NET_WM_WINDOW_TYPE_NORMAL]
+        || state == wm->ewmh_atom[NET_WM_STATE_MODAL])
+        c->area_type=FLOATING_AREA;
+}
+
+static void set_default_desktop_mask(WM *wm, Client *c)
+{
+    unsigned int desktop;
+    unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[NET_WM_DESKTOP], NULL);
+
+    desktop = p ? *(unsigned long *)p : wm->cur_desktop-1;
+    c->desktop_mask = desktop==0xFFFFFFFF ? desktop : get_desktop_mask(desktop+1);
+
 }
 
 static bool have_rule(const Rule *r, Client *c)
@@ -355,7 +374,7 @@ void raise_client(WM *wm, unsigned int desktop_n)
     Client *c=wm->desktop[desktop_n-1]->cur_focus_client;
     if(c != wm->clients)
     {
-        Window wins[]={wm->taskbar->win, c->frame};
+        Window wins[]={wm->top_wins[NORMAL_TOP], c->frame};
         if(is_on_desktop_n(desktop_n, c) && c->area_type==FLOATING_AREA)
             XRaiseWindow(wm->display, c->frame);
         else

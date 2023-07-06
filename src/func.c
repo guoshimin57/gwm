@@ -158,6 +158,8 @@ void clear_wm(WM *wm)
     XDestroyWindow(wm->display, wm->run_cmd->win);
     XDestroyWindow(wm->display, wm->hint_win);
     XDestroyWindow(wm->display, wm->wm_check_win);
+    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
+        XDestroyWindow(wm->display, wm->top_wins[i]);
     XFreeGC(wm->display, wm->gc);
     XFreeModifiermap(wm->mod_map);
     for(size_t i=0; i<POINTER_ACT_N; i++)
