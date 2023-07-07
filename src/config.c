@@ -574,7 +574,7 @@ static void config_act_center_item_text(WM *wm)
     SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_DOWN_BUTTON,       _("减小主區容量"));
     SET_ACT_CENTER_ITEM_TEXT(wm, TITLEBAR_TOGGLE_BUTTON,   _("開關當前窗口標題欄"));
     SET_ACT_CENTER_ITEM_TEXT(wm, CLI_BORDER_TOGGLE_BUTTON, _("開關當前窗口邊框"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, CLOSE_ALL_CLIENTS_BUTTON, _("關閉所有窗口"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, CLOSE_ALL_CLIENTS_BUTTON, _("關閉桌面所有窗口"));
     SET_ACT_CENTER_ITEM_TEXT(wm, PRINT_WIN_BUTTON,         _("當前窗口截圖"));
     SET_ACT_CENTER_ITEM_TEXT(wm, PRINT_SCREEN_BUTTON,      _("全屏截圖"));
     SET_ACT_CENTER_ITEM_TEXT(wm, FOCUS_MODE_BUTTON,        _("切換聚焦模式"));

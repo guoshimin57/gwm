@@ -194,7 +194,8 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        close_win(wm, c->win);
+        if(is_on_cur_desktop(wm, c))
+            close_win(wm, c->win);
 }
 
 /* 取得窗口疊次序意義上的下一個客戶窗口 */
@@ -264,8 +265,9 @@ void change_area(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     Layout l=DESKTOP(wm)->cur_layout;
     Area_type t=arg.area_type==PREV_AREA ? c->icon->area_type : arg.area_type;
-    if( c!=wm->clients && (l==TILE || (l==STACK
-        && (c->area_type==ICONIFY_AREA || t==ICONIFY_AREA))))
+    if( c!=wm->clients && (l==TILE
+        || (l==STACK && (c->area_type==ICONIFY_AREA || t==ICONIFY_AREA))
+        || (l==FULL && (c->area_type==FLOATING_AREA || t==FLOATING_AREA))))
         move_client(wm, c, get_area_head(wm, t), t);
 }
 

@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.5.1\n"
+"Project-Id-Version: gwm 2.5.2\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-07-07 02:26+0800\n"
+"POT-Creation-Date: 2023-07-07 13:39+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -99,8 +99,9 @@ msgid "開關當前窗口邊框"
 msgstr "开关当前窗口边框"
 
 #: src/config.c:577
-msgid "關閉所有窗口"
-msgstr "关闭所有窗口"
+#, fuzzy
+msgid "關閉桌面所有窗口"
+msgstr "关闭桌面所有窗口"
 
 #: src/config.c:578
 msgid "當前窗口截圖"

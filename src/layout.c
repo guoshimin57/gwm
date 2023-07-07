@@ -45,8 +45,10 @@ void update_layout(WM *wm)
 
 static void set_full_layout(WM *wm)
 {
-    Client *c=CUR_FOC_CLI(wm);
-    c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        if( is_on_cur_desktop(wm, c)
+            && c->area_type!=FLOATING_AREA && c->area_type!=ICONIFY_AREA)
+            c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 }
 
 static void set_preview_layout(WM *wm)
@@ -120,20 +122,20 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
 
 static void fix_win_rect_for_frame(WM *wm)
 {
-    if(DESKTOP(wm)->cur_layout==FULL || DESKTOP(wm)->cur_layout==STACK)
-        return;
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(should_fix_win_rect(wm, c))
-            c->x+=c->border_w, c->y+=c->titlebar_h+c->border_w,
-            c->w-=2*c->border_w, c->h-=c->titlebar_h+2*c->border_w;
+    if(DESKTOP(wm)->cur_layout != STACK)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(should_fix_win_rect(wm, c))
+                c->x+=c->border_w, c->y+=c->titlebar_h+c->border_w,
+                c->w-=2*c->border_w, c->h-=c->titlebar_h+2*c->border_w;
 }
 
 static bool should_fix_win_rect(WM *wm, Client *c)
 {
     Area_type t=c->area_type;
+    Layout cl=DESKTOP(wm)->cur_layout;
     return (is_on_cur_desktop(wm, c)
-        && (DESKTOP(wm)->cur_layout==PREVIEW || (DESKTOP(wm)->cur_layout==TILE
-        && (t==MAIN_AREA || t==SECOND_AREA || t==FIXED_AREA))));
+        && ((cl==PREVIEW || (cl==TILE && t!=FLOATING_AREA && t!=ICONIFY_AREA))
+        || (cl==FULL && t==FLOATING_AREA)));
 }
 
 static void fix_cur_focus_client_rect(WM *wm)
