@@ -605,6 +605,7 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             XDestroyWindow(wm->display, c->buttons[i]);
         XDestroyWindow(wm->display, c->title_area);
+        XDestroyWindow(wm->display, c->logo);
     }
     update_layout(wm);
 }

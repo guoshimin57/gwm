@@ -12,7 +12,7 @@
 ./" program. Otherwise, see <http://www.gnu.org/licenses/>.
 ./" ************************************************* ***************************/
 
-.TH gwm 1 July 2023 "gwm 2.5.0" gwm
+.TH gwm 1 July 2023 "gwm 2.5.1" gwm
 .
 .SH NAME
 gwm \- gwm (gsm's window manager), is an X11-based dynamic window manager written in C language.
@@ -107,10 +107,6 @@ Switch the start and stop status of the above mplayer commands.
 .TP
 .V Mod4+Mod1+F3
 Terminate the above mplayer command.
-.
-.TP
-.B Mod4+Control+d
-Open the command entry and have grab keyboard. After typing part or all of a command, press Enter to run the first matching command and exit. Press the Esc key or use the pointer to click outside the entry to close the command entry. Support simple editing functions, you can use the Backspace key to delete a character before the cursor, use the Del key to delete a character after the cursor, use the left key to move the cursor to the position of the previous character, and use the right key to move the cursor to the position of next character, use the Home key to move the cursor before the first character, use End to move the cursor behind the last character, use Control+u to clear all characters before the cursor, use Control+v to paste the content at the cursor position, use Tab key completes commands.
 .
 .TP
 .B Mod4+Control+F1
@@ -227,10 +223,6 @@ Switch to the previous window, which has a lower stacking order.
 .TP
 .B Mod4+c
 Close the current window.
-.
-.TP
-.B Mod4+d
-Show the desktop, i.e. when WM is in "showing the desktop" mode, iconify all windows; otherwise deconify all windows.
 .
 .TP
 .B Mod4+f
@@ -354,7 +346,7 @@ Some "pointer button1 click" commands, which can be understood directly accordin
     Between the main and fixed areas: adjust the ratio of the main and fixed areas.
 .
 .TP
-.B Operation taskbar (unless otherwise specified, the corresponding pointer command is: pointer button 1 - click)
+.B Operate taskbar (unless otherwise specified, the corresponding pointer command is: pointer button 1 - click)
     Taskbar virtual desktop buttons:
         Pointer button 1              - click  Change to this virtual desktop,
         Control+pointer button 1      - click  Move the current window to this virtual desktop, and change to this virtual desktop,
@@ -371,6 +363,10 @@ Some "pointer button1 click" commands, which can be understood directly accordin
         Pointer button 3      - move    Swap two windows,
         Pointer button 2      - move    Change area,
         Mod4+pointer button 2 - click   Close the icon and the corresponding window.
+.
+.TP
+.B Operate action center(unless otherwise specified, the corresponding pointer command is: pointer button 1 - click)
+    Run button: Open the command entry and have grab keyboard. After typing part or all of a command, press Enter to run the first matching command and exit. Press the Esc key or use the pointer to click outside the entry to close the command entry. Support simple editing functions, you can use the Backspace key to delete a character before the cursor, use the Del key to delete a character after the cursor, use the left key to move the cursor to the position of the previous character, and use the right key to move the cursor to the position of next character, use the Home key to move the cursor before the first character, use End to move the cursor behind the last character, use Control+u to clear all characters before the cursor, use Control+v to paste the content at the cursor position, use Tab key completes commands.
 .
 .SS Configuration
 .

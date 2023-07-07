@@ -92,7 +92,6 @@ static const Keybind keybind[] =
     {CMD_KEY,       XK_F1,        exec,                        SH_CMD(PLAY_START)},
     {CMD_KEY,       XK_F2,        exec,                        SH_CMD(PLAY_TOGGLE)},
     {CMD_KEY,       XK_F3,        exec,                        SH_CMD(PLAY_QUIT)},
-    {SYS_KEY,       XK_d,         enter_and_run_cmd,           {0}},
     {SYS_KEY,       XK_F1,        exec,                        SH_CMD(VOLUME_DOWN)},
     {SYS_KEY,       XK_F2,        exec,                        SH_CMD(VOLUME_UP)},
     {SYS_KEY,       XK_F3,        exec,                        SH_CMD(VOLUME_MAX)},
@@ -100,7 +99,6 @@ static const Keybind keybind[] =
     {SYS_KEY,       XK_l,         exec,                        SH_CMD(LOGOUT)},
     {SYS_KEY,       XK_p,         exec,                        SH_CMD("poweroff")},
     {SYS_KEY,       XK_r,         exec,                        SH_CMD("reboot")},
-    {WM_KEY,        XK_Delete,    quit_wm,                     {0}},
     {WM_KEY,        XK_k,         key_move_resize_client,      {.direction=UP}},
     {WM_KEY,        XK_j,         key_move_resize_client,      {.direction=DOWN}},
     {WM_KEY,        XK_h,         key_move_resize_client,      {.direction=LEFT}},
@@ -122,7 +120,6 @@ static const Keybind keybind[] =
     {WM_KEY,        XK_Tab,       next_client,                 {0}},
     {WM_SKEY,       XK_Tab,       prev_client,                 {0}},
     {WM_KEY,        XK_c,         close_client,                {0}},
-    {WM_KEY,        XK_d,         show_desktop,                {0}},
     {WM_KEY,        XK_f,         change_layout,               {.layout=FULL}},
     {WM_KEY,        XK_p,         change_layout,               {.layout=PREVIEW}},
     {WM_KEY,        XK_s,         change_layout,               {.layout=STACK}},
@@ -581,7 +578,7 @@ static void config_act_center_item_text(WM *wm)
     SET_ACT_CENTER_ITEM_TEXT(wm, PRINT_WIN_BUTTON,         _("當前窗口截圖"));
     SET_ACT_CENTER_ITEM_TEXT(wm, PRINT_SCREEN_BUTTON,      _("全屏截圖"));
     SET_ACT_CENTER_ITEM_TEXT(wm, FOCUS_MODE_BUTTON,        _("切換聚焦模式"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, COMPOSITOR_BUTTON,        _("開關合成器(特效)"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, COMPOSITOR_BUTTON,        _("開關合成器"));
     SET_ACT_CENTER_ITEM_TEXT(wm, WALLPAPER_BUTTON,         _("切換壁紙"));
     SET_ACT_CENTER_ITEM_TEXT(wm, COLOR_THEME_BUTTON,       _("切換顏色主題"));
     SET_ACT_CENTER_ITEM_TEXT(wm, QUIT_WM_BUTTON,           _("退出gwm"));
