@@ -39,7 +39,6 @@ struct config_tag
     int taskbar_button_width; // 任務欄按鈕的寬度
     int icon_win_width_max; // 縮微窗口的最大寬度
     int icon_gap; // 縮微化窗口的間隔
-    int run_cmd_entry_width; // 運行命令的輸入構件的寬度
     int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
 
     unsigned int default_cur_desktop; // 默認的當前桌面

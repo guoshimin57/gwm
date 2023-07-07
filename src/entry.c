@@ -75,9 +75,9 @@ static void hint_for_run_cmd_entry(WM *wm, const char *regex)
 
     if(paths && regex && strcmp(regex, "*"))
     {
-        int bw=wm->cfg->border_width, w=wm->cfg->run_cmd_entry_width,
-            h=ENTRY_HEIGHT(wm), x=wm->run_cmd->x+bw,
-            y=wm->run_cmd->y+wm->run_cmd->h+bw, i, n, max=(wm->workarea.h-y)/h;
+        int bw=wm->cfg->border_width, w=wm->run_cmd->w, h=wm->run_cmd->h,
+            x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+2*bw,
+            i, n, max=(wm->workarea.h-y)/h;
         String_format fmt={{0, 0, w, h}, CENTER_LEFT, false, true, false, 0,
             TEXT_COLOR(wm, HINT), HINT_FONT};
 

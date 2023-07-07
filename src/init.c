@@ -136,7 +136,9 @@ static void create_cursors(WM *wm)
 static void create_run_cmd_entry(WM *wm)
 {
     int sw=wm->screen_width, sh=wm->screen_height, bw=wm->cfg->border_width,
-        ew=wm->cfg->run_cmd_entry_width, eh=ENTRY_HEIGHT(wm);
+        ew, eh=ENTRY_HEIGHT(wm), pad=get_font_pad(wm, ENTRY_FONT);
+    get_string_size(wm, wm->font[ENTRY_FONT], wm->cfg->run_cmd_entry_hint, &ew, NULL);
+    ew += 2*pad, ew = (ew>=sw/4 && ew<=sw-2*bw) ? ew : sw/4;
     Rect r={(sw-ew)/2-bw, (sh-eh)/2-bw, ew, eh};
     wm->run_cmd=create_entry(wm, &r, wm->cfg->run_cmd_entry_hint);
 }
