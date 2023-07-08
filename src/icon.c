@@ -77,13 +77,13 @@ static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
 
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 {
-    unsigned long i, n=0, w=0, h=0, *data=NULL;
+    unsigned long i, n=0, w=0, h=0, size=0, *data=NULL;
     unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[NET_WM_ICON], &n);
     if(!p)
         return NULL;
     
     data=(unsigned long *)p;
-    w=data[0], h=data[1], data+=2;
+    w=*data++, h=*data++, size=w*h;
     Imlib_Image image=imlib_create_image(w, h);
     imlib_context_set_image(image);
     imlib_image_set_has_alpha(1);
@@ -91,10 +91,10 @@ static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
     DATA32 *image_data=imlib_image_get_data();
     /* 當long大小爲8字節時，以long型數組存儲的特性數據，每個元素的前4字節都是填充0 */
     if(sizeof(long) == 8)
-        for(i=0; i<n; i++)
+        for(i=0; i<size; i++)
             image_data[i]=data[i]; // 跳過填充字節
     else
-        memcpy(image_data, (unsigned char *)data, w*h*4);
+        memcpy(image_data, (unsigned char *)data, size*4);
     XFree(p);
     imlib_image_put_back_data(image_data);
     return image;

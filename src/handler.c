@@ -384,6 +384,7 @@ static void handle_map_request(WM *wm, XEvent *e)
     }
     restack_win(wm, win);
     XMapWindow(wm->display, win);
+    printf("%lx\n", win);
 }
 
 /* 對已經映射的窗口重設父窗口會依次執行以下操作：
