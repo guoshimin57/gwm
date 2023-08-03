@@ -13,6 +13,7 @@
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
+static void unmap_for_click(WM *wm, Widget_type type);
 static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e);
 static void focus_clicked_client(WM *wm, Window win);
 static void handle_client_message(WM *wm, XEvent *e);
@@ -77,20 +78,27 @@ static void ignore_event(WM *wm, XEvent *e)
 static void handle_button_press(WM *wm, XEvent *e)
 {
     Window win=e->xbutton.window;
+    Client *c=win_to_client(wm, win), *tmc=NULL;
     Widget_type type=get_widget_type(wm, win);
     for(const Buttonbind *b=wm->cfg->buttonbind; b->func; b++)
     {
         if( is_func_click(wm, type, b, e)
             && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
-            focus_clicked_client(wm, win);
-            if(b->func)
-                b->func(wm, e, b->arg);
             if(type == CLIENT_WIN)
                 XAllowEvents(wm->display, ReplayPointer, CurrentTime);
+            focus_clicked_client(wm, win);
+            if(c && (tmc=get_top_modal_client(wm, c->subgroup_leader)) && c!=tmc)
+                continue;
+            if(b->func)
+                b->func(wm, e, b->arg);
         }
     }
-
+    unmap_for_click(wm, type);
+}
+ 
+static void unmap_for_click(WM *wm, Widget_type type)
+{
     if(type != ACT_CENTER_ITEM)
         XUnmapWindow(wm->display, wm->act_center->win);
     if(type != TITLE_LOGO)
@@ -101,7 +109,7 @@ static void handle_button_press(WM *wm, XEvent *e)
         XUnmapWindow(wm->display, wm->hint_win);
     }
 }
- 
+
 static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e)
 {
     return (b->widget_type == type 
@@ -114,7 +122,7 @@ static void focus_clicked_client(WM *wm, Window win)
     Client *c=win_to_client(wm, win);
     if(c == NULL)
         c=win_to_iconic_state_client(wm, win);
-    if(c)
+    if(c && c!=CUR_FOC_CLI(wm))
         focus_client(wm, wm->cur_desktop, c);
 }
 
@@ -382,9 +390,9 @@ static void handle_map_request(WM *wm, XEvent *e)
         add_client(wm, win);
         DESKTOP(wm)->default_area_type=wm->cfg->default_area_type;
     }
-    restack_win(wm, win);
+    else
+        restack_win(wm, win);
     XMapWindow(wm->display, win);
-    printf("%lx\n", win);
 }
 
 /* 對已經映射的窗口重設父窗口會依次執行以下操作：
@@ -489,7 +497,7 @@ static void handle_wm_transient_for_notify(WM *wm, Window win)
 {
     Client *c=win_to_client(wm, win);
     if(c)
-        c->owner=get_transient_for(wm, win);
+        c->owner=win_to_client(wm, get_transient_for(wm, win));
 }
 
 static void handle_selection_notify(WM *wm, XEvent *e)

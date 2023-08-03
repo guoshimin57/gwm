@@ -34,5 +34,6 @@ void close_win(WM *wm, Window win);
 Window create_widget_win(WM *wm, Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void set_visual_for_imlib(WM *wm, Drawable d);
 void restack_win(WM *wm, Window win);
+bool is_modal_win(WM *wm, Window win);
 
 #endif

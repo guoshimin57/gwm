@@ -243,7 +243,8 @@ typedef enum color_theme_tag Color_theme;
 
 enum top_win_type_tag // 窗口疊次序分層類型
 {
-    DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, DOCK_TOP, ABOVE_TOP, FULLSCREEN_TOP, TOP_WIN_TYPE_N
+    DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, DOCK_TOP, ABOVE_TOP, FULLSCREEN_TOP,
+    FLOAT_TOP, TOP_WIN_TYPE_N
 };
 typedef enum top_win_type_tag Top_win_type;
 
@@ -363,6 +364,7 @@ extern sig_atomic_t run_flag; // 程序運行標志
 #include "client.h"
 #include "color.h"
 #include "config.h"
+#include "debug.h"
 #include "desktop.h"
 #include "drawable.h"
 #include "entry.h"

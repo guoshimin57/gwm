@@ -15,8 +15,8 @@
 #define TITLEBAR_HEIGHT(wm) get_font_height_by_pad(wm, TITLEBAR_FONT)
 
 struct client_tag // 客戶窗口相關信息
-{   /* 分別爲客戶窗口、父窗口、圖標窗口, 標題區、標題區按鈕、臨時窗口對應的主窗口 */
-    Window win, frame, logo, title_area, buttons[TITLE_BUTTON_N], owner;
+{   // 分別爲客戶窗口、父窗口、圖標窗口, 標題區、標題區按鈕、臨時窗口對應的主窗口
+    Window win, frame, logo, title_area, buttons[TITLE_BUTTON_N];
     int x, y; // win的橫、縱坐標
     int w, h, titlebar_h, border_w; // win的寬、高、標題欄高、邊框寬
     unsigned int desktop_mask; // 所属虚拟桌面的掩碼
@@ -27,11 +27,12 @@ struct client_tag // 客戶窗口相關信息
     XClassHint class_hint; // 客戶窗口的程序類型特性提示
     XSizeHints size_hint; // 客戶窗口的窗口尺寸條件特性提示
     XWMHints *wm_hint; // 客戶窗口的窗口管理程序條件特性提示
-    struct client_tag *prev, *next; // 分別爲前、後節點
+    // 分別爲前、後節點以及主窗口節點、小組組長节点（同屬一個程序實例的客戶構成一個小組）
+    struct client_tag *prev, *next, *owner, *subgroup_leader;
 };
 
 void add_client(WM *wm, Window win);
-void add_client_node(Client *head, Client *c);
+void add_client_node(WM *wm, Client *head, Client *c);
 void fix_area_type(WM *wm);
 void set_default_win_rect(WM *wm, Client *c);
 void create_titlebar(WM *wm, Client *c);
@@ -44,7 +45,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit);
 void del_client_node(Client *c);
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
 Client *win_to_iconic_state_client(WM *wm, Window win);
-void raise_client(WM *wm, unsigned int desktop_n);
+void raise_client(WM *wm, Client *c);
 Client *get_next_client(WM *wm, Client *c);
 Client *get_prev_client(WM *wm, Client *c);
 void move_client(WM *wm, Client *from, Client *to, Area_type type);
@@ -52,5 +53,9 @@ void swap_clients(WM *wm, Client *a, Client *b);
 int compare_client_order(WM *wm, Client *c1, Client *c2);
 bool is_last_typed_client(WM *wm, Client *c, Area_type type);
 Client *get_area_head(WM *wm, Area_type type);
+Client **get_subgroup_clients(WM *wm, Client *c, int *n);
+int get_subgroup_n(WM *wm, Client *c);
+Client *get_subgroup_leader(Client *c);
+Client *get_top_modal_client(WM *wm, Client *subgroup_leader);
 
 #endif

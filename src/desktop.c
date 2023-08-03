@@ -11,6 +11,10 @@
 
 #include "gwm.h"
 
+typedef enum op_type_tag { MOVE_TO_N, CHANGE_TO_N, ATTACH_TO_N, ATTACH_TO_ALL } Op_type;
+
+static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op);
+
 void init_desktop(WM *wm)
 {
     wm->cur_desktop=wm->cfg->default_cur_desktop;
@@ -86,10 +90,27 @@ void move_to_desktop_n(WM *wm, Client *c, unsigned int n)
     if(!n || n==wm->cur_desktop || c==wm->clients)
         return;
 
-    c->desktop_mask=get_desktop_mask(n);
-    focus_client(wm, n, c);
+    ready_to_desktop_n(wm, c, n, MOVE_TO_N);
     focus_client(wm, wm->cur_desktop, NULL);
     focus_desktop_n(wm, wm->cur_desktop);
+}
+
+static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op)
+{
+    int m=0;
+    Client **g=get_subgroup_clients(wm, c, &m);
+
+    for(int i=0; i<m; i++)
+    {
+        if(op==MOVE_TO_N || op==CHANGE_TO_N)
+            g[i]->desktop_mask = get_desktop_mask(n);
+        else if(op == ATTACH_TO_N)
+            g[i]->desktop_mask |= get_desktop_mask(n);
+        else
+            g[i]->desktop_mask = ~0;
+        focus_client(wm, n, g[i]);
+    }
+    free(g);
 }
 
 void all_move_to_desktop_n(WM *wm, unsigned int n)
@@ -122,8 +143,7 @@ void attach_to_desktop_n(WM *wm, Client *c, unsigned int n)
     if(!n || n==wm->cur_desktop || c==wm->clients)
         return;
 
-    c->desktop_mask |= get_desktop_mask(n);
-    focus_client(wm, n, c);
+    ready_to_desktop_n(wm, c, n, ATTACH_TO_N);
     set_all_net_client_list(wm);
 }
 
@@ -132,10 +152,9 @@ void attach_to_desktop_all(WM *wm, Client *c)
     if(c == wm->clients)
         return;
 
-    c->desktop_mask=~0;
     for(unsigned int i=1; i<=DESKTOP_N; i++)
         if(i != wm->cur_desktop)
-            focus_client(wm, i, c);
+            ready_to_desktop_n(wm, c, i, ATTACH_TO_ALL);
     set_all_net_client_list(wm);
 }
 

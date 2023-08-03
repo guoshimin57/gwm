@@ -388,20 +388,27 @@ static bool is_accessible(const char *filename)
 
 void iconify(WM *wm, Client *c)
 {
-    Icon *i=c->icon;
+    int n=0;
+    Client **g=get_subgroup_clients(wm, c, &n);
 
-    i->title_text=get_icon_title_text(wm, c->win, c->title_text);
-    update_win_bg(wm, i->win, WIDGET_COLOR(wm, TASKBAR), None);
-    i->area_type=c->area_type==ICONIFY_AREA ? wm->cfg->default_area_type : c->area_type;
-    c->area_type=ICONIFY_AREA;
-    update_icon_area(wm);
-    XMapWindow(wm->display, i->win);
-    XUnmapWindow(wm->display, c->frame);
-    if(c == DESKTOP(wm)->cur_focus_client)
+    for(int i=0; i<n; i++)
     {
-        focus_client(wm, wm->cur_desktop, NULL);
-        update_frame_bg(wm, wm->cur_desktop, c);
+        Icon *icon=g[i]->icon;
+        icon->title_text=get_icon_title_text(wm, g[i]->win, g[i]->title_text);
+        update_win_bg(wm, icon->win, WIDGET_COLOR(wm, TASKBAR), None);
+        icon->area_type = g[i]->area_type==ICONIFY_AREA ?
+            wm->cfg->default_area_type : g[i]->area_type;
+        g[i]->area_type=ICONIFY_AREA;
+        update_icon_area(wm);
+        XMapWindow(wm->display, icon->win);
+        XUnmapWindow(wm->display, g[i]->frame);
+        if(g[i] == DESKTOP(wm)->cur_focus_client)
+        {
+            focus_client(wm, wm->cur_desktop, NULL);
+            update_frame_bg(wm, wm->cur_desktop, g[i]);
+        }
     }
+    free(g);
 }
 
 void create_icon(WM *wm, Client *c)
@@ -453,11 +460,18 @@ void deiconify(WM *wm, Client *c)
     if(!c)
         return;
 
-    XMapWindow(wm->display, c->frame);
-    XUnmapWindow(wm->display, c->icon->win);
-    c->area_type=c->icon->area_type;
-    update_icon_area(wm);
-    focus_client(wm, wm->cur_desktop, c);
+    int n=0;
+    Client **g=get_subgroup_clients(wm, c, &n);
+
+    for(int i=0; i<n; i++)
+    {
+        XMapWindow(wm->display, g[i]->frame);
+        XUnmapWindow(wm->display, g[i]->icon->win);
+        g[i]->area_type=g[i]->icon->area_type;
+        update_icon_area(wm);
+        focus_client(wm, wm->cur_desktop, g[i]);
+    }
+    free(g);
 }
 
 void del_icon(WM *wm, Client *c)

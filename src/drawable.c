@@ -24,7 +24,9 @@ Window get_transient_for(WM *wm, Window w)
 Atom get_atom_prop(WM *wm, Window win, Atom prop)
 {
     unsigned char *p=get_prop(wm, win, prop, NULL);
-    return p ? *(Atom *)p : None;
+    Atom result = p ? *(Atom *)p : None;
+    XFree(p);
+    return result;
 }
 
 /* 調用此函數時需要注意：若返回的特性數據的實際格式是32位的話，
@@ -184,7 +186,9 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
         return !win_to_client(wm, win);
 
     unsigned char *p=get_prop(wm, win, wm->icccm_atoms[WM_STATE], NULL);
-    return (p && (*(unsigned long *)p)==IconicState) || a.map_state==IsViewable;
+    bool result=((p && (*(unsigned long *)p)==IconicState) || a.map_state==IsViewable);
+    XFree(p);
+    return result;
 }
 
 static bool is_wm_win_type(WM *wm, Window win)
@@ -268,10 +272,12 @@ static void change_prop_for_root_bg(WM *wm, Pixmap pixmap)
     {
         unsigned char *rdata=get_prop(wm, win, prop_root, NULL),
                       *edata=get_prop(wm, win, prop_esetroot, NULL);
-        Pixmap rid=*((Pixmap *)rdata), eid=*((Pixmap *)edata);
+        Pixmap rid = rdata ? *((Pixmap *)rdata) : None,
+               eid = edata ? *((Pixmap *)edata) : None;
 
+        XFree(rdata), XFree(edata);
         if(rid && eid && eid!=rid)
-            XKillClient(wm->display, rid), XFree(rdata), XFree(edata);
+            XKillClient(wm->display, rid);
     }
 
     prop_root=XInternAtom(wm->display, "_XROOTPMAP_ID", False);
@@ -384,7 +390,18 @@ void restack_win(WM *wm, Window win)
         wins[0]=wm->top_wins[DESKTOP_TOP];
     else if(type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DOCK])
         wins[0]=wm->top_wins[DOCK_TOP];
+    else if(c)
+    {
+        raise_client(wm, c);
+        return;
+    }
     else
         wins[0]=wm->top_wins[NORMAL_TOP];
     XRestackWindows(wm->display, wins, 2);
+}
+
+bool is_modal_win(WM *wm, Window win)
+{
+    return get_atom_prop(wm, win, wm->ewmh_atom[NET_WM_STATE])
+        == wm->ewmh_atom[NET_WM_STATE_MODAL];
 }

@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.5.4\n"
+"Project-Id-Version: gwm 2.6.0\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-07-07 19:53+0800\n"
+"POT-Creation-Date: 2023-08-03 22:07+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -247,6 +247,11 @@ msgstr "Open window menu"
 #: src/config.c:662
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
+
+#: src/debug.c:20
+#, c-format
+msgid "以下是%lx窗口的子窗口：\n"
+msgstr "The following are subwindows of the %lx window:\n"
 
 #: src/font.c:29
 msgid "錯誤：不能加載必要的字體。"

@@ -16,9 +16,9 @@ static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
 
-/* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因
- * （如移動到其他虛擬桌面）而未更新時，則應使用值爲NULL的c來調用本
- * 函數。這樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
+/* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因（如移動到
+ * 其他虛擬桌面、刪除、縮微）而未更新時，則應使用值爲NULL的c來調用本函數。這
+ * 樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
 void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 {
     if(c && c!=CUR_FOC_CLI(wm) && c->wm_hint && (c->wm_hint->flags & XUrgencyHint))
@@ -37,8 +37,7 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     }
     update_client_bg(wm, desktop_n, pc);
     update_client_bg(wm, desktop_n, d->prev_focus_client);
-    if(pc->area_type!=ICONIFY_AREA || d->cur_layout==PREVIEW)
-        raise_client(wm, desktop_n);
+    raise_client(wm, pc);
     set_net_active_window(wm);
 }
 
@@ -46,28 +45,35 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
 {
     Desktop *d=wm->desktop[desktop_n-1];
     Client *p=NULL, **pp=&d->prev_focus_client, **pc=&d->cur_focus_client;
- 
+
+
     if(!c)  // 當某個client在desktop_n中變得不可見時，即既有可能被刪除了，
     {       // 也可能是被縮微化了，還有可能是移動到其他虛擬桌面了。
-        if(!is_map_client(wm, desktop_n, *pc))
-            p=win_to_client(wm, (*pc)->owner);
-        if(!is_map_client(wm, desktop_n, p))
-            p=*pp;
-        if(!is_map_client(wm, desktop_n, p))
-            p=get_prev_map_client(wm, desktop_n, *pp);
-        if(!p)
-            p=get_next_map_client(wm, desktop_n, *pp);
-        *pc = p ? p : wm->clients;
-        if(!is_map_client(wm, desktop_n, *pp) || *pp==*pc)
-            p=win_to_client(wm, (*pp)->owner);
-        if(!is_map_client(wm, desktop_n, p))
-            p=get_prev_map_client(wm, desktop_n, *pp);
-        if(!p)
-            p=get_next_map_client(wm, desktop_n, *pp);
-        *pp = p ? p : wm->clients;
+        if(is_map_client(wm, desktop_n, *pc)) // 非當前窗口被非wm手段關閉（如kill）
+            return;
+        p = (*pc)->owner ? (*pc)->owner : *pp;
+        if(is_map_client(wm, desktop_n, p))
+            *pc=p;
+        else if((p=get_prev_map_client(wm, desktop_n, *pp)))
+            *pc=p;
+        else if((p=get_next_map_client(wm, desktop_n, *pp)))
+            *pc=p;
+        else
+            *pc=wm->clients;
+
+        if(is_map_client(wm, desktop_n, *pp))
+           return;
+        else if(is_map_client(wm, desktop_n, (*pp)->owner))
+            *pp=(*pp)->owner;
+        else if((p=get_prev_map_client(wm, desktop_n, *pp)))
+            *pp=p;
+        else if((p=get_next_map_client(wm, desktop_n, *pp)))
+            *pp=p;
+        else
+            *pp=wm->clients;
     }
     else if(c != *pc)
-        *pp=*pc, *pc=c;
+        *pp=*pc, *pc=((p=get_top_modal_client(wm, c->subgroup_leader)) ? p : c);
 }
 
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c)
