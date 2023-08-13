@@ -15,6 +15,7 @@ void print_win_tree(WM *wm, Window win)
 {
     unsigned int n;
     Window root, parent, *child=NULL;
+
     if(XQueryTree(wm->display, win, &root, &parent, &child, &n))
     {
         printf(_("以下是%lx窗口的子窗口：\n"), win);
@@ -22,4 +23,68 @@ void print_win_tree(WM *wm, Window win)
             printf("%lx\n", child[i]);
         XFree(child);
     }
+    else
+        printf(_("無法查詢%lx窗口的子窗口\n"), win);
+}
+
+void print_net_wm_win_type(WM *wm, Window win)
+{
+    Net_wm_win_type type=get_net_wm_win_type(wm, win);
+
+    printf(_("以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"), win);
+    printf("desktop: %d\n", type.desktop);
+    printf("dock: %d\n", type.dock);
+    printf("toolbar: %d\n", type.toolbar);
+    printf("menu: %d\n", type.menu);
+    printf("utility: %d\n", type.utility);
+    printf("splash: %d\n", type.splash);
+    printf("dialog: %d\n", type.dialog);
+    printf("dropdown_menu: %d\n", type.dropdown_menu);
+    printf("popup_menu: %d\n", type.popup_menu);
+    printf("tooltip: %d\n", type.tooltip);
+    printf("notification: %d\n", type.notification);
+    printf("combo: %d\n", type.combo);
+    printf("dnd: %d\n", type.dnd);
+    printf("normal: %d\n", type.normal);
+    printf("none: %d\n", type.none);
+}
+
+void print_net_wm_state(WM *wm, Window win)
+{
+    Net_wm_state state=get_net_wm_state(wm, win);
+
+    printf(_("以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"), win);
+    printf("modal: %d\n", state.modal);
+    printf("sticky: %d\n", state.sticky);
+    printf("vmax: %d\n", state.vmax);
+    printf("hmax: %d\n", state.hmax);
+    printf("shaded: %d\n", state.shaded);
+    printf("skip_taskbar: %d\n", state.skip_taskbar);
+    printf("skip_pager: %d\n", state.skip_pager);
+    printf("hidden: %d\n", state.hidden);
+    printf("fullscreen: %d\n", state.fullscreen);
+    printf("above: %d\n", state.above);
+    printf("below: %d\n", state.below);
+    printf("attent: %d\n", state.attent);
+    printf("focused: %d\n", state.focused);
+    printf("none: %d\n", state.none);
+}
+
+int print_atom_name(WM *wm, Atom atom)
+{
+    for(int i=0; i<ICCCM_ATOMS_N; i++)
+        if(wm->icccm_atoms[i] == atom)
+            return printf("icccm_atom=%ld, name=%s, index=%d\n", (long)atom, ICCCM_NAMES[i], i);
+    for(int i=0; i<EWMH_ATOM_N; i++)
+        if(wm->ewmh_atom[i] == atom)
+            return printf("ewmh_atom=%ld, name=%s, index=%d\n", (long)atom, EWMH_NAME[i], i);
+    return printf("unknown_atom=%ld\n", (long)atom);
+}
+
+void print_all_atom_name(WM *wm)
+{
+    for(int i=0; i<ICCCM_ATOMS_N; i++)
+        printf("icccm_atom=%ld, name=%s, index=%d\n", (long)wm->icccm_atoms[i], ICCCM_NAMES[i], i);
+    for(int i=0; i<EWMH_ATOM_N; i++)
+        printf("ewmh_atom=%ld, name=%s, index=%d\n", (long)wm->ewmh_atom[i], EWMH_NAME[i], i);
 }

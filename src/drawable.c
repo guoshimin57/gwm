@@ -21,10 +21,14 @@ Window get_transient_for(WM *wm, Window w)
     return XGetTransientForHint(wm->display, w, &pw) ? pw : None;
 }
 
+Atom *get_atom_props(WM *wm, Window win, Atom prop, unsigned long *n)
+{
+    return (Atom *)get_prop(wm, win, prop, n);
+}
+
 Atom get_atom_prop(WM *wm, Window win, Atom prop)
 {
-    unsigned char *p=get_prop(wm, win, prop, NULL);
-    Atom result = p ? *(Atom *)p : None;
+    Atom *p=get_atom_props(wm, win, prop, NULL), result = p ? *p : None;
     XFree(p);
     return result;
 }
@@ -193,11 +197,8 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
 
 static bool is_wm_win_type(WM *wm, Window win)
 {
-    Atom type=get_atom_prop(wm, win, wm->ewmh_atom[NET_WM_WINDOW_TYPE]);
-    return(type == None
-        || type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_NORMAL]
-        || type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_UTILITY]
-        || type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DIALOG]);
+    Net_wm_win_type type=get_net_wm_win_type(wm, win);
+    return(type.utility || type.dialog || type.normal || type.none);
 }
 
 /* 當存在合成器時，合成器會在根窗口上放置特效，即使用XSetWindowBackground*設置
@@ -383,12 +384,12 @@ void restack_win(WM *wm, Window win)
             return;
 
     Client *c=win_to_client(wm, win);
-    Atom type=get_atom_prop(wm, win, wm->ewmh_atom[NET_WM_WINDOW_TYPE]);
+    Net_wm_win_type type=get_net_wm_win_type(wm, win);
     Window wins[2]={None, c ? c->frame : win};
 
-    if(type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DESKTOP])
+    if(type.desktop)
         wins[0]=wm->top_wins[DESKTOP_TOP];
-    else if(type == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DOCK])
+    else if(type.dock)
         wins[0]=wm->top_wins[DOCK_TOP];
     else if(c)
     {
@@ -400,8 +401,96 @@ void restack_win(WM *wm, Window win)
     XRestackWindows(wm->display, wins, 2);
 }
 
-bool is_modal_win(WM *wm, Window win)
+/* 根據EWMH，窗口可能有多種類型，但實際上絕大部分窗口只設置一種類型 */
+Net_wm_win_type get_net_wm_win_type(WM *wm, Window win)
 {
-    return get_atom_prop(wm, win, wm->ewmh_atom[NET_WM_STATE])
-        == wm->ewmh_atom[NET_WM_STATE_MODAL];
+    Net_wm_win_type result={0}, unknown={.none=1};
+    unsigned long n=0;
+    Atom *types=get_atom_props(wm, win, wm->ewmh_atom[NET_WM_WINDOW_TYPE], &n);
+
+    if(!types)
+        return unknown;
+
+    for(unsigned long i=0; i<n; i++)
+    {
+        if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DESKTOP])
+            result.desktop=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DOCK])
+            result.dock=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_TOOLBAR])
+            result.toolbar=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_MENU])
+            result.menu=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_UTILITY])
+            result.utility=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_SPLASH])
+            result.splash=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DIALOG])
+            result.dialog=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DROPDOWN_MENU])
+            result.dropdown_menu=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_POPUP_MENU])
+            result.popup_menu=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_TOOLTIP])
+            result.tooltip=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_NOTIFICATION])
+            result.notification=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_COMBO])
+            result.combo=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DND])
+            result.dnd=1;
+        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_NORMAL])
+            result.normal=1;
+        else
+            result.none=1;
+    }
+    XFree(types);
+
+    return result;
+}
+
+/* EWMH未說明窗口可否同時有多種狀態，但實際上絕大部分窗口不設置或只設置一種 */
+Net_wm_state get_net_wm_state(WM *wm, Window win)
+{
+    Net_wm_state result={0}, unknown={.none=1};
+    unsigned long n=0;
+    Atom *states=get_atom_props(wm, win, wm->ewmh_atom[NET_WM_STATE], &n);
+
+    if(!states)
+        return unknown;
+
+    for(unsigned long i=0; i<n; i++)
+    {
+        if(states[i] == wm->ewmh_atom[NET_WM_STATE_MODAL])
+            result.modal=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_STICKY])
+            result.sticky=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_MAXIMIZED_VERT])
+            result.vmax=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_MAXIMIZED_HORZ])
+            result.hmax=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_SHADED])
+            result.shaded=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_SKIP_TASKBAR])
+            result.skip_taskbar=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_SKIP_PAGER])
+            result.skip_pager=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_HIDDEN])
+            result.hidden=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_FULLSCREEN])
+            result.fullscreen=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_ABOVE])
+            result.above=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_BELOW])
+            result.below=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_DEMANDS_ATTENTION])
+            result.attent=1;
+        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_FOCUSED])
+            result.focused=1;
+        else
+            result.none=1;
+    }
+    XFree(states);
+
+    return result;
 }

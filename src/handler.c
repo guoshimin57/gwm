@@ -11,12 +11,30 @@
 
 #include "gwm.h"
 
+#define SHOULD_REMOVE_STATE(c, act, flag) \
+    (act==NET_WM_STATE_REMOVE || (act==NET_WM_STATE_TOGGLE && c->win_state.flag))
+
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
 static void unmap_for_click(WM *wm, Widget_type type);
 static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e);
 static void focus_clicked_client(WM *wm, Window win);
 static void handle_client_message(WM *wm, XEvent *e);
+static void change_net_wm_state(WM *wm, Client *c, long *full_act);
+static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act);
+static void change_net_wm_state_for_modal(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_shaded(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_above(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_below(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_attent(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_focused(WM *wm, Client *c, long act);
 static void activate_win(WM *wm, Window win, unsigned long src);
 static void change_desktop(WM *wm, Window win, unsigned int desktop);
 static void handle_config_request(WM *wm, XEvent *e);
@@ -130,16 +148,189 @@ static void handle_client_message(WM *wm, XEvent *e)
 {
     Window win=e->xclient.window;
     Atom type=e->xclient.message_type;
+    Client *c=win_to_client(wm, win);
+
     if(type == wm->ewmh_atom[NET_CURRENT_DESKTOP])
         focus_desktop_n(wm, e->xclient.data.l[0]+1);
-    else if(type == wm->ewmh_atom[NET_ACTIVE_WINDOW])
-        activate_win(wm, win, e->xclient.data.l[0]);
     else if(type == wm->ewmh_atom[NET_SHOWING_DESKTOP])
         toggle_showing_desktop_mode(wm, e->xclient.data.l[0]);
-    else if(type == wm->ewmh_atom[NET_WM_DESKTOP])
-        change_desktop(wm, win, e->xclient.data.l[0]);
-    else if(type == wm->ewmh_atom[NET_CLOSE_WINDOW])
-        close_win(wm, win);
+    else if(c)
+    {
+        if(type == wm->ewmh_atom[NET_ACTIVE_WINDOW])
+            activate_win(wm, win, e->xclient.data.l[0]);
+        else if(type == wm->ewmh_atom[NET_CLOSE_WINDOW])
+            close_win(wm, win);
+        else if(type == wm->ewmh_atom[NET_WM_DESKTOP])
+            change_desktop(wm, win, e->xclient.data.l[0]);
+        else if(type == wm->ewmh_atom[NET_WM_STATE])
+            change_net_wm_state(wm, c, e->xclient.data.l);
+    }
+}
+
+static void change_net_wm_state(WM *wm, Client *c, long *full_act)
+{
+    long act=full_act[0];
+    if((act!=NET_WM_STATE_REMOVE && act!=NET_WM_STATE_ADD && act!=NET_WM_STATE_TOGGLE))
+        return;
+
+    Net_wm_state mask=get_net_wm_state_mask(wm, full_act);
+    if(mask.none)
+        return;
+
+    if(mask.modal)          change_net_wm_state_for_modal(wm, c, act);
+    if(mask.sticky)         change_net_wm_state_for_sticky(wm, c, act);
+    if(mask.vmax)           change_net_wm_state_for_vmax(wm, c, act);
+    if(mask.hmax)           change_net_wm_state_for_hmax(wm, c, act);
+    if(mask.shaded)         change_net_wm_state_for_shaded(wm, c, act);
+    if(mask.skip_taskbar)   change_net_wm_state_for_skip_taskbar(wm, c, act);
+    if(mask.skip_pager)     change_net_wm_state_for_skip_pager(wm, c, act);
+    if(mask.hidden)         change_net_wm_state_for_hidden(wm, c, act);
+    if(mask.fullscreen)     change_net_wm_state_for_fullscreen(wm, c, act);
+    if(mask.above)          change_net_wm_state_for_above(wm, c, act);
+    if(mask.below)          change_net_wm_state_for_below(wm, c, act);
+    if(mask.attent)         change_net_wm_state_for_attent(wm, c, act);
+    if(mask.focused)        change_net_wm_state_for_focused(wm, c, act);
+}
+
+static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act)
+{
+    Net_wm_state m={0};
+    Atom *a=wm->ewmh_atom;
+
+    for(long p=0, i=1; i<=2 && (p=full_act[i]); i++)
+    {
+        if     (p == (long)a[NET_WM_STATE_MODAL])             m.modal=1;
+        else if(p == (long)a[NET_WM_STATE_STICKY])            m.sticky=1;
+        else if(p == (long)a[NET_WM_STATE_MAXIMIZED_VERT])    m.vmax=1;
+        else if(p == (long)a[NET_WM_STATE_MAXIMIZED_HORZ])    m.hmax=1;
+        else if(p == (long)a[NET_WM_STATE_SHADED])            m.shaded=1;
+        else if(p == (long)a[NET_WM_STATE_SKIP_TASKBAR])      m.skip_taskbar=1;
+        else if(p == (long)a[NET_WM_STATE_SKIP_PAGER])        m.skip_pager=1;
+        else if(p == (long)a[NET_WM_STATE_HIDDEN])            m.hidden=1;
+        else if(p == (long)a[NET_WM_STATE_FULLSCREEN])        m.fullscreen=1;
+        else if(p == (long)a[NET_WM_STATE_ABOVE])             m.above=1;
+        else if(p == (long)a[NET_WM_STATE_BELOW])             m.below=1;
+        else if(p == (long)a[NET_WM_STATE_DEMANDS_ATTENTION]) m.attent=1;
+        else if(p == (long)a[NET_WM_STATE_FOCUSED])           m.focused=1;
+        else m.none=1;
+    }
+    return m;
+}
+
+static void change_net_wm_state_for_modal(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, modal))
+        c->win_state.modal=0;
+    else
+        c->win_state.modal=1, c->area_type=FLOATING_AREA, update_layout(wm);
+}
+
+static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, sticky))
+        c->win_state.sticky=0, c->desktop_mask=get_desktop_mask(wm->cur_desktop);
+    else
+        c->win_state.sticky=1, c->desktop_mask=~0U, update_layout(wm);
+}
+
+static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, vmax))
+        c->win_state.vmax=0, c->area_type=MAIN_AREA, update_layout(wm);
+    else
+        c->win_state.vmax=1, c->area_type=FLOATING_AREA,
+        maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_VERT_MAX});
+}
+
+static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, hmax))
+        c->win_state.hmax=0, c->area_type=MAIN_AREA, update_layout(wm);
+    else
+        c->win_state.hmax=1, c->area_type=FLOATING_AREA,
+        maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_HORZ_MAX});
+}
+
+/* 暫不支持窗口陰影特效 */
+static void change_net_wm_state_for_shaded(WM *wm, Client *c, long act)
+{
+    UNUSED(wm);
+    if(SHOULD_REMOVE_STATE(c, act, shaded))
+        c->win_state.shaded=0;
+    else
+        c->win_state.shaded=1;
+}
+
+/* 暫不支持跳過任務欄 */
+static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act)
+{
+    UNUSED(wm);
+    if(SHOULD_REMOVE_STATE(c, act, skip_taskbar))
+        c->win_state.skip_taskbar=0;
+    else
+        c->win_state.skip_taskbar=1;
+}
+
+/* 暫不支持跳過分頁器 */
+static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act)
+{
+    UNUSED(wm);
+    if(SHOULD_REMOVE_STATE(c, act, skip_pager))
+        c->win_state.skip_pager=0;
+    else
+        c->win_state.skip_pager=1;
+}
+
+static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, hidden))
+        c->win_state.hidden=0, deiconify(wm, c->area_type==ICONIFY_AREA ? c : NULL);
+    else
+        c->win_state.hidden=1, iconify(wm, c);
+}
+
+/* 暫不支持單獨窗口全屏 */
+static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
+{
+    UNUSED(wm);
+    if(SHOULD_REMOVE_STATE(c, act, fullscreen))
+        c->win_state.fullscreen=0;
+    else
+        c->win_state.fullscreen=1;
+}
+
+static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, above))
+        c->win_state.above=0, c->area_type=MAIN_AREA, raise_client(wm, c);
+    else
+        c->win_state.above=1, c->area_type=FLOATING_AREA, raise_client(wm, c);
+}
+
+static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, below))
+        c->win_state.below=0, c->area_type=MAIN_AREA, raise_client(wm, c);
+    else
+        c->win_state.below=1, c->area_type=FLOATING_AREA, raise_client(wm, c);
+}
+
+/* 暫不支持請求關注 */
+static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
+{
+    UNUSED(wm);
+    if(SHOULD_REMOVE_STATE(c, act, attent))
+        c->win_state.attent=0;
+    else
+        c->win_state.attent=1;
+}
+
+static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, focused))
+        c->win_state.focused=0, focus_client(wm, wm->cur_desktop, NULL);
+    else
+        c->win_state.focused=1, focus_client(wm, wm->cur_desktop, c);
 }
 
 static void activate_win(WM *wm, Window win, unsigned long src)

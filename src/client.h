@@ -12,6 +12,8 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include "drawable.h"
+
 #define TITLEBAR_HEIGHT(wm) get_font_height_by_pad(wm, TITLEBAR_FONT)
 
 struct client_tag // 客戶窗口相關信息
@@ -21,6 +23,8 @@ struct client_tag // 客戶窗口相關信息
     int w, h, titlebar_h, border_w; // win的寬、高、標題欄高、邊框寬
     unsigned int desktop_mask; // 所属虚拟桌面的掩碼
     Area_type area_type; // 區域類型
+    Net_wm_win_type win_type; // win的窗口类型
+    Net_wm_state win_state; // win的窗口状态
     char *title_text; // 標題的文字
     Icon *icon; // 圖符信息
     const char *class_name; // 客戶窗口的程序類型名
@@ -32,7 +36,6 @@ struct client_tag // 客戶窗口相關信息
 };
 
 void add_client(WM *wm, Window win);
-void add_client_node(WM *wm, Client *head, Client *c);
 void fix_area_type(WM *wm);
 void set_default_win_rect(WM *wm, Client *c);
 void create_titlebar(WM *wm, Client *c);
@@ -42,7 +45,6 @@ int get_clients_n(WM *wm);
 int get_all_clients_n(WM *wm);
 Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c, bool is_for_quit);
-void del_client_node(Client *c);
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
 Client *win_to_iconic_state_client(WM *wm, Window win);
 void raise_client(WM *wm, Client *c);
@@ -57,5 +59,16 @@ Client **get_subgroup_clients(WM *wm, Client *c, int *n);
 int get_subgroup_n(WM *wm, Client *c);
 Client *get_subgroup_leader(Client *c);
 Client *get_top_modal_client(WM *wm, Client *subgroup_leader);
+void focus_client(WM *wm, unsigned int desktop_n, Client *c);
+bool is_on_desktop_n(unsigned int n, Client *c);
+bool is_on_cur_desktop(WM *wm, Client *c);
+unsigned int get_desktop_mask(unsigned int desktop_n);
+void iconify(WM *wm, Client *c);
+void create_icon(WM *wm, Client *c);
+void update_icon_area(WM *wm);
+void deiconify(WM *wm, Client *c);
+void del_icon(WM *wm, Client *c);
+void iconify_all_clients(WM *wm);
+void deiconify_all_clients(WM *wm);
 
 #endif

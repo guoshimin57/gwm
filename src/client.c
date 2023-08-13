@@ -15,6 +15,7 @@ static void apply_rules(WM *wm, Client *c);
 static void set_default_desktop_mask(WM *wm, Client *c);
 static void set_default_area_type(WM *wm, Client *c);
 static bool have_rule(const Rule *r, Client *c);
+static void add_client_node(WM *wm, Client *head, Client *c);
 static void set_win_rect_by_attr(WM *wm, Client *c);
 static void fix_win_pos(WM *wm, Client *c);
 static bool fix_win_pos_by_hint(Client *c);
@@ -24,9 +25,15 @@ static void fix_win_size(WM *wm, Client *c);
 static void fix_win_size_by_workarea(WM *wm, Client *c);
 static void frame_client(WM *wm, Client *c);
 static Rect get_button_rect(WM *wm, Client *c, size_t index);
+static void del_client_node(Client *c);
 static Rect get_frame_rect(Client *c);
 static bool move_client_node(WM *wm, Client *from, Client *to, Area_type type);
 static int cmp_client_win(const void *client1, const void *client2);
+static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
+static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
+static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
+static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
+static bool have_same_class_icon_client(WM *wm, Client *c);
 
 void add_client(WM *wm, Window win)
 {
@@ -36,6 +43,8 @@ void add_client(WM *wm, Window win)
     c->title_text=get_title_text(wm, win, "");
     c->wm_hint=XGetWMHints(wm->display, win);
     update_size_hint(wm, c);
+    c->win_type=get_net_wm_win_type(wm, win);
+    c->win_state=get_net_wm_state(wm, win);
     apply_rules(wm, c);
     add_client_node(wm, get_area_head(wm, c->area_type), c);
     fix_area_type(wm);
@@ -87,23 +96,25 @@ static void apply_rules(WM *wm, Client *c)
 
 static void set_default_area_type(WM *wm, Client *c)
 {
-    Atom type=get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_WINDOW_TYPE]);
-
     c->area_type=DESKTOP(wm)->default_area_type;
     if( (c->owner && c->owner->win!=wm->root_win)
-        || type != wm->ewmh_atom[NET_WM_WINDOW_TYPE_NORMAL]
-        || is_modal_win(wm, c->win))
+        || !c->win_type.normal || c->win_state.modal)
         c->area_type=FLOATING_AREA;
 }
 
 static void set_default_desktop_mask(WM *wm, Client *c)
 {
-    unsigned int desktop;
-    unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[NET_WM_DESKTOP], NULL);
+    if(c->win_state.sticky)
+        c->desktop_mask=~0U;
+    else
+    {
+        unsigned int desktop;
+        unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[NET_WM_DESKTOP], NULL);
 
-    desktop = p ? *(unsigned long *)p : wm->cur_desktop-1;
-    XFree(p);
-    c->desktop_mask = desktop==0xFFFFFFFF ? desktop : get_desktop_mask(desktop+1);
+        desktop = p ? *(unsigned long *)p : wm->cur_desktop-1;
+        XFree(p);
+        c->desktop_mask = desktop==~0U ? desktop : get_desktop_mask(desktop+1);
+    }
 }
 
 static bool have_rule(const Rule *r, Client *c)
@@ -114,7 +125,7 @@ static bool have_rule(const Rule *r, Client *c)
         || ((pn && ((name && strstr(name, pn)) || strcmp(pc, "*")==0))));
 }
 
-void add_client_node(WM *wm, Client *head, Client *c)
+static void add_client_node(WM *wm, Client *head, Client *c)
 {
     c->prev=head;
     c->next=head->next;
@@ -175,8 +186,7 @@ static void fix_win_pos_by_prop(WM *wm, Client *c)
          ww=wm->workarea.w, wh=wm->workarea.h;
     if(c->owner)
         c->x=c->owner->x+(c->owner->w-w)/2, c->y=c->owner->y+(c->owner->h-h)/2;
-    if( get_atom_prop(wm, c->win, wm->ewmh_atom[NET_WM_WINDOW_TYPE])
-        == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DIALOG])
+    if(c->win_type.dialog)
         c->x=wx+(ww-w)/2, c->y=wy+(wh-h)/2;
 }
 
@@ -335,7 +345,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     set_all_net_client_list(wm);
 }
 
-void del_client_node(Client *c)
+static void del_client_node(Client *c)
 {
     c->prev->next=c->next;
     c->next->prev=c->prev;
@@ -570,9 +580,230 @@ Client *get_top_modal_client(WM *wm, Client *subgroup_leader)
     Client *result=NULL, **g=get_subgroup_clients(wm, subgroup_leader, &n);
 
     for(int i=n-1; i>=0 && !result; i--)
-        if(is_modal_win(wm, g[i]->win))
+        if(g[i]->win_state.modal)
             result=g[i];
     free(g);
 
     return result;
+}
+
+/* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因（如移動到
+ * 其他虛擬桌面、刪除、縮微）而未更新時，則應使用值爲NULL的c來調用本函數。這
+ * 樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
+void focus_client(WM *wm, unsigned int desktop_n, Client *c)
+{
+    if(c && c!=CUR_FOC_CLI(wm) && c->wm_hint && (c->wm_hint->flags & XUrgencyHint))
+        set_urgency(wm, c, false);
+    update_focus_client_pointer(wm, desktop_n, c);
+
+    Desktop *d=wm->desktop[desktop_n-1];
+    Client *pc=d->cur_focus_client;
+
+    if(desktop_n == wm->cur_desktop)
+    {
+        if(pc->win == wm->root_win)
+            XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
+        else if(pc->area_type != ICONIFY_AREA)
+            set_input_focus(wm, pc->wm_hint, pc->win);
+    }
+    update_client_bg(wm, desktop_n, pc);
+    update_client_bg(wm, desktop_n, d->prev_focus_client);
+    raise_client(wm, pc);
+    set_net_active_window(wm);
+}
+
+static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
+{
+    Desktop *d=wm->desktop[desktop_n-1];
+    Client *p=NULL, **pp=&d->prev_focus_client, **pc=&d->cur_focus_client;
+
+
+    if(!c)  // 當某個client在desktop_n中變得不可見時，即既有可能被刪除了，
+    {       // 也可能是被縮微化了，還有可能是移動到其他虛擬桌面了。
+        if(is_map_client(wm, desktop_n, *pc)) // 非當前窗口被非wm手段關閉（如kill）
+            return;
+        p = (*pc)->owner ? (*pc)->owner : *pp;
+        if(is_map_client(wm, desktop_n, p))
+            *pc=p;
+        else if((p=get_prev_map_client(wm, desktop_n, *pp)))
+            *pc=p;
+        else if((p=get_next_map_client(wm, desktop_n, *pp)))
+            *pc=p;
+        else
+            *pc=wm->clients;
+
+        if(is_map_client(wm, desktop_n, *pp))
+           return;
+        else if(is_map_client(wm, desktop_n, (*pp)->owner))
+            *pp=(*pp)->owner;
+        else if((p=get_prev_map_client(wm, desktop_n, *pp)))
+            *pp=p;
+        else if((p=get_next_map_client(wm, desktop_n, *pp)))
+            *pp=p;
+        else
+            *pp=wm->clients;
+    }
+    else if(c != *pc)
+        *pp=*pc, *pc=((p=get_top_modal_client(wm, c->subgroup_leader)) ? p : c);
+}
+
+static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c)
+{
+    if(c && c->area_type!=ICONIFY_AREA && is_on_desktop_n(desktop_n, c))
+        for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
+            if(p == c)
+                return true;
+    return false;
+}
+
+/* 取得存儲結構意義上的上一個處於映射狀態的客戶窗口 */
+static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c)
+{
+    for(Client *p=c->prev; p!=wm->clients; p=p->prev)
+        if(p->area_type!=ICONIFY_AREA && is_on_desktop_n(desktop_n, p))
+            return p;
+    return NULL;
+}
+
+/* 取得存儲結構意義上的下一個處於映射狀態的客戶窗口 */
+static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c)
+{
+    for(Client *p=c->next; p!=wm->clients; p=p->next)
+        if(p->area_type!=ICONIFY_AREA && is_on_desktop_n(desktop_n, p))
+            return p;
+    return NULL;
+}
+
+bool is_on_desktop_n(unsigned int n, Client *c)
+{
+    return (c->desktop_mask & get_desktop_mask(n));
+}
+
+bool is_on_cur_desktop(WM *wm, Client *c)
+{
+    return (c->desktop_mask & get_desktop_mask(wm->cur_desktop));
+}
+
+unsigned int get_desktop_mask(unsigned int desktop_n)
+{
+    return 1<<(desktop_n-1);
+}
+
+void iconify(WM *wm, Client *c)
+{
+    int n=0;
+    Client **g=get_subgroup_clients(wm, c, &n);
+
+    for(int i=0; i<n; i++)
+    {
+        Icon *icon=g[i]->icon;
+        icon->title_text=get_icon_title_text(wm, g[i]->win, g[i]->title_text);
+        update_win_bg(wm, icon->win, WIDGET_COLOR(wm, TASKBAR), None);
+        icon->area_type = g[i]->area_type==ICONIFY_AREA ?
+            wm->cfg->default_area_type : g[i]->area_type;
+        g[i]->area_type=ICONIFY_AREA;
+        update_icon_area(wm);
+        XMapWindow(wm->display, icon->win);
+        XUnmapWindow(wm->display, g[i]->frame);
+        if(g[i] == DESKTOP(wm)->cur_focus_client)
+        {
+            focus_client(wm, wm->cur_desktop, NULL);
+            update_frame_bg(wm, wm->cur_desktop, g[i]);
+        }
+    }
+    free(g);
+}
+
+void create_icon(WM *wm, Client *c)
+{
+    Icon *i=c->icon=malloc_s(sizeof(Icon));
+    i->x=i->y=0, i->w=i->h=wm->taskbar->h;
+    i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
+    i->win=create_widget_win(wm, wm->taskbar->icon_area, 0, 0,
+        i->w, i->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
+    XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
+    set_icon_image(wm, c);
+}
+
+void update_icon_area(WM *wm)
+{
+    int x=0, w=0;
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+    {
+        if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+        {
+            Icon *i=c->icon;
+            i->w=wm->taskbar->h;
+            if(have_same_class_icon_client(wm, c))
+            {
+                get_string_size(wm, wm->font[TITLEBAR_FONT], i->title_text, &w, NULL);
+                i->w=MIN(i->w+w, wm->cfg->icon_win_width_max);
+                i->show_text=true;
+            }
+            else
+                i->show_text=false;
+            i->x=x;
+            x+=i->w+wm->cfg->icon_gap;
+            XMoveResizeWindow(wm->display, i->win, i->x, i->y, i->w, i->h); 
+        }
+    }
+}
+
+static bool have_same_class_icon_client(WM *wm, Client *c)
+{
+    for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
+        if( p!=c && is_on_cur_desktop(wm, p) && p->area_type==ICONIFY_AREA
+            && !strcmp(c->class_name, p->class_name))
+            return true;
+    return false;
+}
+
+void deiconify(WM *wm, Client *c)
+{
+    if(!c)
+        return;
+
+    int n=0;
+    Client **g=get_subgroup_clients(wm, c, &n);
+
+    for(int i=0; i<n; i++)
+    {
+        XMapWindow(wm->display, g[i]->frame);
+        XUnmapWindow(wm->display, g[i]->icon->win);
+        g[i]->area_type=g[i]->icon->area_type;
+        update_icon_area(wm);
+        focus_client(wm, wm->cur_desktop, g[i]);
+    }
+    free(g);
+}
+
+void del_icon(WM *wm, Client *c)
+{
+    if(c->icon->image)
+    {
+        imlib_context_set_image(c->icon->image);
+        imlib_free_image();
+    }
+    if(c->area_type == ICONIFY_AREA)
+    {
+        XDestroyWindow(wm->display, c->icon->win);
+        c->area_type=c->icon->area_type;
+        vfree(c->icon->title_text, c->icon, NULL);
+        update_icon_area(wm);
+    }
+}
+
+void iconify_all_clients(WM *wm)
+{
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+        if(is_on_cur_desktop(wm, c) && c->area_type!=ICONIFY_AREA)
+            iconify(wm, c);
+}
+
+void deiconify_all_clients(WM *wm)
+{
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+        if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+            deiconify(wm, c);
+    update_layout(wm);
 }

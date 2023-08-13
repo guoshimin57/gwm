@@ -302,17 +302,23 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
 
     int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
         ww=wm->workarea.w, wh=wm->workarea.h;
+    bool vmax=(c->h+2*bw+th == wh), hmax=(c->w+2*bw == ww), fmax=false;
 
     switch(arg.max_way)
     {
-        case IN_SITU_VERT_MAX: c->y=wy+bw+th, c->h=wh-th-2*bw; break;
-        case IN_SITU_HORZ_MAX: c->x=wx+bw, c->w=ww-2*bw; break;
+        case IN_SITU_VERT_MAX: if(hmax) fmax=true; else c->y=wy+bw+th, c->h=wh-th-2*bw; break;
+        case IN_SITU_HORZ_MAX: if(vmax) fmax=true; else c->x=wx+bw, c->w=ww-2*bw; break;
         case TOP_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
         case BOTTOM_MAX: c->x=wx+bw, c->y=wy+wh/2+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
         case LEFT_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
         case RIGHT_MAX: c->x=ww/2+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
-        case FULL_MAX: c->x=wx+bw, c->y=wy+bw+th; c->w=ww-2*bw, c->h=wh-th-2*bw; break;
+        case FULL_MAX: fmax=true; break;
+        default: return;
     }
+
+    if(fmax)
+        c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh-th-2*bw;
+
     if(DESKTOP(wm)->cur_layout == TILE)
         move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
     move_resize_client(wm, c, NULL);

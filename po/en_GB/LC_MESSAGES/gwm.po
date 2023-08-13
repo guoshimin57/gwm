@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.0\n"
+"Project-Id-Version: gwm 2.6.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-08-03 22:07+0800\n"
+"POT-Creation-Date: 2023-08-13 11:12+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -248,10 +248,25 @@ msgstr "Open window menu"
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
-#: src/debug.c:20
+#: src/debug.c:21
 #, c-format
 msgid "以下是%lx窗口的子窗口：\n"
 msgstr "The following are subwindows of the %lx window:\n"
+
+#: src/debug.c:27
+#, c-format
+msgid "無法查詢%lx窗口的子窗口\n"
+msgstr "Unable to query child windows of %lx window:\n"
+
+#: src/debug.c:34
+#, c-format
+msgid "以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"
+msgstr "The following are the window types of the %lx windows (i.e. _NET_WM_WINDOW_TYPE):\n"
+
+#: src/debug.c:56
+#, c-format
+msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
+msgstr "The following are the window states (i.e. _NET_WM_STATE) of the %lx window:\n"
 
 #: src/font.c:29
 msgid "錯誤：不能加載必要的字體。"
@@ -325,6 +340,3 @@ msgstr "Command execution error"
 #: src/misc.c:318
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
-
-#~ msgid "拖動以調整窗口尺寸"
-#~ msgstr "Drag to resize"

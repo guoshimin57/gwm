@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.0\n"
+"Project-Id-Version: gwm 2.6.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-08-03 22:05+0800\n"
+"POT-Creation-Date: 2023-08-13 11:12+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -248,10 +248,25 @@ msgstr "打开窗口菜单"
 msgid "請輸入命令，然後按回車執行"
 msgstr "请输入命令，然后按回车执行"
 
-#: src/debug.c:20
+#: src/debug.c:21
 #, c-format
 msgid "以下是%lx窗口的子窗口：\n"
 msgstr "以下是%lx窗口的子窗口：\n"
+
+#: src/debug.c:27
+#, c-format
+msgid "無法查詢%lx窗口的子窗口\n"
+msgstr "无法查询%lx窗口的子窗口\n"
+
+#: src/debug.c:34
+#, c-format
+msgid "以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"
+msgstr "以下是%lx窗口窗口类型(即_NET_WM_WINDOW_TYPE)：\n"
+
+#: src/debug.c:56
+#, c-format
+msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
+msgstr "以下是%lx窗口窗口状态(即_NET_WM_STATE)：\n"
 
 #: src/font.c:29
 msgid "錯誤：不能加載必要的字體。"
@@ -305,6 +320,7 @@ msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "错误：已经有其他窗口管理器在运行！"
 
 #: src/misc.c:36
+#, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X错误：资源号=%#lx，请求量=%lu，错误码=%d，主请求码=%d，次请求码=%d\n"
 
@@ -324,6 +340,3 @@ msgstr "命令执行错误"
 #: src/misc.c:318
 msgid "未能成功地爲命令創建新進程"
 msgstr "未能成功地为命令创建新进程"
-
-#~ msgid "拖動以調整窗口尺寸"
-#~ msgstr "拖动以调整窗口尺寸"

@@ -70,21 +70,6 @@ void focus_desktop_n(WM *wm, unsigned int n)
     set_all_net_client_list(wm);
 }
 
-bool is_on_desktop_n(unsigned int n, Client *c)
-{
-    return (c->desktop_mask & get_desktop_mask(n));
-}
-
-bool is_on_cur_desktop(WM *wm, Client *c)
-{
-    return (c->desktop_mask & get_desktop_mask(wm->cur_desktop));
-}
-
-unsigned int get_desktop_mask(unsigned int desktop_n)
-{
-    return 1<<(desktop_n-1);
-}
-
 void move_to_desktop_n(WM *wm, Client *c, unsigned int n)
 {
     if(!n || n==wm->cur_desktop || c==wm->clients)

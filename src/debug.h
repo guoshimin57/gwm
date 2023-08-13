@@ -13,5 +13,9 @@
 #define DEBUG_H
 
 void print_win_tree(WM *wm, Window win);
+void print_net_wm_win_type(WM *wm, Window win);
+void print_net_wm_state(WM *wm, Window win);
+int print_atom_name(WM *wm, Atom atom);
+void print_all_atom_name(WM *wm);
 
 #endif

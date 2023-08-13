@@ -19,7 +19,6 @@ struct icon_dir_info_tag
 };
 typedef struct icon_dir_info_tag Icon_dir_info;
 
-static void set_icon_image(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c);
 static Imlib_Image get_icon_image_from_file(WM *wm, Client *c);
@@ -40,8 +39,6 @@ static FILE *open_index_theme(const char *base_dir, const char *theme);
 static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
 static bool is_accessible(const char *filename);
-static bool have_same_class_icon_client(WM *wm, Client *c);
-
 
 void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
@@ -52,7 +49,7 @@ void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int 
     imlib_render_image_on_drawable_at_size(x, y, w, h);
 }
 
-static void set_icon_image(WM *wm, Client *c)
+void set_icon_image(WM *wm, Client *c)
 {
     /* 根據加載效率依次嘗試 */
     if( c && !( (c->icon->image=get_icon_image_from_hint(wm, c))
@@ -384,123 +381,4 @@ static bool is_accessible(const char *filename)
 
     struct stat buf;
     return !stat(filename, &buf);
-}
-
-void iconify(WM *wm, Client *c)
-{
-    int n=0;
-    Client **g=get_subgroup_clients(wm, c, &n);
-
-    for(int i=0; i<n; i++)
-    {
-        Icon *icon=g[i]->icon;
-        icon->title_text=get_icon_title_text(wm, g[i]->win, g[i]->title_text);
-        update_win_bg(wm, icon->win, WIDGET_COLOR(wm, TASKBAR), None);
-        icon->area_type = g[i]->area_type==ICONIFY_AREA ?
-            wm->cfg->default_area_type : g[i]->area_type;
-        g[i]->area_type=ICONIFY_AREA;
-        update_icon_area(wm);
-        XMapWindow(wm->display, icon->win);
-        XUnmapWindow(wm->display, g[i]->frame);
-        if(g[i] == DESKTOP(wm)->cur_focus_client)
-        {
-            focus_client(wm, wm->cur_desktop, NULL);
-            update_frame_bg(wm, wm->cur_desktop, g[i]);
-        }
-    }
-    free(g);
-}
-
-void create_icon(WM *wm, Client *c)
-{
-    Icon *i=c->icon=malloc_s(sizeof(Icon));
-    i->x=i->y=0, i->w=i->h=wm->taskbar->h;
-    i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
-    i->win=create_widget_win(wm, wm->taskbar->icon_area, 0, 0,
-        i->w, i->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
-    XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
-    set_icon_image(wm, c);
-}
-
-void update_icon_area(WM *wm)
-{
-    int x=0, w=0;
-    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-    {
-        if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
-        {
-            Icon *i=c->icon;
-            i->w=wm->taskbar->h;
-            if(have_same_class_icon_client(wm, c))
-            {
-                get_string_size(wm, wm->font[TITLEBAR_FONT], i->title_text, &w, NULL);
-                i->w=MIN(i->w+w, wm->cfg->icon_win_width_max);
-                i->show_text=true;
-            }
-            else
-                i->show_text=false;
-            i->x=x;
-            x+=i->w+wm->cfg->icon_gap;
-            XMoveResizeWindow(wm->display, i->win, i->x, i->y, i->w, i->h); 
-        }
-    }
-}
-
-static bool have_same_class_icon_client(WM *wm, Client *c)
-{
-    for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
-        if( p!=c && is_on_cur_desktop(wm, p) && p->area_type==ICONIFY_AREA
-            && !strcmp(c->class_name, p->class_name))
-            return true;
-    return false;
-}
-
-void deiconify(WM *wm, Client *c)
-{
-    if(!c)
-        return;
-
-    int n=0;
-    Client **g=get_subgroup_clients(wm, c, &n);
-
-    for(int i=0; i<n; i++)
-    {
-        XMapWindow(wm->display, g[i]->frame);
-        XUnmapWindow(wm->display, g[i]->icon->win);
-        g[i]->area_type=g[i]->icon->area_type;
-        update_icon_area(wm);
-        focus_client(wm, wm->cur_desktop, g[i]);
-    }
-    free(g);
-}
-
-void del_icon(WM *wm, Client *c)
-{
-    if(c->icon->image)
-    {
-        imlib_context_set_image(c->icon->image);
-        imlib_free_image();
-    }
-    if(c->area_type == ICONIFY_AREA)
-    {
-        XDestroyWindow(wm->display, c->icon->win);
-        c->area_type=c->icon->area_type;
-        vfree(c->icon->title_text, c->icon, NULL);
-        update_icon_area(wm);
-    }
-}
-
-void iconify_all_clients(WM *wm)
-{
-    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(wm, c) && c->area_type!=ICONIFY_AREA)
-            iconify(wm, c);
-}
-
-void deiconify_all_clients(WM *wm)
-{
-    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
-            deiconify(wm, c);
-    update_layout(wm);
 }

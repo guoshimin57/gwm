@@ -315,3 +315,10 @@ void set_urgency(WM *wm, Client *c, bool urg)
     XSetWMHints(wm->display, c->win, h);
     XFree(h);
 }
+
+void set_input_focus(WM *wm, XWMHints *hint, Window win)
+{
+    if(!hint || ((hint->flags & InputHint) && hint->input)) // 不抗拒鍵盤輸入
+        XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
+    send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
+}

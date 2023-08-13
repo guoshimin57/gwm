@@ -23,12 +23,6 @@ struct icon_tag // 縮微窗口相關信息
 };
 
 void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h);
-void iconify(WM *wm, Client *c);
-void create_icon(WM *wm, Client *c);
-void update_icon_area(WM *wm);
-void deiconify(WM *wm, Client *c);
-void del_icon(WM *wm, Client *c);
-void iconify_all_clients(WM *wm);
-void deiconify_all_clients(WM *wm);
+void set_icon_image(WM *wm, Client *c);
 
 #endif
