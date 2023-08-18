@@ -20,7 +20,6 @@ struct config_tag
     char font_name[FONT_N][FONT_NAME_MAX]; // 本窗口管理器所使用的字庫名稱列表。注意：每增加一種不同的字體，就會增加2M左右的內存佔用
     Focus_mode focus_mode; // 聚焦模式
     Layout default_layout; // 默認的窗口布局模式
-    Area_type default_area_type; // 新打開的窗口的默認區域類型
     Color_theme color_theme; // 顏色主題
 
     /* 屏幕保護程序的行爲取決於X服務器，可能顯示移動的圖像，可能只是黑屏。*/

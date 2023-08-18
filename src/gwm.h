@@ -129,7 +129,6 @@
 typedef struct config_tag Config;
 typedef struct desktop_tag Desktop;
 typedef struct taskbar_tag Taskbar;
-typedef struct icon_tag Icon;
 typedef struct client_tag Client;
 typedef struct menu_tag Menu;
 typedef struct entry_tag Entry;
@@ -194,12 +193,13 @@ enum focus_mode_tag // 窗口聚焦模式
 };
 typedef enum focus_mode_tag Focus_mode;
 
-enum area_type_tag // 窗口的區域類型
+enum place_type_tag // 窗口的位置類型
 {
-     MAIN_AREA, SECOND_AREA, FIXED_AREA, FLOATING_AREA, ICONIFY_AREA,
-     PREV_AREA, ROOT_AREA,
+    DESKTOP_LAY, BELOW_LAY,
+    NORMAL_LAY_MAIN, NORMAL_LAY_SECOND, NORMAL_LAY_FIXED,
+    DOCK_LAY, ABOVE_LAY, FULLSCREEN_LAY, FLOAT_LAY,
 };
-typedef enum area_type_tag Area_type;
+typedef enum place_type_tag Place_type;
 
 enum widget_type_tag // 構件類型
 {
@@ -215,9 +215,9 @@ enum widget_type_tag // 構件類型
 
     ACT_CENTER_ITEM,
     HELP_BUTTON, FILE_BUTTON, TERM_BUTTON, BROWSER_BUTTON, 
-    PLAY_START_BUTTON, PLAY_TOGGLE_BUTTON, PLAY_QUIT_BUTTON, VOLUME_DOWN_BUTTON,
-    VOLUME_UP_BUTTON, VOLUME_MAX_BUTTON, VOLUME_TOGGLE_BUTTON, MAIN_NEW_BUTTON,
-    SEC_NEW_BUTTON, FIX_NEW_BUTTON, FLOAT_NEW_BUTTON, ICON_NEW_BUTTON,
+    GAME_BUTTON, PLAY_START_BUTTON, PLAY_TOGGLE_BUTTON, PLAY_QUIT_BUTTON,
+    VOLUME_DOWN_BUTTON, VOLUME_UP_BUTTON, VOLUME_MAX_BUTTON, VOLUME_TOGGLE_BUTTON,
+    MAIN_NEW_BUTTON, SEC_NEW_BUTTON, FIX_NEW_BUTTON, FLOAT_NEW_BUTTON,
     N_MAIN_UP_BUTTON, N_MAIN_DOWN_BUTTON, TITLEBAR_TOGGLE_BUTTON, CLI_BORDER_TOGGLE_BUTTON,
     CLOSE_ALL_CLIENTS_BUTTON, PRINT_WIN_BUTTON, PRINT_SCREEN_BUTTON, FOCUS_MODE_BUTTON,
     COMPOSITOR_BUTTON, WALLPAPER_BUTTON, COLOR_THEME_BUTTON, QUIT_WM_BUTTON,
@@ -299,7 +299,7 @@ struct rule_tag // 窗口管理器的規則
 {
     const char *app_class, *app_name; // 分別爲客戶窗口的程序類型和程序名稱
     const char *class_alias; // 客戶窗口的類型別名
-    Area_type area_type; // 客戶窗口的區域類型
+    Place_type place_type; // 客戶窗口的位置類型
     bool show_titlebar, show_border; // 是否顯示客戶窗口標題欄和邊框
     unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼
 };
@@ -362,7 +362,7 @@ union func_arg_tag // 函數參數類型
     Max_way max_way; // 窗口最大化的方式
     int n; // 表示數量
     unsigned int desktop_n; // 虛擬桌面編號，從1開始編號
-    Area_type area_type; // 窗口區域類型
+    Place_type place_type; // 窗口位置類型
     double change_ratio; // 變化率
 };
 typedef union func_arg_tag Func_arg;

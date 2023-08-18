@@ -99,7 +99,7 @@ void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
         return;
 
     Desktop *d=wm->desktop[desktop_n-1];
-    if(c->area_type==ICONIFY_AREA && d->cur_layout!=PREVIEW)
+    if(c->icon && d->cur_layout!=PREVIEW)
         update_win_bg(wm, c->icon->win, c==d->cur_focus_client ?
             WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON) :
             WIDGET_COLOR(wm, TASKBAR), None);

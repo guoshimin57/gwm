@@ -111,11 +111,10 @@ static const Keybind keybind[] =
     {WM_SKEY,       XK_Left,      key_move_resize_client,      {.direction=LEFT2RIGHT}},
     {WM_KEY,        XK_Right,     key_move_resize_client,      {.direction=RIGHT2RIGHT}},
     {WM_SKEY,       XK_Right,     key_move_resize_client,      {.direction=RIGHT2LEFT}},
-    {WM_KEY,        XK_F1,        change_area,                 {.area_type=MAIN_AREA}},
-    {WM_KEY,        XK_F2,        change_area,                 {.area_type=SECOND_AREA}},
-    {WM_KEY,        XK_F3,        change_area,                 {.area_type=FIXED_AREA}},
-    {WM_KEY,        XK_F4,        change_area,                 {.area_type=FLOATING_AREA}},
-    {WM_KEY,        XK_F5,        change_area,                 {.area_type=ICONIFY_AREA}},
+    {WM_KEY,        XK_F1,        change_place,                {.place_type=NORMAL_LAY_MAIN}},
+    {WM_KEY,        XK_F2,        change_place,                {.place_type=NORMAL_LAY_SECOND}},
+    {WM_KEY,        XK_F3,        change_place,                {.place_type=NORMAL_LAY_FIXED}},
+    {WM_KEY,        XK_F4,        change_place,                {.place_type=FLOAT_LAY}},
     {WM_KEY,        XK_Return,    choose_client,               {0}},
     {WM_KEY,        XK_Tab,       next_client,                 {0}},
     {WM_SKEY,       XK_Tab,       prev_client,                 {0}},
@@ -176,6 +175,7 @@ static const Buttonbind buttonbind[] =
     {FILE_BUTTON,               0, Button1,  exec,                       SH_CMD(FILE_MANAGER)},
     {TERM_BUTTON,               0, Button1,  exec,                       SH_CMD(TERMINAL)},
     {BROWSER_BUTTON,            0, Button1,  exec,                       SH_CMD(BROWSER)},
+    {GAME_BUTTON,               0, Button1,  exec,                       SH_CMD(GAME)},
     {PLAY_START_BUTTON,         0, Button1,  exec,                       SH_CMD(PLAY_START)},
     {PLAY_TOGGLE_BUTTON,        0, Button1,  exec,                       SH_CMD(PLAY_TOGGLE)},
     {PLAY_QUIT_BUTTON,          0, Button1,  exec,                       SH_CMD(PLAY_QUIT)},
@@ -183,11 +183,10 @@ static const Buttonbind buttonbind[] =
     {VOLUME_UP_BUTTON,          0, Button1,  exec,                       SH_CMD(VOLUME_UP)},
     {VOLUME_MAX_BUTTON,         0, Button1,  exec,                       SH_CMD(VOLUME_MAX)},
     {VOLUME_TOGGLE_BUTTON,      0, Button1,  exec,                       SH_CMD(VOLUME_TOGGLE)},
-    {MAIN_NEW_BUTTON,           0, Button1,  change_default_area_type,   {.area_type=MAIN_AREA}},
-    {SEC_NEW_BUTTON,            0, Button1,  change_default_area_type,   {.area_type=SECOND_AREA}},
-    {FIX_NEW_BUTTON,            0, Button1,  change_default_area_type,   {.area_type=FIXED_AREA}},
-    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_area_type,   {.area_type=FLOATING_AREA}},
-    {ICON_NEW_BUTTON,           0, Button1,  change_default_area_type,   {.area_type=ICONIFY_AREA}},
+    {MAIN_NEW_BUTTON,           0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_MAIN}},
+    {SEC_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_SECOND}},
+    {FIX_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_FIXED}},
+    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=FLOAT_LAY}},
     {N_MAIN_UP_BUTTON,          0, Button1,  adjust_n_main_max,          {.n=1}},
     {N_MAIN_DOWN_BUTTON,        0, Button1,  adjust_n_main_max,          {.n=-1}},
     {TITLEBAR_TOGGLE_BUTTON,    0, Button1,  toggle_titlebar_visibility, {0}},
@@ -213,25 +212,25 @@ static const Buttonbind buttonbind[] =
     {RIGHT_MAX_BUTTON,          0, Button1,  maximize_client,            {.max_way=RIGHT_MAX}},
     {FULL_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=FULL_MAX}},
     {ROOT_WIN,                  0, Button1,  adjust_layout_ratio,        {0}},
-    {MAIN_BUTTON,               0, Button1,  change_area,                {.area_type=MAIN_AREA}},
-    {SECOND_BUTTON,             0, Button1,  change_area,                {.area_type=SECOND_AREA}},
-    {FIXED_BUTTON,              0, Button1,  change_area,                {.area_type=FIXED_AREA}},
-    {FLOAT_BUTTON,              0, Button1,  change_area,                {.area_type=FLOATING_AREA}},
-    {ICON_BUTTON,               0, Button1,  change_area,                {.area_type=ICONIFY_AREA}},
+    {MAIN_BUTTON,               0, Button1,  change_place,               {.place_type=NORMAL_LAY_MAIN}},
+    {SECOND_BUTTON,             0, Button1,  change_place,               {.place_type=NORMAL_LAY_SECOND}},
+    {FIXED_BUTTON,              0, Button1,  change_place,               {.place_type=NORMAL_LAY_FIXED}},
+    {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=FLOAT_LAY}},
+    {ICON_BUTTON,               0, Button1,  minimize_client,            {0}},
     {MAX_BUTTON,                0, Button1,  maximize_client,            {.max_way=FULL_MAX}},
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},
     {TITLE_AREA,                0, Button1,  pointer_move_resize_client, {.resize=false}},
-    {TITLE_AREA,                0, Button2,  pointer_change_area,        {0}},
+    {TITLE_AREA,                0, Button2,  pointer_change_place,       {0}},
     {TITLE_AREA,                0, Button3,  pointer_swap_clients,       {0}},
     {CLIENT_WIN,                0, Button1,  choose_client,              {0}},
     {CLIENT_WIN,           WM_KEY, Button1,  pointer_move_resize_client, {.resize=false}},
     {CLIENT_WIN,          WM_SKEY, Button1,  pointer_move_resize_client, {.resize=true}},
-    {CLIENT_WIN,           WM_KEY, Button2,  pointer_change_area,        {0}},
+    {CLIENT_WIN,           WM_KEY, Button2,  pointer_change_place,       {0}},
     {CLIENT_WIN,           WM_KEY, Button3,  pointer_swap_clients,       {0}},
     {CLIENT_WIN,                0, Button3,  choose_client,              {0}},
     {CLIENT_FRAME,              0, Button1,  pointer_move_resize_client, {.resize=true}},
-    {CLIENT_ICON,               0, Button1,  change_area,                {.area_type=PREV_AREA}},
-    {CLIENT_ICON,               0, Button2,  pointer_change_area,        {0}},
+    {CLIENT_ICON,               0, Button1,  deiconify_client,           {0}},
+    {CLIENT_ICON,               0, Button2,  pointer_change_place,       {0}},
     {CLIENT_ICON,          WM_KEY, Button2,  close_client,               {0}},
     {CLIENT_ICON,               0, Button3,  pointer_swap_clients,       {0}},
     {0} // 哨兵值，表示結束，切勿刪改之
@@ -247,11 +246,11 @@ static const Buttonbind buttonbind[] =
 static const Rule rule[] =
 {
     /* 客戶程序類型        客戶程序名稱 客戶程序的類型別名   窗口放置位置(詳gwm.h)  是否顯示標題欄 是否顯示邊框 桌面掩碼 */
-    {"Qq",                 "qq",                 "QQ",       FIXED_AREA,            false,         false,        0},
-    {"explorer.exe",       "explorer.exe",       NULL,       FLOATING_AREA,         false,         false,        0},
-    {"Thunder.exe",        "Thunder.exe",        NULL,       FLOATING_AREA,         true,          true,         0},
-    {"Google-chrome",      "google-chrome",      "chrome",   MAIN_AREA,             true,          true,         0},
-    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "Nautilus", MAIN_AREA,             true,          true,         0},
+    {"Qq",                 "qq",                 "QQ",       NORMAL_LAY_FIXED,      false,         false,        0},
+    {"explorer.exe",       "explorer.exe",       NULL,       FLOAT_LAY,             false,         false,        0},
+    {"Thunder.exe",        "Thunder.exe",        NULL,       FLOAT_LAY,             true,          true,         0},
+    {"Google-chrome",      "google-chrome",      "chrome",   NORMAL_LAY_MAIN,       true,          true,         0},
+    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "Nautilus", NORMAL_LAY_MAIN,       true,          true,         0},
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 
@@ -554,29 +553,31 @@ static void config_act_center_item_text(WM *wm)
     SET_ACT_CENTER_ITEM_TEXT(wm, TERM_BUTTON,              _("終端模擬器"));
     SET_ACT_CENTER_ITEM_TEXT(wm, BROWSER_BUTTON,           _("網絡瀏覽器"));
 
+    SET_ACT_CENTER_ITEM_TEXT(wm, GAME_BUTTON,              _("遊戲"));
     SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_START_BUTTON,        _("播放影音"));
     SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_TOGGLE_BUTTON,       _("切換播放狀態"));
     SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_QUIT_BUTTON,         _("關閉影音"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_DOWN_BUTTON,       _("减小音量"));
 
+    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_DOWN_BUTTON,       _("减小音量"));
     SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_UP_BUTTON,         _("增大音量"));
     SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_MAX_BUTTON,        _("最大音量"));
     SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_TOGGLE_BUTTON,     _("靜音切換"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, MAIN_NEW_BUTTON,          _("暫主區開窗"));
 
+    SET_ACT_CENTER_ITEM_TEXT(wm, MAIN_NEW_BUTTON,          _("暫主區開窗"));
     SET_ACT_CENTER_ITEM_TEXT(wm, SEC_NEW_BUTTON,           _("暫次區開窗"));
     SET_ACT_CENTER_ITEM_TEXT(wm, FIX_NEW_BUTTON,           _("暫固定區開窗"));
     SET_ACT_CENTER_ITEM_TEXT(wm, FLOAT_NEW_BUTTON,         _("暫懸浮區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, ICON_NEW_BUTTON,          _("暫縮微區開窗"));
 
     SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_UP_BUTTON,         _("增大主區容量"));
     SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_DOWN_BUTTON,       _("减小主區容量"));
     SET_ACT_CENTER_ITEM_TEXT(wm, TITLEBAR_TOGGLE_BUTTON,   _("開關當前窗口標題欄"));
     SET_ACT_CENTER_ITEM_TEXT(wm, CLI_BORDER_TOGGLE_BUTTON, _("開關當前窗口邊框"));
+
     SET_ACT_CENTER_ITEM_TEXT(wm, CLOSE_ALL_CLIENTS_BUTTON, _("關閉桌面所有窗口"));
     SET_ACT_CENTER_ITEM_TEXT(wm, PRINT_WIN_BUTTON,         _("當前窗口截圖"));
     SET_ACT_CENTER_ITEM_TEXT(wm, PRINT_SCREEN_BUTTON,      _("全屏截圖"));
     SET_ACT_CENTER_ITEM_TEXT(wm, FOCUS_MODE_BUTTON,        _("切換聚焦模式"));
+
     SET_ACT_CENTER_ITEM_TEXT(wm, COMPOSITOR_BUTTON,        _("開關合成器"));
     SET_ACT_CENTER_ITEM_TEXT(wm, WALLPAPER_BUTTON,         _("切換壁紙"));
     SET_ACT_CENTER_ITEM_TEXT(wm, COLOR_THEME_BUTTON,       _("切換顏色主題"));
@@ -642,7 +643,6 @@ static void config_misc(WM *wm)
     c->taskbar_on_top=false;
     c->focus_mode=CLICK_FOCUS;
     c->default_layout=TILE;
-    c->default_area_type=MAIN_AREA;
     c->color_theme=DARK_THEME;
     c->screen_saver_time_out=600;
     c->screen_saver_interval=600;

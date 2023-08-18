@@ -52,10 +52,10 @@ void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int 
 void set_icon_image(WM *wm, Client *c)
 {
     /* 根據加載效率依次嘗試 */
-    if( c && !( (c->icon->image=get_icon_image_from_hint(wm, c))
-        || (c->icon->image=get_icon_image_from_prop(wm, c))
-        || (c->icon->image=get_icon_image_from_file(wm, c))))
-        c->icon->image=NULL;
+    if( c && !( (c->image=get_icon_image_from_hint(wm, c))
+        || (c->image=get_icon_image_from_prop(wm, c))
+        || (c->image=get_icon_image_from_file(wm, c))))
+        c->image=NULL;
 }
 
 static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)

@@ -24,7 +24,7 @@ void update_layout(WM *wm)
     if(wm->clients == wm->clients->next)
         return;
 
-    fix_area_type(wm);
+    fix_place_type(wm);
     switch(DESKTOP(wm)->cur_layout)
     {
         case FULL: set_full_layout(wm); break;
@@ -47,7 +47,7 @@ static void set_full_layout(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if( is_on_cur_desktop(wm, c)
-            && c->area_type!=FLOATING_AREA && c->area_type!=ICONIFY_AREA)
+            && c->place_type!=FLOAT_LAY && !c->icon)
             c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 }
 
@@ -88,15 +88,15 @@ static void set_tile_layout(WM *wm)
     get_area_size(wm, &mw, &mh, &sw, &sh, &fw, &fh);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        Area_type type=c->area_type;
-        if( is_on_cur_desktop(wm, c)
-            && (type==MAIN_AREA || type==SECOND_AREA || type==FIXED_AREA))
+        Place_type type=c->place_type;
+        if( is_on_cur_desktop(wm, c) && (type==NORMAL_LAY_MAIN
+            || type==NORMAL_LAY_SECOND || type==NORMAL_LAY_FIXED))
         {
-            if(type == FIXED_AREA)
+            if(type == NORMAL_LAY_FIXED)
                 c->x=wx+mw+sw+g, c->y=wy+i++*fh, c->w=fw-g, c->h=fh-g;
-            else if(type == MAIN_AREA)
+            else if(type == NORMAL_LAY_MAIN)
                 c->x=wx+sw, c->y=wy+j++*mh, c->w=mw, c->h=mh-g;
-            else if(type == SECOND_AREA)
+            else if(type == NORMAL_LAY_SECOND)
                 c->x=wx, c->y=wy+k++*sh, c->w=sw-g, c->h=sh-g;
             if(is_last_typed_client(wm, c, type)) // 區末窗口取餘量
                 c->h+=wh%(c->h+g)+g;
@@ -109,9 +109,9 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
     double mr=DESKTOP(wm)->main_area_ratio, fr=DESKTOP(wm)->fixed_area_ratio;
     int n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
 
-    n1=get_typed_clients_n(wm, MAIN_AREA),
-    n2=get_typed_clients_n(wm, SECOND_AREA),
-    n3=get_typed_clients_n(wm, FIXED_AREA),
+    n1=get_typed_clients_n(wm, NORMAL_LAY_MAIN),
+    n2=get_typed_clients_n(wm, NORMAL_LAY_SECOND),
+    n3=get_typed_clients_n(wm, NORMAL_LAY_FIXED),
     *mw=mr*ww, *fw=ww*fr, *sw=ww-*fw-*mw;
     *mh = n1 ? wh/n1 : wh, *fh = n3 ? wh/n3 : wh, *sh = n2 ? wh/n2 : wh;
     if(n3 == 0)
@@ -131,17 +131,16 @@ static void fix_win_rect_for_frame(WM *wm)
 
 static bool should_fix_win_rect(WM *wm, Client *c)
 {
-    Area_type t=c->area_type;
     Layout cl=DESKTOP(wm)->cur_layout;
     return (is_on_cur_desktop(wm, c)
-        && ((cl==PREVIEW || (cl==TILE && t!=FLOATING_AREA && t!=ICONIFY_AREA))
-        || (cl==FULL && t==FLOATING_AREA)));
+        && ((cl==PREVIEW || (cl==TILE && c->place_type!=FLOAT_LAY && !c->icon))
+        || (cl==FULL && c->place_type==FLOAT_LAY)));
 }
 
 static void fix_cur_focus_client_rect(WM *wm)
 {
     Client *c=CUR_FOC_CLI(wm);
-    if( DESKTOP(wm)->prev_layout==FULL && c->area_type==FLOATING_AREA
+    if( DESKTOP(wm)->prev_layout==FULL && c->place_type==FLOAT_LAY
         && (DESKTOP(wm)->cur_layout==TILE || DESKTOP(wm)->cur_layout==STACK))
         set_default_win_rect(wm, c);
 }
@@ -163,14 +162,14 @@ bool is_main_sec_gap(WM *wm, int x)
 {
     Desktop *d=DESKTOP(wm);
     long sw=wm->workarea.w*(1-d->main_area_ratio-d->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_typed_clients_n(wm, SECOND_AREA);
+         wx=wm->workarea.x, n=get_typed_clients_n(wm, NORMAL_LAY_SECOND);
     return (n && x>=wx+sw-wm->cfg->win_gap && x<wx+sw);
 }
 
 bool is_main_fix_gap(WM *wm, int x)
 {
     long smw=wm->workarea.w*(1-DESKTOP(wm)->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_typed_clients_n(wm, FIXED_AREA);
+         wx=wm->workarea.x, n=get_typed_clients_n(wm, NORMAL_LAY_FIXED);
     return (n && x>=wx+smw && x<wx+smw+wm->cfg->win_gap);
 }
 

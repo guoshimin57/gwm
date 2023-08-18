@@ -28,7 +28,7 @@ bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg))
 {
     return func == pointer_swap_clients
         || func == pointer_move_resize_client
-        || func == pointer_change_area
+        || func == pointer_change_place
         || func == adjust_layout_ratio;
 }
 
@@ -71,8 +71,8 @@ static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne)
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=CUR_FOC_CLI(wm);
-    if(c->area_type == ICONIFY_AREA)
-        move_client(wm, c, get_area_head(wm, c->icon->area_type), c->icon->area_type);
+    if(c->icon)
+        move_client(wm, c, get_head_client(wm, c->place_type), c->place_type);
     if(DESKTOP(wm)->cur_layout == PREVIEW)
         arg.layout=DESKTOP(wm)->prev_layout, change_layout(wm, e, arg);
 }
@@ -88,15 +88,15 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Layout lay=DESKTOP(wm)->cur_layout;
     Client *c=CUR_FOC_CLI(wm);
 
-    if(lay!=TILE && lay!=STACK && (lay!=FULL || c->area_type!=FLOATING_AREA))
+    if(lay!=TILE && lay!=STACK && (lay!=FULL || c->place_type!=FLOAT_LAY))
         return;
 
     Direction dir=arg.direction;
     bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
     Delta_rect d=get_key_delta_rect(c, dir);
 
-    if(c->area_type!=FLOATING_AREA && lay==TILE)
-        move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
+    if(c->place_type!=FLOAT_LAY && lay==TILE)
+        move_client(wm, c, get_head_client(wm, FLOAT_LAY), FLOAT_LAY);
     if(fix_move_resize_delta_rect(wm, c, &d, is_move))
     {
         move_resize_client(wm, c, &d);
@@ -229,7 +229,7 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
 void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    if(DESKTOP(wm)->cur_layout==TILE && get_typed_clients_n(wm, SECOND_AREA))
+    if(DESKTOP(wm)->cur_layout==TILE && get_typed_clients_n(wm, NORMAL_LAY_SECOND))
     {
         Desktop *d=DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
@@ -246,7 +246,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 { 
     UNUSED(e), UNUSED(arg);
-    if(DESKTOP(wm)->cur_layout==TILE && get_typed_clients_n(wm, FIXED_AREA))
+    if(DESKTOP(wm)->cur_layout==TILE && get_typed_clients_n(wm, NORMAL_LAY_FIXED))
     {
         Desktop *d=DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
@@ -259,16 +259,16 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
     }
 }
 
-void change_area(WM *wm, XEvent *e, Func_arg arg)
+void change_place(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
     Client *c=CUR_FOC_CLI(wm);
     Layout l=DESKTOP(wm)->cur_layout;
-    Area_type t=arg.area_type==PREV_AREA ? c->icon->area_type : arg.area_type;
-    if( c!=wm->clients && (l==TILE
-        || (l==STACK && (c->area_type==ICONIFY_AREA || t==ICONIFY_AREA))
-        || (l==FULL && (c->area_type==FLOATING_AREA || t==FLOATING_AREA))))
-        move_client(wm, c, get_area_head(wm, t), t);
+    Place_type t=arg.place_type;
+
+    if( c!=wm->clients && (l==TILE || (l==FULL &&
+        (c->place_type==FLOAT_LAY || t==FLOAT_LAY))))
+        move_client(wm, c, get_head_client(wm, t), t);
 }
 
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
@@ -285,11 +285,22 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
     int x=ev.xbutton.x-wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N;
     if((to=win_to_client(wm, ev.xbutton.subwindow)) == NULL)
         for(Client *c=head->next; c!=head && !to; c=c->next)
-            if( c!=from && c->area_type==ICONIFY_AREA
-                && x>=c->icon->x && x<c->icon->x+(long)c->icon->w)
+            if(c!=from && c->icon && x>=c->icon->x && x<c->icon->x+c->icon->w)
                 to=c;
     if(to) 
         swap_clients(wm, from, to);
+}
+
+void minimize_client(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    iconify(wm, CUR_FOC_CLI(wm)); 
+}
+
+void deiconify_client(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    deiconify(wm, CUR_FOC_CLI(wm)); 
 }
 
 void maximize_client(WM *wm, XEvent *e, Func_arg arg)
@@ -320,7 +331,7 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
         c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh-th-2*bw;
 
     if(DESKTOP(wm)->cur_layout == TILE)
-        move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
+        move_client(wm, c, get_head_client(wm, FLOAT_LAY), FLOAT_LAY);
     move_resize_client(wm, c, NULL);
 }
 
@@ -331,7 +342,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
 
-    if( (layout==FULL && c->area_type!=FLOATING_AREA) || layout==PREVIEW
+    if( (layout==FULL && c->place_type!=FLOAT_LAY) || layout==PREVIEW
         || !grab_pointer(wm, wm->root_win, act))
         return;
 
@@ -341,8 +352,8 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            if(c->area_type!=FLOATING_AREA && layout==TILE)
-                move_client(wm, c, get_area_head(wm, FLOATING_AREA), FLOATING_AREA);
+            if(c->place_type!=FLOAT_LAY && layout==TILE)
+                move_client(wm, c, get_head_client(wm, FLOAT_LAY), FLOAT_LAY);
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             do_valid_pointer_move_resize(wm, c, &m, act);
@@ -471,7 +482,7 @@ static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act)
     return dr[act];
 }
 
-void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
+void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
 {
     XEvent ev;
     Client *from=CUR_FOC_CLI(wm), *to;
@@ -487,17 +498,15 @@ void pointer_change_area(WM *wm, XEvent *e, Func_arg arg)
     if(!to)
         to=win_to_iconic_state_client(wm, subw);
     if(ev.xbutton.x == 0)
-        move_client(wm, from, get_area_head(wm, SECOND_AREA), SECOND_AREA);
+        move_client(wm, from, get_head_client(wm, NORMAL_LAY_SECOND), NORMAL_LAY_SECOND);
     else if(ev.xbutton.x == (long)wm->screen_width-1)
-        move_client(wm, from, get_area_head(wm, FIXED_AREA), FIXED_AREA);
+        move_client(wm, from, get_head_client(wm, NORMAL_LAY_FIXED), NORMAL_LAY_FIXED);
     else if(ev.xbutton.y == 0)
         maximize_client(wm, NULL, arg);
-    else if(subw == wm->taskbar->win)
-        move_client(wm, from, get_area_head(wm, ICONIFY_AREA), ICONIFY_AREA);
     else if(win==wm->root_win && subw==None)
-        move_client(wm, from, get_area_head(wm, MAIN_AREA), MAIN_AREA);
+        move_client(wm, from, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
     else if(to)
-        move_client(wm, from, to, to->area_type);
+        move_client(wm, from, to, to->place_type);
 }
 
 void change_layout(WM *wm, XEvent *e, Func_arg arg)
@@ -512,11 +521,11 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
     *pl=*cl, *cl=arg.layout;
     if(*pl == PREVIEW)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+            if(is_on_cur_desktop(wm, c) && c->icon)
                 XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
     if(*cl == PREVIEW)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(wm, c) && c->area_type==ICONIFY_AREA)
+            if(is_on_cur_desktop(wm, c) && c->icon)
                 XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
     update_layout(wm);
     update_titlebar_layout(wm);
@@ -565,10 +574,10 @@ void toggle_showing_desktop_mode(WM *wm, bool show)
     set_net_showing_desktop(wm, show);
 }
 
-void change_default_area_type(WM *wm, XEvent *e, Func_arg arg)
+void change_default_place_type(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
-    DESKTOP(wm)->default_area_type=arg.area_type;
+    DESKTOP(wm)->default_place_type=arg.place_type;
 }
 
 void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)

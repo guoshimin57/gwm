@@ -222,7 +222,7 @@ static void change_net_wm_state_for_modal(WM *wm, Client *c, long act)
     if(SHOULD_REMOVE_STATE(c, act, modal))
         c->win_state.modal=0;
     else
-        c->win_state.modal=1, c->area_type=FLOATING_AREA, update_layout(wm);
+        c->win_state.modal=1, c->place_type=FLOAT_LAY, update_layout(wm);
 }
 
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
@@ -236,18 +236,18 @@ static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, vmax))
-        c->win_state.vmax=0, c->area_type=MAIN_AREA, update_layout(wm);
+        c->win_state.vmax=0, c->place_type=NORMAL_LAY_MAIN, update_layout(wm);
     else
-        c->win_state.vmax=1, c->area_type=FLOATING_AREA,
+        c->win_state.vmax=1, c->place_type=FLOAT_LAY,
         maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_VERT_MAX});
 }
 
 static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, hmax))
-        c->win_state.hmax=0, c->area_type=MAIN_AREA, update_layout(wm);
+        c->win_state.hmax=0, c->place_type=NORMAL_LAY_MAIN, update_layout(wm);
     else
-        c->win_state.hmax=1, c->area_type=FLOATING_AREA,
+        c->win_state.hmax=1, c->place_type=FLOAT_LAY,
         maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_HORZ_MAX});
 }
 
@@ -284,7 +284,7 @@ static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, hidden))
-        c->win_state.hidden=0, deiconify(wm, c->area_type==ICONIFY_AREA ? c : NULL);
+        c->win_state.hidden=0, deiconify(wm, c->icon ? c : NULL);
     else
         c->win_state.hidden=1, iconify(wm, c);
 }
@@ -302,17 +302,17 @@ static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, above))
-        c->win_state.above=0, c->area_type=MAIN_AREA, raise_client(wm, c);
+        c->win_state.above=0, c->place_type=NORMAL_LAY_MAIN, raise_client(wm, c);
     else
-        c->win_state.above=1, c->area_type=FLOATING_AREA, raise_client(wm, c);
+        c->win_state.above=1, c->place_type=FLOAT_LAY, raise_client(wm, c);
 }
 
 static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, below))
-        c->win_state.below=0, c->area_type=MAIN_AREA, raise_client(wm, c);
+        c->win_state.below=0, c->place_type=NORMAL_LAY_MAIN, raise_client(wm, c);
     else
-        c->win_state.below=1, c->area_type=FLOATING_AREA, raise_client(wm, c);
+        c->win_state.below=1, c->place_type=FLOAT_LAY, raise_client(wm, c);
 }
 
 /* 暫不支持請求關注 */
@@ -398,7 +398,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
 
     if(wm->cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
-    if(is_layout_adjust_area(wm, win, x) && get_typed_clients_n(wm, MAIN_AREA))
+    if(is_layout_adjust_area(wm, win, x) && get_typed_clients_n(wm, NORMAL_LAY_MAIN))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_BUTTON(type))
         update_win_bg(wm, win, ENTERED_NCLOSE_BUTTON_COLOR(wm, type), None);
@@ -491,9 +491,8 @@ static void handle_expose(WM *wm, XEvent *e)
 
 static void update_title_logo_fg(WM *wm, Client *c)
 {
-    Icon *i=c->icon;
-    if(c->icon->image)
-        draw_image(wm, i->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
+    if(c->image)
+        draw_image(wm, c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
     else
     {
         String_format f={{0, 0, c->titlebar_h, c->titlebar_h}, CENTER, true,
@@ -579,7 +578,7 @@ static void handle_map_request(WM *wm, XEvent *e)
     if(is_wm_win(wm, win, false))
     {
         add_client(wm, win);
-        DESKTOP(wm)->default_area_type=wm->cfg->default_area_type;
+        DESKTOP(wm)->default_place_type=NORMAL_LAY_MAIN;
     }
     else
         restack_win(wm, win);
@@ -647,7 +646,7 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
     char *s=NULL;
     Client *c=win_to_client(wm, win);
 
-    if(!c || c->area_type!=ICONIFY_AREA || !(s=get_text_prop(wm, c->win, atom)))
+    if(!c || !c->icon || !(s=get_text_prop(wm, c->win, atom)))
         return;
 
     free(c->icon->title_text);

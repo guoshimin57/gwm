@@ -147,14 +147,13 @@ void update_client_icon_fg(WM *wm, Window win)
 
 static void draw_client_icon(WM *wm, Client *c)
 {
-    Icon *i=c->icon;
     int size=wm->taskbar->h;
-    if(i->image)
-        draw_image(wm, i->image, i->win, 0, 0, size, size);
+    if(c->image)
+        draw_image(wm, c->image, c->icon->win, 0, 0, size, size);
     else
     {
         String_format f={{0, 0, size, size}, CENTER, true, false, false, 0,
             TEXT_COLOR(wm, CLASS), CLASS_FONT};
-        draw_string(wm, i->win, c->class_name, &f);
+        draw_string(wm, c->icon->win, c->class_name, &f);
     }
 }

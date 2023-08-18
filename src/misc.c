@@ -68,7 +68,7 @@ Widget_type get_widget_type(WM *wm, Window win)
     if(win == wm->taskbar->status_area)
         return STATUS_AREA;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(c->area_type==ICONIFY_AREA && win==c->icon->win)
+        if(c->icon && win==c->icon->win)
             return CLIENT_ICON;
     for(type=ACT_CENTER_ITEM_BEGIN; type<=ACT_CENTER_ITEM_END; type++)
         if(win == wm->act_center->items[WIDGET_INDEX(type, ACT_CENTER_ITEM)])

@@ -166,7 +166,6 @@ static void create_clients(WM *wm)
     memset(wm->clients, 0, sizeof(Client));
     for(size_t i=0; i<DESKTOP_N; i++)
         d[i]->cur_focus_client=d[i]->prev_focus_client=wm->clients;
-    wm->clients->area_type=ROOT_AREA;
     wm->clients->win=wm->root_win;
     wm->clients->prev=wm->clients->next=wm->clients;
     if(!XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))

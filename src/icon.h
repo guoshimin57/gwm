@@ -12,16 +12,6 @@
 #ifndef ICON_H
 #define ICON_H
 
-struct icon_tag // 縮微窗口相關信息
-{
-    Window win; // 位於任務欄的縮微窗口（可能含有圖標名）
-    int x, y, w, h; // 無邊框時win的坐標、尺寸
-    Area_type area_type; // 窗口微縮之前的區域類型
-    bool show_text; // 當存在圖標映像時，是否顯示圖標名
-    char *title_text; // 圖標名，即XA_WM_ICON_NAME，理論上應比XA_WM_NAME簡短，實際上很多客戶窗口的都是與它一模一樣。
-    Imlib_Image image; // 圖標映像
-};
-
 void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h);
 void set_icon_image(WM *wm, Client *c);
 
