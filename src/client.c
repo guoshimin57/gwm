@@ -148,7 +148,7 @@ void fix_place_type(WM *wm)
     int n=0, m=DESKTOP(wm)->n_main_max;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        if(is_on_cur_desktop(wm, c))
+        if(is_on_cur_desktop(wm, c) && !c->icon)
         {
             if(c->place_type==NORMAL_LAY_MAIN && ++n>m)
                 c->place_type=NORMAL_LAY_SECOND;
@@ -286,11 +286,11 @@ static Rect get_button_rect(WM *wm, Client *c, size_t index)
     return (Rect){cw-w*(TITLE_BUTTON_N-index), 0, w, h};
 }
 
-int get_typed_clients_n(WM *wm, Place_type type)
+int get_typed_map_clients_n(WM *wm, Place_type type)
 {
     int n=0;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(wm, c) && c->place_type==type)
+        if(is_on_cur_desktop(wm, c) && c->place_type==type && !c->icon)
             n++;
     return n;
 }
@@ -450,7 +450,7 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     Client *head;
     Place_type ft=from->place_type, tt=to->place_type;
     if( from==wm->clients || (from==to && tt==type) || (ft==NORMAL_LAY_MAIN
-        && type==NORMAL_LAY_SECOND && !get_typed_clients_n(wm, NORMAL_LAY_SECOND)))
+        && type==NORMAL_LAY_SECOND && !get_typed_map_clients_n(wm, NORMAL_LAY_SECOND)))
         return false;
     del_client_node(from);
     if(tt == type)

@@ -89,7 +89,7 @@ static void set_tile_layout(WM *wm)
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         Place_type type=c->place_type;
-        if( is_on_cur_desktop(wm, c) && (type==NORMAL_LAY_MAIN
+        if( !c->icon && is_on_cur_desktop(wm, c) && (type==NORMAL_LAY_MAIN
             || type==NORMAL_LAY_SECOND || type==NORMAL_LAY_FIXED))
         {
             if(type == NORMAL_LAY_FIXED)
@@ -109,9 +109,9 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
     double mr=DESKTOP(wm)->main_area_ratio, fr=DESKTOP(wm)->fixed_area_ratio;
     int n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
 
-    n1=get_typed_clients_n(wm, NORMAL_LAY_MAIN),
-    n2=get_typed_clients_n(wm, NORMAL_LAY_SECOND),
-    n3=get_typed_clients_n(wm, NORMAL_LAY_FIXED),
+    n1=get_typed_map_clients_n(wm, NORMAL_LAY_MAIN),
+    n2=get_typed_map_clients_n(wm, NORMAL_LAY_SECOND),
+    n3=get_typed_map_clients_n(wm, NORMAL_LAY_FIXED),
     *mw=mr*ww, *fw=ww*fr, *sw=ww-*fw-*mw;
     *mh = n1 ? wh/n1 : wh, *fh = n3 ? wh/n3 : wh, *sh = n2 ? wh/n2 : wh;
     if(n3 == 0)
@@ -162,14 +162,14 @@ bool is_main_sec_gap(WM *wm, int x)
 {
     Desktop *d=DESKTOP(wm);
     long sw=wm->workarea.w*(1-d->main_area_ratio-d->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_typed_clients_n(wm, NORMAL_LAY_SECOND);
+         wx=wm->workarea.x, n=get_typed_map_clients_n(wm, NORMAL_LAY_SECOND);
     return (n && x>=wx+sw-wm->cfg->win_gap && x<wx+sw);
 }
 
 bool is_main_fix_gap(WM *wm, int x)
 {
     long smw=wm->workarea.w*(1-DESKTOP(wm)->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_typed_clients_n(wm, NORMAL_LAY_FIXED);
+         wx=wm->workarea.x, n=get_typed_map_clients_n(wm, NORMAL_LAY_FIXED);
     return (n && x>=wx+smw && x<wx+smw+wm->cfg->win_gap);
 }
 

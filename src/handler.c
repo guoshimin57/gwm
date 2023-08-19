@@ -398,7 +398,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
 
     if(wm->cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
-    if(is_layout_adjust_area(wm, win, x) && get_typed_clients_n(wm, NORMAL_LAY_MAIN))
+    if(is_layout_adjust_area(wm, win, x) && get_typed_map_clients_n(wm, NORMAL_LAY_MAIN))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_BUTTON(type))
         update_win_bg(wm, win, ENTERED_NCLOSE_BUTTON_COLOR(wm, type), None);

@@ -229,7 +229,7 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
 void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    if(DESKTOP(wm)->cur_layout==TILE && get_typed_clients_n(wm, NORMAL_LAY_SECOND))
+    if(DESKTOP(wm)->cur_layout==TILE && get_typed_map_clients_n(wm, NORMAL_LAY_SECOND))
     {
         Desktop *d=DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
@@ -246,7 +246,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 { 
     UNUSED(e), UNUSED(arg);
-    if(DESKTOP(wm)->cur_layout==TILE && get_typed_clients_n(wm, NORMAL_LAY_FIXED))
+    if(DESKTOP(wm)->cur_layout==TILE && get_typed_map_clients_n(wm, NORMAL_LAY_FIXED))
     {
         Desktop *d=DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
@@ -295,12 +295,14 @@ void minimize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     iconify(wm, CUR_FOC_CLI(wm)); 
+    update_layout(wm);
 }
 
 void deiconify_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     deiconify(wm, CUR_FOC_CLI(wm)); 
+    update_layout(wm);
 }
 
 void maximize_client(WM *wm, XEvent *e, Func_arg arg)

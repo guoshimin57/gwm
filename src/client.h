@@ -50,7 +50,7 @@ void fix_place_type(WM *wm);
 void set_default_win_rect(WM *wm, Client *c);
 void create_titlebar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
-int get_typed_clients_n(WM *wm, Place_type type);
+int get_typed_map_clients_n(WM *wm, Place_type type);
 int get_clients_n(WM *wm);
 int get_all_clients_n(WM *wm);
 Client *win_to_client(WM *wm, Window win);
