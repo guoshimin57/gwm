@@ -6,7 +6,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.4\n"
+"Project-Id-Version: gwm 2.6.5\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
 "POT-Creation-Date: 2023-08-19 17:42+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
@@ -88,7 +88,7 @@ msgstr "增大主区容量"
 
 #: src/config.c:493
 msgid "减小主區容量"
-msgstr "减小主區容量"
+msgstr "减小主区容量"
 
 #: src/config.c:494
 msgid "開關當前窗口標題欄"

@@ -81,5 +81,6 @@ void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);
 void iconify_all_clients(WM *wm);
 void deiconify_all_clients(WM *wm);
+void update_net_wm_state(WM *wm, Client *c);
 
 #endif

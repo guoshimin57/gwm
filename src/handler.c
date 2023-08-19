@@ -190,6 +190,8 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act)
     if(mask.below)          change_net_wm_state_for_below(wm, c, act);
     if(mask.attent)         change_net_wm_state_for_attent(wm, c, act);
     if(mask.focused)        change_net_wm_state_for_focused(wm, c, act);
+
+    update_net_wm_state(wm, c);
 }
 
 static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act)
@@ -236,19 +238,17 @@ static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, vmax))
-        c->win_state.vmax=0, c->place_type=NORMAL_LAY_MAIN, update_layout(wm);
+        c->win_state.vmax=0, move_client(wm, c, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
     else
-        c->win_state.vmax=1, c->place_type=FLOAT_LAY,
-        maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_VERT_MAX});
+        c->win_state.vmax=1, maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_VERT_MAX});
 }
 
 static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, hmax))
-        c->win_state.hmax=0, c->place_type=NORMAL_LAY_MAIN, update_layout(wm);
+        c->win_state.hmax=0, move_client(wm, c, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
     else
-        c->win_state.hmax=1, c->place_type=FLOAT_LAY,
-        maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_HORZ_MAX});
+        c->win_state.hmax=1, maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_HORZ_MAX});
 }
 
 /* 暫不支持窗口陰影特效 */

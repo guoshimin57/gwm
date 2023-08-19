@@ -787,3 +787,25 @@ void deiconify_all_clients(WM *wm)
             deiconify(wm, c);
     update_layout(wm);
 }
+
+void update_net_wm_state(WM *wm, Client *c)
+{
+    Atom *a=wm->ewmh_atom;
+    unsigned long n=0, val[13]={0}; // 目前EWMH規範中NET_WM_STATE共有13種狀態
+
+    if(c->win_state.modal)          val[n++]=a[NET_WM_STATE_MODAL];
+    if(c->win_state.sticky)         val[n++]=a[NET_WM_STATE_STICKY];
+    if(c->win_state.vmax)           val[n++]=a[NET_WM_STATE_MAXIMIZED_VERT];
+    if(c->win_state.hmax)           val[n++]=a[NET_WM_STATE_MAXIMIZED_HORZ];
+    if(c->win_state.shaded)         val[n++]=a[NET_WM_STATE_SHADED];
+    if(c->win_state.skip_taskbar)   val[n++]=a[NET_WM_STATE_SKIP_TASKBAR];
+    if(c->win_state.skip_pager)     val[n++]=a[NET_WM_STATE_SKIP_PAGER];
+    if(c->win_state.hidden)         val[n++]=a[NET_WM_STATE_HIDDEN];
+    if(c->win_state.fullscreen)     val[n++]=a[NET_WM_STATE_FULLSCREEN];
+    if(c->win_state.above)          val[n++]=a[NET_WM_STATE_ABOVE];
+    if(c->win_state.below)          val[n++]=a[NET_WM_STATE_BELOW];
+    if(c->win_state.attent)         val[n++]=a[NET_WM_STATE_DEMANDS_ATTENTION];
+    if(c->win_state.focused)        val[n++]=a[NET_WM_STATE_FOCUSED];
+    XChangeProperty(wm->display, c->win, a[NET_WM_STATE], XA_ATOM, 32,
+        PropModeReplace, (unsigned char *)val, n);
+}
