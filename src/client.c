@@ -148,7 +148,7 @@ void fix_place_type(WM *wm)
     int n=0, m=DESKTOP(wm)->n_main_max;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        if(is_on_cur_desktop(wm, c) && !c->icon)
+        if(is_on_cur_desktop(wm, c) && !c->icon && !c->owner)
         {
             if(c->place_type==NORMAL_LAY_MAIN && ++n>m)
                 c->place_type=NORMAL_LAY_SECOND;
@@ -189,19 +189,22 @@ static bool fix_win_pos_by_hint(Client *c)
 
 static void fix_win_pos_by_prop(WM *wm, Client *c)
 {
-    // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
-    long w=c->w, h=c->h, wx=wm->workarea.x, wy=wm->workarea.y,
-         ww=wm->workarea.w, wh=wm->workarea.h;
     if(c->owner)
-        c->x=c->owner->x+(c->owner->w-w)/2, c->y=c->owner->y+(c->owner->h-h)/2;
-    if(c->win_type.dialog)
-        c->x=wx+(ww-w)/2, c->y=wy+(wh-h)/2;
+        set_transient_win_pos(c);
+    else if(c->win_type.dialog)
+        c->x=wm->workarea.x+(wm->workarea.w-c->w)/2,
+        c->y=wm->workarea.y+(wm->workarea.h-c->h)/2;
+}
+
+void set_transient_win_pos(Client *c)
+{
+    c->x=c->owner->x+(c->owner->w-c->w)/2;
+    c->y=c->owner->y+(c->owner->h-c->h)/2;
 }
 
 static void fix_win_pos_by_workarea(WM *wm, Client *c)
 {
-    // 爲了避免有符號整數與無符號整數之間的運算帶來符號問題
-    long w=c->w, h=c->h, bw=c->border_w, bh=c->titlebar_h, wx=wm->workarea.x,
+    int w=c->w, h=c->h, bw=c->border_w, bh=c->titlebar_h, wx=wm->workarea.x,
          wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
     if(c->x >= wx+ww-w-bw) // 窗口在工作區右邊出界
         c->x=wx+ww-w-bw;
@@ -286,29 +289,14 @@ static Rect get_button_rect(WM *wm, Client *c, size_t index)
     return (Rect){cw-w*(TITLE_BUTTON_N-index), 0, w, h};
 }
 
-int get_typed_map_clients_n(WM *wm, Place_type type)
+int get_clients_n(WM *wm, Place_type type, bool count_tile, bool count_all_desktop)
 {
     int n=0;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(wm, c) && c->place_type==type && !c->icon)
+        if( (type==PLACE_TYPE_N || c->place_type==type)
+            && (count_tile || (!c->icon && !c->owner))
+            && (count_all_desktop || is_on_cur_desktop(wm, c)))
             n++;
-    return n;
-}
-
-int get_clients_n(WM *wm)
-{
-    int n=0;
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(wm, c))
-            n++;
-    return n;
-}
-
-int get_all_clients_n(WM *wm)
-{
-    int n=0;
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        n++;
     return n;
 }
 
@@ -389,15 +377,15 @@ Client *win_to_iconic_state_client(WM *wm, Window win)
 /* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
 void raise_client(WM *wm, Client *c)
 {
-    int i=0, j=0, n=0;
+    int i, n=0;
     Client **g=get_subgroup_clients(wm, c, &n);
-    Window wins[n];
+    Window wins[n+1];
 
-    for(wins[0]=get_top_win(wm, c), j=1, i=n-1; i>=0; i--)
-        wins[j++]=g[i]->frame;
+    for(wins[0]=get_top_win(wm, c), i=0; i<n; i++)
+        wins[n-i]=g[i]->frame;
     free(g);
 
-    XRestackWindows(wm->display, wins, ARRAY_NUM(wins));
+    XRestackWindows(wm->display, wins, n+1);
     set_all_net_client_list(wm);
 }
 
@@ -450,7 +438,7 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     Client *head;
     Place_type ft=from->place_type, tt=to->place_type;
     if( from==wm->clients || (from==to && tt==type) || (ft==NORMAL_LAY_MAIN
-        && type==NORMAL_LAY_SECOND && !get_typed_map_clients_n(wm, NORMAL_LAY_SECOND)))
+        && type==NORMAL_LAY_SECOND && !get_clients_n(wm, NORMAL_LAY_SECOND, false, false)))
         return false;
     del_client_node(from);
     if(tt == type)
@@ -523,6 +511,7 @@ Client *get_head_client(WM *wm, Place_type type)
     return head;
 }
 
+/* 返回疊次序從底到頂的同亞組客戶 */
 Client **get_subgroup_clients(WM *wm, Client *c, int *n)
 {
     *n=0;

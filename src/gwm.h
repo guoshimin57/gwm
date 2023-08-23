@@ -197,7 +197,7 @@ enum place_type_tag // 窗口的位置類型
 {
     DESKTOP_LAY, BELOW_LAY,
     NORMAL_LAY_MAIN, NORMAL_LAY_SECOND, NORMAL_LAY_FIXED,
-    DOCK_LAY, ABOVE_LAY, FULLSCREEN_LAY, FLOAT_LAY,
+    DOCK_LAY, ABOVE_LAY, FULLSCREEN_LAY, FLOAT_LAY, PLACE_TYPE_N
 };
 typedef enum place_type_tag Place_type;
 

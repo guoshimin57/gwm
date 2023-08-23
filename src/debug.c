@@ -11,6 +11,30 @@
 
 #include "gwm.h"
 
+void print_client_and_top_win(WM *wm)
+{
+    unsigned int n;
+    Window root, parent, *child=NULL;
+
+    if(XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
+    {
+        Client *c=NULL;
+        printf(_("以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"));
+        for(unsigned int i=0; i<n; i++)
+        {
+            if((c=win_to_client(wm, child[i])))
+                printf("client frame: %lx\n", c->frame);
+            else
+                for(unsigned int j=0; j<TOP_WIN_TYPE_N; j++)
+                    if(wm->top_wins[j] == child[i])
+                        printf("top win: %lx\n", child[i]);
+        }
+        XFree(child);
+    }
+    else
+        printf(_("無法查詢根窗口的子窗口\n"));
+}
+
 void print_win_tree(WM *wm, Window win)
 {
     unsigned int n;

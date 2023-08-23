@@ -14,6 +14,8 @@
 static void set_full_layout(WM *wm);
 static void set_preview_layout(WM *wm);
 static void set_tile_layout(WM *wm);
+static void set_rect_of_persistent_win_for_tiling(WM *wm);
+static void set_rect_of_transient_win_for_tiling(WM *wm);
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh);
 static void fix_win_rect_for_frame(WM *wm);
 static bool should_fix_win_rect(WM *wm, Client *c);
@@ -53,7 +55,7 @@ static void set_full_layout(WM *wm)
 
 static void set_preview_layout(WM *wm)
 {
-    int n=get_clients_n(wm), i=n-1, rows, cols, w, h, gap=wm->cfg->win_gap,
+    int n=get_clients_n(wm, PLACE_TYPE_N, true, false), i=n-1, rows, cols, w, h, gap=wm->cfg->win_gap,
         wx=wm->workarea.x, wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
     if(n == 0)
         return;
@@ -75,12 +77,18 @@ static void set_preview_layout(WM *wm)
     }
 }
 
-/* 平鋪布局模式的空間布置如下：
+static void set_tile_layout(WM *wm)
+{
+    set_rect_of_persistent_win_for_tiling(wm);
+    set_rect_of_transient_win_for_tiling(wm);
+}
+
+/* 平鋪布局模式的非臨時窗口的空間布置如下：
  *     1、屏幕從左至右分別布置次要區域、主要區域、固定區域；
  *     2、同一區域內的窗口均分本區域空間（末尾窗口取餘量），窗口間隔設置在前窗尾部；
  *     3、在次要區域內設置其與主區域的窗口間隔；
  *     4、在固定區域內設置其與主區域的窗口間隔。 */
-static void set_tile_layout(WM *wm)
+static void set_rect_of_persistent_win_for_tiling(WM *wm)
 {
     int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=wm->cfg->win_gap,
         wx=wm->workarea.x, wy=wm->workarea.y, wh=wm->workarea.h;
@@ -89,7 +97,7 @@ static void set_tile_layout(WM *wm)
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         Place_type type=c->place_type;
-        if( !c->icon && is_on_cur_desktop(wm, c) && (type==NORMAL_LAY_MAIN
+        if( !c->owner && !c->icon && is_on_cur_desktop(wm, c) && (type==NORMAL_LAY_MAIN
             || type==NORMAL_LAY_SECOND || type==NORMAL_LAY_FIXED))
         {
             if(type == NORMAL_LAY_FIXED)
@@ -100,8 +108,15 @@ static void set_tile_layout(WM *wm)
                 c->x=wx, c->y=wy+k++*sh, c->w=sw-g, c->h=sh-g;
             if(is_last_typed_client(wm, c, type)) // 區末窗口取餘量
                 c->h+=wh%(c->h+g)+g;
-        }
-    }
+        } }
+}
+
+/* 平鋪布局模式的非臨時窗口位置其主窗之上並居中 */
+static void set_rect_of_transient_win_for_tiling(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        if(c->owner)
+            set_transient_win_pos(c);
 }
 
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
@@ -109,9 +124,9 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
     double mr=DESKTOP(wm)->main_area_ratio, fr=DESKTOP(wm)->fixed_area_ratio;
     int n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
 
-    n1=get_typed_map_clients_n(wm, NORMAL_LAY_MAIN),
-    n2=get_typed_map_clients_n(wm, NORMAL_LAY_SECOND),
-    n3=get_typed_map_clients_n(wm, NORMAL_LAY_FIXED),
+    n1=get_clients_n(wm, NORMAL_LAY_MAIN, false, false),
+    n2=get_clients_n(wm, NORMAL_LAY_SECOND, false, false),
+    n3=get_clients_n(wm, NORMAL_LAY_FIXED, false, false),
     *mw=mr*ww, *fw=ww*fr, *sw=ww-*fw-*mw;
     *mh = n1 ? wh/n1 : wh, *fh = n3 ? wh/n3 : wh, *sh = n2 ? wh/n2 : wh;
     if(n3 == 0)
@@ -162,14 +177,14 @@ bool is_main_sec_gap(WM *wm, int x)
 {
     Desktop *d=DESKTOP(wm);
     long sw=wm->workarea.w*(1-d->main_area_ratio-d->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_typed_map_clients_n(wm, NORMAL_LAY_SECOND);
+         wx=wm->workarea.x, n=get_clients_n(wm, NORMAL_LAY_SECOND, false, false);
     return (n && x>=wx+sw-wm->cfg->win_gap && x<wx+sw);
 }
 
 bool is_main_fix_gap(WM *wm, int x)
 {
     long smw=wm->workarea.w*(1-DESKTOP(wm)->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_typed_map_clients_n(wm, NORMAL_LAY_FIXED);
+         wx=wm->workarea.x, n=get_clients_n(wm, NORMAL_LAY_FIXED, false, false);
     return (n && x>=wx+smw && x<wx+smw+wm->cfg->win_gap);
 }
 

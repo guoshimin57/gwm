@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.5\n"
+"Project-Id-Version: gwm 2.6.6\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-08-19 17:42+0800\n"
+"POT-Creation-Date: 2023-08-23 19:15+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -248,22 +248,32 @@ msgstr "Open window menu"
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
-#: src/debug.c:21
+#: src/debug.c:22
+#, c-format
+msgid "以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"
+msgstr "The following is a list of client windows and layer reference windows arranged from bottom to top:\n"
+
+#: src/debug.c:35
+#, c-format
+msgid "無法查詢根窗口的子窗口\n"
+msgstr "Unable to query child windows of %lx window:\n"
+
+#: src/debug.c:45
 #, c-format
 msgid "以下是%lx窗口的子窗口：\n"
 msgstr "The following are subwindows of the %lx window:\n"
 
-#: src/debug.c:27
+#: src/debug.c:51
 #, c-format
 msgid "無法查詢%lx窗口的子窗口\n"
 msgstr "Unable to query child windows of %lx window:\n"
 
-#: src/debug.c:34
+#: src/debug.c:58
 #, c-format
 msgid "以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"
 msgstr "The following are the window types of the %lx windows (i.e. _NET_WM_WINDOW_TYPE):\n"
 
-#: src/debug.c:56
+#: src/debug.c:80
 #, c-format
 msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
 msgstr "The following are the window states (i.e. _NET_WM_STATE) of the %lx window:\n"

@@ -48,11 +48,10 @@ struct client_tag // 客戶窗口相關信息
 void add_client(WM *wm, Window win);
 void fix_place_type(WM *wm);
 void set_default_win_rect(WM *wm, Client *c);
+void set_transient_win_pos(Client *c);
 void create_titlebar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
-int get_typed_map_clients_n(WM *wm, Place_type type);
-int get_clients_n(WM *wm);
-int get_all_clients_n(WM *wm);
+int get_clients_n(WM *wm, Place_type type, bool count_tile, bool count_all_desktop);
 Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c, bool is_for_quit);
 void move_resize_client(WM *wm, Client *c, const Delta_rect *d);

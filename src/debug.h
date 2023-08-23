@@ -12,6 +12,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+void print_client_and_top_win(WM *wm);
 void print_win_tree(WM *wm, Window win);
 void print_net_wm_win_type(WM *wm, Window win);
 void print_net_wm_state(WM *wm, Window win);
