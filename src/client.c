@@ -402,21 +402,21 @@ static Window get_top_win(WM *wm, Client *c)
     return wm->top_wins[index[c->place_type]];
 }
 
-/* 取得存儲結構意義上的下一個客戶窗口 */
+/* 當c->win所在的亞組存在模態窗口時，跳過非模態窗口 */
 Client *get_next_client(WM *wm, Client *c)
 {
-    for(Client *p=c->next; p!=wm->clients; p=p->next)
+    for(Client *m=NULL, *p=c->next; p!=wm->clients; p=p->next)
         if(is_on_cur_desktop(wm, p))
-            return p;
+            return (m=get_top_modal_client(wm, p->subgroup_leader)) ? m : p;
     return NULL;
 }
 
-/* 取得存儲結構意義上的上一個客戶窗口 */
+/* 當c->win所在的亞組存在模態窗口時，跳過非模態窗口 */
 Client *get_prev_client(WM *wm, Client *c)
 {
-    for(Client *p=c->prev; p!=wm->clients; p=p->prev)
+    for(Client *m=NULL, *p=c->prev; p!=wm->clients; p=p->prev)
         if(is_on_cur_desktop(wm, p))
-            return p;
+            return (m=get_top_modal_client(wm, p->subgroup_leader)) ? m : p;
     return NULL;
 }
 

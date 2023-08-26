@@ -38,14 +38,14 @@ Atom get_atom_prop(WM *wm, Window win, Atom prop)
 unsigned char *get_prop(WM *wm, Window win, Atom prop, unsigned long *n)
 {
     int fmt;
-    unsigned long m=0, rest;
+    unsigned long nitems=0, *m=(n ? n : &nitems), rest;
     unsigned char *p=NULL;
     Atom type;
 
     /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
      * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
     if( XGetWindowProperty(wm->display, win, prop, 0, ~0L, False,
-        AnyPropertyType, &type, &fmt, &m, &rest, &p)==Success && p && (*n=m))
+        AnyPropertyType, &type, &fmt, m, &rest, &p)==Success && p && *m)
         return p;
     return NULL;
 }
