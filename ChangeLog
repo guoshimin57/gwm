@@ -9,6 +9,17 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2023年 08月 31日 星期四 11:08:16 CST	gsm <406643764@qq.com>
+	* 發布第2.6.8版；
+	* 修復apply_rules函數使用未初始化的c->owner的缺陷；
+	* 修復apply_rules函數重復調用set_default_desktop_mask的缺陷；
+	* 修復change_net_wm_state_for_above邏輯錯誤導致窗口布局異常的缺陷；
+	* move_client不再支持縮微窗口操作；
+	* pointer_swap_clients不再支持縮微窗口操作；
+	* pointer_change_place不再支持縮微窗口和最大化窗口操作；
+	* 改爲在iconify和deiconify內部執行update_layout；
+	* 代碼重構。
+
 2023年 08月 26日 星期六 12:55:54 CST	gsm <406643764@qq.com>
 	* 發布第2.6.7版；
 	* 修復get_prop函數給空指針賦值引起的缺陷；

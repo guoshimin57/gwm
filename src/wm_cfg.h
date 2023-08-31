@@ -55,7 +55,7 @@
     {MAIN_NEW_BUTTON,           0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_MAIN}},    \
     {SEC_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_SECOND}},  \
     {FIX_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_FIXED}},   \
-    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=FLOAT_LAY}},          \
+    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=ABOVE_LAY}},          \
     {N_MAIN_UP_BUTTON,          0, Button1,  adjust_n_main_max,          {.n=1}},                           \
     {N_MAIN_DOWN_BUTTON,        0, Button1,  adjust_n_main_max,          {.n=-1}},                          \
     {TITLEBAR_TOGGLE_BUTTON,    0, Button1,  toggle_titlebar_visibility, {0}},                              \
@@ -84,7 +84,7 @@
     {MAIN_BUTTON,               0, Button1,  change_place,               {.place_type=NORMAL_LAY_MAIN}},    \
     {SECOND_BUTTON,             0, Button1,  change_place,               {.place_type=NORMAL_LAY_SECOND}},  \
     {FIXED_BUTTON,              0, Button1,  change_place,               {.place_type=NORMAL_LAY_FIXED}},   \
-    {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=FLOAT_LAY}},          \
+    {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=ABOVE_LAY}},          \
     {ICON_BUTTON,               0, Button1,  minimize_client,            {0}},                              \
     {MAX_BUTTON,                0, Button1,  maximize_client,            {.max_way=FULL_MAX}},              \
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},                              \

@@ -197,7 +197,7 @@ enum place_type_tag // 窗口的位置類型
 {
     DESKTOP_LAY, BELOW_LAY,
     NORMAL_LAY_MAIN, NORMAL_LAY_SECOND, NORMAL_LAY_FIXED,
-    DOCK_LAY, ABOVE_LAY, FULLSCREEN_LAY, FLOAT_LAY, PLACE_TYPE_N
+    DOCK_LAY, ABOVE_LAY, FULLSCREEN_LAY, PLACE_TYPE_N
 };
 typedef enum place_type_tag Place_type;
 
@@ -291,7 +291,7 @@ typedef enum color_theme_tag Color_theme;
 enum top_win_type_tag // 窗口疊次序分層類型
 {
     DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, DOCK_TOP, ABOVE_TOP, FULLSCREEN_TOP,
-    FLOAT_TOP, TOP_WIN_TYPE_N
+    TOP_WIN_TYPE_N
 };
 typedef enum top_win_type_tag Top_win_type;
 

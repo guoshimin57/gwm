@@ -48,8 +48,7 @@ void update_layout(WM *wm)
 static void set_full_layout(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if( is_on_cur_desktop(wm, c)
-            && c->place_type!=FLOAT_LAY && !c->icon)
+        if(is_on_cur_desktop(wm, c) && !c->owner && !c->icon)
             c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 }
 
@@ -108,14 +107,15 @@ static void set_rect_of_persistent_win_for_tiling(WM *wm)
                 c->x=wx, c->y=wy+k++*sh, c->w=sw-g, c->h=sh-g;
             if(is_last_typed_client(wm, c, type)) // 區末窗口取餘量
                 c->h+=wh%(c->h+g)+g;
-        } }
+        }
+    }
 }
 
 /* 平鋪布局模式的非臨時窗口位置其主窗之上並居中 */
 static void set_rect_of_transient_win_for_tiling(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(c->owner)
+        if(is_on_cur_desktop(wm, c) && c->owner)
             set_transient_win_pos(c);
 }
 
@@ -148,14 +148,15 @@ static bool should_fix_win_rect(WM *wm, Client *c)
 {
     Layout cl=DESKTOP(wm)->cur_layout;
     return (is_on_cur_desktop(wm, c)
-        && ((cl==PREVIEW || (cl==TILE && c->place_type!=FLOAT_LAY && !c->icon))
-        || (cl==FULL && c->place_type==FLOAT_LAY)));
+        && ((cl==PREVIEW || (cl==TILE && (c->place_type==NORMAL_LAY_MAIN
+        || c->place_type==NORMAL_LAY_SECOND || c->place_type==NORMAL_LAY_FIXED)
+        && !c->icon)) || (cl==FULL && c->owner)));
 }
 
 static void fix_cur_focus_client_rect(WM *wm)
 {
     Client *c=CUR_FOC_CLI(wm);
-    if( DESKTOP(wm)->prev_layout==FULL && c->place_type==FLOAT_LAY
+    if( DESKTOP(wm)->prev_layout==FULL && c->owner
         && (DESKTOP(wm)->cur_layout==TILE || DESKTOP(wm)->cur_layout==STACK))
         set_default_win_rect(wm, c);
 }

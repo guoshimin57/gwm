@@ -11,11 +11,12 @@
 
 #include "gwm.h"
 
+static Client *new_client(WM *wm, Window win);
 static void apply_rules(WM *wm, Client *c);
 static void set_default_desktop_mask(WM *wm, Client *c);
 static void set_default_place_type(Client *c);
 static bool have_rule(const Rule *r, Client *c);
-static void add_client_node(WM *wm, Client *head, Client *c);
+static void add_client_node(Client *head, Client *c);
 static void set_win_rect_by_attr(WM *wm, Client *c);
 static void fix_win_pos(WM *wm, Client *c);
 static bool fix_win_pos_by_hint(Client *c);
@@ -38,16 +39,10 @@ static bool have_same_class_icon_client(WM *wm, Client *c);
 
 void add_client(WM *wm, Window win)
 {
-    Client *c=malloc_s(sizeof(Client));
-    memset(c, 0, sizeof(Client));
-    c->win=win;
-    c->title_text=get_title_text(wm, win, "");
-    c->wm_hint=XGetWMHints(wm->display, win);
-    update_size_hint(wm, c);
-    c->win_type=get_net_wm_win_type(wm, win);
-    c->win_state=get_net_wm_state(wm, win);
+    Client *c=new_client(wm, win);
+
     apply_rules(wm, c);
-    add_client_node(wm, get_head_client(wm, c->place_type), c);
+    add_client_node(get_head_client(wm, c->place_type), c);
     fix_place_type(wm);
     set_default_win_rect(wm, c);
     set_icon_image(wm, c);
@@ -62,52 +57,36 @@ void add_client(WM *wm, Window win)
     set_all_net_client_list(wm);
 }
 
-static void apply_rules(WM *wm, Client *c)
+static Client *new_client(WM *wm, Window win)
 {
-    set_default_place_type(c);
-    set_default_desktop_mask(wm, c);
+    Client *c=malloc_s(sizeof(Client));
+    memset(c, 0, sizeof(Client));
+    c->win=win;
+    c->title_text=get_title_text(wm, win, "");
+    c->wm_hint=XGetWMHints(wm->display, win);
+    c->win_type=get_net_wm_win_type(wm, win);
+    c->win_state=get_net_wm_state(wm, win);
+    c->owner=win_to_client(wm, get_transient_for(wm, c->win));
+    c->subgroup_leader=get_subgroup_leader(c);
     c->border_w=wm->cfg->border_width;
     c->titlebar_h=TITLEBAR_HEIGHT(wm);
-    set_default_desktop_mask(wm, c);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
+    update_size_hint(wm, c);
+    set_default_place_type(c);
+    set_default_desktop_mask(wm, c);
 
-    if(XGetClassHint(wm->display, c->win, &c->class_hint))
-    {
-        c->class_name=c->class_hint.res_class;
-        for(const Rule *r=wm->cfg->rule; r->app_class; r++)
-        {
-            if(have_rule(r, c))
-            {
-                c->place_type=r->place_type;
-                if(!r->show_border)
-                    c->border_w=0;
-                if(!r->show_titlebar)
-                    c->titlebar_h=0;
-                if(r->desktop_mask)
-                    c->desktop_mask=r->desktop_mask;
-                if(r->class_alias)
-                    c->class_name=r->class_alias;
-            }
-        }
-    }
+    return c;
 }
 
 static void set_default_place_type(Client *c)
 {
-    if(c->owner)
-        c->place_type=c->owner->place_type;
-    else if(c->win_type.desktop)
-        c->place_type=DESKTOP_LAY;
-    else if(c->win_state.below)
-        c->place_type=BELOW_LAY;
-    else if(c->win_type.dock)
-        c->place_type=DOCK_LAY;
-    else if(c->win_state.above)
-        c->place_type=ABOVE_LAY;
-    else if(c->win_state.fullscreen)
-        c->place_type=FULLSCREEN_LAY;
-    else
-        c->place_type=NORMAL_LAY_MAIN;
+    if(c->owner)                     c->place_type = c->owner->place_type;
+    else if(c->win_type.desktop)     c->place_type = DESKTOP_LAY;
+    else if(c->win_state.below)      c->place_type = BELOW_LAY;
+    else if(c->win_type.dock)        c->place_type = DOCK_LAY;
+    else if(c->win_state.above)      c->place_type = ABOVE_LAY;
+    else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAY;
+    else                             c->place_type = NORMAL_LAY_MAIN;
 }
 
 static void set_default_desktop_mask(WM *wm, Client *c)
@@ -125,6 +104,29 @@ static void set_default_desktop_mask(WM *wm, Client *c)
     }
 }
 
+static void apply_rules(WM *wm, Client *c)
+{
+    if(!XGetClassHint(wm->display, c->win, &c->class_hint))
+        return;
+
+    c->class_name=c->class_hint.res_class;
+    for(const Rule *r=wm->cfg->rule; r->app_class; r++)
+    {
+        if(have_rule(r, c))
+        {
+            c->place_type=r->place_type;
+            if(!r->show_border)
+                c->border_w=0;
+            if(!r->show_titlebar)
+                c->titlebar_h=0;
+            if(r->desktop_mask)
+                c->desktop_mask=r->desktop_mask;
+            if(r->class_alias)
+                c->class_name=r->class_alias;
+        }
+    }
+}
+
 static bool have_rule(const Rule *r, Client *c)
 {
     const char *pc=r->app_class, *pn=r->app_name,
@@ -133,14 +135,12 @@ static bool have_rule(const Rule *r, Client *c)
         || ((pn && ((name && strstr(name, pn)) || strcmp(pc, "*")==0))));
 }
 
-static void add_client_node(WM *wm, Client *head, Client *c)
+static void add_client_node(Client *head, Client *c)
 {
     c->prev=head;
     c->next=head->next;
     head->next=c;
     c->next->prev=c;
-    c->owner=win_to_client(wm, get_transient_for(wm, c->win));
-    c->subgroup_leader=get_subgroup_leader(c);
 }
 
 void fix_place_type(WM *wm)
@@ -278,7 +278,7 @@ static Rect get_frame_rect(Client *c)
 
 Rect get_title_area_rect(WM *wm, Client *c)
 {
-    int buttons_n[]={[FULL]=c->place_type==FLOAT_LAY ? 7 : 0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
+    int buttons_n[]={[FULL]=c->place_type==ABOVE_LAY ? 7 : 0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
         n=buttons_n[DESKTOP(wm)->cur_layout], size=TITLEBAR_HEIGHT(wm);
     return (Rect){size, 0, c->w-wm->cfg->title_button_width*n-size, size};
 }
@@ -397,7 +397,6 @@ static Window get_top_win(WM *wm, Client *c)
         [NORMAL_LAY_MAIN]=NORMAL_TOP, [NORMAL_LAY_SECOND]=NORMAL_TOP,
         [NORMAL_LAY_FIXED]=NORMAL_TOP, [DOCK_LAY]=DOCK_TOP,
         [ABOVE_LAY]=ABOVE_TOP, [FULLSCREEN_LAY]=FULLSCREEN_TOP,
-        [FLOAT_LAY]=FLOAT_TOP
     };
     return wm->top_wins[index[c->place_type]];
 }
@@ -424,8 +423,6 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
 {
     if(move_client_node(wm, from, to, type))
     {
-        if(from->icon)
-            deiconify(wm, from);
         from->place_type=type;
         fix_place_type(wm);
         raise_client(wm, from);
@@ -437,8 +434,9 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
 {
     Client *head;
     Place_type ft=from->place_type, tt=to->place_type;
-    if( from==wm->clients || (from==to && tt==type) || (ft==NORMAL_LAY_MAIN
-        && type==NORMAL_LAY_SECOND && !get_clients_n(wm, NORMAL_LAY_SECOND, false, false)))
+    if( from==wm->clients || (from==to && tt==type)
+        || (ft==NORMAL_LAY_MAIN && type==NORMAL_LAY_SECOND
+            && !get_clients_n(wm, NORMAL_LAY_SECOND, false, false)))
         return false;
     del_client_node(from);
     if(tt == type)
@@ -458,7 +456,7 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
         else
             head=to;
     }
-    add_client_node(wm, head, from);
+    add_client_node(head, from);
     return true;
 }
 
@@ -470,9 +468,9 @@ void swap_clients(WM *wm, Client *a, Client *b)
     Client *aprev=a->prev, *bprev=b->prev;
 
     del_client_node(a);
-    add_client_node(wm, compare_client_order(wm, a, b)==-1 ? b : bprev, a);
+    add_client_node(compare_client_order(wm, a, b)==-1 ? b : bprev, a);
     if(aprev!=b && bprev!=a) //不相邻
-        del_client_node(b), add_client_node(wm, aprev, b);
+        del_client_node(b), add_client_node(aprev, b);
 
     raise_client(wm, a);
     update_layout(wm);
@@ -685,6 +683,7 @@ void iconify(WM *wm, Client *c)
         }
     }
     free(g);
+    update_layout(wm);
 }
 
 void create_icon(WM *wm, Client *c)
@@ -749,6 +748,7 @@ void deiconify(WM *wm, Client *c)
         }
     }
     free(g);
+    update_layout(wm);
 }
 
 void del_icon(WM *wm, Client *c)
@@ -774,7 +774,6 @@ void deiconify_all_clients(WM *wm)
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
         if(is_on_cur_desktop(wm, c) && c->icon)
             deiconify(wm, c);
-    update_layout(wm);
 }
 
 void update_net_wm_state(WM *wm, Client *c)

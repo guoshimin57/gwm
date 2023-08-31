@@ -221,10 +221,8 @@ static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act)
 
 static void change_net_wm_state_for_modal(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, modal))
-        c->win_state.modal=0;
-    else
-        c->win_state.modal=1, c->place_type=FLOAT_LAY, update_layout(wm);
+    UNUSED(wm);
+    c->win_state.modal=!SHOULD_REMOVE_STATE(c, act, modal);
 }
 
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
@@ -232,7 +230,8 @@ static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
     if(SHOULD_REMOVE_STATE(c, act, sticky))
         c->win_state.sticky=0, c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     else
-        c->win_state.sticky=1, c->desktop_mask=~0U, update_layout(wm);
+        c->win_state.sticky=1, c->desktop_mask=~0U;
+    update_layout(wm);
 }
 
 static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
@@ -255,30 +254,21 @@ static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_shaded(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    if(SHOULD_REMOVE_STATE(c, act, shaded))
-        c->win_state.shaded=0;
-    else
-        c->win_state.shaded=1;
+    c->win_state.shaded=!SHOULD_REMOVE_STATE(c, act, shaded);
 }
 
 /* 暫不支持跳過任務欄 */
 static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    if(SHOULD_REMOVE_STATE(c, act, skip_taskbar))
-        c->win_state.skip_taskbar=0;
-    else
-        c->win_state.skip_taskbar=1;
+    c->win_state.skip_taskbar=!SHOULD_REMOVE_STATE(c, act, skip_taskbar);
 }
 
 /* 暫不支持跳過分頁器 */
 static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    if(SHOULD_REMOVE_STATE(c, act, skip_pager))
-        c->win_state.skip_pager=0;
-    else
-        c->win_state.skip_pager=1;
+    c->win_state.skip_pager=!SHOULD_REMOVE_STATE(c, act, skip_pager);
 }
 
 static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
@@ -293,36 +283,30 @@ static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    if(SHOULD_REMOVE_STATE(c, act, fullscreen))
-        c->win_state.fullscreen=0;
-    else
-        c->win_state.fullscreen=1;
+    c->win_state.fullscreen=!SHOULD_REMOVE_STATE(c, act, fullscreen);
 }
 
 static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, above))
-        c->win_state.above=0, c->place_type=NORMAL_LAY_MAIN, raise_client(wm, c);
+        c->win_state.above=0;
     else
-        c->win_state.above=1, c->place_type=FLOAT_LAY, raise_client(wm, c);
+         c->win_state.above=1, move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
 }
 
 static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, below))
-        c->win_state.below=0, c->place_type=NORMAL_LAY_MAIN, raise_client(wm, c);
+        c->win_state.below=0, move_client(wm, c, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
     else
-        c->win_state.below=1, c->place_type=FLOAT_LAY, raise_client(wm, c);
+        c->win_state.below=1, move_client(wm, c, get_head_client(wm, BELOW_LAY), BELOW_LAY);
 }
 
 /* 暫不支持請求關注 */
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    if(SHOULD_REMOVE_STATE(c, act, attent))
-        c->win_state.attent=0;
-    else
-        c->win_state.attent=1;
+    c->win_state.attent=!SHOULD_REMOVE_STATE(c, act, attent);
 }
 
 static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)

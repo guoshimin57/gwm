@@ -71,8 +71,10 @@ static bool is_valid_click(WM *wm, XEvent *oe, XEvent *ne)
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=CUR_FOC_CLI(wm);
+
     if(c->icon)
-        move_client(wm, c, get_head_client(wm, c->place_type), c->place_type);
+        deiconify(wm, c);
+
     if(DESKTOP(wm)->cur_layout == PREVIEW)
         arg.layout=DESKTOP(wm)->prev_layout, change_layout(wm, e, arg);
 }
@@ -88,15 +90,15 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Layout lay=DESKTOP(wm)->cur_layout;
     Client *c=CUR_FOC_CLI(wm);
 
-    if(lay!=TILE && lay!=STACK && (lay!=FULL || c->place_type!=FLOAT_LAY))
+    if(lay!=TILE && lay!=STACK && (lay!=FULL || c->owner))
         return;
 
     Direction dir=arg.direction;
     bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
     Delta_rect d=get_key_delta_rect(c, dir);
 
-    if(c->place_type!=FLOAT_LAY && lay==TILE)
-        move_client(wm, c, get_head_client(wm, FLOAT_LAY), FLOAT_LAY);
+    if(c->place_type!=ABOVE_LAY && !c->owner && lay==TILE)
+        move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
     if(fix_move_resize_delta_rect(wm, c, &d, is_move))
     {
         move_resize_client(wm, c, &d);
@@ -263,11 +265,9 @@ void change_place(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
     Client *c=CUR_FOC_CLI(wm);
-    Layout l=DESKTOP(wm)->cur_layout;
     Place_type t=arg.place_type;
 
-    if( c!=wm->clients && (l==TILE || (l==FULL &&
-        (c->place_type==FLOAT_LAY || t==FLOAT_LAY))))
+    if(c!=wm->clients && DESKTOP(wm)->cur_layout==TILE)
         move_client(wm, c, get_head_client(wm, t), t);
 }
 
@@ -282,12 +282,7 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
-    int x=ev.xbutton.x-wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N;
-    if((to=win_to_client(wm, ev.xbutton.subwindow)) == NULL)
-        for(Client *c=head->next; c!=head && !to; c=c->next)
-            if(c!=from && c->icon && x>=c->icon->x && x<c->icon->x+c->icon->w)
-                to=c;
-    if(to) 
+    if((to=win_to_client(wm, ev.xbutton.subwindow)))
         swap_clients(wm, from, to);
 }
 
@@ -295,14 +290,12 @@ void minimize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     iconify(wm, CUR_FOC_CLI(wm)); 
-    update_layout(wm);
 }
 
 void deiconify_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     deiconify(wm, CUR_FOC_CLI(wm)); 
-    update_layout(wm);
 }
 
 void maximize_client(WM *wm, XEvent *e, Func_arg arg)
@@ -332,8 +325,8 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     if(fmax)
         c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh-th-2*bw;
 
-    if(DESKTOP(wm)->cur_layout == TILE)
-        move_client(wm, c, get_head_client(wm, FLOAT_LAY), FLOAT_LAY);
+    if(c->place_type!=ABOVE_LAY && !c->owner && DESKTOP(wm)->cur_layout==TILE)
+        move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
     move_resize_client(wm, c, NULL);
 }
 
@@ -344,8 +337,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
 
-    if( (layout==FULL && c->place_type!=FLOAT_LAY) || layout==PREVIEW
-        || !grab_pointer(wm, wm->root_win, act))
+    if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, wm->root_win, act))
         return;
 
     XEvent ev;
@@ -354,8 +346,8 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            if(c->place_type!=FLOAT_LAY && layout==TILE)
-                move_client(wm, c, get_head_client(wm, FLOAT_LAY), FLOAT_LAY);
+            if(c->place_type!=ABOVE_LAY && !c->owner && layout==TILE)
+                move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             do_valid_pointer_move_resize(wm, c, &m, act);
@@ -489,6 +481,7 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
     XEvent ev;
     Client *from=CUR_FOC_CLI(wm), *to;
 
+    UNUSED(arg);
     if( DESKTOP(wm)->cur_layout!=TILE || from==wm->clients
         || !get_valid_click(wm, CHANGE, e, &ev))
         return;
@@ -497,14 +490,10 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(wm, subw);
-    if(!to)
-        to=win_to_iconic_state_client(wm, subw);
     if(ev.xbutton.x == 0)
         move_client(wm, from, get_head_client(wm, NORMAL_LAY_SECOND), NORMAL_LAY_SECOND);
     else if(ev.xbutton.x == (long)wm->screen_width-1)
         move_client(wm, from, get_head_client(wm, NORMAL_LAY_FIXED), NORMAL_LAY_FIXED);
-    else if(ev.xbutton.y == 0)
-        maximize_client(wm, NULL, arg);
     else if(win==wm->root_win && subw==None)
         move_client(wm, from, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
     else if(to)
