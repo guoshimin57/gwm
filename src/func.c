@@ -96,9 +96,9 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Direction dir=arg.direction;
     bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
     Delta_rect d=get_key_delta_rect(c, dir);
+    Place_type type=get_dest_place_type_for_move(wm, c);
 
-    if(c->place_type!=ABOVE_LAY && !c->owner && lay==TILE)
-        move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
+    move_client(wm, c, get_head_client(wm, type), type);
     if(fix_move_resize_delta_rect(wm, c, &d, is_move))
     {
         move_resize_client(wm, c, &d);
@@ -231,7 +231,7 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
 void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    if(DESKTOP(wm)->cur_layout==TILE && get_clients_n(wm, NORMAL_LAY_SECOND, false, false))
+    if(DESKTOP(wm)->cur_layout==TILE && get_clients_n(wm, NORMAL_LAYER_SECOND, false, false))
     {
         Desktop *d=DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
@@ -248,7 +248,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 { 
     UNUSED(e), UNUSED(arg);
-    if(DESKTOP(wm)->cur_layout==TILE && get_clients_n(wm, NORMAL_LAY_FIXED, false, false))
+    if(DESKTOP(wm)->cur_layout==TILE && get_clients_n(wm, NORMAL_LAYER_FIXED, false, false))
     {
         Desktop *d=DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
@@ -349,13 +349,13 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         return;
 
     XEvent ev;
+    Place_type type=get_dest_place_type_for_move(wm, c);
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
         XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            if(c->place_type!=ABOVE_LAY && !c->owner && layout==TILE)
-                move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
+            move_client(wm, c, get_head_client(wm, type), type);
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             do_valid_pointer_move_resize(wm, c, &m, act);
@@ -499,11 +499,11 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(wm, subw);
     if(ev.xbutton.x == 0)
-        move_client(wm, from, get_head_client(wm, NORMAL_LAY_SECOND), NORMAL_LAY_SECOND);
+        move_client(wm, from, get_head_client(wm, NORMAL_LAYER_SECOND), NORMAL_LAYER_SECOND);
     else if(ev.xbutton.x == (long)wm->screen_width-1)
-        move_client(wm, from, get_head_client(wm, NORMAL_LAY_FIXED), NORMAL_LAY_FIXED);
+        move_client(wm, from, get_head_client(wm, NORMAL_LAYER_FIXED), NORMAL_LAYER_FIXED);
     else if(win==wm->root_win && subw==None)
-        move_client(wm, from, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
+        move_client(wm, from, get_head_client(wm, NORMAL_LAYER_MAIN), NORMAL_LAYER_MAIN);
     else if(to)
         move_client(wm, from, to, to->place_type);
 }

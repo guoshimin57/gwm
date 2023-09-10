@@ -52,10 +52,10 @@
     {VOLUME_UP_BUTTON,          0, Button1,  exec,                       SH_CMD(VOLUME_UP)},                \
     {VOLUME_MAX_BUTTON,         0, Button1,  exec,                       SH_CMD(VOLUME_MAX)},               \
     {VOLUME_TOGGLE_BUTTON,      0, Button1,  exec,                       SH_CMD(VOLUME_TOGGLE)},            \
-    {MAIN_NEW_BUTTON,           0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_MAIN}},    \
-    {SEC_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_SECOND}},  \
-    {FIX_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAY_FIXED}},   \
-    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=ABOVE_LAY}},          \
+    {MAIN_NEW_BUTTON,           0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAYER_MAIN}},  \
+    {SEC_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAYER_SECOND}},\
+    {FIX_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAYER_FIXED}}, \
+    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAYER_FLOAT}}, \
     {N_MAIN_UP_BUTTON,          0, Button1,  adjust_n_main_max,          {.n=1}},                           \
     {N_MAIN_DOWN_BUTTON,        0, Button1,  adjust_n_main_max,          {.n=-1}},                          \
     {TITLEBAR_TOGGLE_BUTTON,    0, Button1,  toggle_titlebar_visibility, {0}},                              \
@@ -81,10 +81,10 @@
     {RIGHT_MAX_BUTTON,          0, Button1,  maximize_client,            {.max_way=RIGHT_MAX}},             \
     {FULL_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=FULL_MAX}},              \
     {ROOT_WIN,                  0, Button1,  adjust_layout_ratio,        {0}},                              \
-    {MAIN_BUTTON,               0, Button1,  change_place,               {.place_type=NORMAL_LAY_MAIN}},    \
-    {SECOND_BUTTON,             0, Button1,  change_place,               {.place_type=NORMAL_LAY_SECOND}},  \
-    {FIXED_BUTTON,              0, Button1,  change_place,               {.place_type=NORMAL_LAY_FIXED}},   \
-    {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=ABOVE_LAY}},          \
+    {MAIN_BUTTON,               0, Button1,  change_place,               {.place_type=NORMAL_LAYER_MAIN}},  \
+    {SECOND_BUTTON,             0, Button1,  change_place,               {.place_type=NORMAL_LAYER_SECOND}},\
+    {FIXED_BUTTON,              0, Button1,  change_place,               {.place_type=NORMAL_LAYER_FIXED}}, \
+    {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=NORMAL_LAYER_FLOAT}}, \
     {ICON_BUTTON,               0, Button1,  minimize_client,            {0}},                              \
     {MAX_BUTTON,                0, Button1,  max_restore_client,         {0}},                              \
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},                              \

@@ -14,7 +14,8 @@
 static Client *new_client(WM *wm, Window win);
 static void apply_rules(WM *wm, Client *c);
 static void set_default_desktop_mask(WM *wm, Client *c);
-static void set_default_place_type(Client *c);
+static void set_default_place_type(WM *wm, Client *c);
+static bool should_float(WM *wm, Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static void add_client_node(Client *head, Client *c);
 static void set_win_rect_by_attr(WM *wm, Client *c);
@@ -44,6 +45,7 @@ void add_client(WM *wm, Window win)
     apply_rules(wm, c);
     add_client_node(get_head_client(wm, c->place_type), c);
     fix_place_type(wm);
+    c->old_place_type=c->place_type;
     set_default_win_rect(wm, c);
     set_icon_image(wm, c);
     grab_buttons(wm, c);
@@ -72,21 +74,28 @@ static Client *new_client(WM *wm, Window win)
     c->titlebar_h=TITLEBAR_HEIGHT(wm);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     update_size_hint(wm, c);
-    set_default_place_type(c);
+    set_default_place_type(wm, c);
     set_default_desktop_mask(wm, c);
 
     return c;
 }
 
-static void set_default_place_type(Client *c)
+static void set_default_place_type(WM *wm, Client *c)
 {
     if(c->owner)                     c->place_type = c->owner->place_type;
-    else if(c->win_type.desktop)     c->place_type = DESKTOP_LAY;
-    else if(c->win_state.below)      c->place_type = BELOW_LAY;
-    else if(c->win_type.dock)        c->place_type = DOCK_LAY;
-    else if(c->win_state.above)      c->place_type = ABOVE_LAY;
-    else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAY;
-    else                             c->place_type = NORMAL_LAY_MAIN;
+    else if(c->win_type.desktop)     c->place_type = DESKTOP_LAYER;
+    else if(c->win_state.below)      c->place_type = BELOW_LAYER;
+    else if(c->win_type.dock)        c->place_type = DOCK_LAYER;
+    else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
+    else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
+    else if(should_float(wm, c))     c->place_type = NORMAL_LAYER_FLOAT;
+    else                             c->place_type = NORMAL_LAYER_MAIN;
+}
+
+static bool should_float(WM *wm, Client *c)
+{
+    return (c->win_state.vmax || c->win_state.hmax || c->win_state.fullscreen)
+        && DESKTOP(wm)->cur_layout==TILE;
 }
 
 static void set_default_desktop_mask(WM *wm, Client *c)
@@ -150,19 +159,34 @@ void fix_place_type(WM *wm)
     {
         if(is_on_cur_desktop(wm, c) && !c->icon && !c->owner)
         {
-            if(c->place_type==NORMAL_LAY_MAIN && ++n>m)
-                c->place_type=NORMAL_LAY_SECOND;
-            else if(c->place_type==NORMAL_LAY_SECOND && n<m)
-                c->place_type=NORMAL_LAY_MAIN, n++;
+            if(c->place_type==NORMAL_LAYER_MAIN && ++n>m)
+                c->place_type=NORMAL_LAYER_SECOND;
+            else if(c->place_type==NORMAL_LAYER_SECOND && n<m)
+                c->place_type=NORMAL_LAYER_MAIN, n++;
         }
     }
 }
 
 void set_default_win_rect(WM *wm, Client *c)
 {
-    set_win_rect_by_attr(wm, c);
-    fix_win_size(wm, c);
-    fix_win_pos(wm, c);
+    int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
+        ww=wm->workarea.w, wh=wm->workarea.h;
+
+    if(c->win_state.vmax)
+        c->x=wx+bw, c->w=ww-2*bw;
+    if(c->win_state.hmax)
+        c->y=wy+bw+th, c->h=wh-th-2*bw;
+    if(c->win_state.fullscreen)
+        c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
+
+    if(!c->win_state.vmax && !c->win_state.hmax && !c->win_state.fullscreen)
+    {
+        set_win_rect_by_attr(wm, c);
+        fix_win_size(wm, c);
+        fix_win_pos(wm, c);
+    }
+
+    save_rect_of_client(c);
 }
 
 static void set_win_rect_by_attr(WM *wm, Client *c)
@@ -278,7 +302,7 @@ static Rect get_frame_rect(Client *c)
 
 Rect get_title_area_rect(WM *wm, Client *c)
 {
-    int buttons_n[]={[FULL]=c->place_type==ABOVE_LAY ? 7 : 0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
+    int buttons_n[]={[FULL]=c->owner ? 1 : 0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
         n=buttons_n[DESKTOP(wm)->cur_layout], size=TITLEBAR_HEIGHT(wm);
     return (Rect){size, 0, c->w-wm->cfg->title_button_width*n-size, size};
 }
@@ -393,10 +417,11 @@ static Window get_top_win(WM *wm, Client *c)
 {
     size_t index[]=
     {
-        [DESKTOP_LAY]=DESKTOP_TOP, [BELOW_LAY]=BELOW_TOP,
-        [NORMAL_LAY_MAIN]=NORMAL_TOP, [NORMAL_LAY_SECOND]=NORMAL_TOP,
-        [NORMAL_LAY_FIXED]=NORMAL_TOP, [DOCK_LAY]=DOCK_TOP,
-        [ABOVE_LAY]=ABOVE_TOP, [FULLSCREEN_LAY]=FULLSCREEN_TOP,
+        [DESKTOP_LAYER]=DESKTOP_TOP, [BELOW_LAYER]=BELOW_TOP,
+        [NORMAL_LAYER_MAIN]=NORMAL_TOP, [NORMAL_LAYER_SECOND]=NORMAL_TOP,
+        [NORMAL_LAYER_FIXED]=NORMAL_TOP, [NORMAL_LAYER_FLOAT]=NORMAL_TOP,
+        [DOCK_LAYER]=DOCK_TOP, [ABOVE_LAYER]=ABOVE_TOP,
+        [FULLSCREEN_LAYER]=FULLSCREEN_TOP,
     };
     return wm->top_wins[index[c->place_type]];
 }
@@ -423,10 +448,9 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
 {
     if(move_client_node(wm, from, to, type))
     {
-        /*
         save_rect_of_client(from);
-        from->old_place_type=from->place_type;
-        */
+        if(from->place_type != type)
+            from->old_place_type=from->place_type;
         from->place_type=type;
         fix_place_type(wm);
         raise_client(wm, from);
@@ -439,13 +463,13 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     Client *head;
     Place_type ft=from->place_type, tt=to->place_type;
     if( from==wm->clients || (from==to && tt==type)
-        || (ft==NORMAL_LAY_MAIN && type==NORMAL_LAY_SECOND
-            && !get_clients_n(wm, NORMAL_LAY_SECOND, false, false)))
+        || (ft==NORMAL_LAYER_MAIN && type==NORMAL_LAYER_SECOND
+            && !get_clients_n(wm, NORMAL_LAYER_SECOND, false, false)))
         return false;
     del_client_node(from);
     if(tt == type)
     {
-        if((ft==NORMAL_LAY_MAIN && tt==NORMAL_LAY_SECOND)
+        if((ft==NORMAL_LAYER_MAIN && tt==NORMAL_LAYER_SECOND)
             || (ft==tt && compare_client_order(wm, from, to)==-1))
             head=to;
         else
@@ -453,7 +477,7 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     }
     else
     {
-        if(ft==NORMAL_LAY_MAIN && type==NORMAL_LAY_SECOND)
+        if(ft==NORMAL_LAYER_MAIN && type==NORMAL_LAYER_SECOND)
             head=to->next;
         else if(from == to)
             head=to->prev;
@@ -841,7 +865,7 @@ bool is_tile_client(WM *wm, Client *c)
 {
     Place_type t=c->place_type;
     return is_on_cur_desktop(wm, c) && !c->owner && !c->icon
-        && (t==NORMAL_LAY_MAIN || t==NORMAL_LAY_SECOND || t==NORMAL_LAY_FIXED);
+        && (t==NORMAL_LAYER_MAIN || t==NORMAL_LAYER_SECOND || t==NORMAL_LAYER_FIXED);
 }
 
 void max_client(WM *wm, Client *c, Max_way max_way)
@@ -851,7 +875,7 @@ void max_client(WM *wm, Client *c, Max_way max_way)
     bool vmax=(c->h+2*bw+th == wh), hmax=(c->w+2*bw == ww), fmax=false;
 
     save_rect_of_client(c);
-    if(c->place_type != ABOVE_LAY)
+    if(!c->win_state.vmax && !c->win_state.hmax)
         c->old_place_type=c->place_type;
 
     switch(max_way)
@@ -868,8 +892,13 @@ void max_client(WM *wm, Client *c, Max_way max_way)
 
     if(fmax)
         c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh-th-2*bw;
-
-    if(c->place_type!=ABOVE_LAY && !c->owner && DESKTOP(wm)->cur_layout==TILE)
-        move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
+    Place_type type=get_dest_place_type_for_move(wm, c);
+    move_client(wm, c, get_head_client(wm, type), type);
     move_resize_client(wm, c, NULL);
+}
+
+Place_type get_dest_place_type_for_move(WM *wm, Client *c)
+{
+    return DESKTOP(wm)->cur_layout==TILE && is_tile_client(wm, c) ?
+        NORMAL_LAYER_FLOAT : c->place_type;
 }

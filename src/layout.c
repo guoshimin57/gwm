@@ -105,11 +105,11 @@ static void set_rect_of_tile_win_for_tiling(WM *wm)
         if(is_tile_client(wm, c))
         {
             Place_type type=c->place_type;
-            if(type == NORMAL_LAY_FIXED)
+            if(type == NORMAL_LAYER_FIXED)
                 c->x=wx+mw+sw+g, c->y=wy+i++*fh, c->w=fw-g, c->h=fh-g;
-            else if(type == NORMAL_LAY_MAIN)
+            else if(type == NORMAL_LAYER_MAIN)
                 c->x=wx+sw, c->y=wy+j++*mh, c->w=mw, c->h=mh-g;
-            else if(type == NORMAL_LAY_SECOND)
+            else if(type == NORMAL_LAYER_SECOND)
                 c->x=wx, c->y=wy+k++*sh, c->w=sw-g, c->h=sh-g;
             if(is_last_typed_client(wm, c, type)) // 區末窗口取餘量
                 c->h+=wh%(c->h+g)+g;
@@ -131,9 +131,9 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
     double mr=DESKTOP(wm)->main_area_ratio, fr=DESKTOP(wm)->fixed_area_ratio;
     int n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
 
-    n1=get_clients_n(wm, NORMAL_LAY_MAIN, false, false),
-    n2=get_clients_n(wm, NORMAL_LAY_SECOND, false, false),
-    n3=get_clients_n(wm, NORMAL_LAY_FIXED, false, false),
+    n1=get_clients_n(wm, NORMAL_LAYER_MAIN, false, false),
+    n2=get_clients_n(wm, NORMAL_LAYER_SECOND, false, false),
+    n3=get_clients_n(wm, NORMAL_LAYER_FIXED, false, false),
     *mw=mr*ww, *fw=ww*fr, *sw=ww-*fw-*mw;
     *mh = n1 ? wh/n1 : wh, *fh = n3 ? wh/n3 : wh, *sh = n2 ? wh/n2 : wh;
     if(n3 == 0)
@@ -164,14 +164,14 @@ bool is_main_sec_gap(WM *wm, int x)
 {
     Desktop *d=DESKTOP(wm);
     long sw=wm->workarea.w*(1-d->main_area_ratio-d->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_clients_n(wm, NORMAL_LAY_SECOND, false, false);
+         wx=wm->workarea.x, n=get_clients_n(wm, NORMAL_LAYER_SECOND, false, false);
     return (n && x>=wx+sw-wm->cfg->win_gap && x<wx+sw);
 }
 
 bool is_main_fix_gap(WM *wm, int x)
 {
     long smw=wm->workarea.w*(1-DESKTOP(wm)->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_clients_n(wm, NORMAL_LAY_FIXED, false, false);
+         wx=wm->workarea.x, n=get_clients_n(wm, NORMAL_LAYER_FIXED, false, false);
     return (n && x>=wx+smw && x<wx+smw+wm->cfg->win_gap);
 }
 

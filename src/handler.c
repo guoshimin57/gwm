@@ -225,26 +225,26 @@ static void change_net_wm_state_for_modal(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, sticky))
-        c->win_state.sticky=0, c->desktop_mask=get_desktop_mask(wm->cur_desktop);
+        c->desktop_mask=get_desktop_mask(wm->cur_desktop), c->win_state.sticky=0;
     else
-        c->win_state.sticky=1, c->desktop_mask=~0U;
+        c->desktop_mask=~0U, c->win_state.sticky=1;
     update_layout(wm);
 }
 
 static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, vmax))
-        c->win_state.vmax=0, restore_client(wm, c);
+        restore_client(wm, c), c->win_state.vmax=0;
     else
-        c->win_state.vmax=1, max_client(wm, c, IN_SITU_VERT_MAX);
+        max_client(wm, c, IN_SITU_VERT_MAX), c->win_state.vmax=1;
 }
 
 static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, hmax))
-        c->win_state.hmax=0, restore_client(wm, c);
+        restore_client(wm, c), c->win_state.hmax=0;
     else
-        c->win_state.hmax=1, max_client(wm, c, IN_SITU_HORZ_MAX);
+        max_client(wm, c, IN_SITU_HORZ_MAX), c->win_state.hmax=1;
 }
 
 /* 暫不支持窗口陰影特效 */
@@ -271,9 +271,9 @@ static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, hidden))
-        c->win_state.hidden=0, deiconify(wm, c->icon ? c : NULL);
+        deiconify(wm, c->icon ? c : NULL);
     else
-        c->win_state.hidden=1, iconify(wm, c);
+        iconify(wm, c);
 }
 
 /* 暫不支持單獨窗口全屏 */
@@ -286,17 +286,17 @@ static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, above))
-        c->win_state.above=0, restore_client(wm, c);
+        restore_client(wm, c), c->win_state.above=0;
     else
-        c->win_state.above=1, move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
+        move_client(wm, c, get_head_client(wm, ABOVE_LAYER), ABOVE_LAYER), c->win_state.above=1;
 }
 
 static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, below))
-        c->win_state.below=0, restore_client(wm, c);
+        restore_client(wm, c), c->win_state.below=0;
     else
-        c->win_state.below=1, move_client(wm, c, get_head_client(wm, BELOW_LAY), BELOW_LAY);
+        move_client(wm, c, get_head_client(wm, BELOW_LAYER), BELOW_LAYER), c->win_state.below=1;
 }
 
 /* 暫不支持請求關注 */
@@ -309,9 +309,9 @@ static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, focused))
-        c->win_state.focused=0, focus_client(wm, wm->cur_desktop, NULL);
+        focus_client(wm, wm->cur_desktop, NULL), c->win_state.focused=0;
     else
-        c->win_state.focused=1, focus_client(wm, wm->cur_desktop, c);
+        focus_client(wm, wm->cur_desktop, c), c->win_state.focused=1;
 }
 
 static void activate_win(WM *wm, Window win, unsigned long src)
@@ -379,7 +379,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
 
     if(wm->cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
-    if(is_layout_adjust_area(wm, win, x) && get_clients_n(wm, NORMAL_LAY_MAIN, false, false))
+    if(is_layout_adjust_area(wm, win, x) && get_clients_n(wm, NORMAL_LAYER_MAIN, false, false))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_BUTTON(type))
         update_win_bg(wm, win, ENTERED_NCLOSE_BUTTON_COLOR(wm, type), None);
@@ -559,7 +559,7 @@ static void handle_map_request(WM *wm, XEvent *e)
     if(is_wm_win(wm, win, false))
     {
         add_client(wm, win);
-        DESKTOP(wm)->default_place_type=NORMAL_LAY_MAIN;
+        DESKTOP(wm)->default_place_type=NORMAL_LAYER_MAIN;
     }
     else
         restack_win(wm, win);

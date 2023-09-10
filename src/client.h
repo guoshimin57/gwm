@@ -88,5 +88,6 @@ void restore_rect_of_clients(WM *wm);
 void restore_client(WM *wm, Client *c);
 bool is_tile_client(WM *wm, Client *c);
 void max_client(WM *wm, Client *c, Max_way max_way);
+Place_type get_dest_place_type_for_move(WM *wm, Client *c);
 
 #endif
