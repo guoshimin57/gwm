@@ -298,6 +298,30 @@ void deiconify_client(WM *wm, XEvent *e, Func_arg arg)
     deiconify(wm, CUR_FOC_CLI(wm)); 
 }
 
+void max_restore_client(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    Client *c=CUR_FOC_CLI(wm);
+
+    if(c == wm->clients)
+        return;
+
+    if(c->win_state.vmax || c->win_state.hmax)
+    {
+        if(c->win_state.vmax)
+            c->win_state.vmax=0;
+        if(c->win_state.hmax)
+            c->win_state.hmax=0;
+        restore_client(wm, c);
+    }
+    else
+    {
+        c->win_state.vmax=c->win_state.hmax=1;
+        max_client(wm, c, FULL_MAX);
+    }
+    update_net_wm_state(wm, c);
+}
+
 void maximize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
@@ -306,28 +330,12 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     if(c == wm->clients)
         return;
 
-    int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
-        ww=wm->workarea.w, wh=wm->workarea.h;
-    bool vmax=(c->h+2*bw+th == wh), hmax=(c->w+2*bw == ww), fmax=false;
-
-    switch(arg.max_way)
-    {
-        case IN_SITU_VERT_MAX: if(hmax) fmax=true; else c->y=wy+bw+th, c->h=wh-th-2*bw; break;
-        case IN_SITU_HORZ_MAX: if(vmax) fmax=true; else c->x=wx+bw, c->w=ww-2*bw; break;
-        case TOP_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
-        case BOTTOM_MAX: c->x=wx+bw, c->y=wy+wh/2+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
-        case LEFT_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
-        case RIGHT_MAX: c->x=ww/2+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
-        case FULL_MAX: fmax=true; break;
-        default: return;
-    }
-
-    if(fmax)
-        c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh-th-2*bw;
-
-    if(c->place_type!=ABOVE_LAY && !c->owner && DESKTOP(wm)->cur_layout==TILE)
-        move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
-    move_resize_client(wm, c, NULL);
+    max_client(wm, c, arg.max_way);
+    if(arg.max_way == IN_SITU_VERT_MAX)
+        c->win_state.vmax=1;
+    if(arg.max_way == IN_SITU_HORZ_MAX)
+        c->win_state.hmax=1;
+    update_net_wm_state(wm, c);
 }
 
 void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
@@ -508,6 +516,9 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
     if(*cl == arg.layout)
         return;
 
+    if(*cl == PREVIEW)
+        restore_rect_of_clients(wm);
+
     Display *d=wm->display;
     *pl=*cl, *cl=arg.layout;
     if(*pl == PREVIEW)
@@ -518,6 +529,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
             if(is_on_cur_desktop(wm, c) && c->icon)
                 XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
+
     update_layout(wm);
     update_titlebar_layout(wm);
     update_taskbar_buttons_bg(wm);

@@ -86,7 +86,7 @@
     {FIXED_BUTTON,              0, Button1,  change_place,               {.place_type=NORMAL_LAY_FIXED}},   \
     {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=ABOVE_LAY}},          \
     {ICON_BUTTON,               0, Button1,  minimize_client,            {0}},                              \
-    {MAX_BUTTON,                0, Button1,  maximize_client,            {.max_way=FULL_MAX}},              \
+    {MAX_BUTTON,                0, Button1,  max_restore_client,         {0}},                              \
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},                              \
     {TITLE_AREA,                0, Button1,  pointer_move_resize_client, {.resize=false}},                  \
     {TITLE_AREA,                0, Button2,  pointer_change_place,       {0}},                              \

@@ -96,8 +96,10 @@ static void ignore_event(WM *wm, XEvent *e)
 static void handle_button_press(WM *wm, XEvent *e)
 {
     Window win=e->xbutton.window;
-    Client *c=win_to_client(wm, win), *tmc=NULL;
+    Client *c=win_to_client(wm, win),
+           *tmc = c ? get_top_modal_client(wm, c->subgroup_leader) : NULL;
     Widget_type type=get_widget_type(wm, win);
+
     for(const Buttonbind *b=wm->cfg->buttonbind; b->func; b++)
     {
         if( is_func_click(wm, type, b, e)
@@ -106,15 +108,13 @@ static void handle_button_press(WM *wm, XEvent *e)
             if(type == CLIENT_WIN)
                 XAllowEvents(wm->display, ReplayPointer, CurrentTime);
             focus_clicked_client(wm, win);
-            if(c && (tmc=get_top_modal_client(wm, c->subgroup_leader)) && c!=tmc)
-                continue;
-            if(b->func)
+            if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc) && b->func)
                 b->func(wm, e, b->arg);
         }
     }
     unmap_for_click(wm, type);
 }
- 
+
 static void unmap_for_click(WM *wm, Widget_type type)
 {
     if(type != ACT_CENTER_ITEM)
@@ -174,8 +174,6 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act)
         return;
 
     Net_wm_state mask=get_net_wm_state_mask(wm, full_act);
-    if(mask.none)
-        return;
 
     if(mask.modal)          change_net_wm_state_for_modal(wm, c, act);
     if(mask.sticky)         change_net_wm_state_for_sticky(wm, c, act);
@@ -214,7 +212,6 @@ static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act)
         else if(p == (long)a[NET_WM_STATE_BELOW])             m.below=1;
         else if(p == (long)a[NET_WM_STATE_DEMANDS_ATTENTION]) m.attent=1;
         else if(p == (long)a[NET_WM_STATE_FOCUSED])           m.focused=1;
-        else m.none=1;
     }
     return m;
 }
@@ -237,17 +234,17 @@ static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, vmax))
-        c->win_state.vmax=0, move_client(wm, c, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
+        c->win_state.vmax=0, restore_client(wm, c);
     else
-        c->win_state.vmax=1, maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_VERT_MAX});
+        c->win_state.vmax=1, max_client(wm, c, IN_SITU_VERT_MAX);
 }
 
 static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, hmax))
-        c->win_state.hmax=0, move_client(wm, c, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
+        c->win_state.hmax=0, restore_client(wm, c);
     else
-        c->win_state.hmax=1, maximize_client(wm, NULL, (Func_arg){.max_way=IN_SITU_HORZ_MAX});
+        c->win_state.hmax=1, max_client(wm, c, IN_SITU_HORZ_MAX);
 }
 
 /* 暫不支持窗口陰影特效 */
@@ -289,15 +286,15 @@ static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, above))
-        c->win_state.above=0;
+        c->win_state.above=0, restore_client(wm, c);
     else
-         c->win_state.above=1, move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
+        c->win_state.above=1, move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
 }
 
 static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
 {
     if(SHOULD_REMOVE_STATE(c, act, below))
-        c->win_state.below=0, move_client(wm, c, get_head_client(wm, NORMAL_LAY_MAIN), NORMAL_LAY_MAIN);
+        c->win_state.below=0, restore_client(wm, c);
     else
         c->win_state.below=1, move_client(wm, c, get_head_client(wm, BELOW_LAY), BELOW_LAY);
 }

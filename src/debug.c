@@ -91,7 +91,6 @@ void print_net_wm_state(WM *wm, Window win)
     printf("below: %d\n", state.below);
     printf("attent: %d\n", state.attent);
     printf("focused: %d\n", state.focused);
-    printf("none: %d\n", state.none);
 }
 
 int print_atom_name(WM *wm, Atom atom)

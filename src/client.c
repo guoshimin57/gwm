@@ -30,12 +30,12 @@ static void del_client_node(Client *c);
 static Rect get_frame_rect(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type);
-static int cmp_client_win(const void *client1, const void *client2);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static bool have_same_class_icon_client(WM *wm, Client *c);
+static int cmp_client_win(const void *pclient1, const void *pclient2);
 
 void add_client(WM *wm, Window win)
 {
@@ -423,6 +423,10 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
 {
     if(move_client_node(wm, from, to, type))
     {
+        /*
+        save_rect_of_client(from);
+        from->old_place_type=from->place_type;
+        */
         from->place_type=type;
         fix_place_type(wm);
         raise_client(wm, from);
@@ -527,6 +531,11 @@ Client **get_subgroup_clients(WM *wm, Client *c, int *n)
     return result;
 }
 
+static int cmp_client_win(const void *pclient1, const void *pclient2)
+{
+    return (*(Client **)pclient1)->win - (*(Client **)pclient2)->win;
+}
+
 int get_subgroup_n(WM *wm, Client *c)
 {
     int n=0;
@@ -535,11 +544,6 @@ int get_subgroup_n(WM *wm, Client *c)
             if(p->subgroup_leader==c->subgroup_leader)
                 n++;
     return n;
-}
-
-static int cmp_client_win(const void *client1, const void *client2)
-{
-    return ((Client *)client1)->win - ((Client *)client2)->win;
 }
 
 Client *get_subgroup_leader(Client *c)
@@ -681,6 +685,8 @@ void iconify(WM *wm, Client *c)
             focus_client(wm, wm->cur_desktop, NULL);
             update_frame_bg(wm, wm->cur_desktop, g[i]);
         }
+        c->win_state.hidden=1;
+        update_net_wm_state(wm, g[i]);
     }
     free(g);
     update_layout(wm);
@@ -745,6 +751,8 @@ void deiconify(WM *wm, Client *c)
             XMapWindow(wm->display, g[i]->frame);
             update_icon_area(wm);
             focus_client(wm, wm->cur_desktop, g[i]);
+            c->win_state.hidden=0;
+            update_net_wm_state(wm, g[i]);
         }
     }
     free(g);
@@ -796,4 +804,72 @@ void update_net_wm_state(WM *wm, Client *c)
     if(c->win_state.focused)        val[n++]=a[NET_WM_STATE_FOCUSED];
     XChangeProperty(wm->display, c->win, a[NET_WM_STATE], XA_ATOM, 32,
         PropModeReplace, (unsigned char *)val, n);
+}
+
+void save_rect_of_client(Client *c)
+{
+    c->ox=c->x, c->oy=c->y, c->ow=c->w, c->oh=c->h;
+}
+
+void save_rect_of_clients(WM *wm)
+{
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+        if(is_on_cur_desktop(wm, c))
+            save_rect_of_client(c);
+}
+
+void restore_rect_of_client(Client *c)
+{
+    c->x=c->ox, c->y=c->oy, c->w=c->ow, c->h=c->oh;
+}
+
+void restore_rect_of_clients(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        if(is_on_cur_desktop(wm, c))
+            restore_rect_of_client(c);
+}
+
+void restore_client(WM *wm, Client *c)
+{
+    restore_rect_of_client(c);
+    c->place_type=c->old_place_type;
+    move_client(wm, c, get_head_client(wm, c->place_type), c->place_type);
+}
+
+bool is_tile_client(WM *wm, Client *c)
+{
+    Place_type t=c->place_type;
+    return is_on_cur_desktop(wm, c) && !c->owner && !c->icon
+        && (t==NORMAL_LAY_MAIN || t==NORMAL_LAY_SECOND || t==NORMAL_LAY_FIXED);
+}
+
+void max_client(WM *wm, Client *c, Max_way max_way)
+{
+    int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
+        ww=wm->workarea.w, wh=wm->workarea.h;
+    bool vmax=(c->h+2*bw+th == wh), hmax=(c->w+2*bw == ww), fmax=false;
+
+    save_rect_of_client(c);
+    if(c->place_type != ABOVE_LAY)
+        c->old_place_type=c->place_type;
+
+    switch(max_way)
+    {
+        case IN_SITU_VERT_MAX: if(hmax) fmax=true; else c->y=wy+bw+th, c->h=wh-th-2*bw; break;
+        case IN_SITU_HORZ_MAX: if(vmax) fmax=true; else c->x=wx+bw, c->w=ww-2*bw; break;
+        case TOP_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
+        case BOTTOM_MAX: c->x=wx+bw, c->y=wy+wh/2+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
+        case LEFT_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
+        case RIGHT_MAX: c->x=ww/2+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
+        case FULL_MAX: fmax=true; break;
+        default: return;
+    }
+
+    if(fmax)
+        c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh-th-2*bw;
+
+    if(c->place_type!=ABOVE_LAY && !c->owner && DESKTOP(wm)->cur_layout==TILE)
+        move_client(wm, c, get_head_client(wm, ABOVE_LAY), ABOVE_LAY);
+    move_resize_client(wm, c, NULL);
 }

@@ -452,12 +452,12 @@ Net_wm_win_type get_net_wm_win_type(WM *wm, Window win)
 /* EWMH未說明窗口可否同時有多種狀態，但實際上絕大部分窗口不設置或只設置一種 */
 Net_wm_state get_net_wm_state(WM *wm, Window win)
 {
-    Net_wm_state result={0}, unknown={.none=1};
+    Net_wm_state result={0};
     unsigned long n=0;
     Atom *states=get_atom_props(wm, win, wm->ewmh_atom[NET_WM_STATE], &n);
 
     if(!states)
-        return unknown;
+        return result;
 
     for(unsigned long i=0; i<n; i++)
     {
@@ -487,8 +487,6 @@ Net_wm_state get_net_wm_state(WM *wm, Window win)
             result.attent=1;
         else if(states[i] == wm->ewmh_atom[NET_WM_STATE_FOCUSED])
             result.focused=1;
-        else
-            result.none=1;
     }
     XFree(states);
 

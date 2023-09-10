@@ -46,7 +46,6 @@ typedef struct // 與_NET_WM_STATE列表相應的狀態標志
     unsigned int below : 1;
     unsigned int attent : 1;
     unsigned int focused : 1;
-    unsigned int none : 1;
 } Net_wm_state;
 
 Window get_transient_for(WM *wm, Window w);

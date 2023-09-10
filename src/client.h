@@ -28,12 +28,12 @@ typedef struct icon_tag Icon;
 struct client_tag // 客戶窗口相關信息
 {   // 分別爲客戶窗口、父窗口、圖標窗口, 標題區、標題區按鈕、臨時窗口對應的主窗口
     Window win, frame, logo, title_area, buttons[TITLE_BUTTON_N];
-    int x, y; // win的橫、縱坐標
-    int w, h, titlebar_h, border_w; // win的寬、高、標題欄高、邊框寬
-    unsigned int desktop_mask; // 所属虚拟桌面的掩碼
-    Place_type place_type; // 窗口的位置类型
-    Net_wm_win_type win_type; // win的窗口类型
-    Net_wm_state win_state; // win的窗口状态
+    int x, y, w, h, ox, oy, ow, oh; // 分别爲win現在的和原來的橫、縱坐標和寬、高
+    int titlebar_h, border_w; // win的標題欄高、邊框寬
+    unsigned int desktop_mask; // 所屬虚拟桌面的掩碼
+    Place_type place_type, old_place_type; // 窗口現在的位置類型及原來的位置類型
+    Net_wm_win_type win_type; // win的窗口類型
+    Net_wm_state win_state; // win的窗口狀態
     char *title_text; // 標題的文字
     Icon *icon; // 圖符信息
     Imlib_Image image; // 圖標映像
@@ -41,7 +41,7 @@ struct client_tag // 客戶窗口相關信息
     XClassHint class_hint; // 客戶窗口的程序類型特性提示
     XSizeHints size_hint; // 客戶窗口的窗口尺寸條件特性提示
     XWMHints *wm_hint; // 客戶窗口的窗口管理程序條件特性提示
-    // 分別爲前、後節點以及主窗口節點、小組組長节点（同屬一個程序實例的客戶構成一個小組）
+    // 分別爲前、後節點以及主窗口節點、亚組組長節點（同屬一個程序實例的客戶構成一個亞組）
     struct client_tag *prev, *next, *owner, *subgroup_leader;
 };
 
@@ -81,5 +81,12 @@ void del_icon(WM *wm, Client *c);
 void iconify_all_clients(WM *wm);
 void deiconify_all_clients(WM *wm);
 void update_net_wm_state(WM *wm, Client *c);
+void save_rect_of_client(Client *c);
+void save_rect_of_clients(WM *wm);
+void restore_rect_of_client(Client *c);
+void restore_rect_of_clients(WM *wm);
+void restore_client(WM *wm, Client *c);
+bool is_tile_client(WM *wm, Client *c);
+void max_client(WM *wm, Client *c, Max_way max_way);
 
 #endif
