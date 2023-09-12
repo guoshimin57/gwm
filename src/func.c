@@ -306,12 +306,20 @@ void max_restore_client(WM *wm, XEvent *e, Func_arg arg)
     if(c == wm->clients)
         return;
 
-    if(c->win_state.vmax || c->win_state.hmax)
+    if(is_win_state_max(c))
     {
         if(c->win_state.vmax)
             c->win_state.vmax=0;
         if(c->win_state.hmax)
             c->win_state.hmax=0;
+        if(c->win_state.tmax)
+            c->win_state.tmax=0;
+        if(c->win_state.bmax)
+            c->win_state.bmax=0;
+        if(c->win_state.lmax)
+            c->win_state.lmax=0;
+        if(c->win_state.rmax)
+            c->win_state.rmax=0;
         restore_client(wm, c);
     }
     else
@@ -331,10 +339,16 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
         return;
 
     max_client(wm, c, arg.max_way);
-    if(arg.max_way == IN_SITU_VERT_MAX)
-        c->win_state.vmax=1;
-    if(arg.max_way == IN_SITU_HORZ_MAX)
-        c->win_state.hmax=1;
+    switch(arg.max_way)
+    {
+        case IN_SITU_VERT_MAX:  c->win_state.vmax=1; break;
+        case IN_SITU_HORZ_MAX:  c->win_state.hmax=1; break;
+        case TOP_MAX:           c->win_state.tmax=1; break;
+        case BOTTOM_MAX:        c->win_state.bmax=1; break;
+        case LEFT_MAX:          c->win_state.lmax=1; break;
+        case RIGHT_MAX:         c->win_state.rmax=1; break;
+        case FULL_MAX:          c->win_state.vmax=c->win_state.hmax=1; break;
+    }
     update_net_wm_state(wm, c);
 }
 

@@ -26,6 +26,10 @@ static void change_net_wm_state_for_modal(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_tmax(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_bmax(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_lmax(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_rmax(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_shaded(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act);
@@ -179,6 +183,10 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act)
     if(mask.sticky)         change_net_wm_state_for_sticky(wm, c, act);
     if(mask.vmax)           change_net_wm_state_for_vmax(wm, c, act);
     if(mask.hmax)           change_net_wm_state_for_hmax(wm, c, act);
+    if(mask.tmax)           change_net_wm_state_for_tmax(wm, c, act);
+    if(mask.bmax)           change_net_wm_state_for_bmax(wm, c, act);
+    if(mask.lmax)           change_net_wm_state_for_lmax(wm, c, act);
+    if(mask.rmax)           change_net_wm_state_for_rmax(wm, c, act);
     if(mask.shaded)         change_net_wm_state_for_shaded(wm, c, act);
     if(mask.skip_taskbar)   change_net_wm_state_for_skip_taskbar(wm, c, act);
     if(mask.skip_pager)     change_net_wm_state_for_skip_pager(wm, c, act);
@@ -203,6 +211,10 @@ static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act)
         else if(p == (long)a[NET_WM_STATE_STICKY])            m.sticky=1;
         else if(p == (long)a[NET_WM_STATE_MAXIMIZED_VERT])    m.vmax=1;
         else if(p == (long)a[NET_WM_STATE_MAXIMIZED_HORZ])    m.hmax=1;
+        else if(p == (long)a[GWM_WM_STATE_MAXIMIZED_TOP])     m.tmax=1;
+        else if(p == (long)a[GWM_WM_STATE_MAXIMIZED_BOTTOM])  m.bmax=1;
+        else if(p == (long)a[GWM_WM_STATE_MAXIMIZED_LEFT])    m.lmax=1;
+        else if(p == (long)a[GWM_WM_STATE_MAXIMIZED_RIGHT])   m.rmax=1;
         else if(p == (long)a[NET_WM_STATE_SHADED])            m.shaded=1;
         else if(p == (long)a[NET_WM_STATE_SKIP_TASKBAR])      m.skip_taskbar=1;
         else if(p == (long)a[NET_WM_STATE_SKIP_PAGER])        m.skip_pager=1;
@@ -245,6 +257,38 @@ static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
         restore_client(wm, c), c->win_state.hmax=0;
     else
         max_client(wm, c, IN_SITU_HORZ_MAX), c->win_state.hmax=1;
+}
+
+static void change_net_wm_state_for_tmax(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, tmax))
+        restore_client(wm, c), c->win_state.tmax=0;
+    else
+        max_client(wm, c, TOP_MAX), c->win_state.tmax=1;
+}
+
+static void change_net_wm_state_for_bmax(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, bmax))
+        restore_client(wm, c), c->win_state.bmax=0;
+    else
+        max_client(wm, c, BOTTOM_MAX), c->win_state.bmax=1;
+}
+
+static void change_net_wm_state_for_lmax(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, lmax))
+        restore_client(wm, c), c->win_state.lmax=0;
+    else
+        max_client(wm, c, LEFT_MAX), c->win_state.lmax=1;
+}
+
+static void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
+{
+    if(SHOULD_REMOVE_STATE(c, act, rmax))
+        restore_client(wm, c), c->win_state.rmax=0;
+    else
+        max_client(wm, c, RIGHT_MAX), c->win_state.rmax=1;
 }
 
 /* 暫不支持窗口陰影特效 */

@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.10\n"
+"Project-Id-Version: gwm 2.6.11\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-08-23 19:13+0800\n"
+"POT-Creation-Date: 2023-09-12 11:11+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -79,8 +79,8 @@ msgid "暫固定區開窗"
 msgstr "暂固定区开窗"
 
 #: src/config.c:490
-msgid "暫懸浮區開窗"
-msgstr "暂悬浮区开窗"
+msgid "暫懸浮層開窗"
+msgstr "暂悬浮层开窗"
 
 #: src/config.c:492
 msgid "增大主區容量"
@@ -189,16 +189,16 @@ msgid "切換到固定區域"
 msgstr "切换到固定区域"
 
 #: src/config.c:540
-msgid "切換到懸浮區域"
-msgstr "切换到悬浮区域"
+msgid "切換到懸浮層"
+msgstr "切换到悬浮层"
 
 #: src/config.c:541
 msgid "切換到圖符區域"
 msgstr "切换到图符区域"
 
 #: src/config.c:542
-msgid "切換到懸浮區域並最大化窗口"
-msgstr "切换到悬浮区域并最大化窗口"
+msgid "切換到懸浮層並最大化窗口"
+msgstr "切换到悬浮层并最大化窗口"
 
 #: src/config.c:543
 msgid "關閉窗口"

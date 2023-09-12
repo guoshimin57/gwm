@@ -123,7 +123,7 @@ static void set_rect_of_transient_win_for_tiling(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(is_on_cur_desktop(wm, c) && c->owner)
-            set_transient_win_pos(c);
+            fix_win_pos(wm, c);
 }
 
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)

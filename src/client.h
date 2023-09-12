@@ -48,7 +48,7 @@ struct client_tag // 客戶窗口相關信息
 void add_client(WM *wm, Window win);
 void fix_place_type(WM *wm);
 void set_default_win_rect(WM *wm, Client *c);
-void set_transient_win_pos(Client *c);
+void fix_win_pos(WM *wm, Client *c);
 void create_titlebar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
 int get_clients_n(WM *wm, Place_type type, bool count_tile, bool count_all_desktop);
@@ -89,5 +89,6 @@ void restore_client(WM *wm, Client *c);
 bool is_tile_client(WM *wm, Client *c);
 void max_client(WM *wm, Client *c, Max_way max_way);
 Place_type get_dest_place_type_for_move(WM *wm, Client *c);
+bool is_win_state_max(Client *c);
 
 #endif

@@ -82,6 +82,10 @@ void print_net_wm_state(WM *wm, Window win)
     printf("sticky: %d\n", state.sticky);
     printf("vmax: %d\n", state.vmax);
     printf("hmax: %d\n", state.hmax);
+    printf("tmax: %d\n", state.hmax);
+    printf("bmax: %d\n", state.hmax);
+    printf("lmax: %d\n", state.hmax);
+    printf("rmax: %d\n", state.hmax);
     printf("shaded: %d\n", state.shaded);
     printf("skip_taskbar: %d\n", state.skip_taskbar);
     printf("skip_pager: %d\n", state.skip_pager);

@@ -487,7 +487,7 @@ static void config_act_center_item_text(WM *wm)
     SET_ACT_CENTER_ITEM_TEXT(wm, MAIN_NEW_BUTTON,          _("暫主區開窗"));
     SET_ACT_CENTER_ITEM_TEXT(wm, SEC_NEW_BUTTON,           _("暫次區開窗"));
     SET_ACT_CENTER_ITEM_TEXT(wm, FIX_NEW_BUTTON,           _("暫固定區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, FLOAT_NEW_BUTTON,         _("暫懸浮區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(wm, FLOAT_NEW_BUTTON,         _("暫懸浮層開窗"));
 
     SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_UP_BUTTON,         _("增大主區容量"));
     SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_DOWN_BUTTON,       _("减小主區容量"));
@@ -537,9 +537,9 @@ static void config_tooltip(WM *wm)
     tooltip[SECOND_BUTTON]   = _("切換到次要區域");
     tooltip[MAIN_BUTTON]     = _("切換到主要區域");
     tooltip[FIXED_BUTTON]    = _("切換到固定區域");
-    tooltip[FLOAT_BUTTON]    = _("切換到懸浮區域");
+    tooltip[FLOAT_BUTTON]    = _("切換到懸浮層");
     tooltip[ICON_BUTTON]     = _("切換到圖符區域");
-    tooltip[MAX_BUTTON]      = _("切換到懸浮區域並最大化窗口");
+    tooltip[MAX_BUTTON]      = _("切換到懸浮層並最大化窗口");
     tooltip[CLOSE_BUTTON]    = _("關閉窗口");
     tooltip[DESKTOP1_BUTTON] = _("切換到虛擬桌面1");
     tooltip[DESKTOP2_BUTTON] = _("切換到虛擬桌面2");

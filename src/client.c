@@ -19,9 +19,9 @@ static bool should_float(WM *wm, Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static void add_client_node(Client *head, Client *c);
 static void set_win_rect_by_attr(WM *wm, Client *c);
-static void fix_win_pos(WM *wm, Client *c);
 static bool fix_win_pos_by_hint(Client *c);
 static void fix_win_pos_by_prop(WM *wm, Client *c);
+static void set_transient_win_pos(Client *c);
 static void fix_win_pos_by_workarea(WM *wm, Client *c);
 static void fix_win_size(WM *wm, Client *c);
 static void fix_win_size_by_workarea(WM *wm, Client *c);
@@ -197,7 +197,7 @@ static void set_win_rect_by_attr(WM *wm, Client *c)
     c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
 }
 
-static void fix_win_pos(WM *wm, Client *c)
+void fix_win_pos(WM *wm, Client *c)
 {
     if(!fix_win_pos_by_hint(c))
         fix_win_pos_by_prop(wm, c), fix_win_pos_by_workarea(wm, c);
@@ -220,7 +220,7 @@ static void fix_win_pos_by_prop(WM *wm, Client *c)
         c->y=wm->workarea.y+(wm->workarea.h-c->h)/2;
 }
 
-void set_transient_win_pos(Client *c)
+static void set_transient_win_pos(Client *c)
 {
     c->x=c->owner->x+(c->owner->w-c->w)/2;
     c->y=c->owner->y+(c->owner->h-c->h)/2;
@@ -811,12 +811,16 @@ void deiconify_all_clients(WM *wm)
 void update_net_wm_state(WM *wm, Client *c)
 {
     Atom *a=wm->ewmh_atom;
-    unsigned long n=0, val[13]={0}; // 目前EWMH規範中NET_WM_STATE共有13種狀態
+    unsigned long n=0, val[17]={0}; // 目前EWMH規範中NET_WM_STATE共有13種狀態，GWM自定義4種狀態
 
     if(c->win_state.modal)          val[n++]=a[NET_WM_STATE_MODAL];
     if(c->win_state.sticky)         val[n++]=a[NET_WM_STATE_STICKY];
     if(c->win_state.vmax)           val[n++]=a[NET_WM_STATE_MAXIMIZED_VERT];
     if(c->win_state.hmax)           val[n++]=a[NET_WM_STATE_MAXIMIZED_HORZ];
+    if(c->win_state.tmax)           val[n++]=a[GWM_WM_STATE_MAXIMIZED_TOP];
+    if(c->win_state.bmax)           val[n++]=a[GWM_WM_STATE_MAXIMIZED_BOTTOM];
+    if(c->win_state.lmax)           val[n++]=a[GWM_WM_STATE_MAXIMIZED_LEFT];
+    if(c->win_state.rmax)           val[n++]=a[GWM_WM_STATE_MAXIMIZED_RIGHT];
     if(c->win_state.shaded)         val[n++]=a[NET_WM_STATE_SHADED];
     if(c->win_state.skip_taskbar)   val[n++]=a[NET_WM_STATE_SKIP_TASKBAR];
     if(c->win_state.skip_pager)     val[n++]=a[NET_WM_STATE_SKIP_PAGER];
@@ -875,7 +879,7 @@ void max_client(WM *wm, Client *c, Max_way max_way)
     bool vmax=(c->h+2*bw+th == wh), hmax=(c->w+2*bw == ww), fmax=false;
 
     save_rect_of_client(c);
-    if(!c->win_state.vmax && !c->win_state.hmax)
+    if(!is_win_state_max(c))
         c->old_place_type=c->place_type;
 
     switch(max_way)
@@ -901,4 +905,10 @@ Place_type get_dest_place_type_for_move(WM *wm, Client *c)
 {
     return DESKTOP(wm)->cur_layout==TILE && is_tile_client(wm, c) ?
         NORMAL_LAYER_FLOAT : c->place_type;
+}
+
+bool is_win_state_max(Client *c)
+{
+    return c->win_state.vmax || c->win_state.hmax || c->win_state.tmax
+        || c->win_state.bmax || c->win_state.lmax || c->win_state.rmax;
 }
