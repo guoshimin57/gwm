@@ -377,7 +377,6 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
     if(d)
         c->x+=d->dx, c->y+=d->dy, c->w+=d->dw, c->h+=d->dh;
     Rect fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
-    XMoveResizeWindow(wm->display, c->win, 0, c->titlebar_h, c->w, c->h);
     if(c->titlebar_h)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
@@ -388,6 +387,7 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
         XResizeWindow(wm->display, c->title_area, tr.w, tr.h);
     }
     XMoveResizeWindow(wm->display, c->frame, fr.x, fr.y, fr.w, fr.h);
+    XMoveResizeWindow(wm->display, c->win, 0, c->titlebar_h, c->w, c->h);
 }
 
 Client *win_to_iconic_state_client(WM *wm, Window win)
