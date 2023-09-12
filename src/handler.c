@@ -332,7 +332,11 @@ static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
     if(SHOULD_REMOVE_STATE(c, act, above))
         restore_client(wm, c), c->win_state.above=0;
     else
-        move_client(wm, c, get_head_client(wm, ABOVE_LAYER), ABOVE_LAYER), c->win_state.above=1;
+    {
+        save_place_info_of_client(c);
+        move_client(wm, c, get_head_client(wm, ABOVE_LAYER), ABOVE_LAYER);
+        c->win_state.above=1;
+    }
 }
 
 static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
@@ -340,7 +344,11 @@ static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
     if(SHOULD_REMOVE_STATE(c, act, below))
         restore_client(wm, c), c->win_state.below=0;
     else
-        move_client(wm, c, get_head_client(wm, BELOW_LAYER), BELOW_LAYER), c->win_state.below=1;
+    {
+        save_place_info_of_client(c);
+        move_client(wm, c, get_head_client(wm, BELOW_LAYER), BELOW_LAYER);
+        c->win_state.below=1;
+    }
 }
 
 /* 暫不支持請求關注 */

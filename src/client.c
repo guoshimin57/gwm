@@ -186,7 +186,7 @@ void set_default_win_rect(WM *wm, Client *c)
         fix_win_pos(wm, c);
     }
 
-    save_rect_of_client(c);
+    save_place_info_of_client(c);
 }
 
 static void set_win_rect_by_attr(WM *wm, Client *c)
@@ -448,9 +448,6 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
 {
     if(move_client_node(wm, from, to, type))
     {
-        save_rect_of_client(from);
-        if(from->place_type != type)
-            from->old_place_type=from->place_type;
         from->place_type=type;
         fix_place_type(wm);
         raise_client(wm, from);
@@ -834,34 +831,35 @@ void update_net_wm_state(WM *wm, Client *c)
         PropModeReplace, (unsigned char *)val, n);
 }
 
-void save_rect_of_client(Client *c)
+void save_place_info_of_client(Client *c)
 {
     c->ox=c->x, c->oy=c->y, c->ow=c->w, c->oh=c->h;
+    c->old_place_type=c->place_type;
 }
 
-void save_rect_of_clients(WM *wm)
+void save_place_info_of_clients(WM *wm)
 {
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
         if(is_on_cur_desktop(wm, c))
-            save_rect_of_client(c);
+            save_place_info_of_client(c);
 }
 
-void restore_rect_of_client(Client *c)
+void restore_place_info_of_client(Client *c)
 {
     c->x=c->ox, c->y=c->oy, c->w=c->ow, c->h=c->oh;
+    c->place_type=c->old_place_type;
 }
 
-void restore_rect_of_clients(WM *wm)
+void restore_place_info_of_clients(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(is_on_cur_desktop(wm, c))
-            restore_rect_of_client(c);
+            restore_place_info_of_client(c);
 }
 
 void restore_client(WM *wm, Client *c)
 {
-    restore_rect_of_client(c);
-    c->place_type=c->old_place_type;
+    restore_place_info_of_client(c);
     move_client(wm, c, get_head_client(wm, c->place_type), c->place_type);
 }
 
@@ -878,9 +876,8 @@ void max_client(WM *wm, Client *c, Max_way max_way)
         ww=wm->workarea.w, wh=wm->workarea.h;
     bool vmax=(c->h+2*bw+th == wh), hmax=(c->w+2*bw == ww), fmax=false;
 
-    save_rect_of_client(c);
     if(!is_win_state_max(c))
-        c->old_place_type=c->place_type;
+        save_place_info_of_client(c);
 
     switch(max_way)
     {

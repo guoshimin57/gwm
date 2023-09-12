@@ -363,13 +363,16 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         return;
 
     XEvent ev;
+    bool first=true;
     Place_type type=get_dest_place_type_for_move(wm, c);
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
         XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            move_client(wm, c, get_head_client(wm, type), type);
+            if(first)
+                move_client(wm, c, get_head_client(wm, type), type);
+            first=false;
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             do_valid_pointer_move_resize(wm, c, &m, act);
@@ -387,6 +390,7 @@ static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointe
 
     if(!fix_move_resize_delta_rect(wm, c, &d, act==MOVE))
         return;
+
 
     move_resize_client(wm, c, &d);
     update_hint_win_for_move_resize(wm, c);
@@ -530,8 +534,10 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
     if(*cl == arg.layout)
         return;
 
+    if(arg.layout == PREVIEW)
+        save_place_info_of_clients(wm);
     if(*cl == PREVIEW)
-        restore_rect_of_clients(wm);
+        restore_place_info_of_clients(wm);
 
     Display *d=wm->display;
     *pl=*cl, *cl=arg.layout;

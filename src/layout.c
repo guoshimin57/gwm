@@ -25,14 +25,12 @@ void update_layout(WM *wm)
     if(wm->clients == wm->clients->next)
         return;
 
-    if(DESKTOP(wm)->prev_layout != FULL)
-        save_rect_of_clients(wm);
     fix_place_type(wm);
     switch(DESKTOP(wm)->cur_layout)
     {
         case FULL: set_full_layout(wm); break;
         case PREVIEW: set_preview_layout(wm); break;
-        case STACK: set_stack_layout(wm); break;
+        case STACK: break;//set_stack_layout(wm); break;
         case TILE: set_tile_layout(wm); break;
     }
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -65,6 +63,7 @@ static void set_preview_layout(WM *wm)
         ;
     rows = (cols-1)*cols>=n ? cols-1 : cols;
     w=ww/cols, h=wh/rows;
+
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
         if(is_on_cur_desktop(wm, c))
@@ -80,7 +79,7 @@ static void set_preview_layout(WM *wm)
 
 static void set_stack_layout(WM *wm)
 {
-    restore_rect_of_clients(wm);
+    restore_place_info_of_clients(wm);
 }
 
 static void set_tile_layout(WM *wm)

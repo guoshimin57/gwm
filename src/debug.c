@@ -82,10 +82,10 @@ void print_net_wm_state(WM *wm, Window win)
     printf("sticky: %d\n", state.sticky);
     printf("vmax: %d\n", state.vmax);
     printf("hmax: %d\n", state.hmax);
-    printf("tmax: %d\n", state.hmax);
-    printf("bmax: %d\n", state.hmax);
-    printf("lmax: %d\n", state.hmax);
-    printf("rmax: %d\n", state.hmax);
+    printf("tmax: %d\n", state.tmax);
+    printf("bmax: %d\n", state.bmax);
+    printf("lmax: %d\n", state.lmax);
+    printf("rmax: %d\n", state.rmax);
     printf("shaded: %d\n", state.shaded);
     printf("skip_taskbar: %d\n", state.skip_taskbar);
     printf("skip_pager: %d\n", state.skip_pager);
@@ -114,4 +114,11 @@ void print_all_atom_name(WM *wm)
         printf("icccm_atom=%ld, name=%s, index=%d\n", (long)wm->icccm_atoms[i], ICCCM_NAMES[i], i);
     for(int i=0; i<EWMH_ATOM_N; i++)
         printf("ewmh_atom=%ld, name=%s, index=%d\n", (long)wm->ewmh_atom[i], EWMH_NAME[i], i);
+}
+
+void print_place_info(Client *c)
+{
+    printf(_("以下是%lx窗口的位置信息：\n"), c->win);
+    printf("ox=%d, oy=%d, ow=%d, oh=%d, old_place_type=%d\n", c->ox, c->oy, c->ow, c->oh, c->old_place_type);
+    printf("x=%d, y=%d, w=%d, h=%d, place_type=%d\n", c->x, c->y, c->w, c->h, c->place_type);
 }

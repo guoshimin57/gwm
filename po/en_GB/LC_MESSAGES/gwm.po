@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.12\n"
+"Project-Id-Version: gwm 2.6.13\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-09-12 11:12+0800\n"
+"POT-Creation-Date: 2023-09-12 21:41+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -277,6 +277,11 @@ msgstr "The following are the window types of the %lx windows (i.e. _NET_WM_WIND
 #, c-format
 msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
 msgstr "The following are the window states (i.e. _NET_WM_STATE) of the %lx window:\n"
+
+#: src/debug.c:121
+#, fuzzy, c-format
+msgid "以下是%lx窗口的位置信息：\n"
+msgstr "The following are subwindows of the %lx window:\n"
 
 #: src/font.c:29
 msgid "錯誤：不能加載必要的字體。"

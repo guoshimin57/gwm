@@ -404,91 +404,67 @@ void restack_win(WM *wm, Window win)
 /* 根據EWMH，窗口可能有多種類型，但實際上絕大部分窗口只設置一種類型 */
 Net_wm_win_type get_net_wm_win_type(WM *wm, Window win)
 {
-    Net_wm_win_type result={0}, unknown={.none=1};
+    Net_wm_win_type r={0}, unknown={.none=1};
     unsigned long n=0;
-    Atom *types=get_atom_props(wm, win, wm->ewmh_atom[NET_WM_WINDOW_TYPE], &n);
+    Atom *a=wm->ewmh_atom, *t=get_atom_props(wm, win, a[NET_WM_WINDOW_TYPE], &n);
 
-    if(!types)
+    if(!t)
         return unknown;
 
     for(unsigned long i=0; i<n; i++)
     {
-        if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DESKTOP])
-            result.desktop=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DOCK])
-            result.dock=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_TOOLBAR])
-            result.toolbar=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_MENU])
-            result.menu=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_UTILITY])
-            result.utility=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_SPLASH])
-            result.splash=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DIALOG])
-            result.dialog=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DROPDOWN_MENU])
-            result.dropdown_menu=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_POPUP_MENU])
-            result.popup_menu=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_TOOLTIP])
-            result.tooltip=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_NOTIFICATION])
-            result.notification=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_COMBO])
-            result.combo=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_DND])
-            result.dnd=1;
-        else if(types[i] == wm->ewmh_atom[NET_WM_WINDOW_TYPE_NORMAL])
-            result.normal=1;
-        else
-            result.none=1;
+        if     (t[i] == a[NET_WM_WINDOW_TYPE_DESKTOP])       r.desktop=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_DOCK])          r.dock=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_TOOLBAR])       r.toolbar=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_MENU])          r.menu=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_UTILITY])       r.utility=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_SPLASH])        r.splash=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_DIALOG])        r.dialog=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_DROPDOWN_MENU]) r.dropdown_menu=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_POPUP_MENU])    r.popup_menu=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_TOOLTIP])       r.tooltip=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_NOTIFICATION])  r.notification=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_COMBO])         r.combo=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_DND])           r.dnd=1;
+        else if(t[i] == a[NET_WM_WINDOW_TYPE_NORMAL])        r.normal=1;
+        else                                                 r.none=1;
     }
-    XFree(types);
+    XFree(t);
 
-    return result;
+    return r;
 }
 
 /* EWMH未說明窗口可否同時有多種狀態，但實際上絕大部分窗口不設置或只設置一種 */
 Net_wm_state get_net_wm_state(WM *wm, Window win)
 {
-    Net_wm_state result={0};
+    Net_wm_state r={0};
     unsigned long n=0;
-    Atom *states=get_atom_props(wm, win, wm->ewmh_atom[NET_WM_STATE], &n);
+    Atom *a=wm->ewmh_atom, *s=get_atom_props(wm, win, a[NET_WM_STATE], &n);
 
-    if(!states)
-        return result;
+    if(!s)
+        return r;
 
     for(unsigned long i=0; i<n; i++)
     {
-        if(states[i] == wm->ewmh_atom[NET_WM_STATE_MODAL])
-            result.modal=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_STICKY])
-            result.sticky=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_MAXIMIZED_VERT])
-            result.vmax=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_MAXIMIZED_HORZ])
-            result.hmax=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_SHADED])
-            result.shaded=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_SKIP_TASKBAR])
-            result.skip_taskbar=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_SKIP_PAGER])
-            result.skip_pager=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_HIDDEN])
-            result.hidden=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_FULLSCREEN])
-            result.fullscreen=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_ABOVE])
-            result.above=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_BELOW])
-            result.below=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_DEMANDS_ATTENTION])
-            result.attent=1;
-        else if(states[i] == wm->ewmh_atom[NET_WM_STATE_FOCUSED])
-            result.focused=1;
+        if     (s[i] == a[NET_WM_STATE_MODAL])              r.modal=1;
+        else if(s[i] == a[NET_WM_STATE_STICKY])             r.sticky=1;
+        else if(s[i] == a[NET_WM_STATE_MAXIMIZED_VERT])     r.vmax=1;
+        else if(s[i] == a[NET_WM_STATE_MAXIMIZED_HORZ])     r.hmax=1;
+        else if(s[i] == a[GWM_WM_STATE_MAXIMIZED_TOP])      r.tmax=1;
+        else if(s[i] == a[GWM_WM_STATE_MAXIMIZED_BOTTOM])   r.bmax=1;
+        else if(s[i] == a[GWM_WM_STATE_MAXIMIZED_LEFT])     r.lmax=1;
+        else if(s[i] == a[GWM_WM_STATE_MAXIMIZED_RIGHT])    r.rmax=1;
+        else if(s[i] == a[NET_WM_STATE_SHADED])             r.shaded=1;
+        else if(s[i] == a[NET_WM_STATE_SKIP_TASKBAR])       r.skip_taskbar=1;
+        else if(s[i] == a[NET_WM_STATE_SKIP_PAGER])         r.skip_pager=1;
+        else if(s[i] == a[NET_WM_STATE_HIDDEN])             r.hidden=1;
+        else if(s[i] == a[NET_WM_STATE_FULLSCREEN])         r.fullscreen=1;
+        else if(s[i] == a[NET_WM_STATE_ABOVE])              r.above=1;
+        else if(s[i] == a[NET_WM_STATE_BELOW])              r.below=1;
+        else if(s[i] == a[NET_WM_STATE_DEMANDS_ATTENTION])  r.attent=1;
+        else if(s[i] == a[NET_WM_STATE_FOCUSED])            r.focused=1;
     }
-    XFree(states);
+    XFree(s);
 
-    return result;
+    return r;
 }
