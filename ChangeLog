@@ -9,6 +9,14 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2023年 09月 15日 星期五 21:32:02 CST	gsm <406643764@qq.com>
+	* 發布第2.6.14版；
+	* 修復change_net_wm_state_for_above和change_net_wm_state_for_below函數在調用save_place_info_of_client函數時未考慮place_type的缺陷；
+	* 刪除沒用的set_stack_layout函數；
+	* 修復max_restore_client函數無法保存窗口位置信息的缺陷；
+	* 修復在最大化至右半屏時尺寸異常的缺陷；
+	* 修復調整窗口尺寸之後未更新窗口狀態的缺陷。
+
 2023年 09月 12日 星期二 21:44:23 CST	gsm <406643764@qq.com>
 	* 發布第2.6.13版；
 	* 修復get_net_wm_state函數未考慮半屏最大化狀態的缺陷；

@@ -13,7 +13,6 @@
 
 static void set_full_layout(WM *wm);
 static void set_preview_layout(WM *wm);
-static void set_stack_layout(WM *wm);
 static void set_tile_layout(WM *wm);
 static void set_rect_of_tile_win_for_tiling(WM *wm);
 static void set_rect_of_transient_win_for_tiling(WM *wm);
@@ -30,7 +29,7 @@ void update_layout(WM *wm)
     {
         case FULL: set_full_layout(wm); break;
         case PREVIEW: set_preview_layout(wm); break;
-        case STACK: break;//set_stack_layout(wm); break;
+        case STACK: break;
         case TILE: set_tile_layout(wm); break;
     }
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -75,11 +74,6 @@ static void set_preview_layout(WM *wm)
             fix_win_rect_for_frame(c);
         }
     }
-}
-
-static void set_stack_layout(WM *wm)
-{
-    restore_place_info_of_clients(wm);
 }
 
 static void set_tile_layout(WM *wm)

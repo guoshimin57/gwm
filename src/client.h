@@ -80,6 +80,7 @@ void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);
 void iconify_all_clients(WM *wm);
 void deiconify_all_clients(WM *wm);
+void update_win_state_for_move_resize(WM *wm, Client *c);
 void update_net_wm_state(WM *wm, Client *c);
 void save_place_info_of_client(Client *c);
 void save_place_info_of_clients(WM *wm);

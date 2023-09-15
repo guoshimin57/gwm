@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.13\n"
+"Project-Id-Version: gwm 2.6.14\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-09-12 21:41+0800\n"
+"POT-Creation-Date: 2023-09-15 21:29+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -146,14 +146,14 @@ msgstr "关机"
 msgid "運行"
 msgstr "运行"
 
-#. 客戶窗口菜單項類型          按鈕文字
+#. 客戶窗口菜單項類型       按鈕文字
 #: src/config.c:519
-msgid "原位縱向最大化"
-msgstr "原位纵向最大化"
+msgid "縱向最大化"
+msgstr "纵向最大化"
 
 #: src/config.c:520
-msgid "原位橫向最大化"
-msgstr "原位横向最大化"
+msgid "橫向最大化"
+msgstr "横向最大化"
 
 #: src/config.c:521
 msgid "最大化至上半屏"
@@ -197,8 +197,8 @@ msgid "切換到圖符區域"
 msgstr "切换到图符区域"
 
 #: src/config.c:542
-msgid "切換到懸浮層並最大化窗口"
-msgstr "切换到悬浮层并最大化窗口"
+msgid "最大化/還原窗口"
+msgstr "最大化/还原窗口"
 
 #: src/config.c:543
 msgid "關閉窗口"
@@ -279,9 +279,9 @@ msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
 msgstr "以下是%lx窗口窗口状态(即_NET_WM_STATE)：\n"
 
 #: src/debug.c:121
-#, fuzzy, c-format
+#, c-format
 msgid "以下是%lx窗口的位置信息：\n"
-msgstr "以下是%lx窗口的子窗口：\n"
+msgstr "以下是%lx窗口的位置窗口：\n"
 
 #: src/font.c:29
 msgid "錯誤：不能加載必要的字體。"
@@ -355,3 +355,6 @@ msgstr "命令执行错误"
 #: src/misc.c:318
 msgid "未能成功地爲命令創建新進程"
 msgstr "未能成功地为命令创建新进程"
+
+#~ msgid "切換到懸浮層並最大化窗口"
+#~ msgstr "切换到悬浮层并最大化窗口"

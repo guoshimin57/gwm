@@ -73,8 +73,8 @@
     {POWEROFF_BUTTON,           0, Button1,  exec,                       SH_CMD("poweroff")},               \
     {RUN_BUTTON,                0, Button1,  enter_and_run_cmd,          {0}},                              \
     {TITLE_LOGO,                0, Button1,  open_client_menu,           {0}},                              \
-    {IN_SITU_VERT_MAX_BUTTON,   0, Button1,  maximize_client,            {.max_way=IN_SITU_VERT_MAX}},      \
-    {IN_SITU_HORZ_MAX_BUTTON,   0, Button1,  maximize_client,            {.max_way=IN_SITU_HORZ_MAX}},      \
+    {VERT_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=VERT_MAX}},              \
+    {HORZ_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=HORZ_MAX}},              \
     {TOP_MAX_BUTTON,            0, Button1,  maximize_client,            {.max_way=TOP_MAX}},               \
     {BOTTOM_MAX_BUTTON,         0, Button1,  maximize_client,            {.max_way=BOTTOM_MAX}},            \
     {LEFT_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=LEFT_MAX}},              \

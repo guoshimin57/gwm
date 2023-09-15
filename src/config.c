@@ -515,14 +515,14 @@ static void config_act_center_item_text(WM *wm)
  */
 static void config_client_menu_item_text(WM *wm)
 {
-    /*                            客戶窗口菜單項類型          按鈕文字 */
-    SET_CLIENT_MENU_ITEM_TEXT(wm, IN_SITU_VERT_MAX_BUTTON,  _("原位縱向最大化"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, IN_SITU_HORZ_MAX_BUTTON,  _("原位橫向最大化"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, TOP_MAX_BUTTON,           _("最大化至上半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, BOTTOM_MAX_BUTTON,        _("最大化至下半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, LEFT_MAX_BUTTON,          _("最大化至左半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, RIGHT_MAX_BUTTON,         _("最大化至右半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, FULL_MAX_BUTTON,          _("完全最大化"));
+    /*                            客戶窗口菜單項類型       按鈕文字 */
+    SET_CLIENT_MENU_ITEM_TEXT(wm, VERT_MAX_BUTTON,      _("縱向最大化"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, HORZ_MAX_BUTTON,      _("橫向最大化"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, TOP_MAX_BUTTON,       _("最大化至上半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, BOTTOM_MAX_BUTTON,    _("最大化至下半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, LEFT_MAX_BUTTON,      _("最大化至左半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, RIGHT_MAX_BUTTON,     _("最大化至右半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(wm, FULL_MAX_BUTTON,      _("完全最大化"));
 }
 
 /* 功能：設置構件功能提示。
@@ -539,7 +539,7 @@ static void config_tooltip(WM *wm)
     tooltip[FIXED_BUTTON]    = _("切換到固定區域");
     tooltip[FLOAT_BUTTON]    = _("切換到懸浮層");
     tooltip[ICON_BUTTON]     = _("切換到圖符區域");
-    tooltip[MAX_BUTTON]      = _("切換到懸浮層並最大化窗口");
+    tooltip[MAX_BUTTON]      = _("最大化/還原窗口");
     tooltip[CLOSE_BUTTON]    = _("關閉窗口");
     tooltip[DESKTOP1_BUTTON] = _("切換到虛擬桌面1");
     tooltip[DESKTOP2_BUTTON] = _("切換到虛擬桌面2");

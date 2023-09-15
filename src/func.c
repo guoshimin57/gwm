@@ -117,6 +117,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
                 wm->event_handlers[ev.type](wm, &ev);
         }
     }
+    update_win_state_for_move_resize(wm, c);
 }
 
 static Delta_rect get_key_delta_rect(Client *c, Direction dir)
@@ -268,7 +269,10 @@ void change_place(WM *wm, XEvent *e, Func_arg arg)
     Place_type t=arg.place_type;
 
     if(c!=wm->clients && DESKTOP(wm)->cur_layout==TILE)
+    {
         move_client(wm, c, get_head_client(wm, t), t);
+        update_win_state_for_move_resize(wm, c);
+    }
 }
 
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
@@ -324,8 +328,8 @@ void max_restore_client(WM *wm, XEvent *e, Func_arg arg)
     }
     else
     {
-        c->win_state.vmax=c->win_state.hmax=1;
         max_client(wm, c, FULL_MAX);
+        c->win_state.vmax=c->win_state.hmax=1;
     }
     update_net_wm_state(wm, c);
 }
@@ -341,8 +345,8 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     max_client(wm, c, arg.max_way);
     switch(arg.max_way)
     {
-        case IN_SITU_VERT_MAX:  c->win_state.vmax=1; break;
-        case IN_SITU_HORZ_MAX:  c->win_state.hmax=1; break;
+        case VERT_MAX:  c->win_state.vmax=1; break;
+        case HORZ_MAX:  c->win_state.hmax=1; break;
         case TOP_MAX:           c->win_state.tmax=1; break;
         case BOTTOM_MAX:        c->win_state.bmax=1; break;
         case LEFT_MAX:          c->win_state.lmax=1; break;
@@ -363,16 +367,13 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         return;
 
     XEvent ev;
-    bool first=true;
     Place_type type=get_dest_place_type_for_move(wm, c);
     do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
     {
         XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            if(first)
-                move_client(wm, c, get_head_client(wm, type), type);
-            first=false;
+            move_client(wm, c, get_head_client(wm, type), type);
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             do_valid_pointer_move_resize(wm, c, &m, act);
@@ -382,6 +383,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     }while(!is_match_button_release(e, &ev));
     XUngrabPointer(wm->display, CurrentTime);
     XUnmapWindow(wm->display, wm->hint_win);
+    update_win_state_for_move_resize(wm, c);
 }
 
 static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act)
@@ -524,6 +526,7 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
         move_client(wm, from, get_head_client(wm, NORMAL_LAYER_MAIN), NORMAL_LAYER_MAIN);
     else if(to)
         move_client(wm, from, to, to->place_type);
+    update_win_state_for_move_resize(wm, from);
 }
 
 void change_layout(WM *wm, XEvent *e, Func_arg arg)

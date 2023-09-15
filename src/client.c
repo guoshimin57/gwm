@@ -37,6 +37,7 @@ static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static bool have_same_class_icon_client(WM *wm, Client *c);
 static int cmp_client_win(const void *pclient1, const void *pclient2);
+static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h);
 
 void add_client(WM *wm, Window win)
 {
@@ -805,6 +806,44 @@ void deiconify_all_clients(WM *wm)
             deiconify(wm, c);
 }
 
+void update_win_state_for_move_resize(WM *wm, Client *c)
+{
+    int x=c->x, y=c->y, w=c->w, h=c->h, left_x, top_y, max_w, max_h,
+        mid_x, mid_y, half_w, half_h;
+    bool update=false;
+    Net_wm_state *s=&c->win_state;
+
+    get_max_rect(wm, c, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
+    if(s->vmax && (y!=top_y || h!=max_h))
+        s->vmax=0, update=true;
+
+    if(s->hmax && (x!=left_x || w!=max_w))
+        s->hmax=0, update=true;
+
+    if( s->tmax && (x!=left_x || y!=top_y || w!=max_w || h!=half_h))
+        s->tmax=0, update=true;
+
+    if( s->bmax && (x!=left_x || y!=mid_y || w!=max_w || h!=half_h))
+        s->bmax=0, update=true;
+
+    if( s->lmax && (x!=left_x || y!=top_y || w!=half_w || h!=max_h))
+        s->lmax=0, update=true;
+
+    if( s->rmax && (x!=mid_x || y!=top_y || w!=half_w || h!=max_h))
+        s->rmax=0, update=true;
+
+    if(update)
+        update_net_wm_state(wm, c);
+}
+
+static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h)
+{
+    int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
+        ww=wm->workarea.w, wh=wm->workarea.h;
+    *left_x=wx+bw, *top_y=wy+bw+th, *max_w=ww-2*bw, *max_h=wh-th-2*bw,
+    *mid_x=*left_x+ww/2, *mid_y=*top_y+wh/2, *half_w=ww/2-2*bw, *half_h=wh/2-th-2*bw;
+}
+
 void update_net_wm_state(WM *wm, Client *c)
 {
     Atom *a=wm->ewmh_atom;
@@ -872,27 +911,27 @@ bool is_tile_client(WM *wm, Client *c)
 
 void max_client(WM *wm, Client *c, Max_way max_way)
 {
-    int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
-        ww=wm->workarea.w, wh=wm->workarea.h;
-    bool vmax=(c->h+2*bw+th == wh), hmax=(c->w+2*bw == ww), fmax=false;
+    int left_x, top_y, max_w, max_h, mid_x, mid_y, half_w, half_h;
 
     if(!is_win_state_max(c))
         save_place_info_of_client(c);
+    get_max_rect(wm, c, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
 
+    bool vmax=(c->h == max_h), hmax=(c->w == max_w), fmax=false;
     switch(max_way)
     {
-        case IN_SITU_VERT_MAX: if(hmax) fmax=true; else c->y=wy+bw+th, c->h=wh-th-2*bw; break;
-        case IN_SITU_HORZ_MAX: if(vmax) fmax=true; else c->x=wx+bw, c->w=ww-2*bw; break;
-        case TOP_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
-        case BOTTOM_MAX: c->x=wx+bw, c->y=wy+wh/2+bw+th, c->w=ww-2*bw, c->h=wh/2-th-2*bw; break;
-        case LEFT_MAX: c->x=wx+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
-        case RIGHT_MAX: c->x=ww/2+bw, c->y=wy+bw+th, c->w=ww/2-2*bw, c->h=wh-th-2*bw; break;
-        case FULL_MAX: fmax=true; break;
-        default: return;
+        case VERT_MAX:  if(hmax) fmax=true; else c->y=top_y, c->h=max_h;  break;
+        case HORZ_MAX:  if(vmax) fmax=true; else c->x=left_x, c->w=max_w; break;
+        case TOP_MAX:   c->x=left_x, c->y=top_y, c->w=max_w, c->h=half_h; break;
+        case BOTTOM_MAX:c->x=left_x, c->y=mid_y, c->w=max_w, c->h=half_h; break;
+        case LEFT_MAX:  c->x=left_x, c->y=top_y, c->w=half_w, c->h=max_h; break;
+        case RIGHT_MAX: c->x=mid_x, c->y=top_y, c->w=half_w, c->h=max_h;  break;
+        case FULL_MAX:  fmax=true; break;
+        default:        return;
     }
-
     if(fmax)
-        c->x=wx+bw, c->y=wy+bw+th, c->w=ww-2*bw, c->h=wh-th-2*bw;
+        c->x=left_x, c->y=top_y, c->w=max_w, c->h=max_h;
+
     Place_type type=get_dest_place_type_for_move(wm, c);
     move_client(wm, c, get_head_client(wm, type), type);
     move_resize_client(wm, c, NULL);

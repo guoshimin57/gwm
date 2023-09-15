@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.13\n"
+"Project-Id-Version: gwm 2.6.14\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-09-12 21:41+0800\n"
+"POT-Creation-Date: 2023-09-15 21:29+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -146,14 +146,14 @@ msgstr "Shutdown"
 msgid "運行"
 msgstr "Run"
 
-#. 客戶窗口菜單項類型          按鈕文字
+#. 客戶窗口菜單項類型       按鈕文字
 #: src/config.c:519
-msgid "原位縱向最大化"
-msgstr "In-situ vertical max"
+msgid "縱向最大化"
+msgstr "Vertical max"
 
 #: src/config.c:520
-msgid "原位橫向最大化"
-msgstr "In-situ lateral max"
+msgid "橫向最大化"
+msgstr "Horizontal max"
 
 #: src/config.c:521
 msgid "最大化至上半屏"
@@ -197,8 +197,8 @@ msgid "切換到圖符區域"
 msgstr "To icon area"
 
 #: src/config.c:542
-msgid "切換到懸浮層並最大化窗口"
-msgstr "Float and max"
+msgid "最大化/還原窗口"
+msgstr "Max/Restore window"
 
 #: src/config.c:543
 msgid "關閉窗口"
@@ -279,9 +279,9 @@ msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
 msgstr "The following are the window states (i.e. _NET_WM_STATE) of the %lx window:\n"
 
 #: src/debug.c:121
-#, fuzzy, c-format
+#, c-format
 msgid "以下是%lx窗口的位置信息：\n"
-msgstr "The following are subwindows of the %lx window:\n"
+msgstr "The following are place info of the %lx window:\n"
 
 #: src/font.c:29
 msgid "錯誤：不能加載必要的字體。"
@@ -355,6 +355,9 @@ msgstr "Command execution error"
 #: src/misc.c:318
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
+
+#~ msgid "切換到懸浮層並最大化窗口"
+#~ msgstr "Float and max"
 
 #~ msgid "暫懸浮區開窗"
 #~ msgstr "Floating next"

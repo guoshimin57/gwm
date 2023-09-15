@@ -248,7 +248,7 @@ static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
     if(SHOULD_REMOVE_STATE(c, act, vmax))
         restore_client(wm, c), c->win_state.vmax=0;
     else
-        max_client(wm, c, IN_SITU_VERT_MAX), c->win_state.vmax=1;
+        max_client(wm, c, VERT_MAX), c->win_state.vmax=1;
 }
 
 static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
@@ -256,7 +256,7 @@ static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
     if(SHOULD_REMOVE_STATE(c, act, hmax))
         restore_client(wm, c), c->win_state.hmax=0;
     else
-        max_client(wm, c, IN_SITU_HORZ_MAX), c->win_state.hmax=1;
+        max_client(wm, c, HORZ_MAX), c->win_state.hmax=1;
 }
 
 static void change_net_wm_state_for_tmax(WM *wm, Client *c, long act)
@@ -333,7 +333,8 @@ static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
         restore_client(wm, c), c->win_state.above=0;
     else
     {
-        save_place_info_of_client(c);
+        if(c->place_type != ABOVE_LAYER)
+            save_place_info_of_client(c);
         move_client(wm, c, get_head_client(wm, ABOVE_LAYER), ABOVE_LAYER);
         c->win_state.above=1;
     }
@@ -345,7 +346,8 @@ static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
         restore_client(wm, c), c->win_state.below=0;
     else
     {
-        save_place_info_of_client(c);
+        if(c->place_type != BELOW_LAYER)
+            save_place_info_of_client(c);
         move_client(wm, c, get_head_client(wm, BELOW_LAYER), BELOW_LAYER);
         c->win_state.below=1;
     }
