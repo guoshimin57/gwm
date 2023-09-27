@@ -25,6 +25,7 @@ void create_taskbar(WM *wm)
     b->win=create_widget_win(wm, wm->root_win, b->x, b->y, b->w, b->h,
         0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(wm->display, b->win, CROSSING_MASK);
+    set_net_wm_win_type(wm, b->win, NET_WM_WINDOW_TYPE_DOCK);
 
     Window wins[]={wm->top_wins[DOCK_TOP], b->win};
     XRestackWindows(wm->display, wins, 2);
@@ -80,6 +81,7 @@ static void create_act_center(WM *wm)
 {
     wm->act_center=create_menu(wm, wm->cfg->act_center_item_text,
         ACT_CENTER_ITEM_N, wm->cfg->act_center_col);
+    set_net_wm_win_type(wm, wm->act_center->win, NET_WM_WINDOW_TYPE_DROPDOWN_MENU);
 }
 
 void update_taskbar_buttons_bg(WM *wm)

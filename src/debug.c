@@ -122,3 +122,26 @@ void print_place_info(Client *c)
     printf("ox=%d, oy=%d, ow=%d, oh=%d, old_place_type=%d\n", c->ox, c->oy, c->ow, c->oh, c->old_place_type);
     printf("x=%d, y=%d, w=%d, h=%d, place_type=%d\n", c->x, c->y, c->w, c->h, c->place_type);
 }
+
+void print_client_win(WM *wm)
+{
+    printf(_("以下是自頂向底排列的客戶窗口列表：\n"));
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        printf("%lx\n", c->win);
+}
+
+void show_top_win(WM *wm)
+{
+    int h=wm->cfg->font_size[CLASS_FONT]*2, w=10*h;
+    char *s[]={"DESKTOP_TOP", "BELOW_TOP", "NORMAL_TOP", "FLOAT_TOP",
+        "DOCK_TOP", "ABOVE_TOP", "FULLSCREEN_TOP"};
+    String_format f={{0, 0, w, h}, CENTER_LEFT, false,
+        false, false, 0, TEXT_COLOR(wm, CLASS), CLASS_FONT};
+
+    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
+    {
+        XMoveResizeWindow(wm->display, wm->top_wins[i], i*w/2, wm->taskbar->y, w, h);
+        XMapWindow(wm->display, wm->top_wins[i]);
+        draw_string(wm, wm->top_wins[i], s[i], &f);
+    }
+}

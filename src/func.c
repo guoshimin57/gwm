@@ -98,7 +98,8 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Delta_rect d=get_key_delta_rect(c, dir);
     Place_type type=get_dest_place_type_for_move(wm, c);
 
-    move_client(wm, c, get_head_client(wm, type), type);
+    if(c->place_type!=NORMAL_LAYER_FLOAT && type==NORMAL_LAYER_FLOAT)
+        move_client(wm, c, get_head_client(wm, type), type);
     if(fix_move_resize_delta_rect(wm, c, &d, is_move))
     {
         move_resize_client(wm, c, &d);
@@ -232,7 +233,8 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
 void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    if(DESKTOP(wm)->cur_layout==TILE && get_clients_n(wm, NORMAL_LAYER_SECOND, false, false))
+    if( DESKTOP(wm)->cur_layout==TILE
+        && get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false))
     {
         Desktop *d=DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
@@ -249,7 +251,8 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 { 
     UNUSED(e), UNUSED(arg);
-    if(DESKTOP(wm)->cur_layout==TILE && get_clients_n(wm, NORMAL_LAYER_FIXED, false, false))
+    if( DESKTOP(wm)->cur_layout==TILE
+        && get_clients_n(wm, NORMAL_LAYER_FIXED, false, false, false))
     {
         Desktop *d=DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
@@ -345,13 +348,13 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     max_client(wm, c, arg.max_way);
     switch(arg.max_way)
     {
-        case VERT_MAX:  c->win_state.vmax=1; break;
-        case HORZ_MAX:  c->win_state.hmax=1; break;
-        case TOP_MAX:           c->win_state.tmax=1; break;
-        case BOTTOM_MAX:        c->win_state.bmax=1; break;
-        case LEFT_MAX:          c->win_state.lmax=1; break;
-        case RIGHT_MAX:         c->win_state.rmax=1; break;
-        case FULL_MAX:          c->win_state.vmax=c->win_state.hmax=1; break;
+        case VERT_MAX:   c->win_state.vmax=1; break;
+        case HORZ_MAX:   c->win_state.hmax=1; break;
+        case TOP_MAX:    c->win_state.tmax=1; break;
+        case BOTTOM_MAX: c->win_state.bmax=1; break;
+        case LEFT_MAX:   c->win_state.lmax=1; break;
+        case RIGHT_MAX:  c->win_state.rmax=1; break;
+        case FULL_MAX:   c->win_state.vmax=c->win_state.hmax=1; break;
     }
     update_net_wm_state(wm, c);
 }
@@ -373,7 +376,8 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            move_client(wm, c, get_head_client(wm, type), type);
+            if(c->place_type!=NORMAL_LAYER_FLOAT && type==NORMAL_LAYER_FLOAT)
+                move_client(wm, c, get_head_client(wm, type), type);
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             do_valid_pointer_move_resize(wm, c, &m, act);
@@ -432,7 +436,7 @@ static bool fix_delta_rect_for_nonprefer_size(Client *c, XSizeHints *hint, Delta
 
     int ox=c->x, oy=c->y, ow=c->w, oh=c->h;
     fix_win_size_by_hint(c);
-    d->dx=c->x-ox, d->dy=c->y-oy, d->dw=(int)c->w-ow, d->dh=(int)c->h-oh;
+    d->dx=c->x-ox, d->dy=c->y-oy, d->dw=c->w-ow, d->dh=c->h-oh;
     c->x=ox, c->y=oy, c->w=ow, c->h=oh;
     return true;
 }

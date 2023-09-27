@@ -16,8 +16,10 @@ static void apply_rules(WM *wm, Client *c);
 static void set_default_desktop_mask(WM *wm, Client *c);
 static void set_default_place_type(WM *wm, Client *c);
 static bool should_float(WM *wm, Client *c);
+static bool is_max_state(Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static void add_client_node(Client *head, Client *c);
+static void set_default_win_rect(WM *wm, Client *c);
 static void set_win_rect_by_attr(WM *wm, Client *c);
 static bool fix_win_pos_by_hint(Client *c);
 static void fix_win_pos_by_prop(WM *wm, Client *c);
@@ -95,8 +97,13 @@ static void set_default_place_type(WM *wm, Client *c)
 
 static bool should_float(WM *wm, Client *c)
 {
-    return (c->win_state.vmax || c->win_state.hmax || c->win_state.fullscreen)
-        && DESKTOP(wm)->cur_layout==TILE;
+    return is_max_state(c) && DESKTOP(wm)->cur_layout==TILE;
+}
+
+static bool is_max_state(Client *c)
+{
+    Net_wm_state *s=&c->win_state;
+    return s->vmax || s->hmax || s->tmax || s->bmax || s->lmax || s->rmax;
 }
 
 static void set_default_desktop_mask(WM *wm, Client *c)
@@ -168,7 +175,7 @@ void fix_place_type(WM *wm)
     }
 }
 
-void set_default_win_rect(WM *wm, Client *c)
+static void set_default_win_rect(WM *wm, Client *c)
 {
     int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
         ww=wm->workarea.w, wh=wm->workarea.h;
@@ -180,7 +187,7 @@ void set_default_win_rect(WM *wm, Client *c)
     if(c->win_state.fullscreen)
         c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 
-    if(!c->win_state.vmax && !c->win_state.hmax && !c->win_state.fullscreen)
+    if(!is_max_state(c) && !c->win_state.fullscreen)
     {
         set_win_rect_by_attr(wm, c);
         fix_win_size(wm, c);
@@ -314,12 +321,13 @@ static Rect get_button_rect(WM *wm, Client *c, size_t index)
     return (Rect){cw-w*(TITLE_BUTTON_N-index), 0, w, h};
 }
 
-int get_clients_n(WM *wm, Place_type type, bool count_tile, bool count_all_desktop)
+int get_clients_n(WM *wm, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)
 {
     int n=0;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if( (type==PLACE_TYPE_N || c->place_type==type)
-            && (count_tile || (!c->icon && !c->owner))
+            && (count_icon || !c->icon)
+            && (count_trans || !c->owner)
             && (count_all_desktop || is_on_cur_desktop(wm, c)))
             n++;
     return n;
@@ -420,7 +428,7 @@ static Window get_top_win(WM *wm, Client *c)
     {
         [DESKTOP_LAYER]=DESKTOP_TOP, [BELOW_LAYER]=BELOW_TOP,
         [NORMAL_LAYER_MAIN]=NORMAL_TOP, [NORMAL_LAYER_SECOND]=NORMAL_TOP,
-        [NORMAL_LAYER_FIXED]=NORMAL_TOP, [NORMAL_LAYER_FLOAT]=NORMAL_TOP,
+        [NORMAL_LAYER_FIXED]=NORMAL_TOP, [NORMAL_LAYER_FLOAT]=FLOAT_TOP,
         [DOCK_LAYER]=DOCK_TOP, [ABOVE_LAYER]=ABOVE_TOP,
         [FULLSCREEN_LAYER]=FULLSCREEN_TOP,
     };
@@ -462,7 +470,7 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     Place_type ft=from->place_type, tt=to->place_type;
     if( from==wm->clients || (from==to && tt==type)
         || (ft==NORMAL_LAYER_MAIN && type==NORMAL_LAYER_SECOND
-            && !get_clients_n(wm, NORMAL_LAYER_SECOND, false, false)))
+            && !get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false)))
         return false;
     del_client_node(from);
     if(tt == type)
@@ -530,9 +538,9 @@ Client *get_head_client(WM *wm, Place_type type)
         if(c->place_type == type)
             return c->prev;
     for(Client *c=head->prev; c!=wm->clients; c=c->prev)
-        if(c->place_type < type)
-            head=c;
-    return head;
+        if(c->place_type > type)
+            return c->prev;
+    return head->prev;
 }
 
 /* 返回疊次序從底到頂的同亞組客戶 */

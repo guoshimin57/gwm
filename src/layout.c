@@ -13,6 +13,7 @@
 
 static void set_full_layout(WM *wm);
 static void set_preview_layout(WM *wm);
+static void set_rect_of_main_win_for_preview(WM *wm);
 static void set_tile_layout(WM *wm);
 static void set_rect_of_tile_win_for_tiling(WM *wm);
 static void set_rect_of_transient_win_for_tiling(WM *wm);
@@ -50,7 +51,13 @@ static void set_full_layout(WM *wm)
 
 static void set_preview_layout(WM *wm)
 {
-    int n=get_clients_n(wm, PLACE_TYPE_N, true, false);
+    set_rect_of_main_win_for_preview(wm);
+    set_rect_of_transient_win_for_tiling(wm);
+}
+
+static void set_rect_of_main_win_for_preview(WM *wm)
+{
+    int n=get_clients_n(wm, PLACE_TYPE_N, true, false, false);
     if(n == 0)
         return;
 
@@ -65,7 +72,7 @@ static void set_preview_layout(WM *wm)
 
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        if(is_on_cur_desktop(wm, c))
+        if(is_on_cur_desktop(wm, c) && !c->owner)
         {
             c->x=wx+(i%cols)*w, c->y=wy+(i/cols)*h;
             c->w = i%cols ? w-gap : w+(ww-w*cols); // 右排窗口佔用剩餘橫向向空間
@@ -116,7 +123,7 @@ static void set_rect_of_transient_win_for_tiling(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(is_on_cur_desktop(wm, c) && c->owner)
-            fix_win_pos(wm, c);
+            fix_win_pos(wm, c), fix_win_rect_for_frame(c);
 }
 
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
@@ -124,9 +131,9 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
     double mr=DESKTOP(wm)->main_area_ratio, fr=DESKTOP(wm)->fixed_area_ratio;
     int n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
 
-    n1=get_clients_n(wm, NORMAL_LAYER_MAIN, false, false),
-    n2=get_clients_n(wm, NORMAL_LAYER_SECOND, false, false),
-    n3=get_clients_n(wm, NORMAL_LAYER_FIXED, false, false),
+    n1=get_clients_n(wm, NORMAL_LAYER_MAIN, false, false, false),
+    n2=get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false),
+    n3=get_clients_n(wm, NORMAL_LAYER_FIXED, false, false, false),
     *mw=mr*ww, *fw=ww*fr, *sw=ww-*fw-*mw;
     *mh = n1 ? wh/n1 : wh, *fh = n3 ? wh/n3 : wh, *sh = n2 ? wh/n2 : wh;
     if(n3 == 0)
@@ -157,14 +164,16 @@ bool is_main_sec_gap(WM *wm, int x)
 {
     Desktop *d=DESKTOP(wm);
     long sw=wm->workarea.w*(1-d->main_area_ratio-d->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_clients_n(wm, NORMAL_LAYER_SECOND, false, false);
+         wx=wm->workarea.x,
+         n=get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false);
     return (n && x>=wx+sw-wm->cfg->win_gap && x<wx+sw);
 }
 
 bool is_main_fix_gap(WM *wm, int x)
 {
     long smw=wm->workarea.w*(1-DESKTOP(wm)->fixed_area_ratio),
-         wx=wm->workarea.x, n=get_clients_n(wm, NORMAL_LAYER_FIXED, false, false);
+         wx=wm->workarea.x,
+         n=get_clients_n(wm, NORMAL_LAYER_FIXED, false, false, false);
     return (n && x>=wx+smw && x<wx+smw+wm->cfg->win_gap);
 }
 

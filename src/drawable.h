@@ -57,6 +57,8 @@ Atom *get_atom_props(WM *wm, Window win, Atom prop, unsigned long *n);
 Atom get_atom_prop(WM *wm, Window win, Atom prop);
 unsigned char *get_prop(WM *wm, Window win, Atom prop, unsigned long *n);
 char *get_text_prop(WM *wm, Window win, Atom atom);
+void set_ewmh_atom_to_atom(WM *wm, Window win, Ewmh_atom atom, Ewmh_atom value);
+void set_net_wm_win_type(WM *wm, Window win, Ewmh_atom value);
 char *get_title_text(WM *wm, Window win, const char *fallback);
 char *get_icon_title_text(WM *wm, Window win, const char *fallback);
 void copy_prop(WM *wm, Window dest, Window src);

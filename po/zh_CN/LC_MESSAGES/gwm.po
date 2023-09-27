@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.14\n"
+"Project-Id-Version: gwm 2.6.15\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-09-15 21:29+0800\n"
+"POT-Creation-Date: 2023-09-27 23:21+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -283,6 +283,11 @@ msgstr "以下是%lx窗口窗口状态(即_NET_WM_STATE)：\n"
 msgid "以下是%lx窗口的位置信息：\n"
 msgstr "以下是%lx窗口的位置窗口：\n"
 
+#: src/debug.c:128
+#, fuzzy, c-format
+msgid "以下是自頂向底排列的客戶窗口列表：\n"
+msgstr "以下是自底向顶排列的客户窗口和分层参照窗口列表：\n"
+
 #: src/font.c:29
 msgid "錯誤：不能加載必要的字體。"
 msgstr "错误：不能加载必要的字体。"
@@ -322,7 +327,7 @@ msgstr "不能安装SIGHUP信号处理函数"
 msgid "錯誤: 不能設置輸入法"
 msgstr "错误： 不能设置输入法"
 
-#: src/init.c:172
+#: src/init.c:175
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 

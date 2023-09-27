@@ -68,6 +68,17 @@ char *get_text_prop(WM *wm, Window win, Atom atom)
     return result;
 }
 
+void set_ewmh_atom_to_atom(WM *wm, Window win, Ewmh_atom atom, Ewmh_atom value)
+{
+    XChangeProperty(wm->display, win, wm->ewmh_atom[atom], XA_ATOM, 32,
+        PropModeReplace, (unsigned char *)&wm->ewmh_atom[value], 1);
+}
+
+void set_net_wm_win_type(WM *wm, Window win, Ewmh_atom value)
+{
+    set_ewmh_atom_to_atom(wm, win, NET_WM_WINDOW_TYPE, value);
+}
+
 char *get_title_text(WM *wm, Window win, const char *fallback)
 {
     char *s=NULL;
