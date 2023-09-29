@@ -18,7 +18,6 @@ static void set_tile_layout(WM *wm);
 static void set_rect_of_tile_win_for_tiling(WM *wm);
 static void set_rect_of_transient_win_for_tiling(WM *wm);
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh);
-static void fix_win_rect_for_frame(Client *c);
 
 void update_layout(WM *wm)
 {
@@ -61,8 +60,9 @@ static void set_rect_of_main_win_for_preview(WM *wm)
     if(n == 0)
         return;
 
-    int i=n-1, rows, cols, w, h, gap=wm->cfg->win_gap, wx=wm->workarea.x,
+    int rows, cols, w, h, g=wm->cfg->win_gap, wx=wm->workarea.x,
         wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
+    Rect frame;
 
     /* 行、列数量尽量相近，以保证窗口比例基本不变 */
     for(cols=1; cols<=n && cols*cols<n; cols++)
@@ -74,11 +74,9 @@ static void set_rect_of_main_win_for_preview(WM *wm)
     {
         if(is_on_cur_desktop(wm, c) && !c->owner)
         {
-            c->x=wx+(i%cols)*w, c->y=wy+(i/cols)*h;
-            c->w = i%cols ? w-gap : w+(ww-w*cols); // 右排窗口佔用剩餘橫向向空間
-            c->h = i>=cols ? h-gap : h+(wh-h*rows); // 底排窗口佔用剩餘縱向空間
-            i--;
-            fix_win_rect_for_frame(c);
+            n--;
+            frame=(Rect){wx+(n%cols)*w+g, wy+(n/cols)*h+g, w-2*g, h-2*g};
+            set_win_rect_by_frame(c, &frame);
         }
     }
 }
@@ -98,6 +96,7 @@ static void set_rect_of_tile_win_for_tiling(WM *wm)
 {
     int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=wm->cfg->win_gap,
         wx=wm->workarea.x, wy=wm->workarea.y, wh=wm->workarea.h;
+    Rect frame;
 
     get_area_size(wm, &mw, &mh, &sw, &sh, &fw, &fh);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -106,14 +105,14 @@ static void set_rect_of_tile_win_for_tiling(WM *wm)
         {
             Place_type type=c->place_type;
             if(type == NORMAL_LAYER_FIXED)
-                c->x=wx+mw+sw+g, c->y=wy+i++*fh, c->w=fw-g, c->h=fh-g;
+                frame=(Rect){wx+mw+sw+g, wy+i++*fh, fw-g, fh-g};
             else if(type == NORMAL_LAYER_MAIN)
-                c->x=wx+sw, c->y=wy+j++*mh, c->w=mw, c->h=mh-g;
+                frame=(Rect){wx+sw, wy+j++*mh, mw, mh-g};
             else if(type == NORMAL_LAYER_SECOND)
-                c->x=wx, c->y=wy+k++*sh, c->w=sw-g, c->h=sh-g;
+                frame=(Rect){wx, wy+k++*sh, sw-g, sh-g};
             if(is_last_typed_client(wm, c, type)) // 區末窗口取餘量
-                c->h+=wh%(c->h+g)+g;
-            fix_win_rect_for_frame(c);
+                frame.h+=wh%(frame.h+g)+g;
+            set_win_rect_by_frame(c, &frame);
         }
     }
 }
@@ -123,7 +122,7 @@ static void set_rect_of_transient_win_for_tiling(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(is_on_cur_desktop(wm, c) && c->owner)
-            fix_win_pos(wm, c), fix_win_rect_for_frame(c);
+            fix_win_pos(wm, c);
 }
 
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
@@ -140,12 +139,6 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
         *mw+=*fw, *fw=0;
     if(n2 == 0)
         *mw+=*sw, *sw=0;
-}
-
-static void fix_win_rect_for_frame(Client *c)
-{
-    c->x+=c->border_w, c->y+=c->titlebar_h+c->border_w;
-    c->w-=2*c->border_w, c->h-=c->titlebar_h+2*c->border_w;
 }
 
 void update_titlebar_layout(WM *wm)

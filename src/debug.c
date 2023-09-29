@@ -123,11 +123,16 @@ void print_place_info(Client *c)
     printf("x=%d, y=%d, w=%d, h=%d, place_type=%d\n", c->x, c->y, c->w, c->h, c->place_type);
 }
 
-void print_client_win(WM *wm)
+void print_all_client_win(WM *wm)
 {
     printf(_("以下是自頂向底排列的客戶窗口列表：\n"));
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        printf("%lx\n", c->win);
+        print_client_win(c);
+}
+
+void print_client_win(Client *c)
+{
+    printf("win=%lx (frame=%lx)\n", c->win, c->frame);
 }
 
 void show_top_win(WM *wm)

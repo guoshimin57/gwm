@@ -47,6 +47,7 @@ struct client_tag // 客戶窗口相關信息
 
 void add_client(WM *wm, Window win);
 void fix_place_type(WM *wm);
+void set_win_rect_by_frame(Client *c, const Rect *frame);
 void fix_win_pos(WM *wm, Client *c);
 void create_titlebar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);

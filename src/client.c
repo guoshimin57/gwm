@@ -60,6 +60,7 @@ void add_client(WM *wm, Window win)
     XMapSubwindows(wm->display, c->frame);
     focus_client(wm, wm->cur_desktop, c);
     set_all_net_client_list(wm);
+    print_client_win(c);
 }
 
 static Client *new_client(WM *wm, Window win)
@@ -175,6 +176,12 @@ void fix_place_type(WM *wm)
     }
 }
 
+void set_win_rect_by_frame(Client *c, const Rect *frame)
+{
+    c->x=frame->x+c->border_w, c->y=frame->y+c->titlebar_h+c->border_w;
+    c->w=frame->w-2*c->border_w, c->h=frame->h-c->titlebar_h-2*c->border_w;
+}
+
 static void set_default_win_rect(WM *wm, Client *c)
 {
     int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
@@ -215,7 +222,7 @@ static bool fix_win_pos_by_hint(Client *c)
 {
     XSizeHints *p=&c->size_hint;
     if((p->flags & USPosition))
-        c->x=p->x, c->y=p->y;
+        c->x=p->x+c->border_w, c->y=p->y+c->border_w+c->titlebar_h;
     return (p->flags & USPosition);
 }
 
