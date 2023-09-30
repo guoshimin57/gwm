@@ -31,6 +31,7 @@ struct client_tag // 客戶窗口相關信息
     int x, y, w, h, ox, oy, ow, oh; // 分别爲win現在的和原來的橫、縱坐標和寬、高
     int titlebar_h, border_w; // win的標題欄高、邊框寬
     unsigned int desktop_mask; // 所屬虚拟桌面的掩碼
+    long map_n; // win最後一次映射的序號
     Place_type place_type, old_place_type; // 窗口現在的位置類型及原來的位置類型
     Net_wm_win_type win_type; // win的窗口類型
     Net_wm_state win_state; // win的窗口狀態

@@ -316,6 +316,7 @@ struct wm_tag // 窗口管理器相關信息
     int screen, screen_width, screen_height; // 屏幕號、屏幕寬度和高度
     int depth; // 窗口的深度
     unsigned int cur_desktop; // 當前虛擬桌面編號，從1開始編號
+    long map_count; // 所有客戶窗口的累計映射次數
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
     Rect workarea; // 工作區坐標和尺寸

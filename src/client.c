@@ -38,7 +38,6 @@ static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static bool have_same_class_icon_client(WM *wm, Client *c);
-static int cmp_client_win(const void *pclient1, const void *pclient2);
 static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h);
 
 void add_client(WM *wm, Window win)
@@ -60,7 +59,6 @@ void add_client(WM *wm, Window win)
     XMapSubwindows(wm->display, c->frame);
     focus_client(wm, wm->cur_desktop, c);
     set_all_net_client_list(wm);
-    print_client_win(c);
 }
 
 static Client *new_client(WM *wm, Window win)
@@ -68,6 +66,7 @@ static Client *new_client(WM *wm, Window win)
     Client *c=malloc_s(sizeof(Client));
     memset(c, 0, sizeof(Client));
     c->win=win;
+    c->map_n=++wm->map_count;
     c->title_text=get_title_text(wm, win, "");
     c->wm_hint=XGetWMHints(wm->display, win);
     c->win_type=get_net_wm_win_type(wm, win);
@@ -560,17 +559,11 @@ Client **get_subgroup_clients(WM *wm, Client *c, int *n)
     unsigned int i=0;
     Client **result=malloc_s(*n*sizeof(Client *));
 
-    for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
+    for(Client *p=wm->clients->prev; p!=wm->clients; p=p->prev)
         if(p->subgroup_leader == c->subgroup_leader)
             result[i++]=p;
-    qsort(result, *n, sizeof(Client *), cmp_client_win);
 
     return result;
-}
-
-static int cmp_client_win(const void *pclient1, const void *pclient2)
-{
-    return (*(Client **)pclient1)->win - (*(Client **)pclient2)->win;
 }
 
 int get_subgroup_n(WM *wm, Client *c)

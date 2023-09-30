@@ -18,7 +18,7 @@ static bool is_prefer_aspect(int w, int h, XSizeHints *hint);
 static void set_net_supported(WM *wm);
 static void set_net_client_list(WM *wm);
 static void set_net_client_list_stacking(WM *wm);
-static int cmp_win(const void *pwin1, const void *pwin2);
+static int cmp_map_order(const void *pclient1, const void *pclient2);
 static void set_net_number_of_desktops(WM *wm);
 static void set_net_desktop_geometry(WM *wm);
 static void set_net_desktop_viewport(WM *wm);
@@ -187,18 +187,25 @@ static void set_net_client_list(WM *wm)
         XDeleteProperty(wm->display, root, a);
     else
     {
-        Window list[n];
-        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            list[i++]=c->win;
-        qsort(list, n, sizeof(Window), cmp_win);
+        Window wlist[n];
+        Client **clist=malloc_s(n*sizeof(Client *));
+
+        for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+            clist[i++]=c;
+        qsort(clist, n, sizeof(Client *), cmp_map_order);
+
+        for(i=0; i<n; i++)
+            wlist[i]=clist[i]->win;
+
+        free(clist);
         XChangeProperty(wm->display, root, a, XA_WINDOW, 32,
-            PropModeReplace, (unsigned char *)list, n);
+            PropModeReplace, (unsigned char *)wlist, n);
     }
 }
 
-static int cmp_win(const void *pwin1, const void *pwin2)
+static int cmp_map_order(const void *pclient1, const void *pclient2)
 {
-    return (*(Window *)pwin1-*(Window *)pwin2);
+    return (*(Client **)pclient1)->map_n - (*(Client **)pclient2)->map_n;
 }
 
 static void set_net_client_list_stacking(WM *wm)
