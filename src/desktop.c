@@ -82,20 +82,16 @@ void move_to_desktop_n(WM *wm, Client *c, unsigned int n)
 
 static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op)
 {
-    int m=0;
-    Client **g=get_subgroup_clients(wm, c, &m);
-
-    for(int i=0; i<m; i++)
+    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
         if(op==MOVE_TO_N || op==CHANGE_TO_N)
-            g[i]->desktop_mask = get_desktop_mask(n);
+            p->desktop_mask = get_desktop_mask(n);
         else if(op == ATTACH_TO_N)
-            g[i]->desktop_mask |= get_desktop_mask(n);
+            p->desktop_mask |= get_desktop_mask(n);
         else
-            g[i]->desktop_mask = ~0;
-        focus_client(wm, n, g[i]);
+            p->desktop_mask = ~0;
+        focus_client(wm, n, p);
     }
-    free(g);
 }
 
 void all_move_to_desktop_n(WM *wm, unsigned int n)

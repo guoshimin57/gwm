@@ -56,7 +56,7 @@ static void set_preview_layout(WM *wm)
 
 static void set_rect_of_main_win_for_preview(WM *wm)
 {
-    int n=get_clients_n(wm, PLACE_TYPE_N, true, false, false);
+    int n=get_clients_n(wm, ANY_PLACE, true, false, false);
     if(n == 0)
         return;
 
@@ -120,7 +120,7 @@ static void set_rect_of_tile_win_for_tiling(WM *wm)
 /* 平鋪布局模式的非臨時窗口位置其主窗之上並居中 */
 static void set_rect_of_transient_win_for_tiling(WM *wm)
 {
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
         if(is_on_cur_desktop(wm, c) && c->owner)
             fix_win_pos(wm, c);
 }

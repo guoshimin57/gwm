@@ -101,7 +101,7 @@ static void handle_button_press(WM *wm, XEvent *e)
 {
     Window win=e->xbutton.window;
     Client *c=win_to_client(wm, win),
-           *tmc = c ? get_top_modal_client(wm, c->subgroup_leader) : NULL;
+           *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
     Widget_type type=get_widget_type(wm, win);
 
     for(const Buttonbind *b=wm->cfg->buttonbind; b->func; b++)
@@ -335,7 +335,7 @@ static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
     {
         if(c->place_type != ABOVE_LAYER)
             save_place_info_of_client(c);
-        move_client(wm, c, get_head_client(wm, ABOVE_LAYER), ABOVE_LAYER);
+        move_client(wm, c, NULL, ABOVE_LAYER);
         c->win_state.above=1;
     }
 }
@@ -348,7 +348,7 @@ static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
     {
         if(c->place_type != BELOW_LAYER)
             save_place_info_of_client(c);
-        move_client(wm, c, get_head_client(wm, BELOW_LAYER), BELOW_LAYER);
+        move_client(wm, c, NULL, BELOW_LAYER);
         c->win_state.below=1;
     }
 }

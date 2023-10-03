@@ -18,6 +18,7 @@ static void set_default_place_type(WM *wm, Client *c);
 static bool should_float(WM *wm, Client *c);
 static bool is_max_state(Client *c);
 static bool have_rule(const Rule *r, Client *c);
+static Client *get_head_for_add_client(WM *wm, Client *c);
 static void add_client_node(Client *head, Client *c);
 static void set_default_win_rect(WM *wm, Client *c);
 static void set_win_rect_by_attr(WM *wm, Client *c);
@@ -32,7 +33,12 @@ static Rect get_button_rect(WM *wm, Client *c, size_t index);
 static void del_client_node(Client *c);
 static Rect get_frame_rect(Client *c);
 static Window get_top_win(WM *wm, Client *c);
-static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type);
+static bool is_valid_to_normal_layer_sec(WM *wm, Client *c);
+static void move_client_node(WM *wm, Client *from, Client *to, Place_type type);
+static void add_subgroup(Client *head, Client *subgroup_leader);
+static void del_subgroup(Client *subgroup_leader);
+static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
+static int cmp_client_store_order(WM *wm, Client *c1, Client *c2);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
@@ -45,7 +51,7 @@ void add_client(WM *wm, Window win)
     Client *c=new_client(wm, win);
 
     apply_rules(wm, c);
-    add_client_node(get_head_client(wm, c->place_type), c);
+    add_client_node(get_head_for_add_client(wm, c), c);
     fix_place_type(wm);
     c->old_place_type=c->place_type;
     set_default_win_rect(wm, c);
@@ -150,6 +156,19 @@ static bool have_rule(const Rule *r, Client *c)
         *class=c->class_hint.res_class, *name=c->class_hint.res_name;
     return ((pc && ((class && strstr(class, pc)) || strcmp(pc, "*")==0))
         || ((pn && ((name && strstr(name, pn)) || strcmp(pc, "*")==0))));
+}
+
+static Client *get_head_for_add_client(WM *wm, Client *c)
+{
+    Client *top=NULL, *head=NULL;
+    if(c->owner)
+    {
+        top=get_top_transient_client(c->subgroup_leader, false);
+        head = top ? top->prev : c->owner->prev;
+    }
+    else
+        head=get_head_client(wm, c->place_type);
+    return head;
 }
 
 static void add_client_node(Client *head, Client *c)
@@ -331,7 +350,7 @@ int get_clients_n(WM *wm, Place_type type, bool count_icon, bool count_trans, bo
 {
     int n=0;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if( (type==PLACE_TYPE_N || c->place_type==type)
+        if( (type==ANY_PLACE || c->place_type==type)
             && (count_icon || !c->icon)
             && (count_trans || !c->owner)
             && (count_all_desktop || is_on_cur_desktop(wm, c)))
@@ -416,13 +435,12 @@ Client *win_to_iconic_state_client(WM *wm, Window win)
 /* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
 void raise_client(WM *wm, Client *c)
 {
-    int i, n=0;
-    Client **g=get_subgroup_clients(wm, c, &n);
+    int n=get_subgroup_n(c);
     Window wins[n+1];
 
-    for(wins[0]=get_top_win(wm, c), i=0; i<n; i++)
-        wins[n-i]=g[i]->frame;
-    free(g);
+    wins[0]=get_top_win(wm, c);
+    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
+        wins[n--]=p->frame;
 
     XRestackWindows(wm->display, wins, n+1);
     set_all_net_client_list(wm);
@@ -446,7 +464,7 @@ Client *get_next_client(WM *wm, Client *c)
 {
     for(Client *m=NULL, *p=c->next; p!=wm->clients; p=p->next)
         if(is_on_cur_desktop(wm, p))
-            return (m=get_top_modal_client(wm, p->subgroup_leader)) ? m : p;
+            return (m=get_top_transient_client(p->subgroup_leader, true)) ? m : p;
     return NULL;
 }
 
@@ -455,68 +473,99 @@ Client *get_prev_client(WM *wm, Client *c)
 {
     for(Client *m=NULL, *p=c->prev; p!=wm->clients; p=p->prev)
         if(is_on_cur_desktop(wm, p))
-            return (m=get_top_modal_client(wm, p->subgroup_leader)) ? m : p;
+            return (m=get_top_transient_client(p->subgroup_leader, true)) ? m : p;
     return NULL;
 }
 
 void move_client(WM *wm, Client *from, Client *to, Place_type type)
 {
-    if(move_client_node(wm, from, to, type))
-    {
-        from->place_type=type;
-        fix_place_type(wm);
-        raise_client(wm, from);
-        update_layout(wm);
-    }
+    if( from==wm->clients || from==to ||
+        (type==NORMAL_LAYER_SECOND && !is_valid_to_normal_layer_sec(wm, from)))
+        return;
+
+    move_client_node(wm, from, to, type);
+    set_place_type_for_subgroup(from->subgroup_leader, to ? to->place_type : type);
+    fix_place_type(wm);
+    raise_client(wm, from);
+    update_layout(wm);
 }
 
-static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
+static bool is_valid_to_normal_layer_sec(WM *wm, Client *c)
 {
-    Client *head;
-    Place_type ft=from->place_type, tt=to->place_type;
-    if( from==wm->clients || (from==to && tt==type)
-        || (ft==NORMAL_LAYER_MAIN && type==NORMAL_LAYER_SECOND
-            && !get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false)))
-        return false;
-    del_client_node(from);
-    if(tt == type)
-    {
-        if((ft==NORMAL_LAYER_MAIN && tt==NORMAL_LAYER_SECOND)
-            || (ft==tt && compare_client_order(wm, from, to)==-1))
-            head=to;
-        else
-            head=to->prev;
-    }
+    return c->place_type!=NORMAL_LAYER_MAIN
+        || get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false);
+}
+
+static void move_client_node(WM *wm, Client *from, Client *to, Place_type type)
+{
+    Client *head=NULL;
+    del_subgroup(from->subgroup_leader);
+    if(to)
+        head = cmp_client_store_order(wm, from, to) < 0 ? to : to->prev;
     else
     {
-        if(ft==NORMAL_LAYER_MAIN && type==NORMAL_LAYER_SECOND)
-            head=to->next;
-        else if(from == to)
-            head=to->prev;
-        else
-            head=to;
+        head=get_head_client(wm, type);
+        if(from->place_type==NORMAL_LAYER_MAIN && type==NORMAL_LAYER_SECOND)
+            head=head->next;
     }
-    add_client_node(head, from);
-    return true;
+    add_subgroup(head, from->subgroup_leader);
+}
+
+static void add_subgroup(Client *head, Client *subgroup_leader)
+{
+    Client *top=get_top_transient_client(subgroup_leader, false),
+           *begin=(top ? top : subgroup_leader), *end=subgroup_leader;
+
+    begin->prev=head;
+    end->next=head->next;
+    head->next=begin;
+    end->next->prev=end;
+}
+
+static void del_subgroup(Client *subgroup_leader)
+{
+    Client *top=get_top_transient_client(subgroup_leader, false),
+           *begin=(top ? top : subgroup_leader), *end=subgroup_leader;
+
+    begin->prev->next=end->next;
+    end->next->prev=begin->prev;
+}
+
+static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type)
+{
+    for(Client *ld=subgroup_leader, *c=ld; ld && c->subgroup_leader==ld; c=c->prev)
+        c->place_type=type;
 }
 
 void swap_clients(WM *wm, Client *a, Client *b)
 {
-    if(a == b)
+    if(a->subgroup_leader == b->subgroup_leader)
         return;
 
-    Client *aprev=a->prev, *bprev=b->prev;
+    Client *tmp, *top, *a_begin, *b_begin, *a_prev, *a_leader, *b_leader, *oa=a;
 
-    del_client_node(a);
-    add_client_node(compare_client_order(wm, a, b)==-1 ? b : bprev, a);
-    if(aprev!=b && bprev!=a) //不相邻
-        del_client_node(b), add_client_node(aprev, b);
+    if(cmp_client_store_order(wm, a, b) > 0)
+        tmp=a, a=b, b=tmp;
 
-    raise_client(wm, a);
+    a_leader=a->subgroup_leader, b_leader=b->subgroup_leader;
+
+    top=get_top_transient_client(a_leader, false);
+    a_begin=(top ? top : a_leader);
+    a_prev=a_begin->prev;
+
+    top=get_top_transient_client(b_leader, false);
+    b_begin=(top ? top : b_leader);
+
+    del_subgroup(a_leader);
+    add_subgroup(b_leader, a_leader);
+    if(a_leader->next != b_begin) //不相邻
+        del_subgroup(b_leader), add_subgroup(a_prev, b_leader);
+
+    raise_client(wm, oa);
     update_layout(wm);
 }
 
-int compare_client_order(WM *wm, Client *c1, Client *c2)
+static int cmp_client_store_order(WM *wm, Client *c1, Client *c2)
 {
     if(c1 == c2)
         return 0;
@@ -549,30 +598,11 @@ Client *get_head_client(WM *wm, Place_type type)
     return head->prev;
 }
 
-/* 返回疊次序從底到頂的同亞組客戶 */
-Client **get_subgroup_clients(WM *wm, Client *c, int *n)
-{
-    *n=0;
-    if(!c || c==wm->clients || !(*n=get_subgroup_n(wm, c)))
-        return NULL;
-
-    unsigned int i=0;
-    Client **result=malloc_s(*n*sizeof(Client *));
-
-    for(Client *p=wm->clients->prev; p!=wm->clients; p=p->prev)
-        if(p->subgroup_leader == c->subgroup_leader)
-            result[i++]=p;
-
-    return result;
-}
-
-int get_subgroup_n(WM *wm, Client *c)
+int get_subgroup_n(Client *c)
 {
     int n=0;
-    if(c && c!=wm->clients)
-        for(Client *p=wm->clients->next; p!=wm->clients; p=p->next)
-            if(p->subgroup_leader==c->subgroup_leader)
-                n++;
+    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
+        n++;
     return n;
 }
 
@@ -583,15 +613,13 @@ Client *get_subgroup_leader(Client *c)
     return c;
 }
 
-Client *get_top_modal_client(WM *wm, Client *subgroup_leader)
+Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
 {
-    int n;
-    Client *result=NULL, **g=get_subgroup_clients(wm, subgroup_leader, &n);
+    Client *result=NULL, *ld=subgroup_leader;
 
-    for(int i=n-1; i>=0 && !result; i--)
-        if(g[i]->win_state.modal)
-            result=g[i];
-    free(g);
+    for(Client *c=ld; ld && c->subgroup_leader==ld; c=c->prev)
+        if((only_modal && c->win_state.modal) || c->owner)
+            result=c;
 
     return result;
 }
@@ -652,7 +680,7 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
             *pp=wm->clients;
     }
     else if(c != *pc)
-        *pp=*pc, *pc=((p=get_top_modal_client(wm, c->subgroup_leader)) ? p : c);
+        *pp=*pc, *pc=((p=get_top_transient_client(c->subgroup_leader, true)) ? p : c);
 }
 
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c)
@@ -699,26 +727,22 @@ unsigned int get_desktop_mask(unsigned int desktop_n)
 
 void iconify(WM *wm, Client *c)
 {
-    int n=0;
-    Client **g=get_subgroup_clients(wm, c, &n);
-
-    for(int i=0; i<n; i++)
+    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
-        create_icon(wm, g[i]);
-        g[i]->icon->title_text=get_icon_title_text(wm, g[i]->win, g[i]->title_text);
-        update_win_bg(wm, g[i]->icon->win, WIDGET_COLOR(wm, TASKBAR), None);
+        create_icon(wm, p);
+        p->icon->title_text=get_icon_title_text(wm, p->win, p->title_text);
+        update_win_bg(wm, p->icon->win, WIDGET_COLOR(wm, TASKBAR), None);
         update_icon_area(wm);
-        XMapWindow(wm->display, g[i]->icon->win);
-        XUnmapWindow(wm->display, g[i]->frame);
-        if(g[i] == DESKTOP(wm)->cur_focus_client)
+        XMapWindow(wm->display, p->icon->win);
+        XUnmapWindow(wm->display, p->frame);
+        if(p == DESKTOP(wm)->cur_focus_client)
         {
             focus_client(wm, wm->cur_desktop, NULL);
-            update_frame_bg(wm, wm->cur_desktop, g[i]);
+            update_frame_bg(wm, wm->cur_desktop, p);
         }
-        c->win_state.hidden=1;
-        update_net_wm_state(wm, g[i]);
+        p->win_state.hidden=1;
+        update_net_wm_state(wm, p);
     }
-    free(g);
     update_layout(wm);
 }
 
@@ -770,22 +794,18 @@ void deiconify(WM *wm, Client *c)
     if(!c)
         return;
 
-    int n=0;
-    Client **g=get_subgroup_clients(wm, c, &n);
-
-    for(int i=0; i<n; i++)
+    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
-        if(g[i]->icon)
+        if(p->icon)
         {
-            del_icon(wm, g[i]);
-            XMapWindow(wm->display, g[i]->frame);
+            del_icon(wm, p);
+            XMapWindow(wm->display, p->frame);
             update_icon_area(wm);
-            focus_client(wm, wm->cur_desktop, g[i]);
-            c->win_state.hidden=0;
-            update_net_wm_state(wm, g[i]);
+            focus_client(wm, wm->cur_desktop, p);
+            p->win_state.hidden=0;
+            update_net_wm_state(wm, p);
         }
     }
-    free(g);
     update_layout(wm);
 }
 
@@ -907,7 +927,7 @@ void restore_place_info_of_clients(WM *wm)
 void restore_client(WM *wm, Client *c)
 {
     restore_place_info_of_client(c);
-    move_client(wm, c, get_head_client(wm, c->place_type), c->place_type);
+    move_client(wm, c, NULL, c->place_type);
 }
 
 bool is_tile_client(WM *wm, Client *c)
@@ -941,7 +961,7 @@ void max_client(WM *wm, Client *c, Max_way max_way)
         c->x=left_x, c->y=top_y, c->w=max_w, c->h=max_h;
 
     Place_type type=get_dest_place_type_for_move(wm, c);
-    move_client(wm, c, get_head_client(wm, type), type);
+    move_client(wm, c, NULL, type);
     move_resize_client(wm, c, NULL);
 }
 

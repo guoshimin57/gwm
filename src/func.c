@@ -99,7 +99,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Place_type type=get_dest_place_type_for_move(wm, c);
 
     if(c->place_type!=NORMAL_LAYER_FLOAT && type==NORMAL_LAYER_FLOAT)
-        move_client(wm, c, get_head_client(wm, type), type);
+        move_client(wm, c, NULL, type);
     if(fix_move_resize_delta_rect(wm, c, &d, is_move))
     {
         move_resize_client(wm, c, &d);
@@ -273,7 +273,7 @@ void change_place(WM *wm, XEvent *e, Func_arg arg)
 
     if(c!=wm->clients && DESKTOP(wm)->cur_layout==TILE)
     {
-        move_client(wm, c, get_head_client(wm, t), t);
+        move_client(wm, c, NULL, t);
         update_win_state_for_move_resize(wm, c);
     }
 }
@@ -377,7 +377,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         if(ev.type == MotionNotify)
         {
             if(c->place_type!=NORMAL_LAYER_FLOAT && type==NORMAL_LAYER_FLOAT)
-                move_client(wm, c, get_head_client(wm, type), type);
+                move_client(wm, c, NULL, type);
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
             do_valid_pointer_move_resize(wm, c, &m, act);
@@ -523,13 +523,13 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(wm, subw);
     if(ev.xbutton.x == 0)
-        move_client(wm, from, get_head_client(wm, NORMAL_LAYER_SECOND), NORMAL_LAYER_SECOND);
+        move_client(wm, from, NULL, NORMAL_LAYER_SECOND);
     else if(ev.xbutton.x == (long)wm->screen_width-1)
-        move_client(wm, from, get_head_client(wm, NORMAL_LAYER_FIXED), NORMAL_LAYER_FIXED);
+        move_client(wm, from, NULL, NORMAL_LAYER_FIXED);
     else if(win==wm->root_win && subw==None)
-        move_client(wm, from, get_head_client(wm, NORMAL_LAYER_MAIN), NORMAL_LAYER_MAIN);
+        move_client(wm, from, NULL, NORMAL_LAYER_MAIN);
     else if(to)
-        move_client(wm, from, to, to->place_type);
+        move_client(wm, from, to, ANY_PLACE);
     update_win_state_for_move_resize(wm, from);
 }
 

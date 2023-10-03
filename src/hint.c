@@ -181,7 +181,7 @@ static void set_net_client_list(WM *wm)
 {
     Window root=wm->root_win;
     Atom a = wm->ewmh_atom[NET_CLIENT_LIST];
-    int i=0, n=get_clients_n(wm, PLACE_TYPE_N, true, true, true);
+    int i=0, n=get_clients_n(wm, ANY_PLACE, true, true, true);
 
     if(n == 0)
         XDeleteProperty(wm->display, root, a);
