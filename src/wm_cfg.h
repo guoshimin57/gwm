@@ -55,7 +55,7 @@
     {MAIN_NEW_BUTTON,           0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAYER_MAIN}},  \
     {SEC_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAYER_SECOND}},\
     {FIX_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAYER_FIXED}}, \
-    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=NORMAL_LAYER_FLOAT}}, \
+    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=FLOAT_LAYER}},        \
     {N_MAIN_UP_BUTTON,          0, Button1,  adjust_n_main_max,          {.n=1}},                           \
     {N_MAIN_DOWN_BUTTON,        0, Button1,  adjust_n_main_max,          {.n=-1}},                          \
     {TITLEBAR_TOGGLE_BUTTON,    0, Button1,  toggle_titlebar_visibility, {0}},                              \
@@ -84,7 +84,7 @@
     {MAIN_BUTTON,               0, Button1,  change_place,               {.place_type=NORMAL_LAYER_MAIN}},  \
     {SECOND_BUTTON,             0, Button1,  change_place,               {.place_type=NORMAL_LAYER_SECOND}},\
     {FIXED_BUTTON,              0, Button1,  change_place,               {.place_type=NORMAL_LAYER_FIXED}}, \
-    {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=NORMAL_LAYER_FLOAT}}, \
+    {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=FLOAT_LAYER}},        \
     {ICON_BUTTON,               0, Button1,  minimize_client,            {0}},                              \
     {MAX_BUTTON,                0, Button1,  max_restore_client,         {0}},                              \
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},                              \

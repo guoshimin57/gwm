@@ -99,13 +99,14 @@ static void set_default_place_type(WM *wm, Client *c)
     else if(c->win_type.dock)        c->place_type = DOCK_LAYER;
     else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
     else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
-    else if(should_float(wm, c))     c->place_type = NORMAL_LAYER_FLOAT;
+    else if(should_float(wm, c))     c->place_type = FLOAT_LAYER;
     else                             c->place_type = NORMAL_LAYER_MAIN;
 }
 
 static bool should_float(WM *wm, Client *c)
 {
-    return is_max_state(c) && DESKTOP(wm)->cur_layout==TILE;
+    Layout layout=DESKTOP(wm)->cur_layout;
+    return layout==STACK || (layout==TILE && is_max_state(c));
 }
 
 static bool is_max_state(Client *c)
@@ -437,12 +438,12 @@ Client *win_to_iconic_state_client(WM *wm, Window win)
 /* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
 void raise_client(WM *wm, Client *c)
 {
-    int n=get_subgroup_n(c);
+    int n=get_subgroup_n(c), i=n;
     Window wins[n+1];
 
     wins[0]=get_top_win(wm, c);
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
-        wins[n--]=p->frame;
+        wins[i--]=p->frame;
 
     XRestackWindows(wm->display, wins, n+1);
     set_all_net_client_list(wm);
@@ -452,11 +453,15 @@ static Window get_top_win(WM *wm, Client *c)
 {
     size_t index[]=
     {
-        [DESKTOP_LAYER]=DESKTOP_TOP, [BELOW_LAYER]=BELOW_TOP,
-        [NORMAL_LAYER_MAIN]=NORMAL_TOP, [NORMAL_LAYER_SECOND]=NORMAL_TOP,
-        [NORMAL_LAYER_FIXED]=NORMAL_TOP, [NORMAL_LAYER_FLOAT]=FLOAT_TOP,
-        [DOCK_LAYER]=DOCK_TOP, [ABOVE_LAYER]=ABOVE_TOP,
         [FULLSCREEN_LAYER]=FULLSCREEN_TOP,
+        [ABOVE_LAYER]=ABOVE_TOP,
+        [DOCK_LAYER]=DOCK_TOP,
+        [FLOAT_LAYER]=FLOAT_TOP,
+        [NORMAL_LAYER_MAIN]=NORMAL_TOP,
+        [NORMAL_LAYER_SECOND]=NORMAL_TOP,
+        [NORMAL_LAYER_FIXED]=NORMAL_TOP,
+        [BELOW_LAYER]=BELOW_TOP,
+        [DESKTOP_LAYER]=DESKTOP_TOP,
     };
     return wm->top_wins[index[c->place_type]];
 }
@@ -491,6 +496,11 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
     }
 }
 
+bool is_normal_layer(Place_type t)
+{
+    return t==NORMAL_LAYER_MAIN || t==NORMAL_LAYER_SECOND || t==NORMAL_LAYER_FIXED;
+}
+
 static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
 {
     Layout l=DESKTOP(wm)->cur_layout;
@@ -499,8 +509,7 @@ static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
     return from != wm->clients
         && (!to || from->subgroup_leader!=to->subgroup_leader)
         && (t!=NORMAL_LAYER_SECOND || is_valid_to_normal_layer_sec(wm, from))
-        && (l==TILE || (t!=NORMAL_LAYER_MAIN && t!=NORMAL_LAYER_SECOND
-                    && t!=NORMAL_LAYER_FIXED && t!=NORMAL_LAYER_FLOAT));
+        && (l==TILE || !is_normal_layer(t));
 }
 
 static bool is_valid_to_normal_layer_sec(WM *wm, Client *c)
@@ -767,7 +776,7 @@ void iconify(WM *wm, Client *c)
 static Client *get_icon_client_head(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(c->icon)
+        if(is_on_cur_desktop(wm, c) && c->icon)
             return c->prev;
     return wm->clients->prev;
 }
@@ -959,9 +968,8 @@ void restore_client(WM *wm, Client *c)
 
 bool is_tile_client(WM *wm, Client *c)
 {
-    Place_type t=c->place_type;
     return is_on_cur_desktop(wm, c) && !c->owner && !c->icon
-        && (t==NORMAL_LAYER_MAIN || t==NORMAL_LAYER_SECOND || t==NORMAL_LAYER_FIXED);
+        && is_normal_layer(c->place_type);
 }
 
 void max_client(WM *wm, Client *c, Max_way max_way)
@@ -995,7 +1003,7 @@ void max_client(WM *wm, Client *c, Max_way max_way)
 Place_type get_dest_place_type_for_move(WM *wm, Client *c)
 {
     return DESKTOP(wm)->cur_layout==TILE && is_tile_client(wm, c) ?
-        NORMAL_LAYER_FLOAT : c->place_type;
+        FLOAT_LAYER : c->place_type;
 }
 
 bool is_win_state_max(Client *c)

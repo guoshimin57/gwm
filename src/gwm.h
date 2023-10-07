@@ -200,11 +200,18 @@ typedef enum focus_mode_tag Focus_mode;
 
 enum place_type_tag // 窗口的位置類型
 {
-    FULLSCREEN_LAYER, ABOVE_LAYER, DOCK_LAYER, NORMAL_LAYER_FLOAT,
+    FULLSCREEN_LAYER, ABOVE_LAYER, DOCK_LAYER, FLOAT_LAYER,
     NORMAL_LAYER_MAIN, NORMAL_LAYER_SECOND, NORMAL_LAYER_FIXED,
     BELOW_LAYER, DESKTOP_LAYER, ANY_PLACE, PLACE_TYPE_N=ANY_PLACE
 };
 typedef enum place_type_tag Place_type;
+
+enum top_win_type_tag // 窗口疊次序分層類型
+{
+    DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, FLOAT_TOP, DOCK_TOP, ABOVE_TOP,
+    FULLSCREEN_TOP, TOP_WIN_TYPE_N
+};
+typedef enum top_win_type_tag Top_win_type;
 
 enum widget_type_tag // 構件類型
 {
@@ -292,13 +299,6 @@ enum color_theme_tag // 顏色主題
     DARK_THEME, NORMAL_THEME, LIGHT_THEME, COLOR_THEME_N
 };
 typedef enum color_theme_tag Color_theme;
-
-enum top_win_type_tag // 窗口疊次序分層類型
-{
-    DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, FLOAT_TOP, DOCK_TOP, ABOVE_TOP,
-    FULLSCREEN_TOP, TOP_WIN_TYPE_N
-};
-typedef enum top_win_type_tag Top_win_type;
 
 struct rule_tag // 窗口管理器的規則
 {

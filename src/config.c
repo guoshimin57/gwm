@@ -94,7 +94,7 @@ static const Keybind keybind[] =
     {WM_KEY,        XK_F1,        change_place,                {.place_type=NORMAL_LAYER_MAIN}},
     {WM_KEY,        XK_F2,        change_place,                {.place_type=NORMAL_LAYER_SECOND}},
     {WM_KEY,        XK_F3,        change_place,                {.place_type=NORMAL_LAYER_FIXED}},
-    {WM_KEY,        XK_F4,        change_place,                {.place_type=NORMAL_LAYER_FLOAT}},
+    {WM_KEY,        XK_F4,        change_place,                {.place_type=FLOAT_LAYER}},
     {WM_KEY,        XK_Return,    choose_client,               {0}},
     {WM_KEY,        XK_Tab,       next_client,                 {0}},
     {WM_SKEY,       XK_Tab,       prev_client,                 {0}},
@@ -167,11 +167,11 @@ static const Buttonbind buttonbind[] =
 static const Rule rule[] =
 {
     /* 客戶程序類型        客戶程序名稱 客戶程序的類型別名   窗口放置位置(詳gwm.h)  是否顯示標題欄 是否顯示邊框 桌面掩碼 */
-    {"QQ",                 "qq",                 "QQ",       NORMAL_LAYER_FIXED,      false,         false,        0},
-    {"explorer.exe",       "explorer.exe",       NULL,       NORMAL_LAYER_FLOAT,      false,         false,        0},
-    {"Thunder.exe",        "Thunder.exe",        NULL,       NORMAL_LAYER_FLOAT,      true,          true,         0},
-    {"Google-chrome",      "google-chrome",      "chrome",   NORMAL_LAYER_MAIN,       true,          true,         0},
-    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "Nautilus", NORMAL_LAYER_MAIN,       true,          true,         0},
+    {"QQ",                 "qq",                 "QQ",       NORMAL_LAYER_FIXED,    false,         false,        0},
+    {"explorer.exe",       "explorer.exe",       NULL,       FLOAT_LAYER,           false,         false,        0},
+    {"Thunder.exe",        "Thunder.exe",        NULL,       FLOAT_LAYER,           true,          true,         0},
+    {"Google-chrome",      "google-chrome",      "chrome",   NORMAL_LAYER_MAIN,     true,          true,         0},
+    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "Nautilus", NORMAL_LAYER_MAIN,     true,          true,         0},
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 

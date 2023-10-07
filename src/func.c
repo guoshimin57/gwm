@@ -98,7 +98,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Delta_rect d=get_key_delta_rect(c, dir);
     Place_type type=get_dest_place_type_for_move(wm, c);
 
-    if(c->place_type!=NORMAL_LAYER_FLOAT && type==NORMAL_LAYER_FLOAT)
+    if(c->place_type!=FLOAT_LAYER && type==FLOAT_LAYER)
         move_client(wm, c, NULL, type);
     if(fix_move_resize_delta_rect(wm, c, &d, is_move))
     {
@@ -372,7 +372,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
         XMaskEvent(wm->display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
         if(ev.type == MotionNotify)
         {
-            if(c->place_type!=NORMAL_LAYER_FLOAT && type==NORMAL_LAYER_FLOAT)
+            if(c->place_type!=FLOAT_LAYER && type==FLOAT_LAYER)
                 move_client(wm, c, NULL, type);
             /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
             m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
@@ -552,6 +552,16 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
             if(is_on_cur_desktop(wm, c) && c->icon)
                 XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
+
+    if(*pl==TILE && *cl==STACK)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_on_cur_desktop(wm, c) && is_normal_layer(c->place_type))
+                c->place_type=FLOAT_LAYER;
+
+    if(*pl==STACK && *cl==TILE)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_on_cur_desktop(wm, c) && c->place_type==FLOAT_LAYER)
+                c->place_type=NORMAL_LAYER_MAIN;
 
     update_layout(wm);
     update_titlebar_layout(wm);
