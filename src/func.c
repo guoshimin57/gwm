@@ -269,13 +269,9 @@ void change_place(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
     Client *c=CUR_FOC_CLI(wm);
-    Place_type t=arg.place_type;
 
-    if(c!=wm->clients && DESKTOP(wm)->cur_layout==TILE)
-    {
-        move_client(wm, c, NULL, t);
-        update_win_state_for_move_resize(wm, c);
-    }
+    move_client(wm, c, NULL, arg.place_type);
+    update_win_state_for_move_resize(wm, c);
 }
 
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)

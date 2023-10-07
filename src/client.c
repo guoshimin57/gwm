@@ -33,8 +33,9 @@ static Rect get_button_rect(WM *wm, Client *c, size_t index);
 static void del_client_node(Client *c);
 static Rect get_frame_rect(Client *c);
 static Window get_top_win(WM *wm, Client *c);
+static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
 static bool is_valid_to_normal_layer_sec(WM *wm, Client *c);
-static void move_client_node(WM *wm, Client *from, Client *to, Place_type type);
+static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type);
 static void add_subgroup(Client *head, Client *subgroup_leader);
 static void del_subgroup(Client *subgroup_leader);
 static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
@@ -43,6 +44,7 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
+static Client *get_icon_client_head(WM *wm);
 static bool have_same_class_icon_client(WM *wm, Client *c);
 static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h);
 
@@ -479,15 +481,26 @@ Client *get_prev_client(WM *wm, Client *c)
 
 void move_client(WM *wm, Client *from, Client *to, Place_type type)
 {
-    if( from==wm->clients || from==to ||
-        (type==NORMAL_LAYER_SECOND && !is_valid_to_normal_layer_sec(wm, from)))
-        return;
+    if(move_client_node(wm, from, to, type))
+    {
+        set_place_type_for_subgroup(from->subgroup_leader,
+            to ? to->place_type : type);
+        fix_place_type(wm);
+        raise_client(wm, from);
+        update_layout(wm);
+    }
+}
 
-    move_client_node(wm, from, to, type);
-    set_place_type_for_subgroup(from->subgroup_leader, to ? to->place_type : type);
-    fix_place_type(wm);
-    raise_client(wm, from);
-    update_layout(wm);
+static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
+{
+    Layout l=DESKTOP(wm)->cur_layout;
+    Place_type t = to ? to->place_type : type;
+
+    return from != wm->clients
+        && (!to || from->subgroup_leader!=to->subgroup_leader)
+        && (t!=NORMAL_LAYER_SECOND || is_valid_to_normal_layer_sec(wm, from))
+        && (l==TILE || (t!=NORMAL_LAYER_MAIN && t!=NORMAL_LAYER_SECOND
+                    && t!=NORMAL_LAYER_FIXED && t!=NORMAL_LAYER_FLOAT));
 }
 
 static bool is_valid_to_normal_layer_sec(WM *wm, Client *c)
@@ -496,8 +509,11 @@ static bool is_valid_to_normal_layer_sec(WM *wm, Client *c)
         || get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false);
 }
 
-static void move_client_node(WM *wm, Client *from, Client *to, Place_type type)
+static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
 {
+    if(!is_valid_move(wm, from, to, type))
+        return false;
+
     Client *head=NULL;
     del_subgroup(from->subgroup_leader);
     if(to)
@@ -509,6 +525,7 @@ static void move_client_node(WM *wm, Client *from, Client *to, Place_type type)
             head=head->next;
     }
     add_subgroup(head, from->subgroup_leader);
+    return true;
 }
 
 static void add_subgroup(Client *head, Client *subgroup_leader)
@@ -727,6 +744,7 @@ unsigned int get_desktop_mask(unsigned int desktop_n)
 
 void iconify(WM *wm, Client *c)
 {
+    move_client_node(wm, c, get_icon_client_head(wm), ANY_PLACE);
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
         create_icon(wm, p);
@@ -744,6 +762,14 @@ void iconify(WM *wm, Client *c)
         update_net_wm_state(wm, p);
     }
     update_layout(wm);
+}
+
+static Client *get_icon_client_head(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        if(c->icon)
+            return c->prev;
+    return wm->clients->prev;
 }
 
 void create_icon(WM *wm, Client *c)
@@ -794,6 +820,7 @@ void deiconify(WM *wm, Client *c)
     if(!c)
         return;
 
+    move_client_node(wm, c, NULL, c->place_type);
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
         if(p->icon)
