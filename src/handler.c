@@ -298,14 +298,14 @@ static void change_net_wm_state_for_shaded(WM *wm, Client *c, long act)
     c->win_state.shaded=!SHOULD_REMOVE_STATE(c, act, shaded);
 }
 
-/* 暫不支持跳過任務欄 */
 static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act)
 {
-    UNUSED(wm);
     c->win_state.skip_taskbar=!SHOULD_REMOVE_STATE(c, act, skip_taskbar);
+    if(c->win_state.skip_taskbar && c->icon)
+        deiconify(wm, c);
 }
 
-/* 暫不支持跳過分頁器 */
+/* 暫未實現分頁器 */
 static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
@@ -434,7 +434,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     if(wm->cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
     if( is_layout_adjust_area(wm, win, x)
-        && get_clients_n(wm, NORMAL_LAYER_MAIN, false, false, false))
+        && get_clients_n(wm, TILE_LAYER_MAIN, false, false, false))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_BUTTON(type))
         update_win_bg(wm, win, ENTERED_NCLOSE_BUTTON_COLOR(wm, type), None);
@@ -614,7 +614,7 @@ static void handle_map_request(WM *wm, XEvent *e)
     if(is_wm_win(wm, win, false))
     {
         add_client(wm, win);
-        DESKTOP(wm)->default_place_type=NORMAL_LAYER_MAIN;
+        DESKTOP(wm)->default_place_type=TILE_LAYER_MAIN;
     }
     else
         restack_win(wm, win);

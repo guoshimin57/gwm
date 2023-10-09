@@ -234,7 +234,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     if( DESKTOP(wm)->cur_layout==TILE
-        && get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false))
+        && get_clients_n(wm, TILE_LAYER_SECOND, false, false, false))
     {
         Desktop *d=DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
@@ -252,7 +252,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 { 
     UNUSED(e), UNUSED(arg);
     if( DESKTOP(wm)->cur_layout==TILE
-        && get_clients_n(wm, NORMAL_LAYER_FIXED, false, false, false))
+        && get_clients_n(wm, TILE_LAYER_FIXED, false, false, false))
     {
         Desktop *d=DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
@@ -519,11 +519,11 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(wm, subw);
     if(ev.xbutton.x == 0)
-        move_client(wm, from, NULL, NORMAL_LAYER_SECOND);
+        move_client(wm, from, NULL, TILE_LAYER_SECOND);
     else if(ev.xbutton.x == (long)wm->screen_width-1)
-        move_client(wm, from, NULL, NORMAL_LAYER_FIXED);
+        move_client(wm, from, NULL, TILE_LAYER_FIXED);
     else if(win==wm->root_win && subw==None)
-        move_client(wm, from, NULL, NORMAL_LAYER_MAIN);
+        move_client(wm, from, NULL, TILE_LAYER_MAIN);
     else if(to)
         move_client(wm, from, to, ANY_PLACE);
     update_win_state_for_move_resize(wm, from);
@@ -561,7 +561,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
     if(*pl==STACK && *cl==TILE)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
             if(is_on_cur_desktop(wm, c) && c->place_type==FLOAT_LAYER)
-                c->place_type=NORMAL_LAYER_MAIN;
+                c->place_type=TILE_LAYER_MAIN;
 
     update_layout(wm);
     update_titlebar_layout(wm);

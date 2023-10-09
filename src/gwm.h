@@ -201,7 +201,7 @@ typedef enum focus_mode_tag Focus_mode;
 enum place_type_tag // 窗口的位置類型
 {
     FULLSCREEN_LAYER, ABOVE_LAYER, DOCK_LAYER, FLOAT_LAYER,
-    NORMAL_LAYER_MAIN, NORMAL_LAYER_SECOND, NORMAL_LAYER_FIXED,
+    TILE_LAYER_MAIN, TILE_LAYER_SECOND, TILE_LAYER_FIXED,
     BELOW_LAYER, DESKTOP_LAYER, ANY_PLACE, PLACE_TYPE_N=ANY_PLACE
 };
 typedef enum place_type_tag Place_type;

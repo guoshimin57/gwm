@@ -100,7 +100,7 @@ static void set_default_place_type(WM *wm, Client *c)
     else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
     else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
     else if(should_float(wm, c))     c->place_type = FLOAT_LAYER;
-    else                             c->place_type = NORMAL_LAYER_MAIN;
+    else                             c->place_type = TILE_LAYER_MAIN;
 }
 
 static bool should_float(WM *wm, Client *c)
@@ -189,10 +189,10 @@ void fix_place_type(WM *wm)
     {
         if(is_on_cur_desktop(wm, c) && !c->icon && !c->owner)
         {
-            if(c->place_type==NORMAL_LAYER_MAIN && ++n>m)
-                c->place_type=NORMAL_LAYER_SECOND;
-            else if(c->place_type==NORMAL_LAYER_SECOND && n<m)
-                c->place_type=NORMAL_LAYER_MAIN, n++;
+            if(c->place_type==TILE_LAYER_MAIN && ++n>m)
+                c->place_type=TILE_LAYER_SECOND;
+            else if(c->place_type==TILE_LAYER_SECOND && n<m)
+                c->place_type=TILE_LAYER_MAIN, n++;
         }
     }
 }
@@ -457,9 +457,9 @@ static Window get_top_win(WM *wm, Client *c)
         [ABOVE_LAYER]=ABOVE_TOP,
         [DOCK_LAYER]=DOCK_TOP,
         [FLOAT_LAYER]=FLOAT_TOP,
-        [NORMAL_LAYER_MAIN]=NORMAL_TOP,
-        [NORMAL_LAYER_SECOND]=NORMAL_TOP,
-        [NORMAL_LAYER_FIXED]=NORMAL_TOP,
+        [TILE_LAYER_MAIN]=NORMAL_TOP,
+        [TILE_LAYER_SECOND]=NORMAL_TOP,
+        [TILE_LAYER_FIXED]=NORMAL_TOP,
         [BELOW_LAYER]=BELOW_TOP,
         [DESKTOP_LAYER]=DESKTOP_TOP,
     };
@@ -498,7 +498,7 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
 
 bool is_normal_layer(Place_type t)
 {
-    return t==NORMAL_LAYER_MAIN || t==NORMAL_LAYER_SECOND || t==NORMAL_LAYER_FIXED;
+    return t==TILE_LAYER_MAIN || t==TILE_LAYER_SECOND || t==TILE_LAYER_FIXED;
 }
 
 static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
@@ -508,14 +508,14 @@ static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
 
     return from != wm->clients
         && (!to || from->subgroup_leader!=to->subgroup_leader)
-        && (t!=NORMAL_LAYER_SECOND || is_valid_to_normal_layer_sec(wm, from))
+        && (t!=TILE_LAYER_SECOND || is_valid_to_normal_layer_sec(wm, from))
         && (l==TILE || !is_normal_layer(t));
 }
 
 static bool is_valid_to_normal_layer_sec(WM *wm, Client *c)
 {
-    return c->place_type!=NORMAL_LAYER_MAIN
-        || get_clients_n(wm, NORMAL_LAYER_SECOND, false, false, false);
+    return c->place_type!=TILE_LAYER_MAIN
+        || get_clients_n(wm, TILE_LAYER_SECOND, false, false, false);
 }
 
 static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
@@ -530,7 +530,7 @@ static bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     else
     {
         head=get_head_client(wm, type);
-        if(from->place_type==NORMAL_LAYER_MAIN && type==NORMAL_LAYER_SECOND)
+        if(from->place_type==TILE_LAYER_MAIN && type==TILE_LAYER_SECOND)
             head=head->next;
     }
     add_subgroup(head, from->subgroup_leader);
@@ -753,6 +753,9 @@ unsigned int get_desktop_mask(unsigned int desktop_n)
 
 void iconify(WM *wm, Client *c)
 {
+    if(c->win_state.skip_taskbar)
+        return;
+
     move_client_node(wm, c, get_icon_client_head(wm), ANY_PLACE);
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
