@@ -32,6 +32,8 @@ void minimize_client(WM *wm, XEvent *e, Func_arg arg);
 void deiconify_client(WM *wm, XEvent *e, Func_arg arg);
 void max_restore_client(WM *wm, XEvent *e, Func_arg arg);
 void maximize_client(WM *wm, XEvent *e, Func_arg arg);
+void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg);
+void toggle_shade_client_mode(WM *wm, Client *c, bool shade);
 void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg);
 void pointer_change_place(WM *wm, XEvent *e, Func_arg arg);
 void change_layout(WM *wm, XEvent *e, Func_arg arg);

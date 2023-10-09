@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.21\n"
+"Project-Id-Version: gwm 2.6.22\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-09-27 23:21+0800\n"
+"POT-Creation-Date: 2023-10-09 22:44+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -148,103 +148,107 @@ msgstr "Run"
 
 #. 客戶窗口菜單項類型       按鈕文字
 #: src/config.c:519
+msgid "卷起/放下"
+msgstr "Roll up / Put down"
+
+#: src/config.c:520
 msgid "縱向最大化"
 msgstr "Vertical max"
 
-#: src/config.c:520
+#: src/config.c:521
 msgid "橫向最大化"
 msgstr "Horizontal max"
 
-#: src/config.c:521
+#: src/config.c:522
 msgid "最大化至上半屏"
 msgstr "Max to top half screen"
 
-#: src/config.c:522
+#: src/config.c:523
 msgid "最大化至下半屏"
 msgstr "Max to bottom half screen"
 
-#: src/config.c:523
+#: src/config.c:524
 msgid "最大化至左半屏"
 msgstr "Max to left half screen"
 
-#: src/config.c:524
+#: src/config.c:525
 msgid "最大化至右半屏"
 msgstr "Max to right half screen"
 
-#: src/config.c:525
+#: src/config.c:526
 msgid "完全最大化"
 msgstr "fully max"
 
 #. 構件類型             構件功能提示文字
-#: src/config.c:537
+#: src/config.c:538
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: src/config.c:538
+#: src/config.c:539
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: src/config.c:539
+#: src/config.c:540
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: src/config.c:540
+#: src/config.c:541
 msgid "切換到懸浮層"
 msgstr "To float layer"
 
-#: src/config.c:541
+#: src/config.c:542
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: src/config.c:542
+#: src/config.c:543
 msgid "最大化/還原窗口"
 msgstr "Max/Restore window"
 
-#: src/config.c:543
+#: src/config.c:544
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: src/config.c:544
+#: src/config.c:545
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: src/config.c:545
+#: src/config.c:546
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: src/config.c:546
+#: src/config.c:547
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: src/config.c:547
+#: src/config.c:548
 msgid "切換到全屏模式"
 msgstr "To full screen mode"
 
-#: src/config.c:548
+#: src/config.c:549
 msgid "切換到預覽模式"
 msgstr "To preview mode"
 
-#: src/config.c:549
+#: src/config.c:550
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: src/config.c:550
+#: src/config.c:551
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: src/config.c:551
+#: src/config.c:552
 msgid "顯示桌面"
 msgstr "Show desktop"
 
-#: src/config.c:552
+#: src/config.c:553
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: src/config.c:553
+#: src/config.c:554
 msgid "打開窗口菜單"
 msgstr "Open window menu"
 
-#: src/config.c:583
+#: src/config.c:584
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 

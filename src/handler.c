@@ -11,8 +11,8 @@
 
 #include "gwm.h"
 
-#define SHOULD_REMOVE_STATE(c, act, flag) \
-    (act==NET_WM_STATE_REMOVE || (act==NET_WM_STATE_TOGGLE && c->win_state.flag))
+#define SHOULD_ADD_STATE(c, act, flag) \
+    (act==NET_WM_STATE_ADD || (act==NET_WM_STATE_TOGGLE && !c->win_state.flag))
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
@@ -231,141 +231,169 @@ static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act)
 static void change_net_wm_state_for_modal(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    c->win_state.modal=!SHOULD_REMOVE_STATE(c, act, modal);
+    c->win_state.modal=SHOULD_ADD_STATE(c, act, modal);
 }
 
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, sticky))
-        c->desktop_mask=get_desktop_mask(wm->cur_desktop), c->win_state.sticky=0;
+    bool add=SHOULD_ADD_STATE(c, act, sticky);
+
+    if(add)
+        c->desktop_mask=~0U;
     else
-        c->desktop_mask=~0U, c->win_state.sticky=1;
+        c->desktop_mask=get_desktop_mask(wm->cur_desktop);
     update_layout(wm);
+    c->win_state.sticky=add;
 }
 
 static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, vmax))
-        restore_client(wm, c), c->win_state.vmax=0;
+    bool add=SHOULD_ADD_STATE(c, act, vmax);
+
+    if(add)
+        max_client(wm, c, VERT_MAX);
     else
-        max_client(wm, c, VERT_MAX), c->win_state.vmax=1;
+        restore_client(wm, c);
+    c->win_state.vmax=add;
 }
 
 static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, hmax))
-        restore_client(wm, c), c->win_state.hmax=0;
+    bool add=SHOULD_ADD_STATE(c, act, hmax);
+
+    if(add)
+        max_client(wm, c, HORZ_MAX);
     else
-        max_client(wm, c, HORZ_MAX), c->win_state.hmax=1;
+        restore_client(wm, c);
+    c->win_state.hmax=add;
 }
 
 static void change_net_wm_state_for_tmax(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, tmax))
-        restore_client(wm, c), c->win_state.tmax=0;
+    bool add=SHOULD_ADD_STATE(c, act, tmax);
+
+    if(add)
+        max_client(wm, c, TOP_MAX);
     else
-        max_client(wm, c, TOP_MAX), c->win_state.tmax=1;
+        restore_client(wm, c);
+    c->win_state.tmax=add;
 }
 
 static void change_net_wm_state_for_bmax(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, bmax))
-        restore_client(wm, c), c->win_state.bmax=0;
+    bool add=SHOULD_ADD_STATE(c, act, bmax);
+
+    if(add)
+        max_client(wm, c, BOTTOM_MAX);
     else
-        max_client(wm, c, BOTTOM_MAX), c->win_state.bmax=1;
+        restore_client(wm, c);
+    c->win_state.bmax=add;
 }
 
 static void change_net_wm_state_for_lmax(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, lmax))
-        restore_client(wm, c), c->win_state.lmax=0;
-    else
+    bool add=SHOULD_ADD_STATE(c, act, lmax);
+
+    if(add)
         max_client(wm, c, LEFT_MAX), c->win_state.lmax=1;
+    else
+        restore_client(wm, c);
+    c->win_state.lmax=add;
 }
 
 static void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, rmax))
-        restore_client(wm, c), c->win_state.rmax=0;
-    else
+    bool add=SHOULD_ADD_STATE(c, act, rmax);
+
+    if(add)
         max_client(wm, c, RIGHT_MAX), c->win_state.rmax=1;
+    else
+        restore_client(wm, c);
+    c->win_state.rmax=add;
 }
 
-/* 暫不支持窗口陰影特效 */
 static void change_net_wm_state_for_shaded(WM *wm, Client *c, long act)
 {
-    UNUSED(wm);
-    c->win_state.shaded=!SHOULD_REMOVE_STATE(c, act, shaded);
+    toggle_shade_client_mode(wm, c, SHOULD_ADD_STATE(c, act, shaded));
 }
 
 static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act)
 {
-    c->win_state.skip_taskbar=!SHOULD_REMOVE_STATE(c, act, skip_taskbar);
-    if(c->win_state.skip_taskbar && c->icon)
+    bool add=SHOULD_ADD_STATE(c, act, skip_taskbar);
+
+    if(add && c->icon)
         deiconify(wm, c);
+    c->win_state.skip_taskbar=add;
 }
 
 /* 暫未實現分頁器 */
 static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    c->win_state.skip_pager=!SHOULD_REMOVE_STATE(c, act, skip_pager);
+    c->win_state.skip_pager=SHOULD_ADD_STATE(c, act, skip_pager);
 }
 
 static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, hidden))
-        deiconify(wm, c->icon ? c : NULL);
-    else
+    if(SHOULD_ADD_STATE(c, act, hidden))
         iconify(wm, c);
+    else
+        deiconify(wm, c->icon ? c : NULL);
 }
 
 /* 暫不支持單獨窗口全屏 */
 static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    c->win_state.fullscreen=!SHOULD_REMOVE_STATE(c, act, fullscreen);
+    c->win_state.fullscreen=SHOULD_ADD_STATE(c, act, fullscreen);
 }
 
 static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, above))
-        restore_client(wm, c), c->win_state.above=0;
-    else
+    bool add=SHOULD_ADD_STATE(c, act, above);
+
+    if(add)
     {
         if(c->place_type != ABOVE_LAYER)
             save_place_info_of_client(c);
         move_client(wm, c, NULL, ABOVE_LAYER);
-        c->win_state.above=1;
     }
+    else
+        restore_client(wm, c);
+    c->win_state.above=add;
 }
 
 static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, below))
-        restore_client(wm, c), c->win_state.below=0;
-    else
+    bool add=SHOULD_ADD_STATE(c, act, below);
+
+    if(add)
     {
         if(c->place_type != BELOW_LAYER)
             save_place_info_of_client(c);
         move_client(wm, c, NULL, BELOW_LAYER);
-        c->win_state.below=1;
     }
+    else
+        restore_client(wm, c), c->win_state.below=0;
+    c->win_state.below=add;
 }
 
 /* 暫不支持請求關注 */
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    c->win_state.attent=!SHOULD_REMOVE_STATE(c, act, attent);
+    c->win_state.attent=SHOULD_ADD_STATE(c, act, attent);
 }
 
 static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
 {
-    if(SHOULD_REMOVE_STATE(c, act, focused))
-        focus_client(wm, wm->cur_desktop, NULL), c->win_state.focused=0;
+    bool add=SHOULD_ADD_STATE(c, act, focused);
+
+    if(add)
+        focus_client(wm, wm->cur_desktop, c);
     else
-        focus_client(wm, wm->cur_desktop, c), c->win_state.focused=1;
+        focus_client(wm, wm->cur_desktop, NULL);
+    c->win_state.focused=add;
 }
 
 static void activate_win(WM *wm, Window win, unsigned long src)

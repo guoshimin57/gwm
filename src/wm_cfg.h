@@ -87,6 +87,7 @@
     {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=FLOAT_LAYER}},        \
     {ICON_BUTTON,               0, Button1,  minimize_client,            {0}},                              \
     {MAX_BUTTON,                0, Button1,  max_restore_client,         {0}},                              \
+    {SHADE_BUTTON,              0, Button1,  toggle_shade_client,        {0}},                              \
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},                              \
     {TITLE_AREA,                0, Button1,  pointer_move_resize_client, {.resize=false}},                  \
     {TITLE_AREA,                0, Button2,  pointer_change_place,       {0}},                              \

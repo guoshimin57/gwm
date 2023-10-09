@@ -355,6 +355,23 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
     update_net_wm_state(wm, c);
 }
 
+void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    static bool shade=false;
+
+    toggle_shade_client_mode(wm, CUR_FOC_CLI(wm), shade=!shade);
+}
+
+void toggle_shade_client_mode(WM *wm, Client *c, bool shade)
+{
+    if(shade && c->titlebar_h)
+        XResizeWindow(wm->display, c->frame, c->w, c->titlebar_h);
+    else if(!shade)
+        XResizeWindow(wm->display, c->frame, c->w, c->titlebar_h+c->h);
+    c->win_state.shaded=shade;
+}
+
 void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Layout layout=DESKTOP(wm)->cur_layout;

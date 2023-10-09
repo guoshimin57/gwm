@@ -516,6 +516,7 @@ static void config_act_center_item_text(WM *wm)
 static void config_client_menu_item_text(WM *wm)
 {
     /*                            客戶窗口菜單項類型       按鈕文字 */
+    SET_CLIENT_MENU_ITEM_TEXT(wm, SHADE_BUTTON,         _("卷起/放下"));
     SET_CLIENT_MENU_ITEM_TEXT(wm, VERT_MAX_BUTTON,      _("縱向最大化"));
     SET_CLIENT_MENU_ITEM_TEXT(wm, HORZ_MAX_BUTTON,      _("橫向最大化"));
     SET_CLIENT_MENU_ITEM_TEXT(wm, TOP_MAX_BUTTON,       _("最大化至上半屏"));
