@@ -12,7 +12,7 @@
 ./" program. Otherwise, see <http://www.gnu.org/licenses/>.
 ./" ************************************************* ***************************/
 
-.TH gwm 1 October 2023 "gwm 2.6.22" gwm
+.TH gwm 1 October 2023 "gwm 2.6.23" gwm
 .
 .SH NAME
 .B
@@ -56,6 +56,8 @@ When using keyboard commands, pointer commands, the caps lock and num lock keys 
 When moving or resizing a window in tiling mode, the window switches to the top of the float layer, while the remaining windows remain in the original layout mode. Windows can only be moved or resized in full screen, stacking, or tiling modes. In full screen mode, only the transient window can be moved or resized. Except that the window can be iconified in the stacking mode, only in the tiling mode can the place be swapped or changed for the window, the area ratio can be adjusted, and the maximum number of windows in the area can be adjusted. When a window is moved or resized, a hint window for window coordinates and dimensions will be displayed. The size is in the size step value preferred by the program, which may be in pixels, character width, or other.
 .TP
 Window group refer to all open windows of the same program, while a window subgroup refer to a program's main window and all its descendant transient windows. If the window subgroup contains modal windows, only the top-level modal window can be operated. When performing operations of iconify, deiconify, and desktop switching on a window, the same operation will be performed on other windows in the same subgroup; when performing other operations, it will only be applied to this window.
+.TP
+When there is an urgency or attention request come from a client window which not on the current virtual desktop, the taskbar desktop button corresponding to the virtual desktop where the client window is on will change color. Usually red represents an urgency request and yellow represents a attention request. Specific colors vary by color theme.
 .TP
 Unless otherwise specified, the following commands operate on the current desktop.
 .TP

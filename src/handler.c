@@ -378,11 +378,10 @@ static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
     c->win_state.below=add;
 }
 
-/* 暫不支持請求關注 */
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 {
-    UNUSED(wm);
     c->win_state.attent=SHOULD_ADD_STATE(c, act, attent);
+    update_taskbar_buttons_bg(wm);
 }
 
 static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
@@ -398,11 +397,19 @@ static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
 
 static void activate_win(WM *wm, Window win, unsigned long src)
 {
-    Client *c=NULL;
-    if(src==1 && (c=win_to_client(wm, win)) && c!=CUR_FOC_CLI(wm))
-        set_urgency(wm, c, true);
-    if(src==2 && (c=win_to_client(wm, win)) && is_on_cur_desktop(wm, c))
-        focus_client(wm, wm->cur_desktop, c);
+    Client *c=win_to_client(wm, win);
+    if(!c)
+        return;
+
+    if(src == 2) // 源自分頁器
+    {
+        if(is_on_cur_desktop(wm, c))
+            focus_client(wm, wm->cur_desktop, c);
+        else
+            set_urgency(wm, c, true);
+    }
+    else // 源自應用程序
+        set_attention(wm, c, true);
 }
 
 static void change_desktop(WM *wm, Window win, unsigned int desktop)
@@ -701,6 +708,7 @@ static void handle_wm_hints_notify(WM *wm, Window win)
     if( nh && ((nh->flags & InputHint) && nh->input) // 變成需要鍵盤輸入
         && (!oh || !((oh->flags & InputHint) && oh->input)))
         set_input_focus(wm, nh, win);
+    update_taskbar_buttons_bg(wm);
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
 }

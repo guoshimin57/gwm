@@ -68,6 +68,7 @@
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
 
 #define WIDGET_INDEX(type_name, type_class) ((type_name) - type_class ## _BEGIN)
+#define DESKTOP_BUTTON_N(n) (DESKTOP_BUTTON_BEGIN+n-1)
 #define IS_WIDGET_CLASS(type_name, type_class) \
     (type_class ## _BEGIN <= (type_name) && (type_name) <= type_class ## _END)
 #define IS_BUTTON(type) \
@@ -282,7 +283,8 @@ enum widget_color_tag // 構件顏色類型
     NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR, NORMAL_TITLEBAR_COLOR,
     CURRENT_TITLEBAR_COLOR, ENTERED_NORMAL_BUTTON_COLOR,
     ENTERED_CLOSE_BUTTON_COLOR, CHOSEN_BUTTON_COLOR, MENU_COLOR, TASKBAR_COLOR,
-    ENTRY_COLOR, HINT_WIN_COLOR, ROOT_WIN_COLOR, WIDGET_COLOR_N 
+    ENTRY_COLOR, HINT_WIN_COLOR, URGENCY_WIDGET_COLOR, ATTENTION_WIDGET_COLOR,
+    ROOT_WIN_COLOR, WIDGET_COLOR_N 
 };
 typedef enum widget_color_tag Widget_color;
 

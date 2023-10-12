@@ -93,15 +93,27 @@ void update_taskbar_buttons_bg(WM *wm)
 void update_taskbar_button_bg(WM *wm, Widget_type type)
 {
     Window win=wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
-    update_win_bg(wm, win, NCHOSEN_BUTTON_COLOR(wm, type, TASKBAR_COLOR), None);
+    unsigned long color=NCHOSEN_BUTTON_COLOR(wm, type, TASKBAR_COLOR);
+
+    if(IS_WIDGET_CLASS(type, DESKTOP_BUTTON))
+    {
+        unsigned int desktop_n=WIDGET_INDEX(type, DESKTOP_BUTTON)+1;
+        if(desktop_n != wm->cur_desktop)
+        {
+            if(have_urgency(wm, desktop_n))
+                color=get_widget_color(wm, URGENCY_WIDGET_COLOR);
+            else if(have_attention(wm, desktop_n))
+                color=get_widget_color(wm, ATTENTION_WIDGET_COLOR);
+        }
+    }
+    update_win_bg(wm, win, color, None);
 }
 
 void update_taskbar_button_fg(WM *wm, Widget_type type)
 {
     size_t i=WIDGET_INDEX(type, TASKBAR_BUTTON);
     String_format f={{0, 0, wm->cfg->taskbar_button_width, wm->taskbar->h},
-        CENTER, true, false, false, NCHOSEN_BUTTON_COLOR(wm, type, TASKBAR_COLOR),
-        TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
+        CENTER, true, false, false, 0, TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
     draw_string(wm, wm->taskbar->buttons[i], wm->cfg->taskbar_button_text[i], &f);
 }
 

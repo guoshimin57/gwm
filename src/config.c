@@ -259,6 +259,8 @@ static void config_widget_color_for_dark(WM *wm)
     color_name[TASKBAR_COLOR]               = "grey21";
     color_name[ENTRY_COLOR]                 = "white";
     color_name[HINT_WIN_COLOR]              = "grey81";
+    color_name[URGENCY_WIDGET_COLOR]        = "red";
+    color_name[ATTENTION_WIDGET_COLOR]      = "Yellow4";
     color_name[ROOT_WIN_COLOR]              = "black";
 }
 
@@ -281,6 +283,8 @@ static void config_widget_color_for_normal(WM *wm)
     color_name[TASKBAR_COLOR]               = "grey21";
     color_name[ENTRY_COLOR]                 = "white";
     color_name[HINT_WIN_COLOR]              = "grey31";
+    color_name[URGENCY_WIDGET_COLOR]        = "red";
+    color_name[ATTENTION_WIDGET_COLOR]      = "Yellow4";
     color_name[ROOT_WIN_COLOR]              = "black";
 }
 
@@ -303,6 +307,8 @@ static void config_widget_color_for_light(WM *wm)
     color_name[TASKBAR_COLOR]               = "grey81";
     color_name[ENTRY_COLOR]                 = "black";
     color_name[HINT_WIN_COLOR]              = "grey31";
+    color_name[URGENCY_WIDGET_COLOR]        = "red";
+    color_name[ATTENTION_WIDGET_COLOR]      = "yellow2";
     color_name[ROOT_WIN_COLOR]              = "black";
 }
 

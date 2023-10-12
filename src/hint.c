@@ -320,7 +320,14 @@ void set_urgency(WM *wm, Client *c, bool urg)
 
     h->flags = urg ? (h->flags | XUrgencyHint) : (h->flags & ~XUrgencyHint);
     XSetWMHints(wm->display, c->win, h);
-    XFree(h);
+    XFree(c->wm_hint), c->wm_hint=h;
+}
+
+void set_attention(WM *wm, Client *c, bool attent)
+{
+    c->win_state.attent=attent;
+    update_net_wm_state(wm, c);
+    update_taskbar_buttons_bg(wm);
 }
 
 void set_input_focus(WM *wm, XWMHints *hint, Window win)

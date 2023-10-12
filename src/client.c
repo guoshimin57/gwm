@@ -655,8 +655,10 @@ Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
  * 樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
 void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 {
-    if(c && c!=CUR_FOC_CLI(wm) && c->wm_hint && (c->wm_hint->flags & XUrgencyHint))
+    if(have_urgency(wm, desktop_n))
         set_urgency(wm, c, false);
+    if(have_attention(wm, desktop_n))
+        set_attention(wm, c, false);
     update_focus_client_pointer(wm, desktop_n, c);
 
     Desktop *d=wm->desktop[desktop_n-1];
