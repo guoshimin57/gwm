@@ -12,6 +12,7 @@
 #include "gwm.h"
 
 static Client *new_client(WM *wm, Window win);
+static bool should_hide_frame(Client *c);
 static void apply_rules(WM *wm, Client *c);
 static void set_default_desktop_mask(WM *wm, Client *c);
 static void set_default_place_type(WM *wm, Client *c);
@@ -81,14 +82,22 @@ static Client *new_client(WM *wm, Window win)
     c->win_state=get_net_wm_state(wm, win);
     c->owner=win_to_client(wm, get_transient_for(wm, c->win));
     c->subgroup_leader=get_subgroup_leader(c);
-    c->border_w=wm->cfg->border_width;
-    c->titlebar_h=TITLEBAR_HEIGHT(wm);
+    if(!should_hide_frame(c))
+        c->border_w=wm->cfg->border_width, c->titlebar_h=TITLEBAR_HEIGHT(wm);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     update_size_hint(wm, c);
     set_default_place_type(wm, c);
     set_default_desktop_mask(wm, c);
 
     return c;
+}
+
+static bool should_hide_frame(Client *c)
+{
+    Net_wm_win_type t=c->win_type;
+    
+    return t.desktop || t.dock || t.menu || t.dropdown_menu || t.popup_menu
+        || t.splash || t.tooltip || t.notification || t.combo || t.dnd; 
 }
 
 static void set_default_place_type(WM *wm, Client *c)
@@ -242,9 +251,9 @@ void fix_win_pos(WM *wm, Client *c)
 static bool fix_win_pos_by_hint(Client *c)
 {
     XSizeHints *p=&c->size_hint;
-    if((p->flags & USPosition))
+    if((p->flags & USPosition) || (p->flags & PPosition))
         c->x=p->x+c->border_w, c->y=p->y+c->border_w+c->titlebar_h;
-    return (p->flags & USPosition);
+    return (p->flags & USPosition) || (p->flags & PPosition);
 }
 
 static void fix_win_pos_by_prop(WM *wm, Client *c)

@@ -11,7 +11,6 @@
 
 #include "gwm.h"
 
-static bool is_wm_win_type(WM *wm, Window win);
 static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color);
 static void change_prop_for_root_bg(WM *wm, Pixmap pixmap);
 
@@ -194,7 +193,7 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
 {
     XWindowAttributes a;
     bool status=XGetWindowAttributes(wm->display, win, &a);
-    if(!status || a.override_redirect || !is_wm_win_type(wm, win))
+    if(!status || a.override_redirect)
         return false;
 
     if(!before_wm)
@@ -204,12 +203,6 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
     bool result=((p && (*(unsigned long *)p)==IconicState) || a.map_state==IsViewable);
     XFree(p);
     return result;
-}
-
-static bool is_wm_win_type(WM *wm, Window win)
-{
-    Net_wm_win_type type=get_net_wm_win_type(wm, win);
-    return(type.utility || type.dialog || type.normal || type.none);
 }
 
 /* 當存在合成器時，合成器會在根窗口上放置特效，即使用XSetWindowBackground*設置

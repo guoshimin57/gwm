@@ -89,21 +89,21 @@ static void fix_limit_size_hint(XSizeHints *h)
 void fix_win_size_by_hint(Client *c)
 {
     XSizeHints *p=&c->size_hint;
-    long col=get_client_col(c), row=get_client_row(c);
+    long f=p->flags, col=get_client_col(c), row=get_client_row(c);
 
-    c->w = (p->flags & USSize) && p->width ?
+    c->w = (f & USSize || f & PSize) && p->width ?
         p->width : p->base_width+col*p->width_inc;
-    c->h = (p->flags & USSize) && p->height ?
+    c->h = (f & USSize || f & PSize) && p->height ?
         p->height : p->base_height+row*p->height_inc;
-    if((p->flags & PMinSize) && p->min_width)
+    if((f & PMinSize) && p->min_width)
         c->w=MAX((long)c->w, p->min_width);
-    if((p->flags & PMinSize) && p->min_height)
+    if((f & PMinSize) && p->min_height)
         c->h=MAX((long)c->h, p->min_height);
-    if((p->flags & PMaxSize) && p->max_width)
+    if((f & PMaxSize) && p->max_width)
         c->w=MIN((long)c->w, p->max_width);
-    if((p->flags & PMaxSize) && p->max_height)
+    if((f & PMaxSize) && p->max_height)
         c->h=MIN((long)c->h, p->max_height);
-    if( (p->flags & PAspect) && p->min_aspect.x && p->min_aspect.y
+    if( (f & PAspect) && p->min_aspect.x && p->min_aspect.y
         && p->max_aspect.x && p->max_aspect.y)
     {
         float mina=(float)p->min_aspect.x/p->min_aspect.y,
