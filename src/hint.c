@@ -43,38 +43,38 @@ int get_client_row(Client *c)
  */
 void update_size_hint(WM *wm, Client *c)
 {
-    long flags;
-    XSizeHints hint={0};
+    long f=0, flags=0;
+    XSizeHints h={0};
 
-    if(XGetWMNormalHints(wm->display, c->win, &hint, &flags))
+    if(XGetWMNormalHints(wm->display, c->win, &h, &flags))
     {
-        int basew=0, baseh=0, minw=0, minh=0;
-        if(hint.flags & PBaseSize)
-            basew=hint.base_width, baseh=hint.base_height;
-        if(hint.flags & PMinSize)
-            minw=hint.min_width, minh=hint.min_height;
-        if(!basew && minw)
-            hint.base_width=minw;
-        if(!baseh && minh)
-            hint.base_height=minh;
-        if(!minw && basew)
-            hint.min_width=basew;
-        if(!minh && baseh)
-            hint.min_height=baseh;
-        if(!hint.width_inc)
-            hint.width_inc=wm->cfg->resize_inc;
-        if(!hint.height_inc)
-            hint.height_inc=wm->cfg->resize_inc;
-        fix_limit_size_hint(&hint);
-        c->size_hint=hint;
+        /* h.flags只使用最低字節保存了ICCCM之前確立的標志，
+         * flags只使用除最低字節以外的字節保存了ICCCM新增的標志 */
+        f = (h.flags & 0xff) | (flags & ~0xff);
+        if(!(f & PMinSize) && (f & PBaseSize))
+            h.min_width=h.base_width, h.min_height=h.base_height, f|=PMinSize;
+        if(!(f & PBaseSize) && (f & PMinSize))
+            h.base_width=h.min_width, h.base_height=h.min_height, f|=PBaseSize;
+        if(!(f & PResizeInc))
+            h.width_inc=wm->cfg->resize_inc, h.height_inc=wm->cfg->resize_inc;
+        if(!h.width_inc)
+            h.width_inc=wm->cfg->resize_inc;
+        if(!h.height_inc)
+            h.height_inc=wm->cfg->resize_inc;
+        f|=PResizeInc;
+        h.flags=f;
+        fix_limit_size_hint(&h);
+        c->size_hint=h;
     }
-    SET_DEF_VAL(c->size_hint.width_inc, wm->cfg->resize_inc);
-    SET_DEF_VAL(c->size_hint.height_inc, wm->cfg->resize_inc);
 }
 
 // 有的窗口最大、最小尺寸設置不正確，需要修正，如：lxterminal
 static void fix_limit_size_hint(XSizeHints *h)
 {
+    if( h->flags & PMinSize && h->flags & PMaxSize
+        && h->min_width==h->max_width && h->min_height==h->max_height)
+        return;
+
     int minw_incs=base_n_ceil(h->min_width-h->base_width, h->width_inc),
         minh_incs=base_n_ceil(h->min_height-h->base_height, h->height_inc),
         maxw_incs=base_n_floor(h->max_width-h->base_width, h->width_inc),
@@ -96,13 +96,13 @@ void fix_win_size_by_hint(Client *c)
     c->h = (f & USSize || f & PSize) && p->height ?
         p->height : p->base_height+row*p->height_inc;
     if((f & PMinSize) && p->min_width)
-        c->w=MAX((long)c->w, p->min_width);
+        c->w=MAX(c->w, p->min_width);
     if((f & PMinSize) && p->min_height)
-        c->h=MAX((long)c->h, p->min_height);
+        c->h=MAX(c->h, p->min_height);
     if((f & PMaxSize) && p->max_width)
-        c->w=MIN((long)c->w, p->max_width);
+        c->w=MIN(c->w, p->max_width);
     if((f & PMaxSize) && p->max_height)
-        c->h=MIN((long)c->h, p->max_height);
+        c->h=MIN(c->h, p->max_height);
     if( (f & PAspect) && p->min_aspect.x && p->min_aspect.y
         && p->max_aspect.x && p->max_aspect.y)
     {

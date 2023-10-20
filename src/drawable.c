@@ -193,7 +193,7 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
 {
     XWindowAttributes a;
     bool status=XGetWindowAttributes(wm->display, win, &a);
-    if(!status || a.override_redirect)
+    if(!status || a.override_redirect || !is_on_screen(wm, a.x, a.y, a.width, a.height))
         return false;
 
     if(!before_wm)

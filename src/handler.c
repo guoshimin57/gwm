@@ -752,7 +752,11 @@ static void handle_wm_normal_hints_notify(WM *wm, Window win)
 {
     Client *c=win_to_client(wm, win);
     if(c)
+    {
         update_size_hint(wm, c);
+        if(DESKTOP(wm)->cur_layout!=TILE || !is_tile_client(wm, c))
+            fix_win_rect(wm, c), update_layout(wm);
+    }
 }
 
 static void handle_wm_transient_for_notify(WM *wm, Window win)

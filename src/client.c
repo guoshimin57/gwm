@@ -225,13 +225,7 @@ static void set_default_win_rect(WM *wm, Client *c)
         c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 
     if(!is_max_state(c) && !c->win_state.fullscreen)
-    {
-        set_win_rect_by_attr(wm, c);
-        fix_win_size(wm, c);
-        fix_win_pos(wm, c);
-    }
-
-    save_place_info_of_client(c);
+        set_win_rect_by_attr(wm, c), fix_win_rect(wm, c);
 }
 
 static void set_win_rect_by_attr(WM *wm, Client *c)
@@ -240,6 +234,13 @@ static void set_win_rect_by_attr(WM *wm, Client *c)
         .width=wm->workarea.w/4, .height=wm->workarea.h/4};
     XGetWindowAttributes(wm->display, c->win, &a);
     c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
+    save_place_info_of_client(c);
+}
+
+void fix_win_rect(WM *wm, Client *c)
+{
+    fix_win_size(wm, c);
+    fix_win_pos(wm, c);
 }
 
 void fix_win_pos(WM *wm, Client *c)

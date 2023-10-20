@@ -43,7 +43,6 @@
 #define UNUSED(x) ((void)(x))
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
 #define MAX(a, b) ((a)>(b) ? (a) : (b))
-#define SET_DEF_VAL(var, value) ((var) = (var) ? (var) : (value))
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define FUNC_ARG(var, data) (Func_arg){.var=data}

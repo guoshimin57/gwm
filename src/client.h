@@ -40,7 +40,9 @@ struct client_tag // 客戶窗口相關信息
     Imlib_Image image; // 圖標映像
     const char *class_name; // 客戶窗口的程序類型名
     XClassHint class_hint; // 客戶窗口的程序類型特性提示
-    XSizeHints size_hint; // 客戶窗口的窗口尺寸條件特性提示
+    XSizeHints size_hint; // 客戶窗口的正常窗口尺寸條件特性提示，
+                          // 其中size_hint.flags修改爲支持ICCCM，
+                          // 即用XGetWMNormalHints函數的最後一個參數代替
     XWMHints *wm_hint; // 客戶窗口的窗口管理程序條件特性提示
     // 分別爲前、後節點以及主窗口節點、亚組組長節點（同屬一個程序實例的客戶構成一個亞組）
     struct client_tag *prev, *next, *owner, *subgroup_leader;
@@ -49,6 +51,7 @@ struct client_tag // 客戶窗口相關信息
 void add_client(WM *wm, Window win);
 void fix_place_type(WM *wm);
 void set_win_rect_by_frame(Client *c, const Rect *frame);
+void fix_win_rect(WM *wm, Client *c);
 void fix_win_pos(WM *wm, Client *c);
 void create_titlebar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
