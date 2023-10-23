@@ -167,7 +167,7 @@ static const Buttonbind buttonbind[] =
 static const Rule rule[] =
 {
     /* 客戶程序類型        客戶程序名稱 客戶程序的類型別名   窗口放置位置(詳gwm.h)  是否顯示標題欄 是否顯示邊框 桌面掩碼 */
-    {"QQ",                 "qq",                 "QQ",       TILE_LAYER_FIXED,      false,         false,        0},
+    {"QQ",                 "qq",                 "QQ",       FLOAT_LAYER,           false,         false,        0},
     {"explorer.exe",       "explorer.exe",       NULL,       FLOAT_LAYER,           false,         false,        0},
     {"Thunder.exe",        "Thunder.exe",        NULL,       FLOAT_LAYER,           true,          true,         0},
     {"Google-chrome",      "google-chrome",      "chrome",   TILE_LAYER_MAIN,       true,          true,         0},

@@ -410,7 +410,6 @@ static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointe
     if(!fix_move_resize_delta_rect(wm, c, &d, act==MOVE))
         return;
 
-
     move_resize_client(wm, c, &d);
     update_hint_win_for_move_resize(wm, c);
     if(act != MOVE)

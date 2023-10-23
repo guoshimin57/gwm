@@ -368,6 +368,7 @@ Window create_widget_win(WM *wm, Window parent, int x, int y, int w, int h, int 
     attr.border_pixel=border_pixel;
     attr.background_pixel=bg_pixel;
     attr.override_redirect=True;
+
     return XCreateWindow(wm->display, parent, x, y, w, h, border_w, wm->depth,
         InputOutput, wm->visual,
         CWColormap | CWBorderPixel | CWBackPixel | CWOverrideRedirect, &attr);

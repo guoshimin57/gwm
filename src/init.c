@@ -55,8 +55,8 @@ void init_wm(WM *wm)
     init_root_win_background(wm);
     create_cursors(wm);
     XDefineCursor(wm->display, wm->root_win, wm->cursors[NO_OP]);
-    create_taskbar(wm);
     set_workarea(wm);
+    create_taskbar(wm);
     create_run_cmd_entry(wm);
     create_hint_win(wm);
     create_client_menu(wm);
@@ -83,7 +83,7 @@ static void set_visual_info(WM *wm)
 
 static void set_workarea(WM *wm)
 {
-    long sw=wm->screen_width, sh=wm->screen_height, th=wm->taskbar->h;
+    long sw=wm->screen_width, sh=wm->screen_height, th=TASKBAR_HEIGHT(wm);
 
     wm->workarea=(Rect){0, 0, sw, sh};
     if(wm->cfg->show_taskbar)

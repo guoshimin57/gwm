@@ -56,8 +56,8 @@ void add_client(WM *wm, Window win)
     apply_rules(wm, c);
     add_client_node(get_head_for_add_client(wm, c), c);
     fix_place_type(wm);
-    c->old_place_type=c->place_type;
     set_default_win_rect(wm, c);
+    save_place_info_of_client(c);
     set_icon_image(wm, c);
     grab_buttons(wm, c);
     XSelectInput(wm->display, win, EnterWindowMask|PropertyChangeMask);
@@ -94,10 +94,7 @@ static Client *new_client(WM *wm, Window win)
 
 static bool should_hide_frame(Client *c)
 {
-    Net_wm_win_type t=c->win_type;
-    
-    return t.desktop || t.dock || t.menu || t.dropdown_menu || t.popup_menu
-        || t.splash || t.tooltip || t.notification || t.combo || t.dnd; 
+    return !c->win_type.normal && !c->win_type.dialog;
 }
 
 static void set_default_place_type(WM *wm, Client *c)
@@ -149,13 +146,16 @@ static void apply_rules(WM *wm, Client *c)
     {
         if(have_rule(r, c))
         {
-            c->place_type=r->place_type;
-            if(!r->show_border)
-                c->border_w=0;
-            if(!r->show_titlebar)
-                c->titlebar_h=0;
-            if(r->desktop_mask)
-                c->desktop_mask=r->desktop_mask;
+            if(c->win_type.normal || c->win_type.dialog)
+            {
+                c->place_type=r->place_type;
+                if(!r->show_border)
+                    c->border_w=0;
+                if(!r->show_titlebar)
+                    c->titlebar_h=0;
+                if(r->desktop_mask)
+                    c->desktop_mask=r->desktop_mask;
+            }
             if(r->class_alias)
                 c->class_name=r->class_alias;
         }
@@ -234,7 +234,6 @@ static void set_win_rect_by_attr(WM *wm, Client *c)
         .width=wm->workarea.w/4, .height=wm->workarea.h/4};
     XGetWindowAttributes(wm->display, c->win, &a);
     c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
-    save_place_info_of_client(c);
 }
 
 void fix_win_rect(WM *wm, Client *c)
@@ -274,6 +273,9 @@ static void set_transient_win_pos(Client *c)
 
 static void fix_win_pos_by_workarea(WM *wm, Client *c)
 {
+    if(!c->win_type.normal)
+        return;
+
     int w=c->w, h=c->h, bw=c->border_w, bh=c->titlebar_h, wx=wm->workarea.x,
          wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
     if(c->x >= wx+ww-w-bw) // 窗口在工作區右邊出界
@@ -294,6 +296,9 @@ static void fix_win_size(WM *wm, Client *c)
 
 static void fix_win_size_by_workarea(WM *wm, Client *c)
 {
+    if(!c->win_type.normal)
+        return;
+
     long ww=wm->workarea.w, wh=wm->workarea.h, bh=c->titlebar_h, bw=c->border_w;
     if(c->w+2*bw > ww)
         c->w=ww-2*bw;
