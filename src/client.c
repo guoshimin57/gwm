@@ -11,13 +11,14 @@
 
 #include "gwm.h"
 
+
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);
-static void apply_rules(WM *wm, Client *c);
-static void set_default_desktop_mask(WM *wm, Client *c);
-static void set_default_place_type(WM *wm, Client *c);
+static void fix_place_type_for_hint(WM *wm, Client *c);
 static bool should_float(WM *wm, Client *c);
 static bool is_max_state(Client *c);
+static void set_default_desktop_mask(WM *wm, Client *c);
+static void apply_rules(WM *wm, Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static Client *get_head_for_add_client(WM *wm, Client *c);
 static void add_client_node(Client *head, Client *c);
@@ -30,9 +31,9 @@ static void fix_win_pos_by_workarea(WM *wm, Client *c);
 static void fix_win_size(WM *wm, Client *c);
 static void fix_win_size_by_workarea(WM *wm, Client *c);
 static void frame_client(WM *wm, Client *c);
+static Rect get_frame_rect(Client *c);
 static Rect get_button_rect(WM *wm, Client *c, size_t index);
 static void del_client_node(Client *c);
-static Rect get_frame_rect(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
 static bool is_valid_to_normal_layer_sec(WM *wm, Client *c);
@@ -43,8 +44,8 @@ static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type
 static int cmp_client_store_order(WM *wm, Client *c1, Client *c2);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
-static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
+static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_icon_client_head(WM *wm);
 static bool have_same_class_icon_client(WM *wm, Client *c);
 static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h);
@@ -55,7 +56,8 @@ void add_client(WM *wm, Window win)
 
     apply_rules(wm, c);
     add_client_node(get_head_for_add_client(wm, c), c);
-    fix_place_type(wm);
+    fix_place_type_for_hint(wm, c);
+    fix_place_type_for_tile(wm);
     set_default_win_rect(wm, c);
     save_place_info_of_client(c);
     set_icon_image(wm, c);
@@ -82,11 +84,11 @@ static Client *new_client(WM *wm, Window win)
     c->win_state=get_net_wm_state(wm, win);
     c->owner=win_to_client(wm, get_transient_for(wm, c->win));
     c->subgroup_leader=get_subgroup_leader(c);
+    c->place_type=TILE_LAYER_MAIN;
     if(!should_hide_frame(c))
         c->border_w=wm->cfg->border_width, c->titlebar_h=TITLEBAR_HEIGHT(wm);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
     update_size_hint(wm, c);
-    set_default_place_type(wm, c);
     set_default_desktop_mask(wm, c);
 
     return c;
@@ -94,31 +96,8 @@ static Client *new_client(WM *wm, Window win)
 
 static bool should_hide_frame(Client *c)
 {
-    return !c->win_type.normal && !c->win_type.dialog;
-}
-
-static void set_default_place_type(WM *wm, Client *c)
-{
-    if(c->owner)                     c->place_type = c->owner->place_type;
-    else if(c->win_type.desktop)     c->place_type = DESKTOP_LAYER;
-    else if(c->win_state.below)      c->place_type = BELOW_LAYER;
-    else if(c->win_type.dock)        c->place_type = DOCK_LAYER;
-    else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
-    else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
-    else if(should_float(wm, c))     c->place_type = FLOAT_LAYER;
-    else                             c->place_type = TILE_LAYER_MAIN;
-}
-
-static bool should_float(WM *wm, Client *c)
-{
-    Layout layout=DESKTOP(wm)->cur_layout;
-    return layout==STACK || (layout==TILE && is_max_state(c));
-}
-
-static bool is_max_state(Client *c)
-{
-    Net_wm_state *s=&c->win_state;
-    return s->vmax || s->hmax || s->tmax || s->bmax || s->lmax || s->rmax;
+    return (!c->win_type.normal && !c->win_type.dialog)
+        || c->win_state.skip_pager || c->win_state.skip_taskbar;
 }
 
 static void set_default_desktop_mask(WM *wm, Client *c)
@@ -146,16 +125,13 @@ static void apply_rules(WM *wm, Client *c)
     {
         if(have_rule(r, c))
         {
-            if(c->win_type.normal || c->win_type.dialog)
-            {
-                c->place_type=r->place_type;
-                if(!r->show_border)
-                    c->border_w=0;
-                if(!r->show_titlebar)
-                    c->titlebar_h=0;
-                if(r->desktop_mask)
-                    c->desktop_mask=r->desktop_mask;
-            }
+            c->place_type=r->place_type;
+            if(!r->show_border)
+                c->border_w=0;
+            if(!r->show_titlebar)
+                c->titlebar_h=0;
+            if(r->desktop_mask)
+                c->desktop_mask=r->desktop_mask;
             if(r->class_alias)
                 c->class_name=r->class_alias;
         }
@@ -191,7 +167,30 @@ static void add_client_node(Client *head, Client *c)
     c->next->prev=c;
 }
 
-void fix_place_type(WM *wm)
+static void fix_place_type_for_hint(WM *wm, Client *c)
+{
+    if(c->owner)                     c->place_type = c->owner->place_type;
+    else if(c->win_type.desktop)     c->place_type = DESKTOP_LAYER;
+    else if(c->win_state.below)      c->place_type = BELOW_LAYER;
+    else if(c->win_type.dock)        c->place_type = DOCK_LAYER;
+    else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
+    else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
+    else if(should_float(wm, c))     c->place_type = FLOAT_LAYER;
+}
+
+static bool should_float(WM *wm, Client *c)
+{
+    Layout layout=DESKTOP(wm)->cur_layout;
+    return layout==STACK || (layout==TILE && is_max_state(c));
+}
+
+static bool is_max_state(Client *c)
+{
+    Net_wm_state *s=&c->win_state;
+    return s->vmax || s->hmax || s->tmax || s->bmax || s->lmax || s->rmax;
+}
+
+void fix_place_type_for_tile(WM *wm)
 {
     int n=0, m=DESKTOP(wm)->n_main_max;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -251,9 +250,11 @@ void fix_win_pos(WM *wm, Client *c)
 static bool fix_win_pos_by_hint(Client *c)
 {
     XSizeHints *p=&c->size_hint;
-    if((p->flags & USPosition) || (p->flags & PPosition))
+    bool fix=(!c->owner && ((p->flags & USPosition) || (p->flags & PPosition)));
+
+    if(fix)
         c->x=p->x+c->border_w, c->y=p->y+c->border_w+c->titlebar_h;
-    return (p->flags & USPosition) || (p->flags & PPosition);
+    return fix;
 }
 
 static void fix_win_pos_by_prop(WM *wm, Client *c)
@@ -402,7 +403,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     if(c->image)
         imlib_context_set_image(c->image), imlib_free_image();
     del_client_node(c);
-    fix_place_type(wm);
+    fix_place_type_for_tile(wm);
     if(!is_for_quit)
         for(size_t i=1; i<=DESKTOP_N; i++)
             if(is_on_desktop_n(i, c))
@@ -505,7 +506,7 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
     {
         set_place_type_for_subgroup(from->subgroup_leader,
             to ? to->place_type : type);
-        fix_place_type(wm);
+        fix_place_type_for_tile(wm);
         raise_client(wm, from);
         update_layout(wm);
     }
@@ -670,10 +671,6 @@ Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
  * 樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
 void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 {
-    if(have_urgency(wm, desktop_n))
-        set_urgency(wm, c, false);
-    if(have_attention(wm, desktop_n))
-        set_attention(wm, c, false);
     update_focus_client_pointer(wm, desktop_n, c);
 
     Desktop *d=wm->desktop[desktop_n-1];
@@ -684,7 +681,13 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
         if(pc->win == wm->root_win)
             XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
         else if(!pc->icon)
+        {
             set_input_focus(wm, pc->wm_hint, pc->win);
+            if(have_urgency(wm, desktop_n))
+                set_urgency(wm, pc, false);
+            if(have_attention(wm, desktop_n))
+                set_attention(wm, pc, false);
+        }
     }
     update_client_bg(wm, desktop_n, pc);
     update_client_bg(wm, desktop_n, d->prev_focus_client);

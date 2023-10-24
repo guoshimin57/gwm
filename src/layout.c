@@ -24,7 +24,7 @@ void update_layout(WM *wm)
     if(wm->clients == wm->clients->next)
         return;
 
-    fix_place_type(wm);
+    fix_place_type_for_tile(wm);
     switch(DESKTOP(wm)->cur_layout)
     {
         case FULL: set_full_layout(wm); break;
@@ -117,7 +117,7 @@ static void set_rect_of_tile_win_for_tiling(WM *wm)
     }
 }
 
-/* 平鋪布局模式的非臨時窗口位置其主窗之上並居中 */
+/* 平鋪布局模式的非臨時窗口位於其主窗之上並居中 */
 static void set_rect_of_transient_win_for_tiling(WM *wm)
 {
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
