@@ -97,7 +97,7 @@ void fix_win_size_by_hint(Client *c)
         c->w=p->base_width+col*p->width_inc;
     if((f & USSize || f & PSize) && p->height)
         c->h=p->height;
-    else if((f & PBaseSize) && p->height)
+    else if((f & PBaseSize) && p->base_height)
         c->h=p->base_height+row*p->height_inc;
     if((f & PMinSize) && p->min_width)
         c->w=MAX(c->w, p->min_width);
