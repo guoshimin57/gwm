@@ -87,12 +87,10 @@ void exec(WM *wm, XEvent *e, Func_arg arg)
 
 void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
 {
-    Layout lay=DESKTOP(wm)->cur_layout;
-    Client *c=CUR_FOC_CLI(wm);
-
-    if(lay!=TILE && lay!=STACK && (lay!=FULL || c->owner))
+    if(DESKTOP(wm)->cur_layout == PREVIEW)
         return;
 
+    Client *c=CUR_FOC_CLI(wm);
     Direction dir=arg.direction;
     bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
     Delta_rect d=get_key_delta_rect(c, dir);
@@ -379,7 +377,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
 
-    if(layout==FULL || layout==PREVIEW || !grab_pointer(wm, wm->root_win, act))
+    if(layout==PREVIEW || !grab_pointer(wm, wm->root_win, act))
         return;
 
     XEvent ev;

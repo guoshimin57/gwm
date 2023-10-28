@@ -34,7 +34,6 @@
  */
 #define WM_BUTTONBIND                                                                                       \
     /* 構件類型        功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數 */                      \
-    {FULL_BUTTON,               0, Button1,  change_layout,              {.layout=FULL}},                   \
     {PREVIEW_BUTTON,            0, Button1,  change_layout,              {.layout=PREVIEW}},                \
     {STACK_BUTTON,              0, Button1,  change_layout,              {.layout=STACK}},                  \
     {TILE_BUTTON,               0, Button1,  change_layout,              {.layout=TILE}},                   \

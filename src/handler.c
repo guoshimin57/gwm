@@ -51,6 +51,8 @@ static void handle_expose(WM *wm, XEvent *e);
 static void update_title_logo_fg(WM *wm, Client *c);
 static void update_title_area_fg(WM *wm, Client *c);
 static void update_title_button_fg(WM *wm, Client *c, size_t index);
+static void handle_focus_in(WM *wm, XEvent *e);
+static void handle_focus_out(WM *wm, XEvent *e);
 static void handle_key_press(WM *wm, XEvent *e);
 static void key_run_cmd(WM *wm, XKeyEvent *e);
 static void handle_leave_notify(WM *wm, XEvent *e);
@@ -84,6 +86,8 @@ void reg_event_handlers(WM *wm)
     wm->event_handlers[ConfigureRequest] = handle_config_request;
     wm->event_handlers[EnterNotify]      = handle_enter_notify;
     wm->event_handlers[Expose]           = handle_expose;
+    wm->event_handlers[FocusIn]          = handle_focus_in;
+    wm->event_handlers[FocusOut]         = handle_focus_out;
     wm->event_handlers[KeyPress]         = handle_key_press;
     wm->event_handlers[LeaveNotify]      = handle_leave_notify;
     wm->event_handlers[MapRequest]       = handle_map_request;
@@ -295,7 +299,7 @@ static void change_net_wm_state_for_lmax(WM *wm, Client *c, long act)
     bool add=SHOULD_ADD_STATE(c, act, lmax);
 
     if(add)
-        max_client(wm, c, LEFT_MAX), c->win_state.lmax=1;
+        max_client(wm, c, LEFT_MAX);
     else
         restore_client(wm, c);
     c->win_state.lmax=add;
@@ -306,7 +310,7 @@ static void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
     bool add=SHOULD_ADD_STATE(c, act, rmax);
 
     if(add)
-        max_client(wm, c, RIGHT_MAX), c->win_state.rmax=1;
+        max_client(wm, c, RIGHT_MAX);
     else
         restore_client(wm, c);
     c->win_state.rmax=add;
@@ -341,11 +345,19 @@ static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
         deiconify(wm, c->icon ? c : NULL);
 }
 
-/* 暫不支持單獨窗口全屏 */
 static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
 {
-    UNUSED(wm);
-    c->win_state.fullscreen=SHOULD_ADD_STATE(c, act, fullscreen);
+    bool add=SHOULD_ADD_STATE(c, act, fullscreen);
+
+    if(add)
+    {
+        save_place_info_of_client(c);
+        c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
+        move_client(wm, c, NULL, FULLSCREEN_LAYER);
+    }
+    else
+        restore_client(wm, c);
+    c->win_state.fullscreen=add;
 }
 
 static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
@@ -594,6 +606,23 @@ static void update_title_button_fg(WM *wm, Client *c, size_t index)
     draw_string(wm, c->buttons[index], wm->cfg->title_button_text[index], &f);
 }
 
+static void handle_focus_in(WM *wm, XEvent *e)
+{
+    Client *c=win_to_client(wm, e->xfocus.window);
+    if(c && c->win_state.fullscreen && c->place_type!=FULLSCREEN_LAYER)
+    {
+        c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
+        move_client(wm, c, NULL, FULLSCREEN_LAYER);
+    }
+}
+
+static void handle_focus_out(WM *wm, XEvent *e)
+{
+    Client *c=win_to_client(wm, e->xfocus.window);
+    if(c && c->win_state.fullscreen && c->place_type==FULLSCREEN_LAYER)
+        move_client(wm, c, NULL, c->old_place_type);
+}
+
 static void handle_key_press(WM *wm, XEvent *e)
 {
     if(e->xkey.window == wm->run_cmd->win)
@@ -754,7 +783,8 @@ static void handle_wm_normal_hints_notify(WM *wm, Window win)
     if(c)
     {
         update_size_hint(wm, c);
-        if(DESKTOP(wm)->cur_layout!=TILE || !is_tile_client(wm, c))
+        if( DESKTOP(wm)->cur_layout!=TILE
+            || (c->place_type!=FULLSCREEN_LAYER && !is_tile_client(wm, c)))
             fix_win_rect(wm, c), update_layout(wm);
     }
 }

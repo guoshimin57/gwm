@@ -11,7 +11,6 @@
 
 #include "gwm.h"
 
-static void set_full_layout(WM *wm);
 static void set_preview_layout(WM *wm);
 static void set_rect_of_main_win_for_preview(WM *wm);
 static void set_tile_layout(WM *wm);
@@ -27,7 +26,6 @@ void update_layout(WM *wm)
     fix_place_type_for_tile(wm);
     switch(DESKTOP(wm)->cur_layout)
     {
-        case FULL: set_full_layout(wm); break;
         case PREVIEW: set_preview_layout(wm); break;
         case STACK: break;
         case TILE: set_tile_layout(wm); break;
@@ -35,17 +33,6 @@ void update_layout(WM *wm)
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(is_on_cur_desktop(wm, c))
             move_resize_client(wm, c, NULL);
-    if(DESKTOP(wm)->cur_layout == FULL)
-        XUnmapWindow(wm->display, wm->taskbar->win);
-    else if(DESKTOP(wm)->prev_layout == FULL)
-        XMapWindow(wm->display, wm->taskbar->win);
-}
-
-static void set_full_layout(WM *wm)
-{
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(wm, c) && !c->owner && !c->icon)
-            c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
 }
 
 static void set_preview_layout(WM *wm)

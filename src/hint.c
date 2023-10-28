@@ -296,11 +296,9 @@ static void set_net_supporting_wm_check(WM *wm)
         wm->ewmh_atom[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
         PropModeReplace, (unsigned char *)&wm->wm_check_win, 1);
 
-    /* FIXME: 此項設置會導致firefox不能全屏顯示，也許是因爲gwm不支持真正的全屏，確切原因未明
 	XChangeProperty(wm->display, wm->wm_check_win,
         wm->ewmh_atom[NET_SUPPORTING_WM_CHECK], XA_WINDOW, 32,
         PropModeReplace, (unsigned char *)&wm->wm_check_win, 1);
-        */
 
 	XChangeProperty(wm->display, wm->wm_check_win,
         wm->ewmh_atom[NET_WM_NAME], wm->utf8, 8,

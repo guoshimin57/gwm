@@ -354,7 +354,7 @@ static Rect get_frame_rect(Client *c)
 
 Rect get_title_area_rect(WM *wm, Client *c)
 {
-    int buttons_n[]={[FULL]=c->owner ? 1 : 0, [PREVIEW]=1, [STACK]=3, [TILE]=7},
+    int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7},
         n=buttons_n[DESKTOP(wm)->cur_layout], size=TITLEBAR_HEIGHT(wm);
     return (Rect){size, 0, c->w-wm->cfg->title_button_width*n-size, size};
 }

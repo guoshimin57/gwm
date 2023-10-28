@@ -99,7 +99,6 @@ static const Keybind keybind[] =
     {WM_KEY,        XK_Tab,       next_client,                 {0}},
     {WM_SKEY,       XK_Tab,       prev_client,                 {0}},
     {WM_KEY,        XK_c,         close_client,                {0}},
-    {WM_KEY,        XK_f,         change_layout,               {.layout=FULL}},
     {WM_KEY,        XK_p,         change_layout,               {.layout=PREVIEW}},
     {WM_KEY,        XK_s,         change_layout,               {.layout=STACK}},
     {WM_KEY,        XK_t,         change_layout,               {.layout=TILE}},
@@ -461,7 +460,6 @@ static void config_taskbar_button_text(WM *wm)
     SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP1_BUTTON, "1");
     SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP2_BUTTON, "2");
     SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP3_BUTTON, "3");
-    SET_TASKBAR_BUTTON_TEXT(wm, FULL_BUTTON,     "□");
     SET_TASKBAR_BUTTON_TEXT(wm, PREVIEW_BUTTON,  "▦");
     SET_TASKBAR_BUTTON_TEXT(wm, STACK_BUTTON,    "▣");
     SET_TASKBAR_BUTTON_TEXT(wm, TILE_BUTTON,     "▥");
@@ -551,7 +549,6 @@ static void config_tooltip(WM *wm)
     tooltip[DESKTOP1_BUTTON] = _("切換到虛擬桌面1");
     tooltip[DESKTOP2_BUTTON] = _("切換到虛擬桌面2");
     tooltip[DESKTOP3_BUTTON] = _("切換到虛擬桌面3");
-    tooltip[FULL_BUTTON]     = _("切換到全屏模式");
     tooltip[PREVIEW_BUTTON]  = _("切換到預覽模式");
     tooltip[STACK_BUTTON]    = _("切換到堆疊模式");
     tooltip[TILE_BUTTON]     = _("切換到平鋪模式");
