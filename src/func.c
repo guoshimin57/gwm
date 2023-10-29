@@ -200,20 +200,20 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
             close_win(wm, c->win);
 }
 
-/* 取得窗口疊次序意義上的下一個客戶窗口 */
+/* 取得存儲次序上在當前客戶之前的客戶（或其亞組長）。因使用頭插法存儲客戶，
+ * 故若兩者同放置類型的話，該客戶在時間上比當前客戶出現得遲(next) */
 void next_client(WM *wm, XEvent *e, Func_arg arg)
-{   /* 允許切換至根窗口 */
+{
     UNUSED(e), UNUSED(arg);
-    Client *c=get_prev_client(wm, CUR_FOC_CLI(wm));
-    focus_client(wm, wm->cur_desktop, c ? c : wm->clients);
+    focus_client(wm, wm->cur_desktop, get_prev_client(wm, CUR_FOC_CLI(wm)));
 }
 
-/* 取得窗口疊次序意義上的上一個客戶窗口 */
+/* 取得存儲次序上在當前客戶（或其亞組長）之後的客戶。因使用頭插法存儲客戶，
+ * 故若兩者同放置類型的話，該客戶在時間上比當前客戶出現得早(prev) */
 void prev_client(WM *wm, XEvent *e, Func_arg arg)
-{   /* 允許切換至根窗口 */
+{
     UNUSED(e), UNUSED(arg);
-    Client *c=get_next_client(wm, CUR_FOC_CLI(wm));
-    focus_client(wm, wm->cur_desktop, c ? c : wm->clients);
+    focus_client(wm, wm->cur_desktop, get_next_client(wm, CUR_FOC_CLI(wm)));
 }
 
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)

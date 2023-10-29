@@ -332,7 +332,14 @@ void set_attention(WM *wm, Client *c, bool attent)
 
 void set_input_focus(WM *wm, XWMHints *hint, Window win)
 {
-    if(!hint || ((hint->flags & InputHint) && hint->input)) // 不抗拒鍵盤輸入
+    if(has_focus_hint(hint))
         XSetInputFocus(wm->display, win, RevertToPointerRoot, CurrentTime);
-    send_event(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
+    if(has_spec_wm_protocol(wm, win, wm->icccm_atoms[WM_TAKE_FOCUS]))
+        send_client_msg(wm, wm->icccm_atoms[WM_TAKE_FOCUS], win);
+}
+
+bool has_focus_hint(XWMHints *hint)
+{
+    // 若未設置hint，則視爲暗示可聚焦
+    return !hint || ((hint->flags & InputHint) && hint->input);
 }

@@ -117,20 +117,11 @@ void copy_prop(WM *wm, Window dest, Window src)
     XFree(p);
 }
 
-bool send_event(WM *wm, Atom protocol, Window win)
+bool send_client_msg(WM *wm, Atom protocol, Window win)
 {
-	int i, n;
-	Atom *protocols;
-
-	if(!XGetWMProtocols(wm->display, win, &protocols, &n))
-        return false;
-
-    XEvent event;
-    for(i=0; i<n && protocols[i]!=protocol; i++)
-        ;
-    XFree(protocols);
-    if(i < n)
+    if(has_spec_wm_protocol(wm, win, protocol))
     {
+        XEvent event;
         event.type=ClientMessage;
         event.xclient.window=win;
         event.xclient.message_type=wm->icccm_atoms[WM_PROTOCOLS];
@@ -138,7 +129,19 @@ bool send_event(WM *wm, Atom protocol, Window win)
         event.xclient.data.l[0]=protocol;
         event.xclient.data.l[1]=CurrentTime;
         XSendEvent(wm->display, win, False, NoEventMask, &event);
+        return true;
     }
+    return false;
+}
+
+bool has_spec_wm_protocol(WM *wm, Window win, Atom protocol)
+{
+	int i, n;
+	Atom *protocols=NULL;
+	if(XGetWMProtocols(wm->display, win, &protocols, &n))
+        for(i=0; i<n && protocols[i]!=protocol; i++)
+            ;
+    XFree(protocols);
     return i<n;
 }
 
@@ -357,8 +360,9 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
 
 void close_win(WM *wm, Window win)
 {
-    if(!send_event(wm, wm->icccm_atoms[WM_DELETE_WINDOW], win))
-        XDestroyWindow(wm->display, win);
+    if(send_client_msg(wm, wm->icccm_atoms[WM_DELETE_WINDOW], win))
+        return;
+    XKillClient(wm->display, win);
 }
 
 Window create_widget_win(WM *wm, Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)

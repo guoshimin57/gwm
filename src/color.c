@@ -116,6 +116,7 @@ void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
         XSetWindowBorder(wm->display, c->frame, color);
     if(c->titlebar_h)
     {
+        cur=(cur && is_focusable(wm, c));
         color=NCUR_WIDGET_COLOR(wm, cur, TITLEBAR);
         update_win_bg(wm, c->logo, color, 0);
         update_win_bg(wm, c->title_area, color, 0);

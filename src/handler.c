@@ -703,7 +703,7 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
     Client *c=win_to_client(wm, ue->window);
 
     if( c && ue->window==c->win
-        && (ue->send_event || ue->event==c->frame || ue->event==c->win))
+        && (ue->send_event|| ue->event==c->frame || ue->event==c->win))
         del_client(wm, c, false);
 }
 

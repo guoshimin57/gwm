@@ -94,5 +94,6 @@ bool is_tile_client(WM *wm, Client *c);
 void max_client(WM *wm, Client *c, Max_way max_way);
 Place_type get_dest_place_type_for_move(WM *wm, Client *c);
 bool is_win_state_max(Client *c);
+bool is_focusable(WM *wm, Client *c);
 
 #endif

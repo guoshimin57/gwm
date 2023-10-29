@@ -26,5 +26,6 @@ void set_net_showing_desktop(WM *wm, bool show);
 void set_urgency(WM *wm, Client *c, bool urg);
 void set_attention(WM *wm, Client *c, bool attent);
 void set_input_focus(WM *wm, XWMHints *hint, Window win);
+bool has_focus_hint(XWMHints *hint);
 
 #endif

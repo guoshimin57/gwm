@@ -42,7 +42,7 @@ static void add_subgroup(Client *head, Client *subgroup_leader);
 static void del_subgroup(Client *subgroup_leader);
 static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
 static int cmp_client_store_order(WM *wm, Client *c1, Client *c2);
-static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
+static bool update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
@@ -96,7 +96,7 @@ static Client *new_client(WM *wm, Window win)
 
 static bool should_hide_frame(Client *c)
 {
-    return (!c->win_type.normal && !c->win_type.dialog)
+    return (!c->win_type.none && !c->win_type.normal && !c->win_type.dialog)
         || c->win_state.skip_pager || c->win_state.skip_taskbar;
 }
 
@@ -486,18 +486,26 @@ static Window get_top_win(WM *wm, Client *c)
 Client *get_next_client(WM *wm, Client *c)
 {
     for(Client *m=NULL, *p=c->next; p!=wm->clients; p=p->next)
+    {
         if(is_on_cur_desktop(wm, p))
-            return (m=get_top_transient_client(p->subgroup_leader, true)) ? m : p;
-    return NULL;
+        {
+            m=get_top_transient_client(p->subgroup_leader, true);
+            if(!m || p==m)
+                return p;
+            else
+                return p->subgroup_leader->next;
+        }
+    }
+    return wm->clients;
 }
 
 /* 當c->win所在的亞組存在模態窗口時，跳過非模態窗口 */
 Client *get_prev_client(WM *wm, Client *c)
 {
-    for(Client *m=NULL, *p=c->prev; p!=wm->clients; p=p->prev)
+    for(Client *m=NULL, *p=c->prev; p!=c; p=p->prev)
         if(is_on_cur_desktop(wm, p))
             return (m=get_top_transient_client(p->subgroup_leader, true)) ? m : p;
-    return NULL;
+    return wm->clients;
 }
 
 void move_client(WM *wm, Client *from, Client *to, Place_type type)
@@ -660,7 +668,7 @@ Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
     Client *result=NULL, *ld=subgroup_leader;
 
     for(Client *c=ld; ld && c->subgroup_leader==ld; c=c->prev)
-        if((only_modal && c->win_state.modal) || c->owner)
+        if((only_modal && c->win_state.modal) || (!only_modal && c->owner))
             result=c;
 
     return result;
@@ -671,10 +679,11 @@ Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
  * 樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
 void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 {
-    update_focus_client_pointer(wm, desktop_n, c);
+    if(!update_focus_client_pointer(wm, desktop_n, c))
+        return;
 
     Desktop *d=wm->desktop[desktop_n-1];
-    Client *pc=d->cur_focus_client;
+    Client *pc=d->cur_focus_client, *pp=d->prev_focus_client;
 
     if(desktop_n == wm->cur_desktop)
     {
@@ -690,43 +699,53 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
         }
     }
     update_client_bg(wm, desktop_n, pc);
-    update_client_bg(wm, desktop_n, d->prev_focus_client);
+    update_client_bg(wm, desktop_n, pp);
     raise_client(wm, pc);
     set_net_active_window(wm);
 }
 
-static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
+static bool update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
 {
     Desktop *d=wm->desktop[desktop_n-1];
     Client *p=NULL, **pp=&d->prev_focus_client, **pc=&d->cur_focus_client;
+    bool update_pp=false, update_pc=false;
 
     if(!c)  // 當某個client在desktop_n中變得不可見時，即既有可能被刪除了，
     {       // 也可能是被縮微化了，還有可能是移動到其他虛擬桌面了。
-        if(is_map_client(wm, desktop_n, *pc)) // 非當前窗口被非wm手段關閉（如kill）
-            return;
-        p = (*pc)->owner ? (*pc)->owner : *pp;
-        if(is_map_client(wm, desktop_n, p))
-            *pc=p;
-        else if((p=get_prev_map_client(wm, desktop_n, *pp)))
-            *pc=p;
-        else if((p=get_next_map_client(wm, desktop_n, *pp)))
-            *pc=p;
-        else
-            *pc=wm->clients;
+        if(!is_map_client(wm, desktop_n, *pc))
+        {
+            p = (*pc)->owner ? (*pc)->owner : *pp;
+            if(is_map_client(wm, desktop_n, p))
+                *pc=p;
+            else if((p=get_prev_map_client(wm, desktop_n, *pp)))
+                *pc=p;
+            else if((p=get_next_map_client(wm, desktop_n, *pp)))
+                *pc=p;
+            else
+                *pc=wm->clients;
+            update_pc=true;
+        }
 
-        if(is_map_client(wm, desktop_n, *pp))
-           return;
-        else if(is_map_client(wm, desktop_n, (*pp)->owner))
-            *pp=(*pp)->owner;
-        else if((p=get_prev_map_client(wm, desktop_n, *pp)))
-            *pp=p;
-        else if((p=get_next_map_client(wm, desktop_n, *pp)))
-            *pp=p;
-        else
-            *pp=wm->clients;
+        if(!is_map_client(wm, desktop_n, *pp))
+        {
+            if(is_map_client(wm, desktop_n, (*pp)->owner))
+                *pp=(*pp)->owner;
+            else if((p=get_prev_map_client(wm, desktop_n, *pp)))
+                *pp=p;
+            else if((p=get_next_map_client(wm, desktop_n, *pp)))
+                *pp=p;
+            else
+                *pp=wm->clients;
+            update_pp=true;
+        }
     }
     else if(c != *pc)
-        *pp=*pc, *pc=((p=get_top_transient_client(c->subgroup_leader, true)) ? p : c);
+    {
+        p=get_top_transient_client(c->subgroup_leader, true);
+        *pp=*pc, *pc=(p ? p : c), update_pc=update_pp=true;
+    }
+
+    return update_pc || update_pp;
 }
 
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c)
@@ -1033,4 +1052,10 @@ bool is_win_state_max(Client *c)
 {
     return c->win_state.vmax || c->win_state.hmax || c->win_state.tmax
         || c->win_state.bmax || c->win_state.lmax || c->win_state.rmax;
+}
+
+bool is_focusable(WM *wm, Client *c)
+{
+    return has_focus_hint(c->wm_hint)
+        || has_spec_wm_protocol(wm, c->win, wm->icccm_atoms[WM_TAKE_FOCUS]);
 }
