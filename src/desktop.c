@@ -44,7 +44,7 @@ void focus_desktop_n(WM *wm, unsigned int n)
         return;
 
     wm->cur_desktop=n;
-    set_net_current_desktop(wm);
+    set_net_current_desktop(wm->display, wm->root_win, wm->cur_desktop-1);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         if(is_on_cur_desktop(wm, c))

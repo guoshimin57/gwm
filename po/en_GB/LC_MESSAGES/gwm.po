@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.30\n"
+"Project-Id-Version: gwm 2.7.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-10-28 22:38+0800\n"
+"POT-Creation-Date: 2023-11-04 15:50+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -278,12 +278,12 @@ msgstr "The following are the window types of the %lx windows (i.e. _NET_WM_WIND
 msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
 msgstr "The following are the window states (i.e. _NET_WM_STATE) of the %lx window:\n"
 
-#: src/debug.c:121
+#: src/debug.c:102
 #, c-format
 msgid "以下是%lx窗口的位置信息：\n"
 msgstr "The following are place info of the %lx window:\n"
 
-#: src/debug.c:128
+#: src/debug.c:109
 #, fuzzy, c-format
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "The following is a list of client windows and layer reference windows arranged from bottom to top:\n"
@@ -302,23 +302,23 @@ msgstr "Error: The corresponding modifier key for the specified key symbol could
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "Error: The key symbol specified does not have a corresponding key code!\n"
 
-#: src/gwm.c:35
+#: src/gwm.c:49
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "SIGCHLD signal handler function cannot be installed"
 
-#: src/gwm.c:37
+#: src/gwm.c:51
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "SIGINT signal handler cannot be installed"
 
-#: src/gwm.c:39
+#: src/gwm.c:53
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "SIGTERM signal handler cannot be installed"
 
-#: src/gwm.c:41
+#: src/gwm.c:55
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "SIGQUIT signal handler cannot be installed"
 
-#: src/gwm.c:43
+#: src/gwm.c:57
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 
@@ -327,7 +327,7 @@ msgstr "SIGHUP signal handler cannot be installed"
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: src/init.c:175
+#: src/init.c:169
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 

@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.6.30\n"
+"Project-Id-Version: gwm 2.7.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-10-28 22:38+0800\n"
+"POT-Creation-Date: 2023-11-04 15:50+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -278,12 +278,12 @@ msgstr "以下是%lx窗口窗口类型(即_NET_WM_WINDOW_TYPE)：\n"
 msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
 msgstr "以下是%lx窗口窗口状态(即_NET_WM_STATE)：\n"
 
-#: src/debug.c:121
+#: src/debug.c:102
 #, c-format
 msgid "以下是%lx窗口的位置信息：\n"
 msgstr "以下是%lx窗口的位置窗口：\n"
 
-#: src/debug.c:128
+#: src/debug.c:109
 #, fuzzy, c-format
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "以下是自底向顶排列的客户窗口和分层参照窗口列表：\n"
@@ -302,23 +302,23 @@ msgstr "错误：找不到指定的键符号相应的功能转换键！\n"
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "错误：指定的键符号不存在对应的键代码！\n"
 
-#: src/gwm.c:35
+#: src/gwm.c:49
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "不能安装SIGCHLD信号处理函数"
 
-#: src/gwm.c:37
+#: src/gwm.c:51
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "不能安装SIGINT信号处理函数"
 
-#: src/gwm.c:39
+#: src/gwm.c:53
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "不能安装SIGTERM信号处理函数"
 
-#: src/gwm.c:41
+#: src/gwm.c:55
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "不能安装SIGQUIT信号处理函数"
 
-#: src/gwm.c:43
+#: src/gwm.c:57
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 
@@ -327,7 +327,7 @@ msgstr "不能安装SIGHUP信号处理函数"
 msgid "錯誤: 不能設置輸入法"
 msgstr "错误： 不能设置输入法"
 
-#: src/init.c:175
+#: src/init.c:169
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 

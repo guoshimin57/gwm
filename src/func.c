@@ -189,7 +189,7 @@ void close_client(WM *wm, XEvent *e, Func_arg arg)
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
     Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
-        close_win(wm, c->win);
+        close_win(wm->display, c->win);
 }
 
 void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
@@ -197,7 +197,7 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(e), UNUSED(arg);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(is_on_cur_desktop(wm, c))
-            close_win(wm, c->win);
+            close_win(wm->display, c->win);
 }
 
 /* 取得存儲次序上在當前客戶之前的客戶（或其亞組長）。因使用頭插法存儲客戶，
@@ -328,7 +328,7 @@ void max_restore_client(WM *wm, XEvent *e, Func_arg arg)
         max_client(wm, c, FULL_MAX);
         c->win_state.vmax=c->win_state.hmax=1;
     }
-    update_net_wm_state(wm, c);
+    update_net_wm_state(wm->display, c->win, c->win_state);
 }
 
 void maximize_client(WM *wm, XEvent *e, Func_arg arg)
@@ -350,7 +350,7 @@ void maximize_client(WM *wm, XEvent *e, Func_arg arg)
         case RIGHT_MAX:  c->win_state.rmax=1; break;
         case FULL_MAX:   c->win_state.vmax=c->win_state.hmax=1; break;
     }
-    update_net_wm_state(wm, c);
+    update_net_wm_state(wm->display, c->win, c->win_state);
 }
 
 void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg)
@@ -445,7 +445,7 @@ static bool fix_delta_rect_for_nonprefer_size(Client *c, XSizeHints *hint, Delta
         return false;
 
     int ox=c->x, oy=c->y, ow=c->w, oh=c->h;
-    fix_win_size_by_hint(c);
+    fix_win_size_by_hint(&c->size_hint, &c->w, &c->h);
     d->dx=c->x-ox, d->dy=c->y-oy, d->dw=c->w-ow, d->dh=c->h-oh;
     c->x=ox, c->y=oy, c->w=ow, c->h=oh;
     return true;
@@ -493,7 +493,8 @@ static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, 
 static void update_hint_win_for_move_resize(WM *wm, Client *c)
 {
     char str[BUFSIZ];
-    long col=get_client_col(c), row=get_client_row(c);
+    long col=get_win_col(c->w, &c->size_hint),
+         row=get_win_row(c->h, &c->size_hint);
 
     sprintf(str, "(%d, %d) %ldx%ld", c->x, c->y, col, row);
     update_hint_win_for_info(wm, None, str);
@@ -621,7 +622,7 @@ void toggle_showing_desktop_mode(WM *wm, bool show)
         iconify_all_clients(wm);
     else
         deiconify_all_clients(wm);
-    set_net_showing_desktop(wm, show);
+    set_net_showing_desktop(wm->display, wm->root_win, show);
 }
 
 void change_default_place_type(WM *wm, XEvent *e, Func_arg arg)
@@ -752,7 +753,7 @@ void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
         }
     }
     update_win_bg(wm, wm->root_win, color, pixmap);
-    if(pixmap && !have_compositor(wm))
+    if(pixmap && !have_compositor(wm->display, wm->screen))
         XFreePixmap(wm->display, pixmap);
 }
 
@@ -785,7 +786,7 @@ void switch_color_theme(WM *wm, XEvent *e, Func_arg arg)
 void toggle_compositor(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    Window win=get_compositor(wm);
+    Window win=get_compositor(wm->display, wm->screen);
 
     if(win)
         XKillClient(wm->display, win);

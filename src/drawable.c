@@ -14,77 +14,13 @@
 static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color);
 static void change_prop_for_root_bg(WM *wm, Pixmap pixmap);
 
-Window get_transient_for(WM *wm, Window w)
-{
-    Window pw;
-    return XGetTransientForHint(wm->display, w, &pw) ? pw : None;
-}
-
-Atom *get_atom_props(WM *wm, Window win, Atom prop, unsigned long *n)
-{
-    return (Atom *)get_prop(wm, win, prop, n);
-}
-
-Atom get_atom_prop(WM *wm, Window win, Atom prop)
-{
-    Atom *p=get_atom_props(wm, win, prop, NULL), result = p ? *p : None;
-    XFree(p);
-    return result;
-}
-
-/* 調用此函數時需要注意：若返回的特性數據的實際格式是32位的話，
- * 則特性數據存儲於long型數組中。當long是64位時，前4字節會會填充0。 */
-unsigned char *get_prop(WM *wm, Window win, Atom prop, unsigned long *n)
-{
-    int fmt;
-    unsigned long nitems=0, *m=(n ? n : &nitems), rest;
-    unsigned char *p=NULL;
-    Atom type;
-
-    /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
-     * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
-    if( XGetWindowProperty(wm->display, win, prop, 0, ~0L, False,
-        AnyPropertyType, &type, &fmt, m, &rest, &p)==Success && p && *m)
-        return p;
-    return NULL;
-}
-
-char *get_text_prop(WM *wm, Window win, Atom atom)
-{
-    int n;
-    char **list=NULL, *result=NULL;
-    XTextProperty name;
-
-    if(!XGetTextProperty(wm->display, win, &name, atom))
-        return NULL;
-
-    if(name.encoding == XA_STRING)
-        result=copy_string((char *)name.value);
-    else if(Xutf8TextPropertyToTextList(wm->display, &name, &list, &n) == Success
-        && n && *list) // 與手冊不太一致的是，返回Success並不一定真的成功，狗血！
-        result=copy_string(*list), XFreeStringList(list);
-    XFree(name.value);
-    return result;
-}
-
-void set_ewmh_atom_to_atom(WM *wm, Window win, Ewmh_atom atom, Ewmh_atom value)
-{
-    XChangeProperty(wm->display, win, wm->ewmh_atom[atom], XA_ATOM, 32,
-        PropModeReplace, (unsigned char *)&wm->ewmh_atom[value], 1);
-}
-
-void set_net_wm_win_type(WM *wm, Window win, Ewmh_atom value)
-{
-    set_ewmh_atom_to_atom(wm, win, NET_WM_WINDOW_TYPE, value);
-}
-
 char *get_title_text(WM *wm, Window win, const char *fallback)
 {
     char *s=NULL;
 
-    if((s=get_text_prop(wm, win, wm->ewmh_atom[NET_WM_NAME])) && strlen(s))
+    if((s=get_net_wm_name(wm->display, win)) && strlen(s))
         return s;
-    if((s=get_text_prop(wm, win, XA_WM_NAME)) && strlen(s))
+    if((s=get_wm_name(wm->display, win)) && strlen(s))
         return s;
     return copy_string(fallback);
 }
@@ -93,56 +29,11 @@ char *get_icon_title_text(WM *wm, Window win, const char *fallback)
 {
     char *s=NULL;
 
-    if((s=get_text_prop(wm, win, wm->ewmh_atom[NET_WM_ICON_NAME])) && strlen(s))
+    if((s=get_net_wm_icon_name(wm->display, win)) && strlen(s))
         return s;
-    if((s=get_text_prop(wm, win, XA_WM_ICON_NAME)) && strlen(s))
+    if((s=get_wm_icon_name(wm->display, win)) && strlen(s))
         return s;
     return copy_string(fallback);
-}
-
-void copy_prop(WM *wm, Window dest, Window src)
-{
-    int i=0, n=0, fmt=0;
-    Atom type, *p=XListProperties(wm->display, src, &n);
-
-    if(!p)
-        return;
-
-    unsigned long total, rest;
-    for(unsigned char *prop=NULL; i<n; i++, prop && XFree(prop))
-        if( XGetWindowProperty(wm->display, src, p[i], 0, ~0L, False,
-            AnyPropertyType, &type, &fmt, &total, &rest, &prop) == Success)
-            XChangeProperty(wm->display, dest, p[i], type, fmt,
-                PropModeReplace, prop, total);
-    XFree(p);
-}
-
-bool send_client_msg(WM *wm, Atom protocol, Window win)
-{
-    if(has_spec_wm_protocol(wm, win, protocol))
-    {
-        XEvent event;
-        event.type=ClientMessage;
-        event.xclient.window=win;
-        event.xclient.message_type=wm->icccm_atoms[WM_PROTOCOLS];
-        event.xclient.format=32;
-        event.xclient.data.l[0]=protocol;
-        event.xclient.data.l[1]=CurrentTime;
-        XSendEvent(wm->display, win, False, NoEventMask, &event);
-        return true;
-    }
-    return false;
-}
-
-bool has_spec_wm_protocol(WM *wm, Window win, Atom protocol)
-{
-	int i, n;
-	Atom *protocols=NULL;
-	if(XGetWMProtocols(wm->display, win, &protocols, &n))
-        for(i=0; i<n && protocols[i]!=protocol; i++)
-            ;
-    XFree(protocols);
-    return i<n;
 }
 
 bool is_pointer_on_win(WM *wm, Window win)
@@ -196,16 +87,15 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
 {
     XWindowAttributes a;
     bool status=XGetWindowAttributes(wm->display, win, &a);
-    if(!status || a.override_redirect || !is_on_screen(wm, a.x, a.y, a.width, a.height))
+
+    if( !status || a.override_redirect
+        || !is_on_screen(wm, a.x, a.y, a.width, a.height))
         return false;
 
     if(!before_wm)
         return !win_to_client(wm, win);
 
-    unsigned char *p=get_prop(wm, win, wm->icccm_atoms[WM_STATE], NULL);
-    bool result=((p && (*(unsigned long *)p)==IconicState) || a.map_state==IsViewable);
-    XFree(p);
-    return result;
+    return is_iconic_state(wm->display, win) || a.map_state==IsViewable;
 }
 
 /* 當存在合成器時，合成器會在根窗口上放置特效，即使用XSetWindowBackground*設置
@@ -224,7 +114,7 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
 void update_win_bg(WM *wm, Window win, unsigned long color, Pixmap pixmap)
 {
     XEvent event={.xexpose={.type=Expose, .window=win}};
-    bool compos_root = (win==wm->root_win && have_compositor(wm));
+    bool compos_root = (win==wm->root_win && have_compositor(wm->display, wm->screen));
 
     if(compos_root && !pixmap)
         pixmap=create_pixmap_with_color(wm, win, color);
@@ -278,10 +168,9 @@ static void change_prop_for_root_bg(WM *wm, Pixmap pixmap)
 
     if(prop_root && prop_esetroot)
     {
-        unsigned char *rdata=get_prop(wm, win, prop_root, NULL),
-                      *edata=get_prop(wm, win, prop_esetroot, NULL);
-        Pixmap rid = rdata ? *((Pixmap *)rdata) : None,
-               eid = edata ? *((Pixmap *)edata) : None;
+        Pixmap *rdata=(Pixmap *)get_prop(wm->display, win, prop_root, NULL),
+               *edata=(Pixmap *)get_prop(wm->display, win, prop_esetroot, NULL);
+        Pixmap rid=(rdata ? *rdata : None), eid=(edata ? *edata : None);
 
         XFree(rdata), XFree(edata);
         if(rid && eid && eid!=rid)
@@ -358,13 +247,6 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
     return bg;
 }
 
-void close_win(WM *wm, Window win)
-{
-    if(send_client_msg(wm, wm->icccm_atoms[WM_DELETE_WINDOW], win))
-        return;
-    XKillClient(wm->display, win);
-}
-
 Window create_widget_win(WM *wm, Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
 {
     XSetWindowAttributes attr;
@@ -393,7 +275,7 @@ void restack_win(WM *wm, Window win)
             return;
 
     Client *c=win_to_client(wm, win);
-    Net_wm_win_type type=get_net_wm_win_type(wm, win);
+    Net_wm_win_type type=get_net_wm_win_type(wm->display, win);
     Window wins[2]={None, c ? c->frame : win};
 
     if(type.desktop)
@@ -408,72 +290,4 @@ void restack_win(WM *wm, Window win)
     else
         wins[0]=wm->top_wins[NORMAL_TOP];
     XRestackWindows(wm->display, wins, 2);
-}
-
-/* 根據EWMH，窗口可能有多種類型，但實際上絕大部分窗口只設置一種類型 */
-Net_wm_win_type get_net_wm_win_type(WM *wm, Window win)
-{
-    Net_wm_win_type r={0}, unknown={.none=1};
-    unsigned long n=0;
-    Atom *a=wm->ewmh_atom, *t=get_atom_props(wm, win, a[NET_WM_WINDOW_TYPE], &n);
-
-    if(!t)
-        return unknown;
-
-    for(unsigned long i=0; i<n; i++)
-    {
-        if     (t[i] == a[NET_WM_WINDOW_TYPE_DESKTOP])       r.desktop=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_DOCK])          r.dock=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_TOOLBAR])       r.toolbar=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_MENU])          r.menu=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_UTILITY])       r.utility=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_SPLASH])        r.splash=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_DIALOG])        r.dialog=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_DROPDOWN_MENU]) r.dropdown_menu=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_POPUP_MENU])    r.popup_menu=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_TOOLTIP])       r.tooltip=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_NOTIFICATION])  r.notification=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_COMBO])         r.combo=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_DND])           r.dnd=1;
-        else if(t[i] == a[NET_WM_WINDOW_TYPE_NORMAL])        r.normal=1;
-        else                                                 r.none=1;
-    }
-    XFree(t);
-
-    return r;
-}
-
-/* EWMH未說明窗口可否同時有多種狀態，但實際上絕大部分窗口不設置或只設置一種 */
-Net_wm_state get_net_wm_state(WM *wm, Window win)
-{
-    Net_wm_state r={0};
-    unsigned long n=0;
-    Atom *a=wm->ewmh_atom, *s=get_atom_props(wm, win, a[NET_WM_STATE], &n);
-
-    if(!s)
-        return r;
-
-    for(unsigned long i=0; i<n; i++)
-    {
-        if     (s[i] == a[NET_WM_STATE_MODAL])              r.modal=1;
-        else if(s[i] == a[NET_WM_STATE_STICKY])             r.sticky=1;
-        else if(s[i] == a[NET_WM_STATE_MAXIMIZED_VERT])     r.vmax=1;
-        else if(s[i] == a[NET_WM_STATE_MAXIMIZED_HORZ])     r.hmax=1;
-        else if(s[i] == a[GWM_WM_STATE_MAXIMIZED_TOP])      r.tmax=1;
-        else if(s[i] == a[GWM_WM_STATE_MAXIMIZED_BOTTOM])   r.bmax=1;
-        else if(s[i] == a[GWM_WM_STATE_MAXIMIZED_LEFT])     r.lmax=1;
-        else if(s[i] == a[GWM_WM_STATE_MAXIMIZED_RIGHT])    r.rmax=1;
-        else if(s[i] == a[NET_WM_STATE_SHADED])             r.shaded=1;
-        else if(s[i] == a[NET_WM_STATE_SKIP_TASKBAR])       r.skip_taskbar=1;
-        else if(s[i] == a[NET_WM_STATE_SKIP_PAGER])         r.skip_pager=1;
-        else if(s[i] == a[NET_WM_STATE_HIDDEN])             r.hidden=1;
-        else if(s[i] == a[NET_WM_STATE_FULLSCREEN])         r.fullscreen=1;
-        else if(s[i] == a[NET_WM_STATE_ABOVE])              r.above=1;
-        else if(s[i] == a[NET_WM_STATE_BELOW])              r.below=1;
-        else if(s[i] == a[NET_WM_STATE_DEMANDS_ATTENTION])  r.attent=1;
-        else if(s[i] == a[NET_WM_STATE_FOCUSED])            r.focused=1;
-    }
-    XFree(s);
-
-    return r;
 }

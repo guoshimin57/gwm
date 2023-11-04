@@ -53,7 +53,7 @@ void print_win_tree(WM *wm, Window win)
 
 void print_net_wm_win_type(WM *wm, Window win)
 {
-    Net_wm_win_type type=get_net_wm_win_type(wm, win);
+    Net_wm_win_type type=get_net_wm_win_type(wm->display, win);
 
     printf(_("以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"), win);
     printf("desktop: %d\n", type.desktop);
@@ -75,7 +75,7 @@ void print_net_wm_win_type(WM *wm, Window win)
 
 void print_net_wm_state(WM *wm, Window win)
 {
-    Net_wm_state state=get_net_wm_state(wm, win);
+    Net_wm_state state=get_net_wm_state(wm->display, win);
 
     printf(_("以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"), win);
     printf("modal: %d\n", state.modal);
@@ -95,25 +95,6 @@ void print_net_wm_state(WM *wm, Window win)
     printf("below: %d\n", state.below);
     printf("attent: %d\n", state.attent);
     printf("focused: %d\n", state.focused);
-}
-
-int print_atom_name(WM *wm, Atom atom)
-{
-    for(int i=0; i<ICCCM_ATOMS_N; i++)
-        if(wm->icccm_atoms[i] == atom)
-            return printf("icccm_atom=%ld, name=%s, index=%d\n", (long)atom, ICCCM_NAMES[i], i);
-    for(int i=0; i<EWMH_ATOM_N; i++)
-        if(wm->ewmh_atom[i] == atom)
-            return printf("ewmh_atom=%ld, name=%s, index=%d\n", (long)atom, EWMH_NAME[i], i);
-    return printf("unknown_atom=%ld\n", (long)atom);
-}
-
-void print_all_atom_name(WM *wm)
-{
-    for(int i=0; i<ICCCM_ATOMS_N; i++)
-        printf("icccm_atom=%ld, name=%s, index=%d\n", (long)wm->icccm_atoms[i], ICCCM_NAMES[i], i);
-    for(int i=0; i<EWMH_ATOM_N; i++)
-        printf("ewmh_atom=%ld, name=%s, index=%d\n", (long)wm->ewmh_atom[i], EWMH_NAME[i], i);
 }
 
 void print_place_info(Client *c)

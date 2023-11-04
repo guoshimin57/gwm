@@ -74,25 +74,19 @@ static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
 
 static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
 {
-    unsigned long i, n=0, w=0, h=0, size=0, *data=NULL;
-    unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[NET_WM_ICON], &n);
-    if(!p)
+    CARD32 *data=get_net_wm_icon(wm->display, c->win);
+    if(!data)
         return NULL;
     
-    data=(unsigned long *)p;
-    w=*data++, h=*data++, size=w*h;
+    CARD32 w=*data++, h=*data++, size=w*h, i;
     Imlib_Image image=imlib_create_image(w, h);
     imlib_context_set_image(image);
     imlib_image_set_has_alpha(1);
     /* imlib2和_NET_WM_ICON同樣使用大端字節序，因此不必轉換字節序 */
     DATA32 *image_data=imlib_image_get_data();
-    /* 當long大小爲8字節時，以long型數組存儲的特性數據，每個元素的前4字節都是填充0 */
-    if(sizeof(long) == 8)
-        for(i=0; i<size; i++)
-            image_data[i]=data[i]; // 跳過填充字節
-    else
-        memcpy(image_data, (unsigned char *)data, size*4);
-    XFree(p);
+    for(i=0; i<size; i++)
+        image_data[i]=data[i];
+    XFree(data);
     imlib_image_put_back_data(image_data);
     return image;
 }

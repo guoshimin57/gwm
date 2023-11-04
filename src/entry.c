@@ -120,7 +120,7 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
         if(ks == XK_u)
             wmemmove(s, s+*i, no+1), *i=0;
         else if(ks == XK_v)
-            XConvertSelection(wm->display, XA_PRIMARY, wm->utf8,
+            XConvertSelection(wm->display, XA_PRIMARY, get_utf8_string_atom(),
                 None, e->win, ke->time);
     }
     else if(is_equal_modifier_mask(wm, None, ke->state))
@@ -180,24 +180,14 @@ static bool close_entry(WM *wm, Entry *e, bool result)
 
 void paste_for_entry(WM *wm, Entry *e)
 {
-    char *p;
-    Atom da;
-    int di;
-    unsigned long dl;
-
-    if( XGetWindowProperty(wm->display, e->win, wm->utf8, 0, BUFSIZ/4, True,
-        wm->utf8, &da, &di, &dl, &dl, (unsigned char **)&p) != Success || !p)
-        return;
-
+    char *p=(char *)get_prop(wm->display, e->win, get_utf8_string_atom(), NULL);
     wchar_t text[BUFSIZ];
     int n=mbstowcs(text, p, BUFSIZ);
-
     XFree(p);
     if(n <= 0)
         return;
 
     wchar_t *src=e->text+e->cursor_offset, *dest=src+n;
-
     wmemmove(dest, src, wcslen(e->text)-e->cursor_offset);
     wcsncpy(src, text, n);
     e->cursor_offset += n;

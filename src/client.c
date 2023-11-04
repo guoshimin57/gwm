@@ -11,7 +11,6 @@
 
 #include "gwm.h"
 
-
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);
 static void fix_place_type_for_hint(WM *wm, Client *c);
@@ -49,6 +48,7 @@ static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_icon_client_head(WM *wm);
 static bool have_same_class_icon_client(WM *wm, Client *c);
 static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h);
+static int cmp_map_order(const void *pclient1, const void *pclient2);
 
 void add_client(WM *wm, Window win)
 {
@@ -69,7 +69,20 @@ void add_client(WM *wm, Window win)
     XMapWindow(wm->display, c->frame);
     XMapSubwindows(wm->display, c->frame);
     focus_client(wm, wm->cur_desktop, c);
-    set_all_net_client_list(wm);
+    set_net_wm_allowed_actions(wm->display, c->win);
+}
+
+void set_all_net_client_list(WM *wm)
+{
+    int n=0;
+    Window *wlist=get_client_win_list(wm, &n);
+
+    set_net_client_list(wm->display, wm->root_win, wlist, n);
+    free(wlist);
+
+    wlist=get_client_win_list_stacking(wm, &n);
+    set_net_client_list_stacking(wm->display, wm->root_win, wlist, n);
+    free(wlist);
 }
 
 static Client *new_client(WM *wm, Window win)
@@ -80,15 +93,15 @@ static Client *new_client(WM *wm, Window win)
     c->map_n=++wm->map_count;
     c->title_text=get_title_text(wm, win, "");
     c->wm_hint=XGetWMHints(wm->display, win);
-    c->win_type=get_net_wm_win_type(wm, win);
-    c->win_state=get_net_wm_state(wm, win);
-    c->owner=win_to_client(wm, get_transient_for(wm, c->win));
+    c->win_type=get_net_wm_win_type(wm->display, win);
+    c->win_state=get_net_wm_state(wm->display, win);
+    c->owner=win_to_client(wm, get_transient_for(wm->display, c->win));
     c->subgroup_leader=get_subgroup_leader(c);
     c->place_type=TILE_LAYER_MAIN;
     if(!should_hide_frame(c))
         c->border_w=wm->cfg->border_width, c->titlebar_h=TITLEBAR_HEIGHT(wm);
     c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
-    update_size_hint(wm, c);
+    update_size_hint(wm->display, c->win, wm->cfg->resize_inc, &c->size_hint);
     set_default_desktop_mask(wm, c);
 
     return c;
@@ -106,12 +119,8 @@ static void set_default_desktop_mask(WM *wm, Client *c)
         c->desktop_mask=~0U;
     else
     {
-        unsigned int desktop;
-        unsigned char *p=get_prop(wm, c->win, wm->ewmh_atom[NET_WM_DESKTOP], NULL);
-
-        desktop = p ? *(unsigned long *)p : wm->cur_desktop-1;
-        XFree(p);
-        c->desktop_mask = desktop==~0U ? desktop : get_desktop_mask(desktop+1);
+        unsigned int desktop=get_net_wm_desktop(wm->display, c->win)+1;
+        c->desktop_mask = desktop==~0U ? desktop : get_desktop_mask(desktop);
     }
 }
 
@@ -291,7 +300,7 @@ static void fix_win_pos_by_workarea(WM *wm, Client *c)
 
 static void fix_win_size(WM *wm, Client *c)
 {
-    fix_win_size_by_hint(c);
+    fix_win_size_by_hint(&c->size_hint, &c->w, &c->h);
     fix_win_size_by_workarea(wm, c);
 }
 
@@ -314,7 +323,7 @@ static void frame_client(WM *wm, Client *c)
         c->border_w, WIDGET_COLOR(wm, CURRENT_BORDER), 0);
     XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
     if(wm->cfg->set_frame_prop)
-        copy_prop(wm, c->frame, c->win);
+        copy_prop(wm->display, c->frame, c->win);
     if(c->titlebar_h)
         create_titlebar(wm, c);
     XAddToSaveSet(wm->display, c->win);
@@ -691,9 +700,9 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
             XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
         else if(!pc->icon)
         {
-            set_input_focus(wm, pc->wm_hint, pc->win);
+            set_input_focus(wm->display, pc->win, pc->wm_hint);
             if(have_urgency(wm, desktop_n))
-                set_urgency(wm, pc, false);
+                set_urgency(wm->display, pc->win, pc->wm_hint, false);
             if(have_attention(wm, desktop_n))
                 set_attention(wm, pc, false);
         }
@@ -701,7 +710,7 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     update_client_bg(wm, desktop_n, pc);
     update_client_bg(wm, desktop_n, pp);
     raise_client(wm, pc);
-    set_net_active_window(wm);
+    set_net_active_window(wm->display, wm->root_win, pc->win);
 }
 
 static bool update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
@@ -810,7 +819,7 @@ void iconify(WM *wm, Client *c)
             update_frame_bg(wm, wm->cur_desktop, p);
         }
         p->win_state.hidden=1;
-        update_net_wm_state(wm, p);
+        update_net_wm_state(wm->display, p->win, p->win_state);
     }
     update_layout(wm);
 }
@@ -881,7 +890,7 @@ void deiconify(WM *wm, Client *c)
             update_icon_area(wm);
             focus_client(wm, wm->cur_desktop, p);
             p->win_state.hidden=0;
-            update_net_wm_state(wm, p);
+            update_net_wm_state(wm->display, p->win, p->win_state);
         }
     }
     update_layout(wm);
@@ -939,7 +948,7 @@ void update_win_state_for_move_resize(WM *wm, Client *c)
         s->rmax=0, update=true;
 
     if(update)
-        update_net_wm_state(wm, c);
+        update_net_wm_state(wm->display, c->win, c->win_state);
 }
 
 static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h)
@@ -948,32 +957,6 @@ static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w,
         ww=wm->workarea.w, wh=wm->workarea.h;
     *left_x=wx+bw, *top_y=wy+bw+th, *max_w=ww-2*bw, *max_h=wh-th-2*bw,
     *mid_x=*left_x+ww/2, *mid_y=*top_y+wh/2, *half_w=ww/2-2*bw, *half_h=wh/2-th-2*bw;
-}
-
-void update_net_wm_state(WM *wm, Client *c)
-{
-    Atom *a=wm->ewmh_atom;
-    unsigned long n=0, val[17]={0}; // 目前EWMH規範中NET_WM_STATE共有13種狀態，GWM自定義4種狀態
-
-    if(c->win_state.modal)          val[n++]=a[NET_WM_STATE_MODAL];
-    if(c->win_state.sticky)         val[n++]=a[NET_WM_STATE_STICKY];
-    if(c->win_state.vmax)           val[n++]=a[NET_WM_STATE_MAXIMIZED_VERT];
-    if(c->win_state.hmax)           val[n++]=a[NET_WM_STATE_MAXIMIZED_HORZ];
-    if(c->win_state.tmax)           val[n++]=a[GWM_WM_STATE_MAXIMIZED_TOP];
-    if(c->win_state.bmax)           val[n++]=a[GWM_WM_STATE_MAXIMIZED_BOTTOM];
-    if(c->win_state.lmax)           val[n++]=a[GWM_WM_STATE_MAXIMIZED_LEFT];
-    if(c->win_state.rmax)           val[n++]=a[GWM_WM_STATE_MAXIMIZED_RIGHT];
-    if(c->win_state.shaded)         val[n++]=a[NET_WM_STATE_SHADED];
-    if(c->win_state.skip_taskbar)   val[n++]=a[NET_WM_STATE_SKIP_TASKBAR];
-    if(c->win_state.skip_pager)     val[n++]=a[NET_WM_STATE_SKIP_PAGER];
-    if(c->win_state.hidden)         val[n++]=a[NET_WM_STATE_HIDDEN];
-    if(c->win_state.fullscreen)     val[n++]=a[NET_WM_STATE_FULLSCREEN];
-    if(c->win_state.above)          val[n++]=a[NET_WM_STATE_ABOVE];
-    if(c->win_state.below)          val[n++]=a[NET_WM_STATE_BELOW];
-    if(c->win_state.attent)         val[n++]=a[NET_WM_STATE_DEMANDS_ATTENTION];
-    if(c->win_state.focused)        val[n++]=a[NET_WM_STATE_FOCUSED];
-    XChangeProperty(wm->display, c->win, a[NET_WM_STATE], XA_ATOM, 32,
-        PropModeReplace, (unsigned char *)val, n);
 }
 
 void save_place_info_of_client(Client *c)
@@ -1054,8 +1037,57 @@ bool is_win_state_max(Client *c)
         || c->win_state.bmax || c->win_state.lmax || c->win_state.rmax;
 }
 
-bool is_focusable(WM *wm, Client *c)
+/* 獲取按從早到遲的映射順序排列的客戶窗口列表 */
+Window *get_client_win_list(WM *wm, int *n)
 {
-    return has_focus_hint(c->wm_hint)
-        || has_spec_wm_protocol(wm, c->win, wm->icccm_atoms[WM_TAKE_FOCUS]);
+    int i=0, count=get_clients_n(wm, ANY_PLACE, true, true, true);
+
+    if(count == 0)
+        return NULL;
+
+    if(n)
+        *n=count;
+
+    Window *wlist=malloc_s(count*sizeof(Window));
+    Client **clist=malloc_s(count*sizeof(Client *));
+
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+        clist[i++]=c;
+    qsort(clist, *n, sizeof(Client *), cmp_map_order);
+
+    for(i=0; i<count; i++)
+        wlist[i]=clist[i]->win;
+    free(clist);
+
+    return wlist;
 }
+
+static int cmp_map_order(const void *pclient1, const void *pclient2)
+{
+    return (*(Client **)pclient1)->map_n - (*(Client **)pclient2)->map_n;
+}
+
+/* 獲取按從下到上的疊次序排列的客戶窗口列表 */
+Window *get_client_win_list_stacking(WM *wm, int *n)
+{
+    int count=get_clients_n(wm, ANY_PLACE, true, true, true);
+    if(count == 0)
+        return NULL;
+
+    if(n)
+        *n=count;
+
+    Window *wlist=malloc_s(count*sizeof(Window)), *w=wlist;
+    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev, w++)
+        *w=c->win;
+
+    return wlist;
+}
+
+void set_attention(WM *wm, Client *c, bool attent)
+{
+    c->win_state.attent=attent;
+    update_net_wm_state(wm->display, c->win, c->win_state);
+    update_taskbar_buttons_bg(wm);
+}
+

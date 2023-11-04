@@ -13,6 +13,7 @@
 #define CLIENT_H
 
 #include "drawable.h"
+#include "ewmh.h"
 
 #define TITLEBAR_HEIGHT(wm) get_font_height_by_pad(wm, TITLEBAR_FONT)
 
@@ -49,6 +50,7 @@ struct client_tag // 客戶窗口相關信息
 };
 
 void add_client(WM *wm, Window win);
+void set_all_net_client_list(WM *wm);
 void fix_place_type_for_tile(WM *wm);
 void set_win_rect_by_frame(Client *c, const Rect *frame);
 void fix_win_rect(WM *wm, Client *c);
@@ -84,7 +86,6 @@ void del_icon(WM *wm, Client *c);
 void iconify_all_clients(WM *wm);
 void deiconify_all_clients(WM *wm);
 void update_win_state_for_move_resize(WM *wm, Client *c);
-void update_net_wm_state(WM *wm, Client *c);
 void save_place_info_of_client(Client *c);
 void save_place_info_of_clients(WM *wm);
 void restore_place_info_of_client(Client *c);
@@ -94,6 +95,8 @@ bool is_tile_client(WM *wm, Client *c);
 void max_client(WM *wm, Client *c, Max_way max_way);
 Place_type get_dest_place_type_for_move(WM *wm, Client *c);
 bool is_win_state_max(Client *c);
-bool is_focusable(WM *wm, Client *c);
+Window *get_client_win_list(WM *wm, int *n);
+Window *get_client_win_list_stacking(WM *wm, int *n);
+void set_attention(WM *wm, Client *c, bool attent);
 
 #endif

@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 
+static void set_ewmh(WM *wm);
 static void set_signals(void);
 static void ready_to_quit(int signum);
 
@@ -27,6 +28,19 @@ int main(void)
     set_ewmh(&wm);
     handle_events(&wm);
     return EXIT_SUCCESS;
+}
+
+static void set_ewmh(WM *wm)
+{
+    set_net_supported(wm->display, wm->root_win);
+    set_net_number_of_desktops(wm->display, wm->root_win, DESKTOP_N);
+    set_net_desktop_geometry(wm->display, wm->root_win, wm->screen_width, wm->screen_height);
+    set_net_desktop_viewport(wm->display, wm->root_win, 0, 0);
+    set_net_current_desktop(wm->display, wm->root_win, wm->cur_desktop-1);
+    set_net_desktop_names(wm->display, wm->root_win, &wm->cfg->taskbar_button_text[DESKTOP_BUTTON_BEGIN], DESKTOP_N);
+    set_net_workarea(wm->display, wm->root_win, wm->workarea.x, wm->workarea.y, wm->workarea.w, wm->workarea.h, DESKTOP_N);
+    set_net_supporting_wm_check(wm->display, wm->root_win, wm->wm_check_win, "gwm");
+    set_net_showing_desktop(wm->display, wm->root_win, false);
 }
 
 static void set_signals(void)

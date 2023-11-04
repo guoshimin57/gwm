@@ -120,11 +120,8 @@ static void set_locale(WM *wm)
 
 static void set_atoms(WM *wm)
 {
-    for(size_t i=0; i<ICCCM_ATOMS_N; i++)
-        wm->icccm_atoms[i]=XInternAtom(wm->display, ICCCM_NAMES[i], False);
-    for(size_t i=0; i<EWMH_ATOM_N; i++)
-        wm->ewmh_atom[i]=XInternAtom(wm->display, EWMH_NAME[i], False);
-    wm->utf8=XInternAtom(wm->display, "UTF8_STRING", False);
+    set_icccm_atoms(wm->display);
+    set_ewmh_atoms(wm->display);
 }
 
 static void create_cursors(WM *wm)
@@ -141,7 +138,6 @@ static void create_run_cmd_entry(WM *wm)
     ew += 2*pad, ew = (ew>=sw/4 && ew<=sw-2*bw) ? ew : sw/4;
     Rect r={(sw-ew)/2-bw, (sh-eh)/2-bw, ew, eh};
     wm->run_cmd=create_entry(wm, &r, wm->cfg->run_cmd_entry_hint);
-    set_net_wm_win_type(wm, wm->run_cmd->win, NET_WM_WINDOW_TYPE_UTILITY);
 }
 
 static void create_hint_win(WM *wm)
@@ -149,13 +145,11 @@ static void create_hint_win(WM *wm)
     wm->hint_win=create_widget_win(wm, wm->root_win, 0, 0, 1, 1, 0, 0,
         WIDGET_COLOR(wm, HINT_WIN));
     XSelectInput(wm->display, wm->hint_win, ExposureMask);
-    set_net_wm_win_type(wm, wm->hint_win, NET_WM_WINDOW_TYPE_TOOLTIP);
 }
 
 static void create_client_menu(WM *wm)
 {
     wm->client_menu=create_menu(wm, wm->cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
-    set_net_wm_win_type(wm, wm->client_menu->win, NET_WM_WINDOW_TYPE_DROPDOWN_MENU);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */
@@ -203,6 +197,6 @@ static void init_root_win_background(WM *wm)
 
     Pixmap pixmap=create_pixmap_from_file(wm, wm->root_win, name ? name : "");
     update_win_bg(wm, wm->root_win, WIDGET_COLOR(wm, ROOT_WIN), pixmap);
-    if(pixmap && !have_compositor(wm))
+    if(pixmap && !have_compositor(wm->display, wm->screen))
         XFreePixmap(wm->display, pixmap);
 }

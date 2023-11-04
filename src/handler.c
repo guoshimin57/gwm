@@ -21,7 +21,6 @@ static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent 
 static void focus_clicked_client(WM *wm, Window win);
 static void handle_client_message(WM *wm, XEvent *e);
 static void change_net_wm_state(WM *wm, Client *c, long *full_act);
-static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act);
 static void change_net_wm_state_for_modal(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act);
@@ -158,19 +157,19 @@ static void handle_client_message(WM *wm, XEvent *e)
     Atom type=e->xclient.message_type;
     Client *c=win_to_client(wm, win);
 
-    if(type == wm->ewmh_atom[NET_CURRENT_DESKTOP])
+    if(is_spec_ewmh_atom(type, NET_CURRENT_DESKTOP))
         focus_desktop_n(wm, e->xclient.data.l[0]+1);
-    else if(type == wm->ewmh_atom[NET_SHOWING_DESKTOP])
+    else if(is_spec_ewmh_atom(type, NET_SHOWING_DESKTOP))
         toggle_showing_desktop_mode(wm, e->xclient.data.l[0]);
     else if(c)
     {
-        if(type == wm->ewmh_atom[NET_ACTIVE_WINDOW])
+        if(is_spec_ewmh_atom(type, NET_ACTIVE_WINDOW))
             activate_win(wm, win, e->xclient.data.l[0]);
-        else if(type == wm->ewmh_atom[NET_CLOSE_WINDOW])
-            close_win(wm, win);
-        else if(type == wm->ewmh_atom[NET_WM_DESKTOP])
+        else if(is_spec_ewmh_atom(type, NET_CLOSE_WINDOW))
+            close_win(wm->display, win);
+        else if(is_spec_ewmh_atom(type, NET_WM_DESKTOP))
             change_desktop(wm, win, e->xclient.data.l[0]);
-        else if(type == wm->ewmh_atom[NET_WM_STATE])
+        else if(is_spec_ewmh_atom(type, NET_WM_STATE))
             change_net_wm_state(wm, c, e->xclient.data.l);
     }
 }
@@ -181,7 +180,7 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act)
     if((act!=NET_WM_STATE_REMOVE && act!=NET_WM_STATE_ADD && act!=NET_WM_STATE_TOGGLE))
         return;
 
-    Net_wm_state mask=get_net_wm_state_mask(wm, full_act);
+    Net_wm_state mask=get_net_wm_state_mask(full_act);
 
     if(mask.modal)          change_net_wm_state_for_modal(wm, c, act);
     if(mask.sticky)         change_net_wm_state_for_sticky(wm, c, act);
@@ -201,35 +200,7 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act)
     if(mask.attent)         change_net_wm_state_for_attent(wm, c, act);
     if(mask.focused)        change_net_wm_state_for_focused(wm, c, act);
 
-    update_net_wm_state(wm, c);
-}
-
-static Net_wm_state get_net_wm_state_mask(WM *wm, long *full_act)
-{
-    Net_wm_state m={0};
-    Atom *a=wm->ewmh_atom;
-
-    for(long p=0, i=1; i<=2 && (p=full_act[i]); i++)
-    {
-        if     (p == (long)a[NET_WM_STATE_MODAL])             m.modal=1;
-        else if(p == (long)a[NET_WM_STATE_STICKY])            m.sticky=1;
-        else if(p == (long)a[NET_WM_STATE_MAXIMIZED_VERT])    m.vmax=1;
-        else if(p == (long)a[NET_WM_STATE_MAXIMIZED_HORZ])    m.hmax=1;
-        else if(p == (long)a[GWM_WM_STATE_MAXIMIZED_TOP])     m.tmax=1;
-        else if(p == (long)a[GWM_WM_STATE_MAXIMIZED_BOTTOM])  m.bmax=1;
-        else if(p == (long)a[GWM_WM_STATE_MAXIMIZED_LEFT])    m.lmax=1;
-        else if(p == (long)a[GWM_WM_STATE_MAXIMIZED_RIGHT])   m.rmax=1;
-        else if(p == (long)a[NET_WM_STATE_SHADED])            m.shaded=1;
-        else if(p == (long)a[NET_WM_STATE_SKIP_TASKBAR])      m.skip_taskbar=1;
-        else if(p == (long)a[NET_WM_STATE_SKIP_PAGER])        m.skip_pager=1;
-        else if(p == (long)a[NET_WM_STATE_HIDDEN])            m.hidden=1;
-        else if(p == (long)a[NET_WM_STATE_FULLSCREEN])        m.fullscreen=1;
-        else if(p == (long)a[NET_WM_STATE_ABOVE])             m.above=1;
-        else if(p == (long)a[NET_WM_STATE_BELOW])             m.below=1;
-        else if(p == (long)a[NET_WM_STATE_DEMANDS_ATTENTION]) m.attent=1;
-        else if(p == (long)a[NET_WM_STATE_FOCUSED])           m.focused=1;
-    }
-    return m;
+    update_net_wm_state(wm->display, c->win, c->win_state);
 }
 
 static void change_net_wm_state_for_modal(WM *wm, Client *c, long act)
@@ -418,7 +389,7 @@ static void activate_win(WM *wm, Window win, unsigned long src)
         if(is_on_cur_desktop(wm, c))
             focus_client(wm, wm->cur_desktop, c);
         else
-            set_urgency(wm, c, true);
+            set_urgency(wm->display, c->win, c->wm_hint, true);
     }
     else // 源自應用程序
         set_attention(wm, c, true);
@@ -714,12 +685,12 @@ static void handle_property_notify(WM *wm, XEvent *e)
     Atom atom=e->xproperty.atom;
 
     if(wm->cfg->set_frame_prop && (c=win_to_client(wm, win)))
-        copy_prop(wm, c->frame, c->win);
+        copy_prop(wm->display, c->frame, c->win);
     if(atom == XA_WM_HINTS)
         handle_wm_hints_notify(wm, win);
-    else if(atom==XA_WM_ICON_NAME || atom==wm->ewmh_atom[NET_WM_ICON_NAME])
+    else if(atom==XA_WM_ICON_NAME || is_spec_ewmh_atom(atom, NET_WM_ICON_NAME))
         handle_wm_icon_name_notify(wm, win, atom);
-    else if(atom == XA_WM_NAME || atom==wm->ewmh_atom[NET_WM_NAME])
+    else if(atom == XA_WM_NAME || is_spec_ewmh_atom(atom, NET_WM_NAME))
         handle_wm_name_notify(wm, win, atom);
     else if(atom == XA_WM_NORMAL_HINTS)
         handle_wm_normal_hints_notify(wm, win);
@@ -736,7 +707,7 @@ static void handle_wm_hints_notify(WM *wm, Window win)
     XWMHints *oh=c->wm_hint, *nh=XGetWMHints(wm->display, win);
     if( nh && ((nh->flags & InputHint) && nh->input) // 變成需要鍵盤輸入
         && (!oh || !((oh->flags & InputHint) && oh->input)))
-        set_input_focus(wm, nh, win);
+        set_input_focus(wm->display, win, nh);
     update_taskbar_buttons_bg(wm);
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
@@ -747,7 +718,7 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
     char *s=NULL;
     Client *c=win_to_client(wm, win);
 
-    if(!c || !c->icon || !(s=get_text_prop(wm, c->win, atom)))
+    if(!c || !c->icon || !(s=get_text_prop(wm->display, c->win, atom)))
         return;
 
     free(c->icon->title_text);
@@ -757,7 +728,7 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
 
 static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
 {
-    char *s=get_text_prop(wm, win, atom);
+    char *s=get_text_prop(wm->display, win, atom);
     Client *c=win_to_client(wm, win);
 
     if((win!=wm->root_win && !c) || !s)
@@ -782,7 +753,7 @@ static void handle_wm_normal_hints_notify(WM *wm, Window win)
     Client *c=win_to_client(wm, win);
     if(c)
     {
-        update_size_hint(wm, c);
+        update_size_hint(wm->display, c->win, wm->cfg->resize_inc, &c->size_hint);
         if( DESKTOP(wm)->cur_layout!=TILE
             || (c->place_type!=FULLSCREEN_LAYER && !is_tile_client(wm, c)))
             fix_win_rect(wm, c), update_layout(wm);
@@ -793,12 +764,13 @@ static void handle_wm_transient_for_notify(WM *wm, Window win)
 {
     Client *c=win_to_client(wm, win);
     if(c)
-        c->owner=win_to_client(wm, get_transient_for(wm, win));
+        c->owner=win_to_client(wm, get_transient_for(wm->display, win));
 }
 
 static void handle_selection_notify(WM *wm, XEvent *e)
 {
     Window win=e->xselection.requestor;
-    if(e->xselection.property==wm->utf8 && win==wm->run_cmd->win)
+    if( is_spec_icccm_atom(e->xselection.property, UTF8_STRING)
+        && win==wm->run_cmd->win)
         paste_for_entry(wm, wm->run_cmd);
 }
