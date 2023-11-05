@@ -44,22 +44,22 @@ void focus_desktop_n(WM *wm, unsigned int n)
         return;
 
     wm->cur_desktop=n;
-    set_net_current_desktop(wm->display, wm->root_win, wm->cur_desktop-1);
+    set_net_current_desktop(wm->cur_desktop-1);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
         if(is_on_cur_desktop(wm, c))
         {
             if(c->icon)
-                XMapWindow(wm->display, c->icon->win);
+                XMapWindow(xinfo.display, c->icon->win);
             else
-                XMapWindow(wm->display, c->frame);
+                XMapWindow(xinfo.display, c->frame);
         }
         else
         {
             if(c->icon)
-                XUnmapWindow(wm->display, c->icon->win);
+                XUnmapWindow(xinfo.display, c->icon->win);
             else
-                XUnmapWindow(wm->display, c->frame);
+                XUnmapWindow(xinfo.display, c->frame);
         }
     }
 

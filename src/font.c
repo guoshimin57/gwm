@@ -22,7 +22,7 @@ void load_font(WM *wm)
             if(strcmp(wm->cfg->font_name[j], wm->cfg->font_name[i]) == 0)
                 p=wm->font[j];
         if(!p)
-            p=XftFontOpenName(wm->display, wm->screen, wm->cfg->font_name[i]);
+            p=XftFontOpenName(xinfo.display, xinfo.screen, wm->cfg->font_name[i]);
         if(p)
             wm->font[i]=p;
         else
@@ -48,22 +48,22 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
 
     pad=get_str_rect_by_fmt(wm, f, str, &sx, &sy, &sw, &sh);
     n=strlen(str);
-    XClearArea(wm->display, d, x, y, w, h, False); 
+    XClearArea(xinfo.display, d, x, y, w, h, False); 
     if(f->change_bg)
     {
-        GC gc=XCreateGC(wm->display, d, 0, NULL);
-        XSetForeground(wm->display, gc, f->bg);
-        XFillRectangle(wm->display, d, gc, x, y, w, h);
+        GC gc=XCreateGC(xinfo.display, d, 0, NULL);
+        XSetForeground(xinfo.display, gc, f->bg);
+        XFillRectangle(xinfo.display, d, gc, x, y, w, h);
     }
 
-    XftDraw *draw=XftDrawCreate(wm->display, d, wm->visual, wm->colormap);
+    XftDraw *draw=XftDrawCreate(xinfo.display, d, xinfo.visual, xinfo.colormap);
     XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
     if(f->trunc && sw+2*pad>w)
     {
         const char *es="︙";
         int ew, en=strlen(es);
-        get_string_size(wm, font, es, &ew, NULL);
-        XClearArea(wm->display, d, x+w-ew, 0, ew, h, False); 
+        get_string_size(font, es, &ew, NULL);
+        XClearArea(xinfo.display, d, x+w-ew, 0, ew, h, False); 
         XftDrawStringUtf8(draw, &TEXT_COLOR(wm, HINT), font, x+w-ew, sy, (const FcChar8 *)es, en);
     }
     XftDrawDestroy(draw);
@@ -75,7 +75,7 @@ static int get_str_rect_by_fmt(WM *wm, const String_format *f, const char *str, 
     int cx, cy, pad, left, right, top, bottom;
 
     pad = f->pad ? get_font_pad(wm, f->font_type) : 0;
-    get_string_size(wm, font, str, w, h);
+    get_string_size(font, str, w, h);
     cx=f->r.x+f->r.w/2-*w/2, cy=f->r.y+f->r.h/2-*h/2+font->ascent;
     left=f->r.x+pad, right=f->r.x+f->r.w-*w-pad;
     top=f->r.y+*h, bottom=f->r.y+f->r.h;
@@ -97,12 +97,12 @@ static int get_str_rect_by_fmt(WM *wm, const String_format *f, const char *str, 
     return pad;
 }
 
-void get_string_size(WM *wm, XftFont *font, const char *str, int *w, int *h)
+void get_string_size(XftFont *font, const char *str, int *w, int *h)
 {
     /* libXrender文檔沒有解釋XGlyphInfo結構體成員的含義。
        猜測xOff指字符串原點到字符串限定框最右邊的偏移量。*/
     XGlyphInfo e;
-    XftTextExtentsUtf8(wm->display, font, (const FcChar8 *)str, strlen(str), &e);
+    XftTextExtentsUtf8(xinfo.display, font, (const FcChar8 *)str, strlen(str), &e);
     if(w)
         *w=e.xOff;
     /* Xft文檔沒有解析font->height的含義，但font->ascent+font->descent的確比
@@ -119,7 +119,7 @@ void close_fonts(WM *wm)
             if(wm->font[i] == wm->font[j])
                 break;
         if(j == i)
-            XftFontClose(wm->display, wm->font[i]);
+            XftFontClose(xinfo.display, wm->font[i]);
     }
 }
 
@@ -149,19 +149,19 @@ void close_fonts(WM *wm)
  * Hfb=a*Hf=a*3*HEf=a*hE*DPM/0.3=a*hE*DPI/7.62。
  * 對於近視的人，字體尺寸還應調大一點。
  */
-int get_min_font_size(WM *wm)
+int get_min_font_size(void)
 {
-    int w=DisplayWidthMM(wm->display, wm->screen),
-        h=DisplayHeightMM(wm->display, wm->screen),
-        W=DisplayWidth(wm->display, wm->screen),
-        H=DisplayHeight(wm->display, wm->screen);
+    int w=DisplayWidthMM(xinfo.display, xinfo.screen),
+        h=DisplayHeightMM(xinfo.display, xinfo.screen),
+        W=DisplayWidth(xinfo.display, xinfo.screen),
+        H=DisplayHeight(xinfo.display, xinfo.screen);
     double dpm=sqrt(W*W+H*H)/sqrt(w*w+h*h), dpi=25.4*dpm;
     return ceil(0.9248*dpi/7.62);
 }
 
-int get_scale_font_size(WM *wm, double scale)
+int get_scale_font_size(double scale)
 {
-    return scale*get_min_font_size(wm);
+    return scale*get_min_font_size();
 }
 
 int get_font_pad(WM *wm, Font_type type)

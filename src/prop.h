@@ -12,14 +12,14 @@
 #ifndef PROP_H
 #define PROP_H
 
-Window get_transient_for(Display *display, Window win);
-unsigned char *get_prop(Display *display, Window win, Atom prop, unsigned long *n);
-char *get_text_prop(Display *display, Window win, Atom atom);
-void replace_atom_prop(Display *display, Window win, Atom prop, const Atom *values, int n);
-void replace_window_prop(Display *display, Window win, Atom prop, const Window *wins, int n);
-void replace_cardinal_prop(Display *display, Window win, Atom prop, const CARD32 *values, int n);
-void copy_prop(Display *display, Window dest, Window src);
-bool send_client_msg(Display *display, Atom wm_protocols, Atom proto, Window win);
-bool has_spec_wm_protocol(Display *display, Window win, Atom protocol);
+Window get_transient_for(Window win);
+unsigned char *get_prop(Window win, Atom prop, unsigned long *n);
+char *get_text_prop(Window win, Atom atom);
+void replace_atom_prop(Window win, Atom prop, const Atom *values, int n);
+void replace_window_prop(Window win, Atom prop, const Window *wins, int n);
+void replace_cardinal_prop(Window win, Atom prop, const CARD32 *values, int n);
+void copy_prop(Window dest, Window src);
+bool send_client_msg(Atom wm_protocols, Atom proto, Window win);
+bool has_spec_wm_protocol(Window win, Atom protocol);
 
 #endif

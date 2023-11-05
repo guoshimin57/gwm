@@ -11,39 +11,39 @@
 
 #include "gwm.h"
 
-static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color);
-static void change_prop_for_root_bg(WM *wm, Pixmap pixmap);
+static Pixmap create_pixmap_with_color(Drawable d, unsigned long color);
+static void change_prop_for_root_bg(Pixmap pixmap);
 
-char *get_title_text(WM *wm, Window win, const char *fallback)
+char *get_title_text(Window win, const char *fallback)
 {
     char *s=NULL;
 
-    if((s=get_net_wm_name(wm->display, win)) && strlen(s))
+    if((s=get_net_wm_name(win)) && strlen(s))
         return s;
-    if((s=get_wm_name(wm->display, win)) && strlen(s))
+    if((s=get_wm_name(win)) && strlen(s))
         return s;
     return copy_string(fallback);
 }
 
-char *get_icon_title_text(WM *wm, Window win, const char *fallback)
+char *get_icon_title_text(Window win, const char *fallback)
 {
     char *s=NULL;
 
-    if((s=get_net_wm_icon_name(wm->display, win)) && strlen(s))
+    if((s=get_net_wm_icon_name(win)) && strlen(s))
         return s;
-    if((s=get_wm_icon_name(wm->display, win)) && strlen(s))
+    if((s=get_wm_icon_name(win)) && strlen(s))
         return s;
     return copy_string(fallback);
 }
 
-bool is_pointer_on_win(WM *wm, Window win)
+bool is_pointer_on_win(Window win)
 {
     Window r, c;
     int rx, ry, x, y, w, h;
     unsigned int mask;
     
-    return get_geometry(wm->display, win, NULL, NULL, &w, &h, NULL, NULL)
-        && XQueryPointer(wm->display, win, &r, &c, &rx, &ry, &x, &y, &mask)
+    return get_geometry(win, NULL, NULL, &w, &h, NULL, NULL)
+        && XQueryPointer(xinfo.display, win, &r, &c, &rx, &ry, &x, &y, &mask)
         && x>=0 && x<w && y>=0 && y<h;
 }
 
@@ -52,9 +52,9 @@ bool is_pointer_on_win(WM *wm, Window win)
  * 即：|x+w/2-0-sw/2|＜|w/2+sw/2| 且 |y+h/2-0-sh/2|＜|h/2+sh/2|。
  * 兩邊同乘以2，得：|2*x+w-sw|＜|w+sw| 且 |2*y+h-sh|＜|h+sh|。
  */
-bool is_on_screen(WM *wm, int x, int y, int w, int h)
+bool is_on_screen(int x, int y, int w, int h)
 {
-    long sw=wm->screen_width, sh=wm->screen_height, wl=w, hl=h;
+    long sw=xinfo.screen_width, sh=xinfo.screen_height, wl=w, hl=h;
     return labs(2*x+wl-sw)<wl+sw && labs(2*y+hl-sh)<hl+sh;
 }
 
@@ -75,7 +75,7 @@ void print_area(WM *wm, Drawable d, int x, int y, int w, int h)
         sprintf(name, "%s/gwm-", wm->cfg->screenshot_path);
     if(timer != err)
         strftime(name+strlen(name), FILENAME_MAX, "%Y_%m_%d_%H_%M_%S", localtime(&timer));
-    set_visual_for_imlib(wm->display, wm->screen, wm->visual, d);
+    set_visual_for_imlib(d);
     imlib_context_set_image(image);
     imlib_image_set_format(wm->cfg->screenshot_format);
     sprintf(name+strlen(name), ".%s", wm->cfg->screenshot_format);
@@ -86,16 +86,16 @@ void print_area(WM *wm, Drawable d, int x, int y, int w, int h)
 bool is_wm_win(WM *wm, Window win, bool before_wm)
 {
     XWindowAttributes a;
-    bool status=XGetWindowAttributes(wm->display, win, &a);
+    bool status=XGetWindowAttributes(xinfo.display, win, &a);
 
     if( !status || a.override_redirect
-        || !is_on_screen(wm, a.x, a.y, a.width, a.height))
+        || !is_on_screen( a.x, a.y, a.width, a.height))
         return false;
 
     if(!before_wm)
         return !win_to_client(wm, win);
 
-    return is_iconic_state(wm->display, win) || a.map_state==IsViewable;
+    return is_iconic_state(win) || a.map_state==IsViewable;
 }
 
 /* 當存在合成器時，合成器會在根窗口上放置特效，即使用XSetWindowBackground*設置
@@ -111,46 +111,46 @@ bool is_wm_win(WM *wm, Window win, bool before_wm)
  *     https://lists.gnome.org/archives/wm-spec-list/2002-January/msg00003.html
  *     https://mail.gnome.org/archives/wm-spec-list/2002-January/msg00011.html
  */
-void update_win_bg(WM *wm, Window win, unsigned long color, Pixmap pixmap)
+void update_win_bg(Window win, unsigned long color, Pixmap pixmap)
 {
     XEvent event={.xexpose={.type=Expose, .window=win}};
-    bool compos_root = (win==wm->root_win && have_compositor(wm->display, wm->screen));
+    bool compos_root = (win==xinfo.root_win && have_compositor());
 
     if(compos_root && !pixmap)
-        pixmap=create_pixmap_with_color(wm, win, color);
+        pixmap=create_pixmap_with_color(win, color);
 
     if(pixmap)
-        XSetWindowBackgroundPixmap(wm->display, win, pixmap);
+        XSetWindowBackgroundPixmap(xinfo.display, win, pixmap);
     else
-        XSetWindowBackground(wm->display, win, color);
+        XSetWindowBackground(xinfo.display, win, color);
 
     /* XSetWindowBackgroundPixmap或XSetWindowBackground不改變窗口當前內容，
        應通過發送顯露事件或調用XClearWindow來立即改變背景。*/
-    if(pixmap || win==wm->root_win)
-        XClearWindow(wm->display, win);
+    if(pixmap || win==xinfo.root_win)
+        XClearWindow(xinfo.display, win);
     else
-        XSendEvent(wm->display, win, False, NoEventMask, &event);
+        XSendEvent(xinfo.display, win, False, NoEventMask, &event);
 
     if(compos_root)
-        change_prop_for_root_bg(wm, pixmap);
+        change_prop_for_root_bg(pixmap);
 }
 
-static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color)
+static Pixmap create_pixmap_with_color(Drawable d, unsigned long color)
 {
     int w, h, red=(color & 0x00ff0000UL)>>16, green=(color & 0x0000ff00UL)>>8,
         blue=(color & 0x000000ffUL), alpha=(color & 0xff000000UL)>>24;
     unsigned int depth;
     Imlib_Image image=NULL;
 
-    if( !get_geometry(wm->display, d, NULL, NULL, &w, &h, NULL, &depth)
+    if( !get_geometry(d, NULL, NULL, &w, &h, NULL, &depth)
         || !(image=imlib_create_image(w, h)))
         return None;
 
-    Pixmap pixmap=XCreatePixmap(wm->display, d, w, h, depth);
+    Pixmap pixmap=XCreatePixmap(xinfo.display, d, w, h, depth);
     if(!pixmap)
         return None;
 
-    set_visual_for_imlib(wm->display, wm->screen, wm->visual, d);
+    set_visual_for_imlib(d);
     imlib_context_set_image(image);
     imlib_context_set_drawable(pixmap);
     imlib_context_set_color(red, green, blue , alpha);
@@ -160,56 +160,56 @@ static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color)
     return pixmap;
 }
 
-static void change_prop_for_root_bg(WM *wm, Pixmap pixmap)
+static void change_prop_for_root_bg(Pixmap pixmap)
 {
-    Window win=wm->root_win;
-    Atom prop_root=XInternAtom(wm->display, "_XROOTPMAP_ID", True);
-    Atom prop_esetroot=XInternAtom(wm->display, "ESETROOT_PMAP_ID", True);
+    Window win=xinfo.root_win;
+    Atom prop_root=XInternAtom(xinfo.display, "_XROOTPMAP_ID", True);
+    Atom prop_esetroot=XInternAtom(xinfo.display, "ESETROOT_PMAP_ID", True);
 
     if(prop_root && prop_esetroot)
     {
-        Pixmap *rdata=(Pixmap *)get_prop(wm->display, win, prop_root, NULL),
-               *edata=(Pixmap *)get_prop(wm->display, win, prop_esetroot, NULL);
+        Pixmap *rdata=(Pixmap *)get_prop(win, prop_root, NULL),
+               *edata=(Pixmap *)get_prop(win, prop_esetroot, NULL);
         Pixmap rid=(rdata ? *rdata : None), eid=(edata ? *edata : None);
 
         XFree(rdata), XFree(edata);
         if(rid && eid && eid!=rid)
-            XKillClient(wm->display, rid);
+            XKillClient(xinfo.display, rid);
     }
 
-    prop_root=XInternAtom(wm->display, "_XROOTPMAP_ID", False);
-    prop_esetroot=XInternAtom(wm->display, "ESETROOT_PMAP_ID", False);
-    XChangeProperty(wm->display, win, prop_root, XA_PIXMAP, 32,
+    prop_root=XInternAtom(xinfo.display, "_XROOTPMAP_ID", False);
+    prop_esetroot=XInternAtom(xinfo.display, "ESETROOT_PMAP_ID", False);
+    XChangeProperty(xinfo.display, win, prop_root, XA_PIXMAP, 32,
         PropModeReplace, (unsigned char *)&pixmap, 1);
-    XChangeProperty(wm->display, win, prop_esetroot, XA_PIXMAP, 32,
+    XChangeProperty(xinfo.display, win, prop_esetroot, XA_PIXMAP, 32,
         PropModeReplace, (unsigned char *)&pixmap, 1);
 }
 
-void set_override_redirect(WM *wm, Window win)
+void set_override_redirect(Window win)
 {
     XSetWindowAttributes attr={.override_redirect=True};
-    XChangeWindowAttributes(wm->display, win, CWOverrideRedirect, &attr);
+    XChangeWindowAttributes(xinfo.display, win, CWOverrideRedirect, &attr);
 }
 
-bool get_geometry(Display *display, Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth)
+bool get_geometry(Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth)
 {
     Window r;
     int xt, yt;
     unsigned int wt, ht, bwt, dt;
 
-    return XGetGeometry(display, drw, &r, x ? x : &xt, y ? y : &yt,
+    return XGetGeometry(xinfo.display, drw, &r, x ? x : &xt, y ? y : &yt,
         w ? (unsigned int *)w : &wt, h ? (unsigned int *)h : &ht,
         bw ? (unsigned int *)bw : &bwt, depth ? depth : &dt);
 }
 
 /* 坐標均相對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
-void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, int pw, int ph)
+void set_pos_for_click(Window click, int cx, int *px, int *py, int pw, int ph)
 {
-    int x=0, y=0, w=0, h=0, bw=0, sw=wm->screen_width, sh=wm->screen_height;
-    Window child, root=wm->root_win;
+    int x=0, y=0, w=0, h=0, bw=0, sw=xinfo.screen_width, sh=xinfo.screen_height;
+    Window child, root=xinfo.root_win;
 
-    XTranslateCoordinates(wm->display, click, root, 0, 0, &x, &y, &child);
-    get_geometry(wm->display, click, NULL, NULL, &w, &h, &bw, NULL);
+    XTranslateCoordinates(xinfo.display, click, root, 0, 0, &x, &y, &child);
+    get_geometry(click, NULL, NULL, &w, &h, &bw, NULL);
     // 優先考慮右邊顯示彈窗；若不夠位置，則考慮左邊顯示；再不濟則從屏幕左邊開始顯示
     *px = cx+pw<sw ? cx : (cx-pw>0 ? cx-pw : 0);
     /* 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示。
@@ -217,29 +217,29 @@ void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, int pw, i
     *py = y+(h+bw+ph)<sh ? y+h+bw+1: (y-bw-ph>0 ? y-bw-ph-1 : 0);
 }
 
-bool is_win_exist(WM *wm, Window win, Window parent)
+bool is_win_exist(Window win, Window parent)
 {
     Window root, pwin, *child=NULL;
     unsigned int n;
 
-    if(XQueryTree(wm->display, parent, &root, &pwin, &child, &n))
+    if(XQueryTree(xinfo.display, parent, &root, &pwin, &child, &n))
         for(unsigned int i=0; i<n; i++)
             if(win == child[i])
                 { XFree(child); return true; }
     return false;
 }
 
-Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
+Pixmap create_pixmap_from_file(Window win, const char *filename)
 {
     int w, h;
     unsigned int d;
     Imlib_Image image=imlib_load_image(filename);
 
-    if(!image || !get_geometry(wm->display, win, NULL, NULL, &w, &h, NULL, &d))
+    if(!image || !get_geometry(win, NULL, NULL, &w, &h, NULL, &d))
         return None;
 
-    Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
-    set_visual_for_imlib(wm->display, wm->screen, wm->visual, win);
+    Pixmap bg=XCreatePixmap(xinfo.display, win, w, h, d);
+    set_visual_for_imlib(win);
     imlib_context_set_image(image);
     imlib_context_set_drawable(bg);   
     imlib_render_image_on_drawable_at_size(0, 0, w, h);
@@ -247,25 +247,25 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
     return bg;
 }
 
-Window create_widget_win(WM *wm, Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
+Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
 {
     XSetWindowAttributes attr;
-    attr.colormap=wm->colormap;
+    attr.colormap=xinfo.colormap;
     attr.border_pixel=border_pixel;
     attr.background_pixel=bg_pixel;
     attr.override_redirect=True;
 
-    return XCreateWindow(wm->display, parent, x, y, w, h, border_w, wm->depth,
-        InputOutput, wm->visual,
+    return XCreateWindow(xinfo.display, parent, x, y, w, h, border_w, xinfo.depth,
+        InputOutput, xinfo.visual,
         CWColormap | CWBorderPixel | CWBackPixel | CWOverrideRedirect, &attr);
 }
 
-void set_visual_for_imlib(Display *display, int screen, Visual *visual, Drawable d)
+void set_visual_for_imlib(Drawable d)
 {
-    if(d == RootWindow(display, screen))
-        imlib_context_set_visual(DefaultVisual(display, screen));
+    if(d == xinfo.root_win)
+        imlib_context_set_visual(DefaultVisual(xinfo.display, xinfo.screen));
     else
-        imlib_context_set_visual(visual);
+        imlib_context_set_visual(xinfo.visual);
 }
 
 void restack_win(WM *wm, Window win)
@@ -275,7 +275,7 @@ void restack_win(WM *wm, Window win)
             return;
 
     Client *c=win_to_client(wm, win);
-    Net_wm_win_type type=get_net_wm_win_type(wm->display, win);
+    Net_wm_win_type type=get_net_wm_win_type(win);
     Window wins[2]={None, c ? c->frame : win};
 
     if(type.desktop)
@@ -289,5 +289,5 @@ void restack_win(WM *wm, Window win)
     }
     else
         wins[0]=wm->top_wins[NORMAL_TOP];
-    XRestackWindows(wm->display, wins, 2);
+    XRestackWindows(xinfo.display, wins, 2);
 }

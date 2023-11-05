@@ -17,7 +17,7 @@
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
 static void unmap_for_click(WM *wm, Widget_type type);
-static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e);
+static bool is_func_click(Widget_type type, const Buttonbind *b, XEvent *e);
 static void focus_clicked_client(WM *wm, Window win);
 static void handle_client_message(WM *wm, XEvent *e);
 static void change_net_wm_state(WM *wm, Client *c, long *full_act);
@@ -29,7 +29,7 @@ static void change_net_wm_state_for_tmax(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_bmax(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_lmax(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_rmax(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_shaded(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_shaded(Client *c, long act);
 static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act);
@@ -41,8 +41,8 @@ static void change_net_wm_state_for_focused(WM *wm, Client *c, long act);
 static void activate_win(WM *wm, Window win, unsigned long src);
 static void change_desktop(WM *wm, Window win, unsigned int desktop);
 static void handle_config_request(WM *wm, XEvent *e);
-static void config_managed_client(WM *wm, Client *c);
-static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e);
+static void config_managed_client(Client *c);
+static void config_unmanaged_win(XConfigureRequestEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
 static void handle_pointer_hover(WM *wm, Window hover, Widget_type type);
 static const char *get_tooltip(WM *wm, Window win, Widget_type type);
@@ -68,8 +68,8 @@ static void handle_selection_notify(WM *wm, XEvent *e);
 void handle_events(WM *wm)
 {
 	XEvent e;
-    XSync(wm->display, False);
-    while(run_flag && !XNextEvent(wm->display, &e))
+    XSync(xinfo.display, False);
+    while(run_flag && !XNextEvent(xinfo.display, &e))
         if(!XFilterEvent(&e, None))
             wm->event_handlers[e.type](wm, &e);
     clear_wm(wm);
@@ -109,11 +109,11 @@ static void handle_button_press(WM *wm, XEvent *e)
 
     for(const Buttonbind *b=wm->cfg->buttonbind; b->func; b++)
     {
-        if( is_func_click(wm, type, b, e)
+        if( is_func_click(type, b, e)
             && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
             if(type == CLIENT_WIN)
-                XAllowEvents(wm->display, ReplayPointer, CurrentTime);
+                XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
             focus_clicked_client(wm, win);
             if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc) && b->func)
                 b->func(wm, e, b->arg);
@@ -125,21 +125,21 @@ static void handle_button_press(WM *wm, XEvent *e)
 static void unmap_for_click(WM *wm, Widget_type type)
 {
     if(type != ACT_CENTER_ITEM)
-        XUnmapWindow(wm->display, wm->act_center->win);
+        XUnmapWindow(xinfo.display, wm->act_center->win);
     if(type != TITLE_LOGO)
-        XUnmapWindow(wm->display, wm->client_menu->win);
+        XUnmapWindow(xinfo.display, wm->client_menu->win);
     if(type!=RUN_CMD_ENTRY && type!=RUN_BUTTON)
     {
-        XUnmapWindow(wm->display, wm->run_cmd->win);
-        XUnmapWindow(wm->display, wm->hint_win);
+        XUnmapWindow(xinfo.display, wm->run_cmd->win);
+        XUnmapWindow(xinfo.display, wm->hint_win);
     }
 }
 
-static bool is_func_click(WM *wm, Widget_type type, const Buttonbind *b, XEvent *e)
+static bool is_func_click(Widget_type type, const Buttonbind *b, XEvent *e)
 {
     return (b->widget_type == type 
         && b->button == e->xbutton.button
-        && is_equal_modifier_mask(wm, b->modifier, e->xbutton.state));
+        && is_equal_modifier_mask( b->modifier, e->xbutton.state));
 }
 
 static void focus_clicked_client(WM *wm, Window win)
@@ -166,7 +166,7 @@ static void handle_client_message(WM *wm, XEvent *e)
         if(is_spec_ewmh_atom(type, NET_ACTIVE_WINDOW))
             activate_win(wm, win, e->xclient.data.l[0]);
         else if(is_spec_ewmh_atom(type, NET_CLOSE_WINDOW))
-            close_win(wm->display, win);
+            close_win(win);
         else if(is_spec_ewmh_atom(type, NET_WM_DESKTOP))
             change_desktop(wm, win, e->xclient.data.l[0]);
         else if(is_spec_ewmh_atom(type, NET_WM_STATE))
@@ -190,7 +190,7 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act)
     if(mask.bmax)           change_net_wm_state_for_bmax(wm, c, act);
     if(mask.lmax)           change_net_wm_state_for_lmax(wm, c, act);
     if(mask.rmax)           change_net_wm_state_for_rmax(wm, c, act);
-    if(mask.shaded)         change_net_wm_state_for_shaded(wm, c, act);
+    if(mask.shaded)         change_net_wm_state_for_shaded(c, act);
     if(mask.skip_taskbar)   change_net_wm_state_for_skip_taskbar(wm, c, act);
     if(mask.skip_pager)     change_net_wm_state_for_skip_pager(wm, c, act);
     if(mask.hidden)         change_net_wm_state_for_hidden(wm, c, act);
@@ -200,7 +200,7 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act)
     if(mask.attent)         change_net_wm_state_for_attent(wm, c, act);
     if(mask.focused)        change_net_wm_state_for_focused(wm, c, act);
 
-    update_net_wm_state(wm->display, c->win, c->win_state);
+    update_net_wm_state(c->win, c->win_state);
 }
 
 static void change_net_wm_state_for_modal(WM *wm, Client *c, long act)
@@ -287,9 +287,9 @@ static void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
     c->win_state.rmax=add;
 }
 
-static void change_net_wm_state_for_shaded(WM *wm, Client *c, long act)
+static void change_net_wm_state_for_shaded(Client *c, long act)
 {
-    toggle_shade_client_mode(wm, c, SHOULD_ADD_STATE(c, act, shaded));
+    toggle_shade_client_mode(c, SHOULD_ADD_STATE(c, act, shaded));
 }
 
 static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act)
@@ -323,7 +323,7 @@ static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
     if(add)
     {
         save_place_info_of_client(c);
-        c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
+        c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
         move_client(wm, c, NULL, FULLSCREEN_LAYER);
     }
     else
@@ -389,7 +389,7 @@ static void activate_win(WM *wm, Window win, unsigned long src)
         if(is_on_cur_desktop(wm, c))
             focus_client(wm, wm->cur_desktop, c);
         else
-            set_urgency(wm->display, c->win, c->wm_hint, true);
+            set_urgency(c->win, c->wm_hint, true);
     }
     else // 源自應用程序
         set_attention(wm, c, true);
@@ -414,30 +414,30 @@ static void handle_config_request(WM *wm, XEvent *e)
     Client *c=win_to_client(wm, cr.window);
 
     if(c)
-        config_managed_client(wm, c);
+        config_managed_client(c);
     else
-        config_unmanaged_win(wm, &cr);
+        config_unmanaged_win(&cr);
 }
 
-static void config_managed_client(WM *wm, Client *c)
+static void config_managed_client(Client *c)
 {
     XConfigureEvent ce=
     {
-        .type=ConfigureNotify, .display=wm->display, .event=c->win,
+        .type=ConfigureNotify, .display=xinfo.display, .event=c->win,
         .window=c->win, .x=c->x, .y=c->y, .width=c->w, .height=c->h,
         .border_width=0, .above=None, .override_redirect=False
     };
-    XSendEvent(wm->display, c->win, False, StructureNotifyMask, (XEvent *)&ce);
+    XSendEvent(xinfo.display, c->win, False, StructureNotifyMask, (XEvent *)&ce);
 }
 
-static void config_unmanaged_win(WM *wm, XConfigureRequestEvent *e)
+static void config_unmanaged_win(XConfigureRequestEvent *e)
 {
     XWindowChanges wc=
     {
         .x=e->x, .y=e->y, .width=e->width, .height=e->height,
         .border_width=e->border_width, .sibling=e->above, .stack_mode=e->detail
     };
-    XConfigureWindow(wm->display, e->window, e->value_mask, &wc);
+    XConfigureWindow(xinfo.display, e->window, e->value_mask, &wc);
 }
 
 static void handle_enter_notify(WM *wm, XEvent *e)
@@ -455,13 +455,13 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         && get_clients_n(wm, TILE_LAYER_MAIN, false, false, false))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_BUTTON(type))
-        update_win_bg(wm, win, ENTERED_NCLOSE_BUTTON_COLOR(wm, type), None);
+        update_win_bg(win, ENTERED_NCLOSE_BUTTON_COLOR(wm, type), None);
     else if(type == CLIENT_FRAME)
         act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
         act=MOVE;
     if(type != UNDEFINED)
-        XDefineCursor(wm->display, win, wm->cursors[act]);
+        XDefineCursor(xinfo.display, win, wm->cursors[act]);
     handle_pointer_hover(wm, win, type);
 }
 
@@ -475,17 +475,17 @@ static void handle_pointer_hover(WM *wm, Window hover, Widget_type type)
     XEvent ev;
     bool done=false;
     struct timeval t={wm->cfg->hover_time/1000, wm->cfg->hover_time%1000*1000}, t0=t;
-    int fd=ConnectionNumber(wm->display);
+    int fd=ConnectionNumber(xinfo.display);
     fd_set fds;
 
     while(1)
     {
-        if(XPending(wm->display))
+        if(XPending(xinfo.display))
         {
-            XNextEvent(wm->display, &ev);
+            XNextEvent(xinfo.display, &ev);
                 wm->event_handlers[ev.type](wm, &ev);
             if(ev.type == MotionNotify && ev.xmotion.window==hover)
-                XUnmapWindow(wm->display, wm->hint_win), t=t0, done=false;
+                XUnmapWindow(xinfo.display, wm->hint_win), t=t0, done=false;
             else if(ev.type==LeaveNotify && ev.xcrossing.window==hover)
                 break;
         }
@@ -503,7 +503,7 @@ static void handle_pointer_hover(WM *wm, Window hover, Widget_type type)
             }
         }
     }
-    XUnmapWindow(wm->display, wm->hint_win);
+    XUnmapWindow(xinfo.display, wm->hint_win);
 }
 
 static const char *get_tooltip(WM *wm, Window win, Widget_type type)
@@ -546,7 +546,7 @@ static void handle_expose(WM *wm, XEvent *e)
 static void update_title_logo_fg(WM *wm, Client *c)
 {
     if(c->image)
-        draw_image(wm->display, wm->screen, wm->visual, c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
+        draw_image(c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
     else
     {
         String_format f={{0, 0, c->titlebar_h, c->titlebar_h}, CENTER, true,
@@ -582,7 +582,7 @@ static void handle_focus_in(WM *wm, XEvent *e)
     Client *c=win_to_client(wm, e->xfocus.window);
     if(c && c->win_state.fullscreen && c->place_type!=FULLSCREEN_LAYER)
     {
-        c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
+        c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
         move_client(wm, c, NULL, FULLSCREEN_LAYER);
     }
 }
@@ -601,11 +601,11 @@ static void handle_key_press(WM *wm, XEvent *e)
     else
     {
         int n;
-        KeySym *ks=XGetKeyboardMapping(wm->display, e->xkey.keycode, 1, &n);
+        KeySym *ks=XGetKeyboardMapping(xinfo.display, e->xkey.keycode, 1, &n);
 
         for(const Keybind *kb=wm->cfg->keybind; kb->func; kb++)
             if( *ks == kb->keysym
-                && is_equal_modifier_mask(wm, kb->modifier, e->xkey.state)
+                && is_equal_modifier_mask(kb->modifier, e->xkey.state)
                 && kb->func)
                 kb->func(wm, e, kb->arg);
         XFree(ks);
@@ -631,15 +631,15 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
         update_taskbar_button_bg(wm, type);
     else if(type == CLIENT_ICON)
-        update_win_bg(wm, win, WIDGET_COLOR(wm, TASKBAR), None);
+        update_win_bg(win, WIDGET_COLOR(wm, TASKBAR), None);
     else if(IS_MENU_ITEM(type))
-        update_win_bg(wm, win, WIDGET_COLOR(wm, MENU), None);
+        update_win_bg(win, WIDGET_COLOR(wm, MENU), None);
     else if(type == TITLE_LOGO)
-        update_win_bg(wm, win, CLI_WIDGET_COLOR(wm, c, TITLEBAR), None);
+        update_win_bg(win, CLI_WIDGET_COLOR(wm, c, TITLEBAR), None);
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
-        update_win_bg(wm, win, CLI_WIDGET_COLOR(wm, c, TITLEBAR), None);
+        update_win_bg(win, CLI_WIDGET_COLOR(wm, c, TITLEBAR), None);
     if(type != UNDEFINED)
-        XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+        XDefineCursor(xinfo.display, win, wm->cursors[NO_OP]);
 }
 
 static void handle_map_request(WM *wm, XEvent *e)
@@ -653,7 +653,7 @@ static void handle_map_request(WM *wm, XEvent *e)
     }
     else
         restack_win(wm, win);
-    XMapWindow(wm->display, win);
+    XMapWindow(xinfo.display, win);
 }
 
 /* 對已經映射的窗口重設父窗口會依次執行以下操作：
@@ -681,11 +681,11 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
 static void handle_property_notify(WM *wm, XEvent *e)
 {
     Window win=e->xproperty.window;
-    Client *c=NULL;
+    Client *c=win_to_client(wm, win);
     Atom atom=e->xproperty.atom;
 
-    if(wm->cfg->set_frame_prop && (c=win_to_client(wm, win)))
-        copy_prop(wm->display, c->frame, c->win);
+    if(c && wm->cfg->set_frame_prop)
+        copy_prop(c->frame, c->win);
     if(atom == XA_WM_HINTS)
         handle_wm_hints_notify(wm, win);
     else if(atom==XA_WM_ICON_NAME || is_spec_ewmh_atom(atom, NET_WM_ICON_NAME))
@@ -696,6 +696,14 @@ static void handle_property_notify(WM *wm, XEvent *e)
         handle_wm_normal_hints_notify(wm, win);
     else if(atom == XA_WM_TRANSIENT_FOR)
         handle_wm_transient_for_notify(wm, win);
+    else if(c && is_spec_ewmh_atom(atom, NET_WM_ICON))
+    {
+        c->image=get_icon_image(c->win, c->wm_hint, c->class_hint.res_name,
+            wm->cfg->icon_image_size, wm->cfg->cur_icon_theme);
+        draw_image(c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
+        if(c->icon)
+            draw_image(c->image, c->icon->win, 0, 0, c->titlebar_h, c->titlebar_h);
+    }
 }
 
 static void handle_wm_hints_notify(WM *wm, Window win)
@@ -704,10 +712,10 @@ static void handle_wm_hints_notify(WM *wm, Window win)
     if(!c)
         return;
 
-    XWMHints *oh=c->wm_hint, *nh=XGetWMHints(wm->display, win);
+    XWMHints *oh=c->wm_hint, *nh=XGetWMHints(xinfo.display, win);
     if( nh && ((nh->flags & InputHint) && nh->input) // 變成需要鍵盤輸入
         && (!oh || !((oh->flags & InputHint) && oh->input)))
-        set_input_focus(wm->display, win, nh);
+        set_input_focus(win, nh);
     update_taskbar_buttons_bg(wm);
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
@@ -718,7 +726,7 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
     char *s=NULL;
     Client *c=win_to_client(wm, win);
 
-    if(!c || !c->icon || !(s=get_text_prop(wm->display, c->win, atom)))
+    if(!c || !c->icon || !(s=get_text_prop(c->win, atom)))
         return;
 
     free(c->icon->title_text);
@@ -728,13 +736,13 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
 
 static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
 {
-    char *s=get_text_prop(wm->display, win, atom);
+    char *s=get_text_prop(win, atom);
     Client *c=win_to_client(wm, win);
 
-    if((win!=wm->root_win && !c) || !s)
+    if((win!=xinfo.root_win && !c) || !s)
         return;
 
-    if(win == wm->root_win)
+    if(win == xinfo.root_win)
     {
         free(wm->taskbar->status_text);
         wm->taskbar->status_text=s;
@@ -753,7 +761,7 @@ static void handle_wm_normal_hints_notify(WM *wm, Window win)
     Client *c=win_to_client(wm, win);
     if(c)
     {
-        update_size_hint(wm->display, c->win, wm->cfg->resize_inc, &c->size_hint);
+        update_size_hint(c->win, wm->cfg->resize_inc, &c->size_hint);
         if( DESKTOP(wm)->cur_layout!=TILE
             || (c->place_type!=FULLSCREEN_LAYER && !is_tile_client(wm, c)))
             fix_win_rect(wm, c), update_layout(wm);
@@ -764,7 +772,7 @@ static void handle_wm_transient_for_notify(WM *wm, Window win)
 {
     Client *c=win_to_client(wm, win);
     if(c)
-        c->owner=win_to_client(wm, get_transient_for(wm->display, win));
+        c->owner=win_to_client(wm, get_transient_for(win));
 }
 
 static void handle_selection_notify(WM *wm, XEvent *e)

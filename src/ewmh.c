@@ -58,74 +58,74 @@ bool is_spec_ewmh_atom(Atom spec, EWMH_atom_id id)
     return spec==ewmh_atoms[id];
 }
 
-void set_ewmh_atoms(Display *display)
+void set_ewmh_atoms(void)
 {
     for(int i=0; i<EWMH_ATOM_N; i++)
-        ewmh_atoms[i]=XInternAtom(display, ewmh_atom_names[i], False);
+        ewmh_atoms[i]=XInternAtom(xinfo.display, ewmh_atom_names[i], False);
 }
 
-void set_net_supported(Display *display, Window root)
+void set_net_supported(void)
 {
     Atom prop=ewmh_atoms[NET_SUPPORTED];
-    replace_atom_prop(display, root, prop, ewmh_atoms, EWMH_ATOM_N);
+    replace_atom_prop(xinfo.root_win, prop, ewmh_atoms, EWMH_ATOM_N);
 }
 
-void set_net_client_list(Display *display, Window root, const Window *wins, int n)
+void set_net_client_list(const Window *wins, int n)
 {
-    set_net_client_list_by_order(display, root, wins, n, false);
+    set_net_client_list_by_order(wins, n, false);
 }
 
-void set_net_client_list_stacking(Display *display, Window root, const Window *wins, int n)
+void set_net_client_list_stacking(const Window *wins, int n)
 {
-    set_net_client_list_by_order(display, root, wins, n, true);
+    set_net_client_list_by_order(wins, n, true);
 }
 
-void set_net_client_list_by_order(Display *display, Window root, const Window *wins, int n, bool stack)
+void set_net_client_list_by_order(const Window *wins, int n, bool stack)
 {
     Atom prop=ewmh_atoms[stack ? NET_CLIENT_LIST_STACKING : NET_CLIENT_LIST];
 
     if(n == 0)
-        XDeleteProperty(display, root, prop);
+        XDeleteProperty(xinfo.display, xinfo.root_win, prop);
     else
-        replace_window_prop(display, root, prop, wins, n);
+        replace_window_prop(xinfo.root_win, prop, wins, n);
 }
 
-void set_net_number_of_desktops(Display *display, Window root, int n)
+void set_net_number_of_desktops(int n)
 {
     CARD32 count=n;
     Atom prop=ewmh_atoms[NET_NUMBER_OF_DESKTOPS];
 
-    replace_cardinal_prop(display, root, prop, &count, 1);
+    replace_cardinal_prop(xinfo.root_win, prop, &count, 1);
 }
 
-void set_net_desktop_geometry(Display *display, Window root, int w, int h)
+void set_net_desktop_geometry(int w, int h)
 {
     Atom prop=ewmh_atoms[NET_DESKTOP_GEOMETRY];
     CARD32 size[2]={w, h};
     
-    replace_cardinal_prop(display, root, prop, size, 2);
+    replace_cardinal_prop(xinfo.root_win, prop, size, 2);
 }
 
-void set_net_desktop_viewport(Display *display, Window root, int x, int y)
+void set_net_desktop_viewport(int x, int y)
 {
     Atom prop=ewmh_atoms[NET_DESKTOP_GEOMETRY];
     CARD32 pos[2]={x, y};
 
-    replace_cardinal_prop(display, root, prop, pos, 2);
+    replace_cardinal_prop(xinfo.root_win, prop, pos, 2);
 }
 
 /* EWMH桌面編號從0起算，gwm則從1起算 */
-void set_net_current_desktop(Display *display, Window root, unsigned int cur_desktop)
+void set_net_current_desktop(unsigned int cur_desktop)
 {
     CARD32 cur=cur_desktop;
     Atom prop=ewmh_atoms[NET_CURRENT_DESKTOP];
 
-    replace_cardinal_prop(display, root, prop, &cur, 1);
+    replace_cardinal_prop(xinfo.root_win, prop, &cur, 1);
 }
 
-unsigned int get_net_wm_desktop(Display *display, Window win)
+unsigned int get_net_wm_desktop(Window win)
 {
-        unsigned char *p=get_prop(display, win, ewmh_atoms[NET_WM_DESKTOP], NULL);
+        unsigned char *p=get_prop(win, ewmh_atoms[NET_WM_DESKTOP], NULL);
 
         if(!p)
            return 0;
@@ -135,52 +135,52 @@ unsigned int get_net_wm_desktop(Display *display, Window win)
         return desktop;
 }
 
-void set_net_desktop_names(Display *display, Window root, const char **names, int n)
+void set_net_desktop_names(const char **names, int n)
 {
     Atom prop=ewmh_atoms[NET_DESKTOP_NAMES];
     int size=0;
 
     for(int i=0; i<n; i++)
         size += strlen(names[i])+1;
-    replace_utf8_prop(display, root, prop, names, size);
+    replace_utf8_prop(xinfo.root_win, prop, names, size);
 }
 
-void set_net_active_window(Display *display, Window root, Window act_win)
+void set_net_active_window(Window act_win)
 {
     Atom prop=ewmh_atoms[NET_ACTIVE_WINDOW];
 
-    replace_window_prop(display, root, prop, &act_win, 1);
+    replace_window_prop(xinfo.root_win, prop, &act_win, 1);
 }
 
-void set_net_workarea(Display *display, Window root, int x, int y, int w, int h, int desktop_n)
+void set_net_workarea(int x, int y, int w, int h, int desktop_n)
 {
     Atom prop=ewmh_atoms[NET_WORKAREA];
     CARD32 rect[DESKTOP_N][4];
 
     for(size_t i=0; i<DESKTOP_N; i++)
         rect[i][0]=x, rect[i][1]=y, rect[i][2]=w, rect[i][3]=h;
-    replace_cardinal_prop(display, root, prop, rect[0], desktop_n*4);
+    replace_cardinal_prop(xinfo.root_win, prop, rect[0], desktop_n*4);
 }
 
-void set_net_supporting_wm_check(Display *display, Window root, Window check_win, const char *wm_name)
+void set_net_supporting_wm_check(Window check_win, const char *wm_name)
 {
     Atom prop=ewmh_atoms[NET_SUPPORTING_WM_CHECK];
 
-    replace_window_prop(display, root, prop, &check_win, 1);
-    replace_window_prop(display, check_win, prop, &check_win, 1);
+    replace_window_prop(xinfo.root_win, prop, &check_win, 1);
+    replace_window_prop(check_win, prop, &check_win, 1);
     prop=ewmh_atoms[NET_WM_NAME];
-    replace_utf8_prop(display, check_win, prop, wm_name, strlen(wm_name)+1);
+    replace_utf8_prop(check_win, prop, wm_name, strlen(wm_name)+1);
 }
 
-void set_net_showing_desktop(Display *display, Window root, bool show)
+void set_net_showing_desktop(bool show)
 {
     CARD32 showing=show;
     Atom prop=ewmh_atoms[NET_SHOWING_DESKTOP];
 
-    replace_cardinal_prop(display, root, prop, &showing, 1);
+    replace_cardinal_prop(xinfo.root_win, prop, &showing, 1);
 }
 
-void set_net_wm_allowed_actions(Display *display, Window win)
+void set_net_wm_allowed_actions(Window win)
 {
     Atom prop=ewmh_atoms[NET_WM_ALLOWED_ACTIONS];
     unsigned long acts[]=
@@ -199,16 +199,16 @@ void set_net_wm_allowed_actions(Display *display, Window win)
         ewmh_atoms[NET_WM_ACTION_BELOW],
     };
 
-    replace_atom_prop(display, win, prop, acts, ARRAY_NUM(acts));
+    replace_atom_prop(win, prop, acts, ARRAY_NUM(acts));
 }
 
 /* 根據EWMH，窗口可能有多種類型，但實際上絕大部分窗口只設置一種類型 */
-Net_wm_win_type get_net_wm_win_type(Display *display, Window win)
+Net_wm_win_type get_net_wm_win_type(Window win)
 {
     Net_wm_win_type r={0}, unknown={.none=1};
     unsigned long n=0;
     Atom *a=ewmh_atoms,
-         *t=(Atom *)get_prop(display, win, a[NET_WM_WINDOW_TYPE], &n);
+         *t=(Atom *)get_prop(win, a[NET_WM_WINDOW_TYPE], &n);
 
     if(!t)
         return unknown;
@@ -237,11 +237,11 @@ Net_wm_win_type get_net_wm_win_type(Display *display, Window win)
 }
 
 /* EWMH未說明窗口可否同時有多種狀態，但實際上絕大部分窗口不設置或只設置一種 */
-Net_wm_state get_net_wm_state(Display *display, Window win)
+Net_wm_state get_net_wm_state(Window win)
 {
     Net_wm_state r={0};
     unsigned long n=0;
-    Atom *a=ewmh_atoms, *s=(Atom *)get_prop(display, win, a[NET_WM_STATE], &n);
+    Atom *a=ewmh_atoms, *s=(Atom *)get_prop(win, a[NET_WM_STATE], &n);
 
     if(!s)
         return r;
@@ -271,7 +271,7 @@ Net_wm_state get_net_wm_state(Display *display, Window win)
     return r;
 }
 
-void update_net_wm_state(Display *display, Window win, Net_wm_state state)
+void update_net_wm_state(Window win, Net_wm_state state)
 {
     // 目前EWMH規範中NET_WM_STATE共有13種狀態，GWM自定義4種狀態
     Atom *a=ewmh_atoms, prop=a[NET_WM_STATE], states[17]={0};
@@ -294,7 +294,7 @@ void update_net_wm_state(Display *display, Window win, Net_wm_state state)
     if(state.below)          states[n++]=a[NET_WM_STATE_BELOW];
     if(state.attent)         states[n++]=a[NET_WM_STATE_DEMANDS_ATTENTION];
     if(state.focused)        states[n++]=a[NET_WM_STATE_FOCUSED];
-    replace_atom_prop(display, win, prop, states, n);
+    replace_atom_prop(win, prop, states, n);
 }
 
 Net_wm_state get_net_wm_state_mask(const long *full_act)
@@ -327,33 +327,33 @@ Net_wm_state get_net_wm_state_mask(const long *full_act)
 }
 
 /* 判斷是否存在（遵從EWMH標準的）合成器 */
-bool have_compositor(Display *display, int screen)
+bool have_compositor(void)
 {
-    return  get_compositor(display, screen) != None;
+    return  get_compositor() != None;
 }
 
 /* 獲取（遵從EWMH標準的）合成器的ID，它未必是真實的窗口 */
-Window get_compositor(Display *display, int screen)
+Window get_compositor(void)
 {
     char prop_name[32];
 
     // 遵守EWMH標準的合成器都會獲取名爲_NET_WM_CM_Sn的選擇區所有權
-    snprintf(prop_name, 32, "_NET_WM_CM_S%d", screen);
-    Atom prop_atom=XInternAtom(display, prop_name, False);
-    return XGetSelectionOwner(display, prop_atom);
+    snprintf(prop_name, 32, "_NET_WM_CM_S%d", xinfo.screen);
+    Atom prop_atom=XInternAtom(xinfo.display, prop_name, False);
+    return XGetSelectionOwner(xinfo.display, prop_atom);
 }
 
-char *get_net_wm_name(Display *display, Window win)
+char *get_net_wm_name(Window win)
 {
-    return get_text_prop(display, win, ewmh_atoms[NET_WM_NAME]);
+    return get_text_prop(win, ewmh_atoms[NET_WM_NAME]);
 }
 
-char *get_net_wm_icon_name(Display *display, Window win)
+char *get_net_wm_icon_name(Window win)
 {
-    return get_text_prop(display, win, ewmh_atoms[NET_WM_ICON_NAME]);
+    return get_text_prop(win, ewmh_atoms[NET_WM_ICON_NAME]);
 }
 
-CARD32 *get_net_wm_icon(Display *display, Window win)
+CARD32 *get_net_wm_icon(Window win)
 {
-    return (CARD32 *)get_prop(display, win, ewmh_atoms[NET_WM_ICON], NULL);
+    return (CARD32 *)get_prop(win, ewmh_atoms[NET_WM_ICON], NULL);
 }

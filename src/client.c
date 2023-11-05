@@ -11,16 +11,17 @@
 
 #include "gwm.h"
 
+
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);
-static void fix_place_type_for_hint(WM *wm, Client *c);
-static bool should_float(WM *wm, Client *c);
-static bool is_max_state(Client *c);
-static void set_default_desktop_mask(WM *wm, Client *c);
+static void set_default_desktop_mask(Client *c);
 static void apply_rules(WM *wm, Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static Client *get_head_for_add_client(WM *wm, Client *c);
 static void add_client_node(Client *head, Client *c);
+static void fix_place_type_for_hint(WM *wm, Client *c);
+static bool should_float(WM *wm, Client *c);
+static bool is_max_state(Client *c);
 static void set_default_win_rect(WM *wm, Client *c);
 static void set_win_rect_by_attr(WM *wm, Client *c);
 static bool fix_win_pos_by_hint(Client *c);
@@ -60,16 +61,15 @@ void add_client(WM *wm, Window win)
     fix_place_type_for_tile(wm);
     set_default_win_rect(wm, c);
     save_place_info_of_client(c);
-    c->image=get_icon_image(wm->display, c->win, c->wm_hint, c->class_hint.res_name, wm->cfg->icon_image_size, wm->cfg->cur_icon_theme);
     grab_buttons(wm, c);
-    XSelectInput(wm->display, win, EnterWindowMask|PropertyChangeMask);
-    XDefineCursor(wm->display, win, wm->cursors[NO_OP]);
+    XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
+    XDefineCursor(xinfo.display, win, wm->cursors[NO_OP]);
     frame_client(wm, c);
     update_layout(wm);
-    XMapWindow(wm->display, c->frame);
-    XMapSubwindows(wm->display, c->frame);
+    XMapWindow(xinfo.display, c->frame);
+    XMapSubwindows(xinfo.display, c->frame);
     focus_client(wm, wm->cur_desktop, c);
-    set_net_wm_allowed_actions(wm->display, c->win);
+    set_net_wm_allowed_actions(c->win);
 }
 
 void set_all_net_client_list(WM *wm)
@@ -77,11 +77,11 @@ void set_all_net_client_list(WM *wm)
     int n=0;
     Window *wlist=get_client_win_list(wm, &n);
 
-    set_net_client_list(wm->display, wm->root_win, wlist, n);
+    set_net_client_list(wlist, n);
     free(wlist);
 
     wlist=get_client_win_list_stacking(wm, &n);
-    set_net_client_list_stacking(wm->display, wm->root_win, wlist, n);
+    set_net_client_list_stacking(wlist, n);
     free(wlist);
 }
 
@@ -91,18 +91,21 @@ static Client *new_client(WM *wm, Window win)
     memset(c, 0, sizeof(Client));
     c->win=win;
     c->map_n=++wm->map_count;
-    c->title_text=get_title_text(wm, win, "");
-    c->wm_hint=XGetWMHints(wm->display, win);
-    c->win_type=get_net_wm_win_type(wm->display, win);
-    c->win_state=get_net_wm_state(wm->display, win);
-    c->owner=win_to_client(wm, get_transient_for(wm->display, c->win));
+    c->title_text=get_title_text(win, "");
+    c->wm_hint=XGetWMHints(xinfo.display, win);
+    c->win_type=get_net_wm_win_type(win);
+    c->win_state=get_net_wm_state(win);
+    c->owner=win_to_client(wm, get_transient_for(c->win));
     c->subgroup_leader=get_subgroup_leader(c);
     c->place_type=TILE_LAYER_MAIN;
     if(!should_hide_frame(c))
         c->border_w=wm->cfg->border_width, c->titlebar_h=TITLEBAR_HEIGHT(wm);
-    c->class_hint.res_class=c->class_hint.res_name=NULL, c->class_name="?";
-    update_size_hint(wm->display, c->win, wm->cfg->resize_inc, &c->size_hint);
-    set_default_desktop_mask(wm, c);
+    c->class_name="?";
+    XGetClassHint(xinfo.display, c->win, &c->class_hint);
+    update_size_hint(c->win, wm->cfg->resize_inc, &c->size_hint);
+    c->image=get_icon_image(c->win, c->wm_hint, c->class_hint.res_name,
+        wm->cfg->icon_image_size, wm->cfg->cur_icon_theme);
+    set_default_desktop_mask(c);
 
     return c;
 }
@@ -113,20 +116,20 @@ static bool should_hide_frame(Client *c)
         || c->win_state.skip_pager || c->win_state.skip_taskbar;
 }
 
-static void set_default_desktop_mask(WM *wm, Client *c)
+static void set_default_desktop_mask(Client *c)
 {
     if(c->win_state.sticky)
         c->desktop_mask=~0U;
     else
     {
-        unsigned int desktop=get_net_wm_desktop(wm->display, c->win)+1;
+        unsigned int desktop=get_net_wm_desktop(c->win)+1;
         c->desktop_mask = desktop==~0U ? desktop : get_desktop_mask(desktop);
     }
 }
 
 static void apply_rules(WM *wm, Client *c)
 {
-    if(!XGetClassHint(wm->display, c->win, &c->class_hint))
+    if(!c->class_hint.res_class && !c->class_hint.res_name)
         return;
 
     c->class_name=c->class_hint.res_class;
@@ -230,7 +233,7 @@ static void set_default_win_rect(WM *wm, Client *c)
     if(c->win_state.hmax)
         c->y=wy+bw+th, c->h=wh-th-2*bw;
     if(c->win_state.fullscreen)
-        c->x=c->y=0, c->w=wm->screen_width, c->h=wm->screen_height;
+        c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
 
     if(!is_max_state(c) && !c->win_state.fullscreen)
         set_win_rect_by_attr(wm, c), fix_win_rect(wm, c);
@@ -240,7 +243,7 @@ static void set_win_rect_by_attr(WM *wm, Client *c)
 {
     XWindowAttributes a={.x=wm->workarea.x, .y=wm->workarea.y,
         .width=wm->workarea.w/4, .height=wm->workarea.h/4};
-    XGetWindowAttributes(wm->display, c->win, &a);
+    XGetWindowAttributes(xinfo.display, c->win, &a);
     c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
 }
 
@@ -319,20 +322,20 @@ static void fix_win_size_by_workarea(WM *wm, Client *c)
 static void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c);
-    c->frame=create_widget_win(wm, wm->root_win, fr.x, fr.y, fr.w, fr.h,
+    c->frame=create_widget_win(xinfo.root_win, fr.x, fr.y, fr.w, fr.h,
         c->border_w, WIDGET_COLOR(wm, CURRENT_BORDER), 0);
-    XSelectInput(wm->display, c->frame, FRAME_EVENT_MASK);
+    XSelectInput(xinfo.display, c->frame, FRAME_EVENT_MASK);
     if(wm->cfg->set_frame_prop)
-        copy_prop(wm->display, c->frame, c->win);
+        copy_prop(c->frame, c->win);
     if(c->titlebar_h)
         create_titlebar(wm, c);
-    XAddToSaveSet(wm->display, c->win);
-    XReparentWindow(wm->display, c->win, c->frame, 0, c->titlebar_h);
+    XAddToSaveSet(xinfo.display, c->win);
+    XReparentWindow(xinfo.display, c->win, c->frame, 0, c->titlebar_h);
     
     /* 以下是同時設置窗口前景和背景透明度的非EWMH標準方法：
     unsigned long opacity = (unsigned long)(0xfffffffful);
-    Atom XA_NET_WM_WINDOW_OPACITY = XInternAtom(wm->display, "_NET_WM_WINDOW_OPACITY", False);
-    XChangeProperty(wm->display, c->frame, XA_NET_WM_WINDOW_OPACITY, XA_CARDINAL, 32,
+    Atom XA_NET_WM_WINDOW_OPACITY = XInternAtom(xinfo.display, "_NET_WM_WINDOW_OPACITY", False);
+    XChangeProperty(xinfo.display, c->frame, XA_NET_WM_WINDOW_OPACITY, XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)&opacity, 1L);
     */
 }
@@ -343,16 +346,16 @@ void create_titlebar(WM *wm, Client *c)
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(wm, c, i);
-        c->buttons[i]=create_widget_win(wm, c->frame, br.x, br.y,
+        c->buttons[i]=create_widget_win(c->frame, br.x, br.y,
             br.w, br.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
-        XSelectInput(wm->display, c->buttons[i], BUTTON_EVENT_MASK);
+        XSelectInput(xinfo.display, c->buttons[i], BUTTON_EVENT_MASK);
     }
-    c->title_area=create_widget_win(wm, c->frame, tr.x, tr.y,
+    c->title_area=create_widget_win(c->frame, tr.x, tr.y,
         tr.w, tr.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
-    XSelectInput(wm->display, c->title_area, TITLE_AREA_EVENT_MASK);
-    c->logo=create_widget_win(wm, c->frame, 0, 0, c->titlebar_h,
+    XSelectInput(xinfo.display, c->title_area, TITLE_AREA_EVENT_MASK);
+    c->logo=create_widget_win(c->frame, 0, 0, c->titlebar_h,
         c->titlebar_h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
-    XSelectInput(wm->display, c->logo, BUTTON_EVENT_MASK);
+    XSelectInput(xinfo.display, c->logo, BUTTON_EVENT_MASK);
 }
 
 static Rect get_frame_rect(Client *c)
@@ -406,9 +409,9 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     if(!c)
         return;
 
-    if(is_win_exist(wm, c->win, c->frame))
-        XReparentWindow(wm->display, c->win, wm->root_win, c->x, c->y);
-    XDestroyWindow(wm->display, c->frame);
+    if(is_win_exist(c->win, c->frame))
+        XReparentWindow(xinfo.display, c->win, xinfo.root_win, c->x, c->y);
+    XDestroyWindow(xinfo.display, c->frame);
     if(c->image)
         imlib_context_set_image(c->image), imlib_free_image();
     del_client_node(c);
@@ -444,12 +447,12 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
         {
             Rect br=get_button_rect(wm, c, i);
-            XMoveWindow(wm->display, c->buttons[i], br.x, br.y);
+            XMoveWindow(xinfo.display, c->buttons[i], br.x, br.y);
         }
-        XResizeWindow(wm->display, c->title_area, tr.w, tr.h);
+        XResizeWindow(xinfo.display, c->title_area, tr.w, tr.h);
     }
-    XMoveResizeWindow(wm->display, c->frame, fr.x, fr.y, fr.w, fr.h);
-    XMoveResizeWindow(wm->display, c->win, 0, c->titlebar_h, c->w, c->h);
+    XMoveResizeWindow(xinfo.display, c->frame, fr.x, fr.y, fr.w, fr.h);
+    XMoveResizeWindow(xinfo.display, c->win, 0, c->titlebar_h, c->w, c->h);
 }
 
 Client *win_to_iconic_state_client(WM *wm, Window win)
@@ -470,7 +473,7 @@ void raise_client(WM *wm, Client *c)
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
         wins[i--]=p->frame;
 
-    XRestackWindows(wm->display, wins, n+1);
+    XRestackWindows(xinfo.display, wins, n+1);
     set_all_net_client_list(wm);
 }
 
@@ -696,13 +699,13 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 
     if(desktop_n == wm->cur_desktop)
     {
-        if(pc->win == wm->root_win)
-            XSetInputFocus(wm->display, wm->root_win, RevertToPointerRoot, CurrentTime);
+        if(pc->win == xinfo.root_win)
+            XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
         else if(!pc->icon)
         {
-            set_input_focus(wm->display, pc->win, pc->wm_hint);
+            set_input_focus(pc->win, pc->wm_hint);
             if(have_urgency(wm, desktop_n))
-                set_urgency(wm->display, pc->win, pc->wm_hint, false);
+                set_urgency(pc->win, pc->wm_hint, false);
             if(have_attention(wm, desktop_n))
                 set_attention(wm, pc, false);
         }
@@ -710,7 +713,7 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     update_client_bg(wm, desktop_n, pc);
     update_client_bg(wm, desktop_n, pp);
     raise_client(wm, pc);
-    set_net_active_window(wm->display, wm->root_win, pc->win);
+    set_net_active_window(pc->win);
 }
 
 static bool update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
@@ -808,18 +811,18 @@ void iconify(WM *wm, Client *c)
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
         create_icon(wm, p);
-        p->icon->title_text=get_icon_title_text(wm, p->win, p->title_text);
-        update_win_bg(wm, p->icon->win, WIDGET_COLOR(wm, TASKBAR), None);
+        p->icon->title_text=get_icon_title_text(p->win, p->title_text);
+        update_win_bg(p->icon->win, WIDGET_COLOR(wm, TASKBAR), None);
         update_icon_area(wm);
-        XMapWindow(wm->display, p->icon->win);
-        XUnmapWindow(wm->display, p->frame);
+        XMapWindow(xinfo.display, p->icon->win);
+        XUnmapWindow(xinfo.display, p->frame);
         if(p == DESKTOP(wm)->cur_focus_client)
         {
             focus_client(wm, wm->cur_desktop, NULL);
             update_frame_bg(wm, wm->cur_desktop, p);
         }
         p->win_state.hidden=1;
-        update_net_wm_state(wm->display, p->win, p->win_state);
+        update_net_wm_state(p->win, p->win_state);
     }
     update_layout(wm);
 }
@@ -837,9 +840,9 @@ void create_icon(WM *wm, Client *c)
     Icon *i=c->icon=malloc_s(sizeof(Icon));
     i->x=i->y=0, i->w=i->h=wm->taskbar->h;
     i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
-    i->win=create_widget_win(wm, wm->taskbar->icon_area, 0, 0,
+    i->win=create_widget_win(wm->taskbar->icon_area, 0, 0,
         i->w, i->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
-    XSelectInput(wm->display, c->icon->win, ICON_WIN_EVENT_MASK);
+    XSelectInput(xinfo.display, c->icon->win, ICON_WIN_EVENT_MASK);
 }
 
 void update_icon_area(WM *wm)
@@ -853,7 +856,7 @@ void update_icon_area(WM *wm)
             i->w=wm->taskbar->h;
             if(have_same_class_icon_client(wm, c))
             {
-                get_string_size(wm, wm->font[TITLEBAR_FONT], i->title_text, &w, NULL);
+                get_string_size(wm->font[TITLEBAR_FONT], i->title_text, &w, NULL);
                 i->w=MIN(i->w+w, wm->cfg->icon_win_width_max);
                 i->show_text=true;
             }
@@ -861,7 +864,7 @@ void update_icon_area(WM *wm)
                 i->show_text=false;
             i->x=x;
             x+=i->w+wm->cfg->icon_gap;
-            XMoveResizeWindow(wm->display, i->win, i->x, i->y, i->w, i->h); 
+            XMoveResizeWindow(xinfo.display, i->win, i->x, i->y, i->w, i->h); 
         }
     }
 }
@@ -886,11 +889,11 @@ void deiconify(WM *wm, Client *c)
         if(p->icon)
         {
             del_icon(wm, p);
-            XMapWindow(wm->display, p->frame);
+            XMapWindow(xinfo.display, p->frame);
             update_icon_area(wm);
             focus_client(wm, wm->cur_desktop, p);
             p->win_state.hidden=0;
-            update_net_wm_state(wm->display, p->win, p->win_state);
+            update_net_wm_state(p->win, p->win_state);
         }
     }
     update_layout(wm);
@@ -900,7 +903,7 @@ void del_icon(WM *wm, Client *c)
 {
     if(c->icon)
     {
-        XDestroyWindow(wm->display, c->icon->win);
+        XDestroyWindow(xinfo.display, c->icon->win);
         vfree(c->icon->title_text, c->icon, NULL);
         c->icon=NULL;
         update_icon_area(wm);
@@ -948,7 +951,7 @@ void update_win_state_for_move_resize(WM *wm, Client *c)
         s->rmax=0, update=true;
 
     if(update)
-        update_net_wm_state(wm->display, c->win, c->win_state);
+        update_net_wm_state(c->win, c->win_state);
 }
 
 static void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h)
@@ -1087,7 +1090,7 @@ Window *get_client_win_list_stacking(WM *wm, int *n)
 void set_attention(WM *wm, Client *c, bool attent)
 {
     c->win_state.attent=attent;
-    update_net_wm_state(wm->display, c->win, c->win_state);
+    update_net_wm_state(c->win, c->win_state);
     update_taskbar_buttons_bg(wm);
 }
 

@@ -20,18 +20,18 @@ static void draw_client_icon(WM *wm, Client *c);
 void create_taskbar(WM *wm)
 {
     Taskbar *b=wm->taskbar=malloc_s(sizeof(Taskbar));
-    b->w=wm->screen_width, b->h=TASKBAR_HEIGHT(wm);
-    b->x=0, b->y=(wm->cfg->taskbar_on_top ? 0 : wm->screen_height-b->h);
-    b->win=create_widget_win(wm, wm->root_win, b->x, b->y, b->w, b->h,
+    b->w=xinfo.screen_width, b->h=TASKBAR_HEIGHT(wm);
+    b->x=0, b->y=(wm->cfg->taskbar_on_top ? 0 : xinfo.screen_height-b->h);
+    b->win=create_widget_win(xinfo.root_win, b->x, b->y, b->w, b->h,
         0, 0, WIDGET_COLOR(wm, TASKBAR));
-    XSelectInput(wm->display, b->win, CROSSING_MASK);
+    XSelectInput(xinfo.display, b->win, CROSSING_MASK);
     create_taskbar_buttons(wm);
     create_status_area(wm);
     create_icon_area(wm);
     create_act_center(wm);
-    XMapSubwindows(wm->display, b->win);
+    XMapSubwindows(xinfo.display, b->win);
     if(wm->cfg->show_taskbar)
-        XMapWindow(wm->display, b->win);
+        XMapWindow(xinfo.display, b->win);
 }
 
 static void create_taskbar_buttons(WM *wm)
@@ -41,9 +41,9 @@ static void create_taskbar_buttons(WM *wm)
 
     for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
     {
-        b->buttons[i]=create_widget_win(wm, b->win, w*i, 0, w, h, 0, 0,
+        b->buttons[i]=create_widget_win(b->win, w*i, 0, w, h, 0, 0,
             NCHOSEN_BUTTON_COLOR(wm, TASKBAR_BUTTON_BEGIN+i, TASKBAR_COLOR));
-        XSelectInput(wm->display, b->buttons[i], BUTTON_EVENT_MASK);
+        XSelectInput(xinfo.display, b->buttons[i], BUTTON_EVENT_MASK);
     }
 }
 
@@ -52,25 +52,25 @@ static void create_icon_area(WM *wm)
     Taskbar *b=wm->taskbar;
     int bw=wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N,
         w=b->w-bw-b->status_area_w;
-    b->icon_area=create_widget_win(wm, b->win,
+    b->icon_area=create_widget_win(b->win,
         bw, 0, w, b->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
 }
 
 static void create_status_area(WM *wm)
 {
     Taskbar *b=wm->taskbar;
-    b->status_text=get_text_prop(wm->display, wm->root_win, XA_WM_NAME);
+    b->status_text=get_text_prop(xinfo.root_win, XA_WM_NAME);
     if(!b->status_text)
         b->status_text=copy_string("gwm");
-    get_string_size(wm, wm->font[TASKBAR_FONT], b->status_text, &b->status_area_w, NULL);
+    get_string_size(wm->font[TASKBAR_FONT], b->status_text, &b->status_area_w, NULL);
     if(b->status_area_w > wm->cfg->status_area_width_max)
         b->status_area_w=wm->cfg->status_area_width_max;
     else if(b->status_area_w == 0)
         b->status_area_w=1;
-    wm->taskbar->status_area=create_widget_win(wm, b->win,
+    wm->taskbar->status_area=create_widget_win(b->win,
         b->w-b->status_area_w, 0, b->status_area_w, b->h,
         0, 0, WIDGET_COLOR(wm, TASKBAR));
-    XSelectInput(wm->display, b->status_area, ExposureMask);
+    XSelectInput(xinfo.display, b->status_area, ExposureMask);
 }
 
 static void create_act_center(WM *wm)
@@ -101,7 +101,7 @@ void update_taskbar_button_bg(WM *wm, Widget_type type)
                 color=get_widget_color(wm, ATTENTION_WIDGET_COLOR);
         }
     }
-    update_win_bg(wm, win, color, None);
+    update_win_bg(win, color, None);
 }
 
 void update_taskbar_button_fg(WM *wm, Widget_type type)
@@ -125,13 +125,13 @@ void update_icon_status_area(WM *wm)
     int w, bw=wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N;
     Taskbar *b=wm->taskbar;
 
-    get_string_size(wm, wm->font[TASKBAR_FONT], b->status_text, &w, NULL);
+    get_string_size(wm->font[TASKBAR_FONT], b->status_text, &w, NULL);
     if(w > wm->cfg->status_area_width_max)
         w=wm->cfg->status_area_width_max;
     if(w != b->status_area_w)
     {
-        XMoveResizeWindow(wm->display, b->status_area, b->w-w, 0, w, b->h);
-        XMoveResizeWindow(wm->display, b->icon_area, bw, 0, b->w-bw-w, b->h);
+        XMoveResizeWindow(xinfo.display, b->status_area, b->w-w, 0, w, b->h);
+        XMoveResizeWindow(xinfo.display, b->icon_area, bw, 0, b->w-bw-w, b->h);
     }
     b->status_area_w=w;
     update_status_area_fg(wm);
@@ -158,7 +158,7 @@ static void draw_client_icon(WM *wm, Client *c)
 {
     int size=wm->taskbar->h;
     if(c->image)
-        draw_image(wm->display, wm->screen, wm->visual, c->image, c->icon->win, 0, 0, size, size);
+        draw_image(c->image, c->icon->win, 0, 0, size, size);
     else
     {
         String_format f={{0, 0, size, size}, CENTER, true, false, false, 0,

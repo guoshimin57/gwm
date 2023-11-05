@@ -16,13 +16,14 @@ static void set_signals(void);
 static void ready_to_quit(int signum);
 
 sig_atomic_t run_flag=1;
+Xinfo xinfo; // 一經顯式初始化，就不再修改
 
 int main(void)
 {
     WM wm;
     clear_zombies(0);
     init_wm(&wm);
-    XSetScreenSaver(wm.display, wm.cfg->screen_saver_time_out,
+    XSetScreenSaver(xinfo.display, wm.cfg->screen_saver_time_out,
         wm.cfg->screen_saver_interval, PreferBlanking, AllowExposures);
     set_signals();
     set_ewmh(&wm);
@@ -32,15 +33,15 @@ int main(void)
 
 static void set_ewmh(WM *wm)
 {
-    set_net_supported(wm->display, wm->root_win);
-    set_net_number_of_desktops(wm->display, wm->root_win, DESKTOP_N);
-    set_net_desktop_geometry(wm->display, wm->root_win, wm->screen_width, wm->screen_height);
-    set_net_desktop_viewport(wm->display, wm->root_win, 0, 0);
-    set_net_current_desktop(wm->display, wm->root_win, wm->cur_desktop-1);
-    set_net_desktop_names(wm->display, wm->root_win, &wm->cfg->taskbar_button_text[DESKTOP_BUTTON_BEGIN], DESKTOP_N);
-    set_net_workarea(wm->display, wm->root_win, wm->workarea.x, wm->workarea.y, wm->workarea.w, wm->workarea.h, DESKTOP_N);
-    set_net_supporting_wm_check(wm->display, wm->root_win, wm->wm_check_win, "gwm");
-    set_net_showing_desktop(wm->display, wm->root_win, false);
+    set_net_supported();
+    set_net_number_of_desktops(DESKTOP_N);
+    set_net_desktop_geometry(xinfo.screen_width, xinfo.screen_height);
+    set_net_desktop_viewport( 0, 0);
+    set_net_current_desktop(wm->cur_desktop-1);
+    set_net_desktop_names(&wm->cfg->taskbar_button_text[DESKTOP_BUTTON_BEGIN], DESKTOP_N);
+    set_net_workarea(wm->workarea.x, wm->workarea.y, wm->workarea.w, wm->workarea.h, DESKTOP_N);
+    set_net_supporting_wm_check(wm->wm_check_win, "gwm");
+    set_net_showing_desktop(false);
 }
 
 static void set_signals(void)

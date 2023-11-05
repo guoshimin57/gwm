@@ -26,7 +26,7 @@ Widget_type get_widget_type(WM *wm, Window win);
 Pointer_act get_resize_act(Client *c, const Move_info *m);
 void clear_zombies(int signum);
 bool is_chosen_button(WM *wm, Widget_type type);
-void set_xic(WM *wm, Window win, XIC *ic);
+void set_xic(Window win, XIC *ic);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
@@ -35,7 +35,7 @@ File *get_files_in_paths(const char *paths, const char *regex, Order order, bool
 void free_files(File *head);
 int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
-void exec_cmd(WM *wm, char *const*cmd);
+void exec_cmd(char *const*cmd);
 void update_hint_win_for_info(WM *wm, Window hover, const char *info);
 
 #endif

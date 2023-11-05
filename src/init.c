@@ -11,17 +11,17 @@
 
 #include "gwm.h"
 
-static void set_visual_info(WM *wm);
-static void set_locale(WM *wm);
+static void set_visual_info(void);
+static void set_locale(void);
 static void create_refer_wins(WM *wm);
 static void set_workarea(WM *wm);
-static void set_atoms(WM *wm);
+static void set_atoms(void);
 static void create_cursors(WM *wm);
 static void create_run_cmd_entry(WM *wm);
 static void create_hint_win(WM *wm);
 static void create_client_menu(WM *wm);
 static void create_clients(WM *wm);
-static void init_imlib(WM *wm);
+static void init_imlib(void);
 static void init_wallpaper_files(WM *wm);
 static void init_root_win_background(WM *wm);
 static void exec_autostart(WM *wm);
@@ -29,32 +29,32 @@ static void exec_autostart(WM *wm);
 void init_wm(WM *wm)
 {
     memset(wm, 0, sizeof(WM));
-    if(!(wm->display=XOpenDisplay(NULL)))
+    if(!(xinfo.display=XOpenDisplay(NULL)))
         exit_with_msg("error: cannot open display");
 
     XSetErrorHandler(x_fatal_handler);
-    set_locale(wm);
-    wm->screen=DefaultScreen(wm->display);
-    wm->screen_width=DisplayWidth(wm->display, wm->screen);
-    wm->screen_height=DisplayHeight(wm->display, wm->screen);
-    wm->mod_map=XGetModifierMapping(wm->display);
-    wm->root_win=RootWindow(wm->display, wm->screen);
-    XSelectInput(wm->display, wm->root_win, ROOT_EVENT_MASK);
-    set_visual_info(wm);
+    set_locale();
+    xinfo.screen=DefaultScreen(xinfo.display);
+    xinfo.screen_width=DisplayWidth(xinfo.display, xinfo.screen);
+    xinfo.screen_height=DisplayHeight(xinfo.display, xinfo.screen);
+    xinfo.mod_map=XGetModifierMapping(xinfo.display);
+    xinfo.root_win=RootWindow(xinfo.display, xinfo.screen);
+    XSelectInput(xinfo.display, xinfo.root_win, ROOT_EVENT_MASK);
+    set_visual_info();
     create_refer_wins(wm);
-    wm->gc=XCreateGC(wm->display, wm->wm_check_win, 0, NULL);
+    wm->gc=XCreateGC(xinfo.display, wm->wm_check_win, 0, NULL);
     config(wm);
-    init_imlib(wm);
+    init_imlib();
     if(wm->cfg->wallpaper_paths)
         init_wallpaper_files(wm);
     init_desktop(wm);
     reg_event_handlers(wm);
-    set_atoms(wm);
+    set_atoms();
     load_font(wm);
     alloc_color(wm);
     init_root_win_background(wm);
     create_cursors(wm);
-    XDefineCursor(wm->display, wm->root_win, wm->cursors[NO_OP]);
+    XDefineCursor(xinfo.display, xinfo.root_win, wm->cursors[NO_OP]);
     set_workarea(wm);
     create_taskbar(wm);
     create_run_cmd_entry(wm);
@@ -68,22 +68,22 @@ void init_wm(WM *wm)
 static void create_refer_wins(WM *wm)
 {
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
-        wm->top_wins[i]=create_widget_win(wm, wm->root_win, -1, -1, 1, 1, 0, 0, 0);
-    wm->wm_check_win=create_widget_win(wm, wm->root_win, -1, -1, 1, 1, 0, 0, 0);
+        wm->top_wins[i]=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
+    wm->wm_check_win=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
 }
 
-static void set_visual_info(WM *wm)
+static void set_visual_info(void)
 {
     XVisualInfo v;
-    XMatchVisualInfo(wm->display, wm->screen, 32, TrueColor, &v);
-    wm->depth=v.depth;
-    wm->visual=v.visual;
-    wm->colormap=XCreateColormap(wm->display, wm->root_win, v.visual, AllocNone);
+    XMatchVisualInfo(xinfo.display, xinfo.screen, 32, TrueColor, &v);
+    xinfo.depth=v.depth;
+    xinfo.visual=v.visual;
+    xinfo.colormap=XCreateColormap(xinfo.display, xinfo.root_win, v.visual, AllocNone);
 }
 
 static void set_workarea(WM *wm)
 {
-    long sw=wm->screen_width, sh=wm->screen_height, th=TASKBAR_HEIGHT(wm);
+    long sw=xinfo.screen_width, sh=xinfo.screen_height, th=TASKBAR_HEIGHT(wm);
 
     wm->workarea=(Rect){0, 0, sw, sh};
     if(wm->cfg->show_taskbar)
@@ -99,10 +99,10 @@ static void exec_autostart(WM *wm)
     char cmd[BUFSIZ];
     sprintf(cmd, "[ -x '%s' ] && '%s'", wm->cfg->autostart, wm->cfg->autostart);
     const char *sh_cmd[]={"/bin/sh", "-c", wm->cfg->autostart, NULL};
-    exec_cmd(wm, (char *const *)sh_cmd);
+    exec_cmd((char *const *)sh_cmd);
 }
 
-static void set_locale(WM *wm)
+static void set_locale(void)
 {
 	if(!setlocale(LC_ALL, "") || !XSupportsLocale())
 		fprintf(stderr, "warning: no locale support\n");
@@ -112,29 +112,29 @@ static void set_locale(WM *wm)
         textdomain("gwm");
 
         char *m=XSetLocaleModifiers("");
-        wm->xim=XOpenIM(wm->display, NULL, NULL, NULL);
-        if(!m || !wm->xim)
+        xinfo.xim=XOpenIM(xinfo.display, NULL, NULL, NULL);
+        if(!m || !xinfo.xim)
             fprintf(stderr, _("錯誤: 不能設置輸入法"));
     }
 }
 
-static void set_atoms(WM *wm)
+static void set_atoms(void)
 {
-    set_icccm_atoms(wm->display);
-    set_ewmh_atoms(wm->display);
+    set_icccm_atoms();
+    set_ewmh_atoms();
 }
 
 static void create_cursors(WM *wm)
 {
     for(size_t i=0; i<POINTER_ACT_N; i++)
-        wm->cursors[i]=XCreateFontCursor(wm->display, wm->cfg->cursor_shape[i]);
+        wm->cursors[i]=XCreateFontCursor(xinfo.display, wm->cfg->cursor_shape[i]);
 }
 
 static void create_run_cmd_entry(WM *wm)
 {
-    int sw=wm->screen_width, sh=wm->screen_height, bw=wm->cfg->border_width,
+    int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=wm->cfg->border_width,
         ew, eh=ENTRY_HEIGHT(wm), pad=get_font_pad(wm, ENTRY_FONT);
-    get_string_size(wm, wm->font[ENTRY_FONT], wm->cfg->run_cmd_entry_hint, &ew, NULL);
+    get_string_size(wm->font[ENTRY_FONT], wm->cfg->run_cmd_entry_hint, &ew, NULL);
     ew += 2*pad, ew = (ew>=sw/4 && ew<=sw-2*bw) ? ew : sw/4;
     Rect r={(sw-ew)/2-bw, (sh-eh)/2-bw, ew, eh};
     wm->run_cmd=create_entry(wm, &r, wm->cfg->run_cmd_entry_hint);
@@ -142,9 +142,9 @@ static void create_run_cmd_entry(WM *wm)
 
 static void create_hint_win(WM *wm)
 {
-    wm->hint_win=create_widget_win(wm, wm->root_win, 0, 0, 1, 1, 0, 0,
+    wm->hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
         WIDGET_COLOR(wm, HINT_WIN));
-    XSelectInput(wm->display, wm->hint_win, ExposureMask);
+    XSelectInput(xinfo.display, wm->hint_win, ExposureMask);
 }
 
 static void create_client_menu(WM *wm)
@@ -163,9 +163,9 @@ static void create_clients(WM *wm)
     memset(wm->clients, 0, sizeof(Client));
     for(size_t i=0; i<DESKTOP_N; i++)
         d[i]->cur_focus_client=d[i]->prev_focus_client=wm->clients;
-    wm->clients->win=wm->root_win;
+    wm->clients->win=xinfo.root_win;
     wm->clients->prev=wm->clients->next=wm->clients;
-    if(!XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
+    if(!XQueryTree(xinfo.display, xinfo.root_win, &root, &parent, &child, &n))
         exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
     for(size_t i=0; i<n; i++)
     {
@@ -176,12 +176,12 @@ static void create_clients(WM *wm)
     XFree(child);
 }
 
-static void init_imlib(WM *wm)
+static void init_imlib(void)
 {
     imlib_context_set_dither(1);
-    imlib_context_set_display(wm->display);
-    imlib_context_set_visual(wm->visual);
-    imlib_context_set_colormap(wm->colormap);
+    imlib_context_set_display(xinfo.display);
+    imlib_context_set_visual(xinfo.visual);
+    imlib_context_set_colormap(xinfo.colormap);
 }
 
 static void init_wallpaper_files(WM *wm)
@@ -195,8 +195,8 @@ static void init_root_win_background(WM *wm)
 {
     const char *name=wm->cfg->wallpaper_filename;
 
-    Pixmap pixmap=create_pixmap_from_file(wm, wm->root_win, name ? name : "");
-    update_win_bg(wm, wm->root_win, WIDGET_COLOR(wm, ROOT_WIN), pixmap);
-    if(pixmap && !have_compositor(wm->display, wm->screen))
-        XFreePixmap(wm->display, pixmap);
+    Pixmap pixmap=create_pixmap_from_file(xinfo.root_win, name ? name : "");
+    update_win_bg(xinfo.root_win, WIDGET_COLOR(wm, ROOT_WIN), pixmap);
+    if(pixmap && !have_compositor())
+        XFreePixmap(xinfo.display, pixmap);
 }

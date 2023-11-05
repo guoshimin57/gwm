@@ -16,7 +16,7 @@ void print_client_and_top_win(WM *wm)
     unsigned int n;
     Window root, parent, *child=NULL;
 
-    if(XQueryTree(wm->display, wm->root_win, &root, &parent, &child, &n))
+    if(XQueryTree(xinfo.display, xinfo.root_win, &root, &parent, &child, &n))
     {
         Client *c=NULL;
         printf(_("以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"));
@@ -35,12 +35,12 @@ void print_client_and_top_win(WM *wm)
         printf(_("無法查詢根窗口的子窗口\n"));
 }
 
-void print_win_tree(WM *wm, Window win)
+void print_win_tree(Window win)
 {
     unsigned int n;
     Window root, parent, *child=NULL;
 
-    if(XQueryTree(wm->display, win, &root, &parent, &child, &n))
+    if(XQueryTree(xinfo.display, win, &root, &parent, &child, &n))
     {
         printf(_("以下是%lx窗口的子窗口：\n"), win);
         for(unsigned int i=0; i<n; i++)
@@ -51,9 +51,9 @@ void print_win_tree(WM *wm, Window win)
         printf(_("無法查詢%lx窗口的子窗口\n"), win);
 }
 
-void print_net_wm_win_type(WM *wm, Window win)
+void print_net_wm_win_type(Window win)
 {
-    Net_wm_win_type type=get_net_wm_win_type(wm->display, win);
+    Net_wm_win_type type=get_net_wm_win_type(win);
 
     printf(_("以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"), win);
     printf("desktop: %d\n", type.desktop);
@@ -73,9 +73,9 @@ void print_net_wm_win_type(WM *wm, Window win)
     printf("none: %d\n", type.none);
 }
 
-void print_net_wm_state(WM *wm, Window win)
+void print_net_wm_state(Window win)
 {
-    Net_wm_state state=get_net_wm_state(wm->display, win);
+    Net_wm_state state=get_net_wm_state(win);
 
     printf(_("以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"), win);
     printf("modal: %d\n", state.modal);
@@ -126,8 +126,8 @@ void show_top_win(WM *wm)
 
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
     {
-        XMoveResizeWindow(wm->display, wm->top_wins[i], i*w/2, wm->taskbar->y, w, h);
-        XMapWindow(wm->display, wm->top_wins[i]);
+        XMoveResizeWindow(xinfo.display, wm->top_wins[i], i*w/2, wm->taskbar->y, w, h);
+        XMapWindow(xinfo.display, wm->top_wins[i]);
         draw_string(wm, wm->top_wins[i], s[i], &f);
     }
 }

@@ -185,7 +185,7 @@ static const Rule rule[] =
  */
 static void config_font(WM *wm)
 {
-    int size=get_scale_font_size(wm, 2.0);
+    int size=get_scale_font_size(2.0);
 
     /*           字體類型       字體系列     字號 */
     SET_FONT(wm, DEFAULT_FONT,  "monospace", size);

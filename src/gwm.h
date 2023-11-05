@@ -91,6 +91,18 @@ typedef struct menu_tag Menu;
 typedef struct entry_tag Entry;
 typedef struct string_format_tag String_format;
 
+typedef struct // 與X相關的信息
+{
+    Display *display; // 顯示器
+    int screen, screen_width, screen_height; // 屏幕號、屏幕寬度和高度
+    unsigned int depth; // 色深
+    Visual *visual; // 着色類型
+    Colormap colormap; // 着色圖
+	XModifierKeymap *mod_map; // 功能轉換鍵映射
+    XIM xim; // 輸入法
+    Window root_win; // 根窗口
+} Xinfo;
+
 struct file_tag
 {
     char *name;
@@ -219,19 +231,13 @@ typedef struct rule_tag Rule;
 
 struct wm_tag // 窗口管理器相關信息
 {
-    Display *display; // 顯示器
-    int screen, screen_width, screen_height; // 屏幕號、屏幕寬度和高度
-    int depth; // 窗口的深度
     unsigned int cur_desktop; // 當前虛擬桌面編號，從1開始編號
     long map_count; // 所有客戶窗口的累計映射次數
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
-	XModifierKeymap *mod_map; // 功能轉換鍵映射
     Rect workarea; // 工作區坐標和尺寸
-    Window root_win, hint_win, wm_check_win; // 根窗口、提示窗口、WM檢測窗口
+    Window root_win, hint_win, wm_check_win; // 提示窗口、WM檢測窗口
     Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
     GC gc; // 窗口管理器的圖形信息
-    Visual *visual; // 着色類型
-    Colormap colormap; // 着色圖
     Client *clients; // 頭結點
     XftFont *font[FONT_N]; // 窗口管理器用到的字體
     File *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
@@ -241,7 +247,6 @@ struct wm_tag // 窗口管理器相關信息
     Entry *run_cmd; // 輸入命令並執行的構件
     XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
     XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色
-    XIM xim; // 輸入法
     void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
     Config *cfg; // 窗口管理器配置
 };
@@ -317,6 +322,7 @@ struct delta_rect_tag /* 調整窗口尺寸的信息 */
 typedef struct delta_rect_tag Delta_rect;
 
 extern sig_atomic_t run_flag; // 程序運行標志
+extern Xinfo xinfo;
 
 #include "client.h"
 #include "color.h"

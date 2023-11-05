@@ -13,9 +13,9 @@
 #define DEBUG_H
 
 void print_client_and_top_win(WM *wm);
-void print_win_tree(WM *wm, Window win);
-void print_net_wm_win_type(WM *wm, Window win);
-void print_net_wm_state(WM *wm, Window win);
+void print_win_tree(Window win);
+void print_net_wm_win_type(Window win);
+void print_net_wm_state(Window win);
 void print_place_info(Client *c);
 void print_all_client_win(WM *wm);
 void print_client_win(Client *c);

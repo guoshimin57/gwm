@@ -135,7 +135,7 @@ void update_titlebar_layout(WM *wm)
         if(c->titlebar_h && is_on_cur_desktop(wm, c))
         {
             Rect r=get_title_area_rect(wm, c);
-            XResizeWindow(wm->display, c->title_area, r.w, r.h);
+            XResizeWindow(xinfo.display, c->title_area, r.w, r.h);
         }
     }
 }
@@ -159,7 +159,7 @@ bool is_main_fix_gap(WM *wm, int x)
 
 bool is_layout_adjust_area(WM *wm, Window win, int x)
 {
-    return (DESKTOP(wm)->cur_layout==TILE && win==wm->root_win
+    return (DESKTOP(wm)->cur_layout==TILE && win==xinfo.root_win
         && (is_main_sec_gap(wm, x) || is_main_fix_gap(wm, x)));
 }
 

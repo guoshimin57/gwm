@@ -11,13 +11,13 @@
 
 #include "gwm.h"
 
-Window get_transient_for(Display *display, Window win)
+Window get_transient_for(Window win)
 {
     Window owner;
-    return XGetTransientForHint(display, win, &owner) ? owner : None;
+    return XGetTransientForHint(xinfo.display, win, &owner) ? owner : None;
 }
 
-unsigned char *get_prop(Display *display, Window win, Atom prop, unsigned long *n)
+unsigned char *get_prop(Window win, Atom prop, unsigned long *n)
 {
     int fmt;
     unsigned long i, nitems=0, *m=(n ? n : &nitems), rest;
@@ -26,7 +26,7 @@ unsigned char *get_prop(Display *display, Window win, Atom prop, unsigned long *
 
     /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
      * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
-    if( XGetWindowProperty(display, win, prop, 0, ~0L, False,
+    if( XGetWindowProperty(xinfo.display, win, prop, 0, ~0L, False,
         AnyPropertyType, &type, &fmt, m, &rest, &p) != Success
         || !type || !fmt || !*m || !p)
         return NULL;
@@ -51,46 +51,46 @@ unsigned char *get_prop(Display *display, Window win, Atom prop, unsigned long *
     return result;
 }
 
-char *get_text_prop(Display *display, Window win, Atom atom)
+char *get_text_prop(Window win, Atom atom)
 {
     int n;
     char **list=NULL, *result=NULL;
     XTextProperty name;
 
-    if(!XGetTextProperty(display, win, &name, atom))
+    if(!XGetTextProperty(xinfo.display, win, &name, atom))
         return NULL;
 
     if(name.encoding == XA_STRING)
         result=copy_string((char *)name.value);
-    else if(Xutf8TextPropertyToTextList(display, &name, &list, &n) == Success
+    else if(Xutf8TextPropertyToTextList(xinfo.display, &name, &list, &n) == Success
         && n && *list) // 與手冊不太一致的是，返回Success並不一定真的成功，狗血！
         result=copy_string(*list), XFreeStringList(list);
     XFree(name.value); // 手冊沒提及要釋放name或name.value，但很多WM都會釋放後者
     return result;
 }
 
-void replace_atom_prop(Display *display, Window win, Atom prop, const Atom *values, int n)
+void replace_atom_prop(Window win, Atom prop, const Atom *values, int n)
 {
-    XChangeProperty(display, win, prop, XA_ATOM, 32, PropModeReplace,
+    XChangeProperty(xinfo.display, win, prop, XA_ATOM, 32, PropModeReplace,
         (unsigned char *)values, n);
 }
 
-void replace_window_prop(Display *display, Window win, Atom prop, const Window *wins, int n)
+void replace_window_prop(Window win, Atom prop, const Window *wins, int n)
 {
-    XChangeProperty(display, win, prop, XA_WINDOW, 32, PropModeReplace,
+    XChangeProperty(xinfo.display, win, prop, XA_WINDOW, 32, PropModeReplace,
         (unsigned char *)wins, n);
 }
 
-void replace_cardinal_prop(Display *display, Window win, Atom prop, const CARD32 *values, int n)
+void replace_cardinal_prop(Window win, Atom prop, const CARD32 *values, int n)
 {
-    XChangeProperty(display, win, prop, XA_CARDINAL, 32, PropModeReplace,
+    XChangeProperty(xinfo.display, win, prop, XA_CARDINAL, 32, PropModeReplace,
         (unsigned char *)&values, n);
 }
 
-void copy_prop(Display *display, Window dest, Window src)
+void copy_prop(Window dest, Window src)
 {
     int i=0, n=0, fmt=0;
-    Atom type, *props=XListProperties(display, src, &n);
+    Atom type, *props=XListProperties(xinfo.display, src, &n);
 
     if(!props)
         return;
@@ -98,11 +98,11 @@ void copy_prop(Display *display, Window dest, Window src)
     unsigned long nitems, rest;
     for(unsigned char *data=NULL; i<n; i++)
     {
-        if( XGetWindowProperty(display, src, props[i], 0, ~0L, False,
+        if( XGetWindowProperty(xinfo.display, src, props[i], 0, ~0L, False,
             AnyPropertyType, &type, &fmt, &nitems, &rest, &data)==Success
             && data && nitems)
         {
-            XChangeProperty(display, dest, props[i], type, fmt, PropModeReplace,
+            XChangeProperty(xinfo.display, dest, props[i], type, fmt, PropModeReplace,
                 data, nitems);
             XFree(data);
         }
@@ -110,9 +110,9 @@ void copy_prop(Display *display, Window dest, Window src)
     XFree(props);
 }
 
-bool send_client_msg(Display *display, Atom wm_protocols, Atom proto, Window win)
+bool send_client_msg(Atom wm_protocols, Atom proto, Window win)
 {
-    if(has_spec_wm_protocol(display, win, proto))
+    if(has_spec_wm_protocol(win, proto))
     {
         XEvent event;
         event.type=ClientMessage;
@@ -121,16 +121,16 @@ bool send_client_msg(Display *display, Atom wm_protocols, Atom proto, Window win
         event.xclient.format=32;
         event.xclient.data.l[0]=proto;
         event.xclient.data.l[1]=CurrentTime;
-        return XSendEvent(display, win, False, NoEventMask, &event);
+        return XSendEvent(xinfo.display, win, False, NoEventMask, &event);
     }
     return false;
 }
 
-bool has_spec_wm_protocol(Display *display, Window win, Atom protocol)
+bool has_spec_wm_protocol(Window win, Atom protocol)
 {
 	int i, n;
 	Atom *protocols=NULL;
-	if(XGetWMProtocols(display, win, &protocols, &n))
+	if(XGetWMProtocols(xinfo.display, win, &protocols, &n))
         for(i=0; i<n; i++)
             if(protocols[i] == protocol)
                 { XFree(protocols); return true; }

@@ -56,7 +56,7 @@ Widget_type get_widget_type(WM *wm, Window win)
 {
     Widget_type type;
     Client *c;
-    if(win == wm->root_win)
+    if(win == xinfo.root_win)
         return ROOT_WIN;
     if(win == wm->run_cmd->win)
         return RUN_CMD_ENTRY;
@@ -133,11 +133,11 @@ bool is_chosen_button(WM *wm, Widget_type type)
         || type == LAYOUT_BUTTON_BEGIN+DESKTOP(wm)->cur_layout);
 }
 
-void set_xic(WM *wm, Window win, XIC *ic)
+void set_xic(Window win, XIC *ic)
 {
-    if(wm->xim == NULL)
+    if(xinfo.xim == NULL)
         return;
-    if((*ic=XCreateIC(wm->xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing,
+    if((*ic=XCreateIC(xinfo.xim, XNInputStyle, XIMPreeditNothing|XIMStatusNothing,
         XNClientWindow, win, NULL)) == NULL)
         fprintf(stderr, _("錯誤：窗口（0x%lx）輸入法設置失敗！"), win);
     else
@@ -302,13 +302,13 @@ int base_n_ceil(int x, int n)
     return base_n_floor(x, n)+(x%n ? n : 0);
 }
 
-void exec_cmd(WM *wm, char *const *cmd)
+void exec_cmd(char *const *cmd)
 {
     pid_t pid=fork();
 	if(pid == 0)
     {
-		if(wm->display)
-            close(ConnectionNumber(wm->display));
+		if(xinfo.display)
+            close(ConnectionNumber(xinfo.display));
 		if(!setsid())
             perror(_("未能成功地爲命令創建新會話"));
 		if(execvp(cmd[0], cmd) == -1)
@@ -323,20 +323,20 @@ void update_hint_win_for_info(WM *wm, Window hover, const char *info)
     int x, y, rx, ry, pad=get_font_pad(wm, HINT_FONT),
         w=0, h=get_font_height_by_pad(wm, HINT_FONT);
 
-    get_string_size(wm, wm->font[HINT_FONT], info, &w, NULL);
+    get_string_size(wm->font[HINT_FONT], info, &w, NULL);
     w+=pad*2;
     if(hover)
     {
         Window r, c;
         unsigned int m;
-        if(!XQueryPointer(wm->display, hover, &r, &c, &rx, &ry, &x, &y, &m))
+        if(!XQueryPointer(xinfo.display, hover, &r, &c, &rx, &ry, &x, &y, &m))
             return;
-        set_pos_for_click(wm, hover, rx, &x, &y, w, h);
+        set_pos_for_click(hover, rx, &x, &y, w, h);
     }
     else
-        x=(wm->screen_width-w)/2, y=(wm->screen_height-h)/2;
-    XMoveResizeWindow(wm->display, wm->hint_win, x, y, w, h);
-    XMapRaised(wm->display, wm->hint_win);
+        x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
+    XMoveResizeWindow(xinfo.display, wm->hint_win, x, y, w, h);
+    XMapRaised(xinfo.display, wm->hint_win);
     String_format f={{0, 0, w, h}, CENTER, true, true, false, 0,
         TEXT_COLOR(wm, HINT), HINT_FONT};
     draw_string(wm, wm->hint_win, info, &f);

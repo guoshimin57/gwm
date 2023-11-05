@@ -14,7 +14,7 @@
 
 void grab_keys(WM *wm);
 void grab_buttons(WM *wm, Client *c);
-bool is_equal_modifier_mask(WM *wm, unsigned int m1, unsigned int m2);
+bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
 bool grab_pointer(WM *wm, Window win, Pointer_act act);
 
 #endif

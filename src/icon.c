@@ -17,8 +17,8 @@ typedef struct // 存儲圖標主題規範所說的Per-Directory Keys的結構
     char type[10]; // char context[32]; 目前用不上
 } Icon_dir_info;
 
-static Imlib_Image get_icon_image_from_hint(Display *display, const XWMHints *hint);
-static Imlib_Image get_icon_image_from_prop(Display *display, Window win);
+static Imlib_Image get_icon_image_from_hint(const XWMHints *hint);
+static Imlib_Image get_icon_image_from_prop(Window win);
 static Imlib_Image get_icon_image_from_file(const char *name, int size, const char *theme);
 static char *find_icon(const char *name, int size, int scale, const char *theme, const char *context_dir);
 static char *find_icon_helper(const char *name, int size, int scale, char *const *base_dirs, const char *theme, const char *context_dir);
@@ -39,26 +39,27 @@ static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
 static bool is_accessible(const char *filename);
 
-void draw_image(Display *display, int screen, Visual *visual, Imlib_Image image, Drawable d, int x, int y, int w, int h)
+void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
-    XClearArea(display, d, x, y, w, h, False); 
-    set_visual_for_imlib(display, screen, visual, d);
+    XClearArea(xinfo.display, d, x, y, w, h, False); 
+    set_visual_for_imlib(d);
     imlib_context_set_image(image);
     imlib_context_set_drawable(d);   
     imlib_render_image_on_drawable_at_size(x, y, w, h);
 }
 
-Imlib_Image get_icon_image(Display *display, Window win, const XWMHints *hint, const char *name, int size, const char *theme)
+Imlib_Image get_icon_image(Window win, const XWMHints *hint, const char *name, int size, const char *theme)
 {
     /* 根據加載效率依次嘗試 */
     Imlib_Image image=NULL;
-    if( !(image=get_icon_image_from_hint(display, hint))
-        || !(image=get_icon_image_from_prop(display, win)))
-        image=get_icon_image_from_file(name, size, theme);
-    return image;
+    if( (image=get_icon_image_from_hint(hint))
+        || (image=get_icon_image_from_prop(win))
+        || (image=get_icon_image_from_file(name, size, theme)))
+        return image;
+    return NULL;
 }
 
-static Imlib_Image get_icon_image_from_hint(Display *display, const XWMHints *hint)
+static Imlib_Image get_icon_image_from_hint(const XWMHints *hint)
 {
     if(!hint || !(hint->flags & IconPixmapHint))
         return NULL;
@@ -66,15 +67,15 @@ static Imlib_Image get_icon_image_from_hint(Display *display, const XWMHints *hi
     int w, h;
     Pixmap pixmap=hint->icon_pixmap, mask=hint->icon_mask;
 
-    if(!get_geometry(display, pixmap, NULL, NULL, &w, &h, NULL, NULL))
+    if(!get_geometry(pixmap, NULL, NULL, &w, &h, NULL, NULL))
         return NULL;
     imlib_context_set_drawable(pixmap);   
     return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
 }
 
-static Imlib_Image get_icon_image_from_prop(Display *display, Window win)
+static Imlib_Image get_icon_image_from_prop(Window win)
 {
-    CARD32 *data=get_net_wm_icon(display, win);
+    CARD32 *data=get_net_wm_icon(win);
     if(!data)
         return NULL;
     

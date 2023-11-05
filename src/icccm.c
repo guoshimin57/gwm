@@ -36,16 +36,16 @@ Atom get_utf8_string_atom(void)
     return icccm_atoms[UTF8_STRING];
 }
 
-void replace_utf8_prop(Display *display, Window win, Atom prop, const void *strs, int n)
+void replace_utf8_prop(Window win, Atom prop, const void *strs, int n)
 {
-    XChangeProperty(display, win, prop, get_utf8_string_atom(), 8,
+    XChangeProperty(xinfo.display, win, prop, get_utf8_string_atom(), 8,
         PropModeReplace, (unsigned char *)strs, n);
 }
 
-void set_icccm_atoms(Display *display)
+void set_icccm_atoms(void)
 {
     for(int i=0; i<ICCCM_ATOMS_N; i++)
-        icccm_atoms[i]=XInternAtom(display, icccm_atom_names[i], False);
+        icccm_atoms[i]=XInternAtom(xinfo.display, icccm_atom_names[i], False);
 }
 
 int get_win_col(int width, const XSizeHints *hint)
@@ -63,12 +63,12 @@ int get_win_row(int height, const XSizeHints *hint)
  * 尺寸特性標志位，但相應的XSizeHints結構成員其實沒有設置。因此，不要指望在添加
  * 客戶窗口時一勞永逸地存儲窗口尺寸特性。
  */
-void update_size_hint(Display *display, Window win, int fallback_inc, XSizeHints *size_hint)
+void update_size_hint(Window win, int fallback_inc, XSizeHints *size_hint)
 {
     long f=0, flags=0;
     XSizeHints h={0};
 
-    if(XGetWMNormalHints(display, win, &h, &flags))
+    if(XGetWMNormalHints(xinfo.display, win, &h, &flags))
     {
         /* h.flags只使用最低字節保存了ICCCM之前確立的標志，
          * flags只使用除最低字節以外的字節保存了ICCCM新增的標志 */
@@ -176,13 +176,12 @@ static bool is_prefer_aspect(int w, int h, const XSizeHints *hint)
         !maxax || !maxay || ((float)w/h>=mina && (float)w/h<=maxa);
 }
 
-void set_input_focus(Display *display, Window win, const XWMHints *hint)
+void set_input_focus(Window win, const XWMHints *hint)
 {
     if(has_focus_hint(hint))
-        XSetInputFocus(display, win, RevertToPointerRoot, CurrentTime);
-    if(has_spec_wm_protocol(display, win, icccm_atoms[WM_TAKE_FOCUS]))
-        send_client_msg(display, icccm_atoms[WM_PROTOCOLS],
-            icccm_atoms[WM_TAKE_FOCUS], win);
+        XSetInputFocus(xinfo.display, win, RevertToPointerRoot, CurrentTime);
+    if(has_spec_wm_protocol(win, icccm_atoms[WM_TAKE_FOCUS]))
+        send_client_msg(icccm_atoms[WM_PROTOCOLS], icccm_atoms[WM_TAKE_FOCUS], win);
 }
 
 bool has_focus_hint(const XWMHints *hint)
@@ -191,24 +190,24 @@ bool has_focus_hint(const XWMHints *hint)
     return !hint || ((hint->flags & InputHint) && hint->input);
 }
 
-bool is_focusable(Display *display, Window win, const XWMHints *hint)
+bool is_focusable(Window win, const XWMHints *hint)
 {
     return has_focus_hint(hint)
-        || has_spec_wm_protocol(display, win, icccm_atoms[WM_TAKE_FOCUS]);
+        || has_spec_wm_protocol(win, icccm_atoms[WM_TAKE_FOCUS]);
 }
 
-void set_urgency(Display *display, Window win, XWMHints *h, bool urg)
+void set_urgency(Window win, XWMHints *h, bool urg)
 {
     if(!h)
         return;
 
     h->flags = urg ? (h->flags | XUrgencyHint) : (h->flags & ~XUrgencyHint);
-    XSetWMHints(display, win, h);
+    XSetWMHints(xinfo.display, win, h);
 }
 
-bool is_iconic_state(Display *display, Window win)
+bool is_iconic_state(Window win)
 {
-    int *p=(int *)get_prop(display, win, icccm_atoms[WM_STATE], NULL);
+    int *p=(int *)get_prop(win, icccm_atoms[WM_STATE], NULL);
     bool result = (p && *p==IconicState);
 
     XFree(p);
@@ -216,19 +215,19 @@ bool is_iconic_state(Display *display, Window win)
     return result;
 }
 
-void close_win(Display *display, Window win)
+void close_win(Window win)
 {
-    if(!send_client_msg(display, icccm_atoms[WM_PROTOCOLS],
+    if(!send_client_msg(icccm_atoms[WM_PROTOCOLS],
         icccm_atoms[WM_DELETE_WINDOW], win))
-        XKillClient(display, win);
+        XKillClient(xinfo.display, win);
 }
 
-char *get_wm_name(Display *display, Window win)
+char *get_wm_name(Window win)
 {
-    return get_text_prop(display, win, XA_WM_NAME);
+    return get_text_prop(win, XA_WM_NAME);
 }
 
-char *get_wm_icon_name(Display *display, Window win)
+char *get_wm_icon_name(Window win)
 {
-    return get_text_prop(display, win, XA_WM_ICON_NAME);
+    return get_text_prop(win, XA_WM_ICON_NAME);
 }

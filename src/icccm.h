@@ -20,20 +20,20 @@ typedef enum // 與ICCCM規範標識符名稱表(icccm_atiom_names)相應的ID
 
 bool is_spec_icccm_atom(Atom spec, ICCCM_atom_id id);
 Atom get_utf8_string_atom(void);
-void replace_utf8_prop(Display *display, Window win, Atom prop, const void *strs, int n);
-void set_icccm_atoms(Display *display);
+void replace_utf8_prop(Window win, Atom prop, const void *strs, int n);
+void set_icccm_atoms(void);
 int get_win_col(int width, const XSizeHints *hint);
 int get_win_row(int height, const XSizeHints *hint);
-void update_size_hint(Display *display, Window win, int fallback_inc, XSizeHints *size_hint);
+void update_size_hint(Window win, int fallback_inc, XSizeHints *size_hint);
 void fix_win_size_by_hint(const XSizeHints *size_hint, int *w, int *h);
 bool is_prefer_size(int w, int h, const XSizeHints *hint);
-void set_input_focus(Display *display, Window win, const XWMHints *hint);
+void set_input_focus(Window win, const XWMHints *hint);
 bool has_focus_hint(const XWMHints *hint);
-bool is_focusable(Display *display, Window win, const XWMHints *hint);
-void set_urgency(Display *display, Window win, XWMHints *h, bool urg);
-bool is_iconic_state(Display *display, Window win);
-void close_win(Display *display, Window win);
-char *get_wm_name(Display *display, Window win);
-char *get_wm_icon_name(Display *display, Window win);
+bool is_focusable(Window win, const XWMHints *hint);
+void set_urgency(Window win, XWMHints *h, bool urg);
+bool is_iconic_state(Window win);
+void close_win(Window win);
+char *get_wm_name(Window win);
+char *get_wm_icon_name(Window win);
 
 #endif

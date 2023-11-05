@@ -70,7 +70,6 @@ bool is_normal_layer(Place_type t);
 void swap_clients(WM *wm, Client *a, Client *b);
 bool is_last_typed_client(WM *wm, Client *c, Place_type type);
 Client *get_head_client(WM *wm, Place_type type);
-Client *get_head_client(WM *wm, Place_type type);
 int get_subgroup_n(Client *c);
 Client *get_subgroup_leader(Client *c);
 Client *get_top_transient_client(Client *subgroup_leader, bool only_modal);

@@ -22,21 +22,21 @@ Entry *create_entry(WM *wm, Rect *r, const char *hint)
 {
     Entry *e=wm->run_cmd=malloc_s(sizeof(Entry));
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h, e->hint=hint;
-    e->win=create_widget_win(wm, wm->root_win, e->x, e->y, e->w, e->h,
+    e->win=create_widget_win(xinfo.root_win, e->x, e->y, e->w, e->h,
         wm->cfg->border_width, WIDGET_COLOR(wm, CURRENT_BORDER), 
         WIDGET_COLOR(wm, ENTRY));
-    XSelectInput(wm->display, e->win, ENTRY_EVENT_MASK);
-    set_xic(wm, e->win, &e->xic);
+    XSelectInput(xinfo.display, e->win, ENTRY_EVENT_MASK);
+    set_xic(e->win, &e->xic);
     return e;
 }
 
 void show_entry(WM *wm, Entry *e)
 {
     e->text[0]=L'\0', e->cursor_offset=0;
-    XRaiseWindow(wm->display, e->win);
-    XMapWindow(wm->display, e->win);
+    XRaiseWindow(xinfo.display, e->win);
+    XMapWindow(xinfo.display, e->win);
     update_entry_text(wm, e);
-    XGrabKeyboard(wm->display, e->win, False, GrabModeAsync, GrabModeAsync, CurrentTime);
+    XGrabKeyboard(xinfo.display, e->win, False, GrabModeAsync, GrabModeAsync, CurrentTime);
 }
 
 void update_entry_text(WM *wm, Entry *e)
@@ -51,7 +51,7 @@ void update_entry_text(WM *wm, Entry *e)
         draw_string(wm, e->win, e->hint, &f);
     else
         draw_wcs(wm, e->win, e->text, &f);
-    XDrawLine(wm->display, e->win, wm->gc, x, 0, x, e->h);
+    XDrawLine(xinfo.display, e->win, wm->gc, x, 0, x, e->h);
 }
 
 static int get_entry_cursor_x(WM *wm, Entry *e)
@@ -63,7 +63,7 @@ static int get_entry_cursor_x(WM *wm, Entry *e)
 
     e->text[e->cursor_offset]=L'\0'; 
     if(wcstombs(mbs, e->text, n) != (size_t)-1)
-        get_string_size(wm, wm->font[ENTRY_FONT], mbs, &w, NULL);
+        get_string_size(wm->font[ENTRY_FONT], mbs, &w, NULL);
     e->text[e->cursor_offset]=wc; 
     return get_font_pad(wm, ENTRY_FONT)+w;
 }
@@ -84,16 +84,16 @@ static void hint_for_run_cmd_entry(WM *wm, const char *regex)
         File *f, *files=get_files_in_paths(paths, regex, RISE, false, &n);
         if(n)
         {
-            XMoveResizeWindow(wm->display, win, x, y, w, MIN(n, max)*h);
-            XMapWindow(wm->display, win);
-            XClearWindow(wm->display, win);
+            XMoveResizeWindow(xinfo.display, win, x, y, w, MIN(n, max)*h);
+            XMapWindow(xinfo.display, win);
+            XClearWindow(xinfo.display, win);
             for(i=0, f=files->next; f && i<max; f=f->next, i++)
                 draw_string(wm, win, i<max-1 ? f->name : "...", &fmt), fmt.r.y+=h;
             free_files(files);
             return;
         }
     }
-    XUnmapWindow(wm->display, win);
+    XUnmapWindow(xinfo.display, win);
 }
 
 static char *get_match_cmd(const char *regex)
@@ -115,15 +115,15 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
     KeySym ks=look_up_key(e->xic, ke, keyname, FILENAME_MAX);
     size_t n1=wcslen(s), n2=wcslen(keyname), n=ARRAY_NUM(e->text);
 
-    if(is_equal_modifier_mask(wm, ControlMask, ke->state))
+    if(is_equal_modifier_mask(ControlMask, ke->state))
     {
         if(ks == XK_u)
             wmemmove(s, s+*i, no+1), *i=0;
         else if(ks == XK_v)
-            XConvertSelection(wm->display, XA_PRIMARY, get_utf8_string_atom(),
+            XConvertSelection(xinfo.display, XA_PRIMARY, get_utf8_string_atom(),
                 None, e->win, ke->time);
     }
-    else if(is_equal_modifier_mask(wm, None, ke->state))
+    else if(is_equal_modifier_mask(None, ke->state))
     {
         switch(ks)
         {
@@ -143,7 +143,7 @@ bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke)
             default:           wcsncpy(s+n1, keyname, n-n1-1), (*i)+=n2;
         }
     }
-    else if(is_equal_modifier_mask(wm, ShiftMask, ke->state))
+    else if(is_equal_modifier_mask(ShiftMask, ke->state))
         wcsncpy(s+n1, keyname, n-n1-1), (*i)+=n2;
 
     char *regex=get_part_match_regex(e);
@@ -172,15 +172,15 @@ static char *get_part_match_regex(Entry *e)
 
 static bool close_entry(WM *wm, Entry *e, bool result)
 {
-    XUngrabKeyboard(wm->display, CurrentTime);
-    XUnmapWindow(wm->display, e->win);
-    XUnmapWindow(wm->display, wm->hint_win);
+    XUngrabKeyboard(xinfo.display, CurrentTime);
+    XUnmapWindow(xinfo.display, e->win);
+    XUnmapWindow(xinfo.display, wm->hint_win);
     return result;
 }
 
 void paste_for_entry(WM *wm, Entry *e)
 {
-    char *p=(char *)get_prop(wm->display, e->win, get_utf8_string_atom(), NULL);
+    char *p=(char *)get_prop(e->win, get_utf8_string_atom(), NULL);
     wchar_t text[BUFSIZ];
     int n=mbstowcs(text, p, BUFSIZ);
     XFree(p);
