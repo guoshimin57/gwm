@@ -158,7 +158,7 @@ static void draw_client_icon(WM *wm, Client *c)
 {
     int size=wm->taskbar->h;
     if(c->image)
-        draw_image(wm, c->image, c->icon->win, 0, 0, size, size);
+        draw_image(wm->display, wm->screen, wm->visual, c->image, c->icon->win, 0, 0, size, size);
     else
     {
         String_format f={{0, 0, size, size}, CENTER, true, false, false, 0,

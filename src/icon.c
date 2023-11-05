@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     icon.c：實現圖符化的相關功能。
+ *     icon.c：實現與圖標映像相關的功能。
  *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -11,20 +11,19 @@
 
 #include "gwm.h"
 
-// 存儲圖標主題規範所說的Per-Directory Keys的結構
-struct icon_dir_info_tag
+typedef struct // 存儲圖標主題規範所說的Per-Directory Keys的結構
 {
     int size, scale, max_size, min_size, threshold;
     char type[10]; // char context[32]; 目前用不上
-};
-typedef struct icon_dir_info_tag Icon_dir_info;
+} Icon_dir_info;
 
-static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c);
-static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c);
-static Imlib_Image get_icon_image_from_file(WM *wm, Client *c);
-static char *find_icon(WM *wm, const char *name, int size, int scale, const char *context_dir);
+static Imlib_Image get_icon_image_from_hint(Display *display, const XWMHints *hint);
+static Imlib_Image get_icon_image_from_prop(Display *display, Window win);
+static Imlib_Image get_icon_image_from_file(const char *name, int size, const char *theme);
+static char *find_icon(const char *name, int size, int scale, const char *theme, const char *context_dir);
 static char *find_icon_helper(const char *name, int size, int scale, char *const *base_dirs, const char *theme, const char *context_dir);
 static char *lookup_icon(const char *name, int size, int scale, char *const *base_dirs, const char *theme, const char *context_dir);
+static bool get_closest_icon(const char *name, int size, int scale, const char *base_dir, const char *sub_dir, const char *theme, char **closest, int *min_distance);
 static char *lookup_fallback_icon(const char *name, char *const *base_dirs);
 static bool is_dir_match_size(const char *base_dir, const char *theme, const char *sub_dir, int size, int scale);
 static int get_dir_size_distance(const char *base_dir, const char *theme, const char *sub_dir, int size, int scale);
@@ -40,60 +39,61 @@ static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
 static bool is_accessible(const char *filename);
 
-void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h)
+void draw_image(Display *display, int screen, Visual *visual, Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
-    XClearArea(wm->display, d, x, y, w, h, False); 
-    set_visual_for_imlib(wm, d);
+    XClearArea(display, d, x, y, w, h, False); 
+    set_visual_for_imlib(display, screen, visual, d);
     imlib_context_set_image(image);
     imlib_context_set_drawable(d);   
     imlib_render_image_on_drawable_at_size(x, y, w, h);
 }
 
-void set_icon_image(WM *wm, Client *c)
+Imlib_Image get_icon_image(Display *display, Window win, const XWMHints *hint, const char *name, int size, const char *theme)
 {
     /* 根據加載效率依次嘗試 */
-    if( c && !( (c->image=get_icon_image_from_hint(wm, c))
-        || (c->image=get_icon_image_from_prop(wm, c))
-        || (c->image=get_icon_image_from_file(wm, c))))
-        c->image=NULL;
+    Imlib_Image image=NULL;
+    if( !(image=get_icon_image_from_hint(display, hint))
+        || !(image=get_icon_image_from_prop(display, win)))
+        image=get_icon_image_from_file(name, size, theme);
+    return image;
 }
 
-static Imlib_Image get_icon_image_from_hint(WM *wm, Client *c)
+static Imlib_Image get_icon_image_from_hint(Display *display, const XWMHints *hint)
 {
-    if(!c->wm_hint || !(c->wm_hint->flags & IconPixmapHint))
+    if(!hint || !(hint->flags & IconPixmapHint))
         return NULL;
 
     int w, h;
-    Pixmap pixmap=c->wm_hint->icon_pixmap, mask=c->wm_hint->icon_mask;
+    Pixmap pixmap=hint->icon_pixmap, mask=hint->icon_mask;
 
-    if(!get_geometry(wm, pixmap, NULL, NULL, &w, &h, NULL, NULL))
+    if(!get_geometry(display, pixmap, NULL, NULL, &w, &h, NULL, NULL))
         return NULL;
     imlib_context_set_drawable(pixmap);   
     return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
 }
 
-static Imlib_Image get_icon_image_from_prop(WM *wm, Client *c)
+static Imlib_Image get_icon_image_from_prop(Display *display, Window win)
 {
-    CARD32 *data=get_net_wm_icon(wm->display, c->win);
+    CARD32 *data=get_net_wm_icon(display, win);
     if(!data)
         return NULL;
     
-    CARD32 w=*data++, h=*data++, size=w*h, i;
+    CARD32 w=data[0], h=data[1], size=w*h, i;
     Imlib_Image image=imlib_create_image(w, h);
     imlib_context_set_image(image);
     imlib_image_set_has_alpha(1);
     /* imlib2和_NET_WM_ICON同樣使用大端字節序，因此不必轉換字節序 */
     DATA32 *image_data=imlib_image_get_data();
     for(i=0; i<size; i++)
-        image_data[i]=data[i];
-    XFree(data);
+        image_data[i]=data[i+2];
+    free(data);
     imlib_image_put_back_data(image_data);
     return image;
 }
 
-static Imlib_Image get_icon_image_from_file(WM *wm, Client *c)
+static Imlib_Image get_icon_image_from_file(const char *name, int size, const char *theme)
 {
-    char *fn=find_icon(wm, c->class_hint.res_name, wm->taskbar->h, 1, "apps");
+    char *fn=find_icon(name, size, 1, theme, "apps");
     return fn ? imlib_load_image(fn) : NULL;
 }
 
@@ -113,68 +113,88 @@ static Imlib_Image get_icon_image_from_file(WM *wm, Client *c)
 // index.theme文件中的目錄段鍵名，即圖標主題規範所說的Per-Directory Keys
 #define ICON_THEME_PER_DIR_KEYS (const char *[]){"Size=", "Scale=", "MaxSize=", "MinSize=", "Threshold=", "Type=", "Context="}
 
-static char *find_icon(WM *wm, const char *name, int size, int scale, const char *context_dir)
+static char *find_icon(const char *name, int size, int scale, const char *theme, const char *context_dir)
 {
     char *filename=NULL, **base_dirs=get_base_dirs();
 
     // 規範建議先找基本目錄，然後找hicolor，最後找後備目錄
-    if( (filename=find_icon_helper(name, size, scale, base_dirs, wm->cfg->cur_icon_theme, context_dir))
+    if( (filename=find_icon_helper(name, size, scale, base_dirs, theme, context_dir))
         || (filename=find_icon_helper(name, size, scale, base_dirs, "hicolor", context_dir))
         || (filename=lookup_fallback_icon(name, base_dirs)))
     {
         for(char **b=base_dirs; b&&*b; b++)
             free(*b);
-        free((void *)base_dirs);
+        free(base_dirs);
     }
     return filename;
 }
 
 static char *find_icon_helper(const char *name, int size, int scale, char *const *base_dirs, const char *theme, const char *context_dir)
 {
-    char *filename=NULL, *const *b=NULL, *const *p=NULL, *const *backup=NULL;
+    char *filename=NULL;
 
     if((filename=lookup_icon(name, size, scale, base_dirs, theme, context_dir)))
         return filename;
+
     // 規範建議在給定主題中找不到匹配的圖標時，遞歸搜索其父主題列表
-    for(b=base_dirs; b&&*b; b++, free((void *)backup))
-        for(backup=p=get_parent_themes(*b, theme); p&&*p; free(*p++))
+    char *const *b=NULL, **p=NULL, **parent=NULL;
+    for(b=base_dirs; b&&*b; b++, free(parent))
+        for(parent=p=get_parent_themes(*b, theme); p&&*p; free(*p++))
             if((filename=find_icon_helper(name, size, scale, b, *p, context_dir)))
-                { free((void *)backup); return filename; }
+                { free(*p), free(parent); return filename; }
     return NULL;
 }
 
 static char *lookup_icon(const char *name, int size, int scale, char *const *base_dirs, const char *theme, const char *context_dir)
 {
-    int min=INT_MAX, d=0;
-    char *filename=NULL, *closest_filename=NULL;
-    char *const *b=NULL, *const *s=NULL, *const *backup=NULL;
+    int min=INT_MAX;
+    char *closest=NULL;
+    char *const *b=NULL, **s=NULL, **sub_dirs=NULL;
 
-    // 規範建議先搜索完全匹配的圖標，然後搜索尺寸最接近的圖標
-    for(b=base_dirs; b&&*b; b++, free((void *)backup))
-        for(backup=s=get_sub_dirs(*b, theme, context_dir); s&&*s; free(*s++))
-            for(size_t i=0, n=ARRAY_NUM(ICON_EXT); i<n; i++)
-                if(is_accessible(filename=copy_strings(*b, "/", theme, "/",
-                    *s, "/", name, ICON_EXT[i], NULL)))
-                {
-                    if(is_dir_match_size(*b, theme, *s, size, scale))
-                        { free((void *)backup); return filename; }
-                    if((d=get_dir_size_distance(*b, theme, *s, size, scale)) < min)
-                        closest_filename=filename, min=d;
-                }
-    if(closest_filename)
-        return closest_filename;
-    return NULL;
+    for(b=base_dirs; b&&*b; b++, free(sub_dirs))
+        for(sub_dirs=s=get_sub_dirs(*b, theme, context_dir); s&&*s; free(*s++))
+            if(get_closest_icon(name, size, scale, *b, *s, theme, &closest, &min))
+                { free(sub_dirs); free(*s); return closest; }
+    return closest;
+}
+
+/* 規範建議先搜索完全匹配的圖標，然後搜索尺寸最接近的圖標。
+ * 當直接找到完全匹配的圖標時返回真值，否則返回假值。 */
+static bool get_closest_icon(const char *name, int size, int scale, const char *base_dir, const char *sub_dir, const char *theme, char **closest, int *min_distance)
+{
+    char *f=NULL;
+    for(size_t i=0; i<ARRAY_NUM(ICON_EXT); i++)
+    {
+        f=copy_strings(base_dir, "/", theme, "/", sub_dir, "/", name, ICON_EXT[i], NULL);
+        if(is_accessible(f))
+        {
+            if(is_dir_match_size(base_dir, theme, sub_dir, size, scale))
+                return (*closest=f);
+
+            int d=get_dir_size_distance(base_dir, theme, sub_dir, size, scale);
+            if(d < *min_distance)
+                *closest=f, *min_distance=d;
+        }
+        free(f);
+    }
+
+    return false;
 }
 
 static char *lookup_fallback_icon(const char *name, char *const *base_dirs)
 {
-    char *filename=NULL;
-    // 規範規定後備圖標路徑爲：基本目錄/圖標名.擴展名
     for(char *const *b=base_dirs; b&&*b; b++)
-        for(size_t i=0, n=ARRAY_NUM(ICON_EXT); i<n; i++)
-            if((filename=copy_strings(*b, "/", name, ICON_EXT[i], NULL))
-                && is_accessible(filename))
+    {
+        for(size_t i=0; i<ARRAY_NUM(ICON_EXT); i++)
+        {
+            // 規範規定後備圖標路徑爲：基本目錄/圖標名.擴展名
+            char *filename=copy_strings(*b, "/", name, ICON_EXT[i], NULL);
+            if(is_accessible(filename))
                 return filename;
+            free(filename);
+        }
+    }
+
     return NULL;
 }
 

@@ -60,7 +60,7 @@ void add_client(WM *wm, Window win)
     fix_place_type_for_tile(wm);
     set_default_win_rect(wm, c);
     save_place_info_of_client(c);
-    set_icon_image(wm, c);
+    c->image=get_icon_image(wm->display, c->win, c->wm_hint, c->class_hint.res_name, wm->cfg->icon_image_size, wm->cfg->cur_icon_theme);
     grab_buttons(wm, c);
     XSelectInput(wm->display, win, EnterWindowMask|PropertyChangeMask);
     XDefineCursor(wm->display, win, wm->cursors[NO_OP]);

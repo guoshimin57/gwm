@@ -20,16 +20,35 @@ Window get_transient_for(Display *display, Window win)
 unsigned char *get_prop(Display *display, Window win, Atom prop, unsigned long *n)
 {
     int fmt;
-    unsigned long nitems=0, *m=(n ? n : &nitems), rest;
-    unsigned char *p=NULL;
+    unsigned long i, nitems=0, *m=(n ? n : &nitems), rest;
+    unsigned char *p=NULL, *result=NULL;;
     Atom type;
 
     /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
      * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
     if( XGetWindowProperty(display, win, prop, 0, ~0L, False,
-        AnyPropertyType, &type, &fmt, m, &rest, &p)==Success && p && *m)
-        return p;
-    return NULL;
+        AnyPropertyType, &type, &fmt, m, &rest, &p) != Success
+        || !type || !fmt || !*m || !p)
+        return NULL;
+
+    result=malloc_s(*m*fmt/8+1);
+    /* 當fmt等於16時，p以short int類型存儲特性，當short int大於16位時，
+     * 高位是沒用的填充數據；當fmt等於32時，p以long類型存儲特性，當long
+     * 大於32位時，高位是沒用的填充數據。因此，要考慮跳過填充數據。 */
+    for(i=0; i<*m; i++)
+    {
+        switch(fmt)
+        {
+            case  8: result[i]=p[i]; break;
+            case 16: ((CARD16 *)result)[i]=((short int *)p)[i]; break;
+            case 32: ((CARD32 *)result)[i]=((long *)p)[i]; break;
+            default: free(result); return NULL;
+        }
+    }
+    result[*m*fmt/8]='\0';
+    XFree(p);
+
+    return result;
 }
 
 char *get_text_prop(Display *display, Window win, Atom atom)

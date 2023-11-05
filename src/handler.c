@@ -546,7 +546,7 @@ static void handle_expose(WM *wm, XEvent *e)
 static void update_title_logo_fg(WM *wm, Client *c)
 {
     if(c->image)
-        draw_image(wm, c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
+        draw_image(wm->display, wm->screen, wm->visual, c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
     else
     {
         String_format f={{0, 0, c->titlebar_h, c->titlebar_h}, CENTER, true,

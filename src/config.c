@@ -209,6 +209,7 @@ static void config_widget_size(WM *wm)
     c->status_area_width_max=c->font_size[TASKBAR_FONT]*30;
     c->taskbar_button_width=get_font_height_by_pad(wm, TASKBAR_FONT)/0.618+0.5;
     c->icon_win_width_max=c->font_size[TASKBAR_FONT]*15;
+    c->icon_image_size=c->font_size[TASKBAR_FONT]*15;
     c->icon_gap=c->font_size[TASKBAR_FONT]/2.0+0.5;
     c->resize_inc=c->font_size[DEFAULT_FONT];
 }

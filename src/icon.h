@@ -12,7 +12,7 @@
 #ifndef ICON_H
 #define ICON_H
 
-void draw_image(WM *wm, Imlib_Image image, Drawable d, int x, int y, int w, int h);
-void set_icon_image(WM *wm, Client *c);
+void draw_image(Display *display, int screen, Visual *visual, Imlib_Image image, Drawable d, int x, int y, int w, int h);
+Imlib_Image get_icon_image(Display *display, Window win, const XWMHints *hint, const char *name, int size, const char *theme);
 
 #endif

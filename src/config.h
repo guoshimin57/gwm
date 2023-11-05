@@ -37,6 +37,7 @@ struct config_tag
     int status_area_width_max; // 任務欄狀態區域的最大寬度
     int taskbar_button_width; // 任務欄按鈕的寬度
     int icon_win_width_max; // 縮微窗口的最大寬度
+    int icon_image_size; // 圖標映像的邊長
     int icon_gap; // 縮微化窗口的間隔
     int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
 

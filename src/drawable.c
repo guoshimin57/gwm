@@ -42,7 +42,7 @@ bool is_pointer_on_win(WM *wm, Window win)
     int rx, ry, x, y, w, h;
     unsigned int mask;
     
-    return get_geometry(wm, win, NULL, NULL, &w, &h, NULL, NULL)
+    return get_geometry(wm->display, win, NULL, NULL, &w, &h, NULL, NULL)
         && XQueryPointer(wm->display, win, &r, &c, &rx, &ry, &x, &y, &mask)
         && x>=0 && x<w && y>=0 && y<h;
 }
@@ -75,7 +75,7 @@ void print_area(WM *wm, Drawable d, int x, int y, int w, int h)
         sprintf(name, "%s/gwm-", wm->cfg->screenshot_path);
     if(timer != err)
         strftime(name+strlen(name), FILENAME_MAX, "%Y_%m_%d_%H_%M_%S", localtime(&timer));
-    set_visual_for_imlib(wm, d);
+    set_visual_for_imlib(wm->display, wm->screen, wm->visual, d);
     imlib_context_set_image(image);
     imlib_image_set_format(wm->cfg->screenshot_format);
     sprintf(name+strlen(name), ".%s", wm->cfg->screenshot_format);
@@ -142,7 +142,7 @@ static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color)
     unsigned int depth;
     Imlib_Image image=NULL;
 
-    if( !get_geometry(wm, d, NULL, NULL, &w, &h, NULL, &depth)
+    if( !get_geometry(wm->display, d, NULL, NULL, &w, &h, NULL, &depth)
         || !(image=imlib_create_image(w, h)))
         return None;
 
@@ -150,7 +150,7 @@ static Pixmap create_pixmap_with_color(WM *wm, Drawable d, unsigned long color)
     if(!pixmap)
         return None;
 
-    set_visual_for_imlib(wm, d);
+    set_visual_for_imlib(wm->display, wm->screen, wm->visual, d);
     imlib_context_set_image(image);
     imlib_context_set_drawable(pixmap);
     imlib_context_set_color(red, green, blue , alpha);
@@ -191,13 +191,13 @@ void set_override_redirect(WM *wm, Window win)
     XChangeWindowAttributes(wm->display, win, CWOverrideRedirect, &attr);
 }
 
-bool get_geometry(WM *wm, Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth)
+bool get_geometry(Display *display, Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth)
 {
     Window r;
     int xt, yt;
     unsigned int wt, ht, bwt, dt;
 
-    return XGetGeometry(wm->display, drw, &r, x ? x : &xt, y ? y : &yt,
+    return XGetGeometry(display, drw, &r, x ? x : &xt, y ? y : &yt,
         w ? (unsigned int *)w : &wt, h ? (unsigned int *)h : &ht,
         bw ? (unsigned int *)bw : &bwt, depth ? depth : &dt);
 }
@@ -209,7 +209,7 @@ void set_pos_for_click(WM *wm, Window click, int cx, int *px, int *py, int pw, i
     Window child, root=wm->root_win;
 
     XTranslateCoordinates(wm->display, click, root, 0, 0, &x, &y, &child);
-    get_geometry(wm, click, NULL, NULL, &w, &h, &bw, NULL);
+    get_geometry(wm->display, click, NULL, NULL, &w, &h, &bw, NULL);
     // 優先考慮右邊顯示彈窗；若不夠位置，則考慮左邊顯示；再不濟則從屏幕左邊開始顯示
     *px = cx+pw<sw ? cx : (cx-pw>0 ? cx-pw : 0);
     /* 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示。
@@ -235,11 +235,11 @@ Pixmap create_pixmap_from_file(WM *wm, Window win, const char *filename)
     unsigned int d;
     Imlib_Image image=imlib_load_image(filename);
 
-    if(!image || !get_geometry(wm, win, NULL, NULL, &w, &h, NULL, &d))
+    if(!image || !get_geometry(wm->display, win, NULL, NULL, &w, &h, NULL, &d))
         return None;
 
     Pixmap bg=XCreatePixmap(wm->display, win, w, h, d);
-    set_visual_for_imlib(wm, win);
+    set_visual_for_imlib(wm->display, wm->screen, wm->visual, win);
     imlib_context_set_image(image);
     imlib_context_set_drawable(bg);   
     imlib_render_image_on_drawable_at_size(0, 0, w, h);
@@ -260,12 +260,12 @@ Window create_widget_win(WM *wm, Window parent, int x, int y, int w, int h, int 
         CWColormap | CWBorderPixel | CWBackPixel | CWOverrideRedirect, &attr);
 }
 
-void set_visual_for_imlib(WM *wm, Drawable d)
+void set_visual_for_imlib(Display *display, int screen, Visual *visual, Drawable d)
 {
-    if(d == wm->root_win)
-        imlib_context_set_visual(DefaultVisual(wm->display, wm->screen));
+    if(d == RootWindow(display, screen))
+        imlib_context_set_visual(DefaultVisual(display, screen));
     else
-        imlib_context_set_visual(wm->visual);
+        imlib_context_set_visual(visual);
 }
 
 void restack_win(WM *wm, Window win)
