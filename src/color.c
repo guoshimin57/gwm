@@ -34,11 +34,11 @@ void alloc_color(WM *wm)
 {
     for(Color_theme i=0; i<COLOR_THEME_N; i++)
         for(Widget_color j=0; j<WIDGET_COLOR_N; j++)
-            alloc_widget_color( wm->cfg->widget_color_name[i][j],
+            alloc_widget_color( cfg->widget_color_name[i][j],
                 &wm->widget_color[i][j]);
     for(Color_theme i=0; i<COLOR_THEME_N; i++)
         for(Text_color j=0; j<TEXT_COLOR_N; j++)
-            alloc_text_color(wm->cfg->text_color_name[i][j],
+            alloc_text_color(cfg->text_color_name[i][j],
                 &wm->text_color[i][j]);
 }
 
@@ -116,7 +116,6 @@ void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
         XSetWindowBorder(xinfo.display, c->frame, color);
     if(c->titlebar_h)
     {
-        cur=(cur && is_focusable(c->win, c->wm_hint));
         color=NCUR_WIDGET_COLOR(wm, cur, TITLEBAR);
         update_win_bg(c->logo, color, 0);
         update_win_bg(c->title_area, color, 0);
@@ -127,8 +126,8 @@ void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
 
 unsigned long get_widget_color(WM *wm, Widget_color wc)
 {
-    float wo=wm->cfg->widget_opacity[wm->cfg->color_theme][wc];
-    unsigned long rgb=wm->widget_color[wm->cfg->color_theme][wc].pixel;
+    float wo=cfg->widget_opacity[cfg->color_theme][wc];
+    unsigned long rgb=wm->widget_color[cfg->color_theme][wc].pixel;
 
     return ((rgb & 0x00ffffff) | ((unsigned long)(0xff*wo))<<24);
 }

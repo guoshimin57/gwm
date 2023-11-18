@@ -17,15 +17,15 @@ static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op);
 
 void init_desktop(WM *wm)
 {
-    wm->cur_desktop=wm->cfg->default_cur_desktop;
+    wm->cur_desktop=cfg->default_cur_desktop;
     for(size_t i=0; i<DESKTOP_N; i++)
     {
         Desktop *d=wm->desktop[i]=malloc_s(sizeof(Desktop));
-        d->n_main_max=wm->cfg->default_n_main_max;
-        d->cur_layout=d->prev_layout=wm->cfg->default_layout;
+        d->n_main_max=cfg->default_n_main_max;
+        d->cur_layout=d->prev_layout=cfg->default_layout;
         d->default_place_type=TILE_LAYER_MAIN;
-        d->main_area_ratio=wm->cfg->default_main_area_ratio;
-        d->fixed_area_ratio=wm->cfg->default_fixed_area_ratio;
+        d->main_area_ratio=cfg->default_main_area_ratio;
+        d->fixed_area_ratio=cfg->default_fixed_area_ratio;
     }
 }
 

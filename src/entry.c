@@ -23,7 +23,7 @@ Entry *create_entry(WM *wm, Rect *r, const char *hint)
     Entry *e=wm->run_cmd=malloc_s(sizeof(Entry));
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h, e->hint=hint;
     e->win=create_widget_win(xinfo.root_win, e->x, e->y, e->w, e->h,
-        wm->cfg->border_width, WIDGET_COLOR(wm, CURRENT_BORDER), 
+        cfg->border_width, WIDGET_COLOR(wm, CURRENT_BORDER), 
         WIDGET_COLOR(wm, ENTRY));
     XSelectInput(xinfo.display, e->win, ENTRY_EVENT_MASK);
     set_xic(e->win, &e->xic);
@@ -65,7 +65,7 @@ static int get_entry_cursor_x(WM *wm, Entry *e)
     if(wcstombs(mbs, e->text, n) != (size_t)-1)
         get_string_size(wm->font[ENTRY_FONT], mbs, &w, NULL);
     e->text[e->cursor_offset]=wc; 
-    return get_font_pad(wm, ENTRY_FONT)+w;
+    return get_font_pad(ENTRY_FONT)+w;
 }
 
 static void hint_for_run_cmd_entry(WM *wm, const char *regex)
@@ -75,7 +75,7 @@ static void hint_for_run_cmd_entry(WM *wm, const char *regex)
 
     if(paths && regex && strcmp(regex, "*"))
     {
-        int bw=wm->cfg->border_width, w=wm->run_cmd->w, h=wm->run_cmd->h,
+        int bw=cfg->border_width, w=wm->run_cmd->w, h=wm->run_cmd->h,
             x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+2*bw,
             i, n, max=(wm->workarea.h-y)/h;
         String_format fmt={{0, 0, w, h}, CENTER_LEFT, false, true, false, 0,

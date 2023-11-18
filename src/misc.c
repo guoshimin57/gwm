@@ -320,8 +320,8 @@ void exec_cmd(char *const *cmd)
 
 void update_hint_win_for_info(WM *wm, Window hover, const char *info)
 {
-    int x, y, rx, ry, pad=get_font_pad(wm, HINT_FONT),
-        w=0, h=get_font_height_by_pad(wm, HINT_FONT);
+    int x, y, rx, ry, pad=get_font_pad(HINT_FONT),
+        w=0, h=get_font_height_by_pad(HINT_FONT);
 
     get_string_size(wm->font[HINT_FONT], info, &w, NULL);
     w+=pad*2;

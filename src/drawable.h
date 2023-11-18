@@ -16,7 +16,7 @@ char *get_title_text(Window win, const char *fallback);
 char *get_icon_title_text(Window win, const char *fallback);
 bool is_pointer_on_win(Window win);
 bool is_on_screen(int x, int y, int w, int h);
-void print_area(WM *wm, Drawable d, int x, int y, int w, int h);
+void print_area(Drawable d, int x, int y, int w, int h);
 bool is_wm_win(WM *wm, Window win, bool before_wm);
 void update_win_bg(Window win, unsigned long color, Pixmap pixmap);
 void set_override_redirect(Window win);

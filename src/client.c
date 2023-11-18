@@ -15,7 +15,7 @@
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);
 static void set_default_desktop_mask(Client *c);
-static void apply_rules(WM *wm, Client *c);
+static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static Client *get_head_for_add_client(WM *wm, Client *c);
 static void add_client_node(Client *head, Client *c);
@@ -32,7 +32,7 @@ static void fix_win_size(WM *wm, Client *c);
 static void fix_win_size_by_workarea(WM *wm, Client *c);
 static void frame_client(WM *wm, Client *c);
 static Rect get_frame_rect(Client *c);
-static Rect get_button_rect(WM *wm, Client *c, size_t index);
+static Rect get_button_rect(Client *c, size_t index);
 static void del_client_node(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
@@ -55,13 +55,13 @@ void add_client(WM *wm, Window win)
 {
     Client *c=new_client(wm, win);
 
-    apply_rules(wm, c);
+    apply_rules(c);
     add_client_node(get_head_for_add_client(wm, c), c);
     fix_place_type_for_hint(wm, c);
     fix_place_type_for_tile(wm);
     set_default_win_rect(wm, c);
     save_place_info_of_client(c);
-    grab_buttons(wm, c);
+    grab_buttons(c);
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     XDefineCursor(xinfo.display, win, wm->cursors[NO_OP]);
     frame_client(wm, c);
@@ -99,12 +99,12 @@ static Client *new_client(WM *wm, Window win)
     c->subgroup_leader=get_subgroup_leader(c);
     c->place_type=TILE_LAYER_MAIN;
     if(!should_hide_frame(c))
-        c->border_w=wm->cfg->border_width, c->titlebar_h=TITLEBAR_HEIGHT(wm);
+        c->border_w=cfg->border_width, c->titlebar_h=TITLEBAR_HEIGHT;
     c->class_name="?";
     XGetClassHint(xinfo.display, c->win, &c->class_hint);
-    update_size_hint(c->win, wm->cfg->resize_inc, &c->size_hint);
+    update_size_hint(c->win, cfg->resize_inc, &c->size_hint);
     c->image=get_icon_image(c->win, c->wm_hint, c->class_hint.res_name,
-        wm->cfg->icon_image_size, wm->cfg->cur_icon_theme);
+        cfg->icon_image_size, cfg->cur_icon_theme);
     set_default_desktop_mask(c);
 
     return c;
@@ -127,13 +127,13 @@ static void set_default_desktop_mask(Client *c)
     }
 }
 
-static void apply_rules(WM *wm, Client *c)
+static void apply_rules(Client *c)
 {
     if(!c->class_hint.res_class && !c->class_hint.res_name)
         return;
 
     c->class_name=c->class_hint.res_class;
-    for(const Rule *r=wm->cfg->rule; r->app_class; r++)
+    for(const Rule *r=cfg->rule; r->app_class; r++)
     {
         if(have_rule(r, c))
         {
@@ -325,7 +325,7 @@ static void frame_client(WM *wm, Client *c)
     c->frame=create_widget_win(xinfo.root_win, fr.x, fr.y, fr.w, fr.h,
         c->border_w, WIDGET_COLOR(wm, CURRENT_BORDER), 0);
     XSelectInput(xinfo.display, c->frame, FRAME_EVENT_MASK);
-    if(wm->cfg->set_frame_prop)
+    if(cfg->set_frame_prop)
         copy_prop(c->frame, c->win);
     if(c->titlebar_h)
         create_titlebar(wm, c);
@@ -345,7 +345,7 @@ void create_titlebar(WM *wm, Client *c)
     Rect tr=get_title_area_rect(wm, c);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
-        Rect br=get_button_rect(wm, c, i);
+        Rect br=get_button_rect(c, i);
         c->buttons[i]=create_widget_win(c->frame, br.x, br.y,
             br.w, br.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
         XSelectInput(xinfo.display, c->buttons[i], BUTTON_EVENT_MASK);
@@ -367,13 +367,13 @@ static Rect get_frame_rect(Client *c)
 Rect get_title_area_rect(WM *wm, Client *c)
 {
     int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7},
-        n=buttons_n[DESKTOP(wm)->cur_layout], size=TITLEBAR_HEIGHT(wm);
-    return (Rect){size, 0, c->w-wm->cfg->title_button_width*n-size, size};
+        n=buttons_n[DESKTOP(wm)->cur_layout], size=TITLEBAR_HEIGHT;
+    return (Rect){size, 0, c->w-cfg->title_button_width*n-size, size};
 }
 
-static Rect get_button_rect(WM *wm, Client *c, size_t index)
+static Rect get_button_rect(Client *c, size_t index)
 {
-    int cw=c->w, w=wm->cfg->title_button_width, h=TITLEBAR_HEIGHT(wm);
+    int cw=c->w, w=cfg->title_button_width, h=TITLEBAR_HEIGHT;
     return (Rect){cw-w*(TITLE_BUTTON_N-index), 0, w, h};
 }
 
@@ -446,7 +446,7 @@ void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
         {
-            Rect br=get_button_rect(wm, c, i);
+            Rect br=get_button_rect(c, i);
             XMoveWindow(xinfo.display, c->buttons[i], br.x, br.y);
         }
         XResizeWindow(xinfo.display, c->title_area, tr.w, tr.h);
@@ -857,13 +857,13 @@ void update_icon_area(WM *wm)
             if(have_same_class_icon_client(wm, c))
             {
                 get_string_size(wm->font[TITLEBAR_FONT], i->title_text, &w, NULL);
-                i->w=MIN(i->w+w, wm->cfg->icon_win_width_max);
+                i->w=MIN(i->w+w, cfg->icon_win_width_max);
                 i->show_text=true;
             }
             else
                 i->show_text=false;
             i->x=x;
-            x+=i->w+wm->cfg->icon_gap;
+            x+=i->w+cfg->icon_gap;
             XMoveResizeWindow(xinfo.display, i->win, i->x, i->y, i->w, i->h); 
         }
     }

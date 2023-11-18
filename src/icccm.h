@@ -29,7 +29,6 @@ void fix_win_size_by_hint(const XSizeHints *size_hint, int *w, int *h);
 bool is_prefer_size(int w, int h, const XSizeHints *hint);
 void set_input_focus(Window win, const XWMHints *hint);
 bool has_focus_hint(const XWMHints *hint);
-bool is_focusable(Window win, const XWMHints *hint);
 void set_urgency(Window win, XWMHints *h, bool urg);
 bool is_iconic_state(Window win);
 void close_win(Window win);

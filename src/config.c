@@ -183,44 +183,43 @@ static const Rule rule[] =
  *     縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
  * 近視之人應按近視程度設置大於1.0的合適值。
  */
-static void config_font(WM *wm)
+static void config_font(void)
 {
     int size=get_scale_font_size(2.0);
 
-    /*           字體類型       字體系列     字號 */
-    SET_FONT(wm, DEFAULT_FONT,  "monospace", size);
-    SET_FONT(wm, TITLEBAR_FONT, "monospace", size);
-    SET_FONT(wm, MENU_FONT,     "monospace", size);
-    SET_FONT(wm, TASKBAR_FONT,  "monospace", size);
-    SET_FONT(wm, CLASS_FONT,    "monospace", size);
-    SET_FONT(wm, ENTRY_FONT,    "monospace", size);
-    SET_FONT(wm, HINT_FONT,     "monospace", size);
+    /*       字體類型       字體系列     字號 */
+    SET_FONT(DEFAULT_FONT,  "monospace", size);
+    SET_FONT(TITLEBAR_FONT, "monospace", size);
+    SET_FONT(MENU_FONT,     "monospace", size);
+    SET_FONT(TASKBAR_FONT,  "monospace", size);
+    SET_FONT(CLASS_FONT,    "monospace", size);
+    SET_FONT(ENTRY_FONT,    "monospace", size);
+    SET_FONT(HINT_FONT,     "monospace", size);
 }
 
 /* 功能：設置構件尺寸。
  * 說明：建議以字號爲基準來設置構件大小。標識符定義詳見gwm.h。
  */
-static void config_widget_size(WM *wm)
+static void config_widget_size(void)
 {
-    Config *c=wm->cfg;
-    c->border_width=c->font_size[DEFAULT_FONT]/8.0+0.5;
-    c->title_button_width=get_font_height_by_pad(wm, TITLEBAR_FONT);
-    c->win_gap=c->border_width*2;
-    c->status_area_width_max=c->font_size[TASKBAR_FONT]*30;
-    c->taskbar_button_width=get_font_height_by_pad(wm, TASKBAR_FONT)/0.618+0.5;
-    c->icon_win_width_max=c->font_size[TASKBAR_FONT]*15;
-    c->icon_image_size=c->font_size[TASKBAR_FONT]*15;
-    c->icon_gap=c->font_size[TASKBAR_FONT]/2.0+0.5;
-    c->resize_inc=c->font_size[DEFAULT_FONT];
+    cfg->border_width=cfg->font_size[DEFAULT_FONT]/8.0+0.5;
+    cfg->title_button_width=get_font_height_by_pad(TITLEBAR_FONT);
+    cfg->win_gap=cfg->border_width*2;
+    cfg->status_area_width_max=cfg->font_size[TASKBAR_FONT]*30;
+    cfg->taskbar_button_width=get_font_height_by_pad(TASKBAR_FONT)/0.618+0.5;
+    cfg->icon_win_width_max=cfg->font_size[TASKBAR_FONT]*15;
+    cfg->icon_image_size=cfg->font_size[TASKBAR_FONT]*15;
+    cfg->icon_gap=cfg->font_size[TASKBAR_FONT]/2.0+0.5;
+    cfg->resize_inc=cfg->font_size[DEFAULT_FONT];
 }
 
 /* 功能：設置與定位器操作類型相對應的光標符號。
  * 說明：定位器操作類型的定義詳見gwm.h:Pointer_act，
  * 光標符號的定義詳見<X11/cursorfont.h>。
  */
-static void config_cursor_shape(WM *wm)
+static void config_cursor_shape(void)
 {
-    unsigned int *cursor_shape=wm->cfg->cursor_shape;
+    unsigned int *cursor_shape=cfg->cursor_shape;
 
     /*           定位器操作類型         光標符號 */
     cursor_shape[NO_OP]               = XC_left_ptr;
@@ -245,9 +244,9 @@ static void config_cursor_shape(WM *wm)
  * 之一（下同）：
  *     #RGB、#RRGGBB、#RRRGGGBBB、#RRRRGGGGBBBB。
  */
-static void config_widget_color_for_dark(WM *wm)
+static void config_widget_color_for_dark(void)
 {
-    const char **color_name=wm->cfg->widget_color_name[DARK_THEME];
+    const char **color_name=cfg->widget_color_name[DARK_THEME];
 
     /*         構件顏色號                     顏色名 */
     color_name[NORMAL_BORDER_COLOR]         = "grey11";
@@ -269,9 +268,9 @@ static void config_widget_color_for_dark(WM *wm)
 /* 功能：爲中性顏色主題設置構件背景色。
  * 說明：同前。
  */
-static void config_widget_color_for_normal(WM *wm)
+static void config_widget_color_for_normal(void)
 {
-    const char **color_name=wm->cfg->widget_color_name[NORMAL_THEME];
+    const char **color_name=cfg->widget_color_name[NORMAL_THEME];
 
     /*         構件顏色號                     顏色名 */
     color_name[NORMAL_BORDER_COLOR]         = "grey31";
@@ -293,9 +292,9 @@ static void config_widget_color_for_normal(WM *wm)
 /* 功能：爲淺色主題設置構件背景色。
  * 說明：同前。
  */
-static void config_widget_color_for_light(WM *wm)
+static void config_widget_color_for_light(void)
 {
-    const char **color_name=wm->cfg->widget_color_name[LIGHT_THEME];
+    const char **color_name=cfg->widget_color_name[LIGHT_THEME];
 
     /*         構件顏色號                     顏色名 */
     color_name[NORMAL_BORDER_COLOR]         = "grey61";
@@ -317,13 +316,13 @@ static void config_widget_color_for_light(WM *wm)
 /* 功能：爲深色主題設置構件背景色的不透明度。
  * 說明：構件顏色號的定義詳見gwm.h:Widget_color；不透明度取值範圍爲0~1.0（下同）。
  */
-static void config_widget_opacity_for_dark(WM *wm)
+static void config_widget_opacity_for_dark(void)
 {
-    float *opacity=wm->cfg->widget_opacity[DARK_THEME];
+    float *opacity=cfg->widget_opacity[DARK_THEME];
 
-    wm->cfg->global_opacity=0.8; // 全局不透明度
+    cfg->global_opacity=0.8; // 全局不透明度
     for(size_t i=0; i<WIDGET_COLOR_N; i++)
-        opacity[i]=wm->cfg->global_opacity;
+        opacity[i]=cfg->global_opacity;
 
     /* 不使用全局透明度的構件分別設置自己的不透明度：
      *      構件顏色號        不透明度               */
@@ -335,13 +334,13 @@ static void config_widget_opacity_for_dark(WM *wm)
 /* 功能：爲中性顏色主題設置構件背景不透明度。
  * 說明：同前。
  */
-static void config_widget_opacity_for_normal(WM *wm)
+static void config_widget_opacity_for_normal(void)
 {
-    float *opacity=wm->cfg->widget_opacity[NORMAL_THEME];
+    float *opacity=cfg->widget_opacity[NORMAL_THEME];
 
-    wm->cfg->global_opacity = 0.8; // 全局不透明度;
+    cfg->global_opacity = 0.8; // 全局不透明度;
     for(size_t i=0; i<WIDGET_COLOR_N; i++)
-        opacity[i]=wm->cfg->global_opacity;
+        opacity[i]=cfg->global_opacity;
 
     /* 不使用全局透明度的構件分別設置自己的不透明度：
      *      構件顏色號        不透明度               */
@@ -353,13 +352,13 @@ static void config_widget_opacity_for_normal(WM *wm)
 /* 功能：爲淺色主題設置構件背景不透明度。
  * 說明：同前。
  */
-static void config_widget_opacity_for_light(WM *wm)
+static void config_widget_opacity_for_light(void)
 {
-    float *opacity=wm->cfg->widget_opacity[LIGHT_THEME];
+    float *opacity=cfg->widget_opacity[LIGHT_THEME];
 
-    wm->cfg->global_opacity = 0.8; // 全局不透明度
+    cfg->global_opacity = 0.8; // 全局不透明度
     for(size_t i=0; i<WIDGET_COLOR_N; i++)
-        opacity[i]=wm->cfg->global_opacity;
+        opacity[i]=cfg->global_opacity;
 
     /* 不使用全局透明度的構件分別設置自己的不透明度：
      *      構件顏色號        不透明度               */
@@ -369,23 +368,23 @@ static void config_widget_opacity_for_light(WM *wm)
 }
 
 /* 功能：爲各種主題設置構件背景顏色及不透明度。*/
-static void config_widget_color_and_opacity(WM *wm)
+static void config_widget_color_and_opacity(void)
 {
-    config_widget_color_for_dark(wm);
-    config_widget_color_for_normal(wm);
-    config_widget_color_for_light(wm);
+    config_widget_color_for_dark();
+    config_widget_color_for_normal();
+    config_widget_color_for_light();
 
-    config_widget_opacity_for_dark(wm);
-    config_widget_opacity_for_normal(wm);
-    config_widget_opacity_for_light(wm);
+    config_widget_opacity_for_dark();
+    config_widget_opacity_for_normal();
+    config_widget_opacity_for_light();
 }
 
 /* 功能：爲深色主題設置文字顏色。
  * 說明：文字顏色號的定義詳見gwm.h:Text_color。顏色名說明同前。
  */
-static void config_text_color_for_dark(WM *wm)
+static void config_text_color_for_dark(void)
 {
-    const char **color_name=wm->cfg->text_color_name[DARK_THEME];
+    const char **color_name=cfg->text_color_name[DARK_THEME];
 
     /*         文字顏色號                     顏色名 */
     color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey71";
@@ -400,9 +399,9 @@ static void config_text_color_for_dark(WM *wm)
 /* 功能：爲默認顏色主題設置文字顏色。
  * 說明：同前。
  */
-static void config_text_color_for_normal(WM *wm)
+static void config_text_color_for_normal(void)
 {
-    const char **color_name=wm->cfg->text_color_name[NORMAL_THEME];
+    const char **color_name=cfg->text_color_name[NORMAL_THEME];
 
     /*         文字顏色號                     顏色名 */
     color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey71";
@@ -417,9 +416,9 @@ static void config_text_color_for_normal(WM *wm)
 /* 功能：爲淺色主題設置文字顏色。
  * 說明：同前。
  */
-static void config_text_color_for_light(WM *wm)
+static void config_text_color_for_light(void)
 {
-    const char **color_name=wm->cfg->text_color_name[LIGHT_THEME];
+    const char **color_name=cfg->text_color_name[LIGHT_THEME];
 
     /*         文字顏色號                     顏色名 */
     color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey31";
@@ -432,114 +431,114 @@ static void config_text_color_for_light(WM *wm)
 }
 
 /* 功能：爲各種主題設置文字顏色。*/
-static void config_text_color(WM *wm)
+static void config_text_color(void)
 {
-    config_text_color_for_dark(wm);
-    config_text_color_for_normal(wm);
-    config_text_color_for_light(wm);
+    config_text_color_for_dark();
+    config_text_color_for_normal();
+    config_text_color_for_light();
 }
 
 /* 功能：設置標題按鈕的文字。
  * 說明：標題欄按鈕類型的定義詳見gwm.h:Widget_type。
  */
-static void config_title_button_text(WM *wm)
+static void config_title_button_text(void)
 {
-    /*                        標題欄按鈕類型 按鈕文字 */
-    SET_TITLE_BUTTON_TEXT(wm, SECOND_BUTTON, "◁");
-    SET_TITLE_BUTTON_TEXT(wm, MAIN_BUTTON,   "▼");
-    SET_TITLE_BUTTON_TEXT(wm, FIXED_BUTTON,  "▷");
-    SET_TITLE_BUTTON_TEXT(wm, FLOAT_BUTTON,  "△");
-    SET_TITLE_BUTTON_TEXT(wm, ICON_BUTTON,   "—");
-    SET_TITLE_BUTTON_TEXT(wm, MAX_BUTTON,    "□");
-    SET_TITLE_BUTTON_TEXT(wm, CLOSE_BUTTON,  "×");
+    /*                    標題欄按鈕類型 按鈕文字 */
+    SET_TITLE_BUTTON_TEXT(SECOND_BUTTON, "◁");
+    SET_TITLE_BUTTON_TEXT(MAIN_BUTTON,   "▼");
+    SET_TITLE_BUTTON_TEXT(FIXED_BUTTON,  "▷");
+    SET_TITLE_BUTTON_TEXT(FLOAT_BUTTON,  "△");
+    SET_TITLE_BUTTON_TEXT(ICON_BUTTON,   "—");
+    SET_TITLE_BUTTON_TEXT(MAX_BUTTON,    "□");
+    SET_TITLE_BUTTON_TEXT(CLOSE_BUTTON,  "×");
 }
 
 /* 功能：設置任務欄按鈕的文字。
  * 說明：任務欄按鈕類型的定義詳見gwm.h:Widget_type。
  */
-static void config_taskbar_button_text(WM *wm)
+static void config_taskbar_button_text(void)
 {
-    /*                          任務欄按鈕類型   按鈕文字 */
-    SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP1_BUTTON, "1");
-    SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP2_BUTTON, "2");
-    SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP3_BUTTON, "3");
-    SET_TASKBAR_BUTTON_TEXT(wm, PREVIEW_BUTTON,  "▦");
-    SET_TASKBAR_BUTTON_TEXT(wm, STACK_BUTTON,    "▣");
-    SET_TASKBAR_BUTTON_TEXT(wm, TILE_BUTTON,     "▥");
-    SET_TASKBAR_BUTTON_TEXT(wm, DESKTOP_BUTTON,  "■");
-    SET_TASKBAR_BUTTON_TEXT(wm, ACT_CENTER_ITEM, "^");
+    /*                      任務欄按鈕類型   按鈕文字 */
+    SET_TASKBAR_BUTTON_TEXT(DESKTOP1_BUTTON, "1");
+    SET_TASKBAR_BUTTON_TEXT(DESKTOP2_BUTTON, "2");
+    SET_TASKBAR_BUTTON_TEXT(DESKTOP3_BUTTON, "3");
+    SET_TASKBAR_BUTTON_TEXT(PREVIEW_BUTTON,  "▦");
+    SET_TASKBAR_BUTTON_TEXT(STACK_BUTTON,    "▣");
+    SET_TASKBAR_BUTTON_TEXT(TILE_BUTTON,     "▥");
+    SET_TASKBAR_BUTTON_TEXT(DESKTOP_BUTTON,  "■");
+    SET_TASKBAR_BUTTON_TEXT(ACT_CENTER_ITEM, "^");
 }
 
 /* 功能：設置操作中心的文字。
  * 說明：操作中心按鈕類型的定義詳見gwm.h:Widget_type。
  */
-static void config_act_center_item_text(WM *wm)
+static void config_act_center_item_text(void)
 {
-    /*                           操作中心按鈕類型             按鈕文字 */
-    SET_ACT_CENTER_ITEM_TEXT(wm, HELP_BUTTON,              _("幫助"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, FILE_BUTTON,              _("文件"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, TERM_BUTTON,              _("終端模擬器"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, BROWSER_BUTTON,           _("網絡瀏覽器"));
+    /*                       操作中心按鈕類型             按鈕文字 */
+    SET_ACT_CENTER_ITEM_TEXT(HELP_BUTTON,              _("幫助"));
+    SET_ACT_CENTER_ITEM_TEXT(FILE_BUTTON,              _("文件"));
+    SET_ACT_CENTER_ITEM_TEXT(TERM_BUTTON,              _("終端模擬器"));
+    SET_ACT_CENTER_ITEM_TEXT(BROWSER_BUTTON,           _("網絡瀏覽器"));
 
-    SET_ACT_CENTER_ITEM_TEXT(wm, GAME_BUTTON,              _("遊戲"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_START_BUTTON,        _("播放影音"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_TOGGLE_BUTTON,       _("切換播放狀態"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, PLAY_QUIT_BUTTON,         _("關閉影音"));
+    SET_ACT_CENTER_ITEM_TEXT(GAME_BUTTON,              _("遊戲"));
+    SET_ACT_CENTER_ITEM_TEXT(PLAY_START_BUTTON,        _("播放影音"));
+    SET_ACT_CENTER_ITEM_TEXT(PLAY_TOGGLE_BUTTON,       _("切換播放狀態"));
+    SET_ACT_CENTER_ITEM_TEXT(PLAY_QUIT_BUTTON,         _("關閉影音"));
 
-    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_DOWN_BUTTON,       _("减小音量"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_UP_BUTTON,         _("增大音量"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_MAX_BUTTON,        _("最大音量"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, VOLUME_TOGGLE_BUTTON,     _("靜音切換"));
+    SET_ACT_CENTER_ITEM_TEXT(VOLUME_DOWN_BUTTON,       _("减小音量"));
+    SET_ACT_CENTER_ITEM_TEXT(VOLUME_UP_BUTTON,         _("增大音量"));
+    SET_ACT_CENTER_ITEM_TEXT(VOLUME_MAX_BUTTON,        _("最大音量"));
+    SET_ACT_CENTER_ITEM_TEXT(VOLUME_TOGGLE_BUTTON,     _("靜音切換"));
 
-    SET_ACT_CENTER_ITEM_TEXT(wm, MAIN_NEW_BUTTON,          _("暫主區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, SEC_NEW_BUTTON,           _("暫次區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, FIX_NEW_BUTTON,           _("暫固定區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, FLOAT_NEW_BUTTON,         _("暫懸浮層開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(MAIN_NEW_BUTTON,          _("暫主區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(SEC_NEW_BUTTON,           _("暫次區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(FIX_NEW_BUTTON,           _("暫固定區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(FLOAT_NEW_BUTTON,         _("暫懸浮層開窗"));
 
-    SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_UP_BUTTON,         _("增大主區容量"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, N_MAIN_DOWN_BUTTON,       _("减小主區容量"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, TITLEBAR_TOGGLE_BUTTON,   _("開關當前窗口標題欄"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, CLI_BORDER_TOGGLE_BUTTON, _("開關當前窗口邊框"));
+    SET_ACT_CENTER_ITEM_TEXT(N_MAIN_UP_BUTTON,         _("增大主區容量"));
+    SET_ACT_CENTER_ITEM_TEXT(N_MAIN_DOWN_BUTTON,       _("减小主區容量"));
+    SET_ACT_CENTER_ITEM_TEXT(TITLEBAR_TOGGLE_BUTTON,   _("開關當前窗口標題欄"));
+    SET_ACT_CENTER_ITEM_TEXT(CLI_BORDER_TOGGLE_BUTTON, _("開關當前窗口邊框"));
 
-    SET_ACT_CENTER_ITEM_TEXT(wm, CLOSE_ALL_CLIENTS_BUTTON, _("關閉桌面所有窗口"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, PRINT_WIN_BUTTON,         _("當前窗口截圖"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, PRINT_SCREEN_BUTTON,      _("全屏截圖"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, FOCUS_MODE_BUTTON,        _("切換聚焦模式"));
+    SET_ACT_CENTER_ITEM_TEXT(CLOSE_ALL_CLIENTS_BUTTON, _("關閉桌面所有窗口"));
+    SET_ACT_CENTER_ITEM_TEXT(PRINT_WIN_BUTTON,         _("當前窗口截圖"));
+    SET_ACT_CENTER_ITEM_TEXT(PRINT_SCREEN_BUTTON,      _("全屏截圖"));
+    SET_ACT_CENTER_ITEM_TEXT(FOCUS_MODE_BUTTON,        _("切換聚焦模式"));
 
-    SET_ACT_CENTER_ITEM_TEXT(wm, COMPOSITOR_BUTTON,        _("開關合成器"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, WALLPAPER_BUTTON,         _("切換壁紙"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, COLOR_THEME_BUTTON,       _("切換顏色主題"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, QUIT_WM_BUTTON,           _("退出gwm"));
+    SET_ACT_CENTER_ITEM_TEXT(COMPOSITOR_BUTTON,        _("開關合成器"));
+    SET_ACT_CENTER_ITEM_TEXT(WALLPAPER_BUTTON,         _("切換壁紙"));
+    SET_ACT_CENTER_ITEM_TEXT(COLOR_THEME_BUTTON,       _("切換顏色主題"));
+    SET_ACT_CENTER_ITEM_TEXT(QUIT_WM_BUTTON,           _("退出gwm"));
 
-    SET_ACT_CENTER_ITEM_TEXT(wm, LOGOUT_BUTTON,            _("注銷"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, REBOOT_BUTTON,            _("重啓"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, POWEROFF_BUTTON,          _("關機"));
-    SET_ACT_CENTER_ITEM_TEXT(wm, RUN_BUTTON,               _("運行"));
+    SET_ACT_CENTER_ITEM_TEXT(LOGOUT_BUTTON,            _("注銷"));
+    SET_ACT_CENTER_ITEM_TEXT(REBOOT_BUTTON,            _("重啓"));
+    SET_ACT_CENTER_ITEM_TEXT(POWEROFF_BUTTON,          _("關機"));
+    SET_ACT_CENTER_ITEM_TEXT(RUN_BUTTON,               _("運行"));
 }
 
 /* 功能：設置客戶窗口菜單的文字。
  * 說明：客戶窗口菜單項類型的定義詳見gwm.h:Widget_type。
  */
-static void config_client_menu_item_text(WM *wm)
+static void config_client_menu_item_text(void)
 {
-    /*                            客戶窗口菜單項類型       按鈕文字 */
-    SET_CLIENT_MENU_ITEM_TEXT(wm, SHADE_BUTTON,         _("卷起/放下"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, VERT_MAX_BUTTON,      _("縱向最大化"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, HORZ_MAX_BUTTON,      _("橫向最大化"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, TOP_MAX_BUTTON,       _("最大化至上半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, BOTTOM_MAX_BUTTON,    _("最大化至下半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, LEFT_MAX_BUTTON,      _("最大化至左半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, RIGHT_MAX_BUTTON,     _("最大化至右半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(wm, FULL_MAX_BUTTON,      _("完全最大化"));
+    /*                        客戶窗口菜單項類型       按鈕文字 */
+    SET_CLIENT_MENU_ITEM_TEXT(SHADE_BUTTON,         _("卷起/放下"));
+    SET_CLIENT_MENU_ITEM_TEXT(VERT_MAX_BUTTON,      _("縱向最大化"));
+    SET_CLIENT_MENU_ITEM_TEXT(HORZ_MAX_BUTTON,      _("橫向最大化"));
+    SET_CLIENT_MENU_ITEM_TEXT(TOP_MAX_BUTTON,       _("最大化至上半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(BOTTOM_MAX_BUTTON,    _("最大化至下半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(LEFT_MAX_BUTTON,      _("最大化至左半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(RIGHT_MAX_BUTTON,     _("最大化至右半屏"));
+    SET_CLIENT_MENU_ITEM_TEXT(FULL_MAX_BUTTON,      _("完全最大化"));
 }
 
 /* 功能：設置構件功能提示。
  * 說明：構件類型的定義詳見gwm.h:Widget_type。以下未列出的構件要麼不必顯示提示，
  * 要麼動態變化而不可在此設置。
  */
-static void config_tooltip(WM *wm)
+static void config_tooltip(void)
 {
-    const char **tooltip=wm->cfg->tooltip;
+    const char **tooltip=cfg->tooltip;
 
     /*      構件類型             構件功能提示文字 */
     tooltip[SECOND_BUTTON]   = _("切換到次要區域");
@@ -563,53 +562,52 @@ static void config_tooltip(WM *wm)
 /* 功能：設置其他雜項。
  * 說明：標識符含義詳見config.h。
  */
-static void config_misc(WM *wm)
+static void config_misc(void)
 {
-    Config *c=wm->cfg;
-    c->set_frame_prop=false;
-    c->show_taskbar=true;
-    c->taskbar_on_top=false;
-    c->focus_mode=CLICK_FOCUS;
-    c->default_layout=TILE;
-    c->color_theme=DARK_THEME;
-    c->screen_saver_time_out=600;
-    c->screen_saver_interval=600;
-    c->hover_time=300;
-    c->default_cur_desktop=1;
-    c->default_n_main_max=1;
-    c->act_center_col=4;
-    c->font_pad_ratio=0.25;
-    c->default_main_area_ratio=0.6;
-    c->default_fixed_area_ratio=0.15;
-    c->autostart="~/.config/gwm/autostart.sh";
-    c->cur_icon_theme="default";
-    c->screenshot_path="~";
-    c->screenshot_format="png";
-    c->wallpaper_paths="/usr/share/backgrounds/fedora-workstation:/usr/share/wallpapers";
-    c->wallpaper_filename="/usr/share/backgrounds/gwm.png";
-    c->run_cmd_entry_hint=_("請輸入命令，然後按回車執行");
-    c->compositor="picom";
-    c->keybind=keybind;
-    c->buttonbind=buttonbind;
-    c->rule=rule;
+    cfg->set_frame_prop=false;
+    cfg->show_taskbar=true;
+    cfg->taskbar_on_top=false;
+    cfg->focus_mode=CLICK_FOCUS;
+    cfg->default_layout=TILE;
+    cfg->color_theme=DARK_THEME;
+    cfg->screen_saver_time_out=600;
+    cfg->screen_saver_interval=600;
+    cfg->hover_time=300;
+    cfg->default_cur_desktop=1;
+    cfg->default_n_main_max=1;
+    cfg->act_center_col=4;
+    cfg->font_pad_ratio=0.25;
+    cfg->default_main_area_ratio=0.6;
+    cfg->default_fixed_area_ratio=0.15;
+    cfg->autostart="~/.config/gwm/autostart.sh";
+    cfg->cur_icon_theme="default";
+    cfg->screenshot_path="~";
+    cfg->screenshot_format="png";
+    cfg->wallpaper_paths="/usr/share/backgrounds/fedora-workstation:/usr/share/wallpapers";
+    cfg->wallpaper_filename="/usr/share/backgrounds/gwm.png";
+    cfg->run_cmd_entry_hint=_("請輸入命令，然後按回車執行");
+    cfg->compositor="picom";
+    cfg->keybind=keybind;
+    cfg->buttonbind=buttonbind;
+    cfg->rule=rule;
 }
 
 /* =========================== 用戶配置項結束 =========================== */ 
 
-void config(WM *wm)
+void config(void)
 {
-    wm->cfg=malloc_s(sizeof(Config));
-    SET_NULL(wm->cfg->tooltip, WIDGET_N);
+    cfg=malloc_s(sizeof(Config));
+    SET_NULL(cfg->tooltip, WIDGET_N);
 
-    config_misc(wm);
-    config_font(wm);
-    config_widget_size(wm);
-    config_cursor_shape(wm);
-    config_widget_color_and_opacity(wm);
-    config_text_color(wm);
-    config_title_button_text(wm);
-    config_taskbar_button_text(wm);
-    config_act_center_item_text(wm);
-    config_client_menu_item_text(wm);
-    config_tooltip(wm);
+    config_misc();
+    config_font();
+    config_widget_size();
+    config_cursor_shape();
+    config_widget_color_and_opacity();
+    config_text_color();
+    config_title_button_text();
+    config_taskbar_button_text();
+    config_act_center_item_text();
+    config_client_menu_item_text();
+    config_tooltip();
 }

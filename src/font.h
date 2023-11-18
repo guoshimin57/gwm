@@ -29,7 +29,7 @@ void get_string_size(XftFont *font, const char *str, int *w, int *h);
 void close_fonts(WM *wm);
 int get_min_font_size(void);
 int get_scale_font_size(double scale);
-int get_font_pad(WM *wm, Font_type type);
-int get_font_height_by_pad(WM *wm, Font_type type);
+int get_font_pad(Font_type type);
+int get_font_height_by_pad(Font_type type);
 
 #endif

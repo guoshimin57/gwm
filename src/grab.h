@@ -12,8 +12,8 @@
 #ifndef GRAB_H
 #define GRAB_H
 
-void grab_keys(WM *wm);
-void grab_buttons(WM *wm, Client *c);
+void grab_keys(void);
+void grab_buttons(Client *c);
 bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
 bool grab_pointer(WM *wm, Window win, Pointer_act act);
 

@@ -47,7 +47,7 @@ static void set_rect_of_main_win_for_preview(WM *wm)
     if(n == 0)
         return;
 
-    int rows, cols, w, h, g=wm->cfg->win_gap, wx=wm->workarea.x,
+    int rows, cols, w, h, g=cfg->win_gap, wx=wm->workarea.x,
         wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
     Rect frame;
 
@@ -81,7 +81,7 @@ static void set_tile_layout(WM *wm)
  *     4、在固定區域內設置其與主區域的窗口間隔。 */
 static void set_rect_of_tile_win_for_tiling(WM *wm)
 {
-    int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=wm->cfg->win_gap,
+    int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=cfg->win_gap,
         wx=wm->workarea.x, wy=wm->workarea.y, wh=wm->workarea.h;
     Rect frame;
 
@@ -146,7 +146,7 @@ bool is_main_sec_gap(WM *wm, int x)
     long sw=wm->workarea.w*(1-d->main_area_ratio-d->fixed_area_ratio),
          wx=wm->workarea.x,
          n=get_clients_n(wm, TILE_LAYER_SECOND, false, false, false);
-    return (n && x>=wx+sw-wm->cfg->win_gap && x<wx+sw);
+    return (n && x>=wx+sw-cfg->win_gap && x<wx+sw);
 }
 
 bool is_main_fix_gap(WM *wm, int x)
@@ -154,7 +154,7 @@ bool is_main_fix_gap(WM *wm, int x)
     long smw=wm->workarea.w*(1-DESKTOP(wm)->fixed_area_ratio),
          wx=wm->workarea.x,
          n=get_clients_n(wm, TILE_LAYER_FIXED, false, false, false);
-    return (n && x>=wx+smw && x<wx+smw+wm->cfg->win_gap);
+    return (n && x>=wx+smw && x<wx+smw+cfg->win_gap);
 }
 
 bool is_layout_adjust_area(WM *wm, Window win, int x)

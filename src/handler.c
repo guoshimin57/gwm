@@ -107,7 +107,7 @@ static void handle_button_press(WM *wm, XEvent *e)
            *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
     Widget_type type=get_widget_type(wm, win);
 
-    for(const Buttonbind *b=wm->cfg->buttonbind; b->func; b++)
+    for(const Buttonbind *b=cfg->buttonbind; b->func; b++)
     {
         if( is_func_click(type, b, e)
             && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
@@ -449,7 +449,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     Pointer_act act=NO_OP;
     Move_info m={x, y, 0, 0};
 
-    if(wm->cfg->focus_mode==ENTER_FOCUS && c)
+    if(cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
     if( is_layout_adjust_area(wm, win, x)
         && get_clients_n(wm, TILE_LAYER_MAIN, false, false, false))
@@ -474,7 +474,7 @@ static void handle_pointer_hover(WM *wm, Window hover, Widget_type type)
 
     XEvent ev;
     bool done=false;
-    struct timeval t={wm->cfg->hover_time/1000, wm->cfg->hover_time%1000*1000}, t0=t;
+    struct timeval t={cfg->hover_time/1000, cfg->hover_time%1000*1000}, t0=t;
     int fd=ConnectionNumber(xinfo.display);
     fd_set fds;
 
@@ -512,7 +512,7 @@ static const char *get_tooltip(WM *wm, Window win, Widget_type type)
     {
         case CLIENT_ICON: return win_to_iconic_state_client(wm, win)->icon->title_text;
         case TITLE_AREA: return win_to_client(wm, win)->title_text;
-        default: return wm->cfg->tooltip[type];
+        default: return cfg->tooltip[type];
     }
 }
 
@@ -571,10 +571,10 @@ static void update_title_button_fg(WM *wm, Client *c, size_t index)
     if(c->titlebar_h <= 0)
         return;
 
-    int w=wm->cfg->title_button_width, h=TITLEBAR_HEIGHT(wm);
+    int w=cfg->title_button_width, h=TITLEBAR_HEIGHT;
     String_format f={{0, 0, w, h}, CENTER, true, false, false, 0,
         CLI_TEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
-    draw_string(wm, c->buttons[index], wm->cfg->title_button_text[index], &f);
+    draw_string(wm, c->buttons[index], cfg->title_button_text[index], &f);
 }
 
 static void handle_focus_in(WM *wm, XEvent *e)
@@ -603,7 +603,7 @@ static void handle_key_press(WM *wm, XEvent *e)
         int n;
         KeySym *ks=XGetKeyboardMapping(xinfo.display, e->xkey.keycode, 1, &n);
 
-        for(const Keybind *kb=wm->cfg->keybind; kb->func; kb++)
+        for(const Keybind *kb=cfg->keybind; kb->func; kb++)
             if( *ks == kb->keysym
                 && is_equal_modifier_mask(kb->modifier, e->xkey.state)
                 && kb->func)
@@ -684,7 +684,7 @@ static void handle_property_notify(WM *wm, XEvent *e)
     Client *c=win_to_client(wm, win);
     Atom atom=e->xproperty.atom;
 
-    if(c && wm->cfg->set_frame_prop)
+    if(c && cfg->set_frame_prop)
         copy_prop(c->frame, c->win);
     if(atom == XA_WM_HINTS)
         handle_wm_hints_notify(wm, win);
@@ -699,7 +699,7 @@ static void handle_property_notify(WM *wm, XEvent *e)
     else if(c && is_spec_ewmh_atom(atom, NET_WM_ICON))
     {
         c->image=get_icon_image(c->win, c->wm_hint, c->class_hint.res_name,
-            wm->cfg->icon_image_size, wm->cfg->cur_icon_theme);
+            cfg->icon_image_size, cfg->cur_icon_theme);
         draw_image(c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
         if(c->icon)
             draw_image(c->image, c->icon->win, 0, 0, c->titlebar_h, c->titlebar_h);
@@ -713,9 +713,8 @@ static void handle_wm_hints_notify(WM *wm, Window win)
         return;
 
     XWMHints *oh=c->wm_hint, *nh=XGetWMHints(xinfo.display, win);
-    if( nh && ((nh->flags & InputHint) && nh->input) // 變成需要鍵盤輸入
-        && (!oh || !((oh->flags & InputHint) && oh->input)))
-        set_input_focus(win, nh);
+    if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
+        set_attention(wm, c, true);
     update_taskbar_buttons_bg(wm);
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
@@ -761,7 +760,7 @@ static void handle_wm_normal_hints_notify(WM *wm, Window win)
     Client *c=win_to_client(wm, win);
     if(c)
     {
-        update_size_hint(c->win, wm->cfg->resize_inc, &c->size_hint);
+        update_size_hint(c->win, cfg->resize_inc, &c->size_hint);
         if( DESKTOP(wm)->cur_layout!=TILE
             || (c->place_type!=FULLSCREEN_LAYER && !is_tile_client(wm, c)))
             fix_win_rect(wm, c), update_layout(wm);

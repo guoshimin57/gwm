@@ -12,7 +12,7 @@
 #ifndef MENU_H
 #define MENU_H
 
-#define MENU_ITEM_HEIGHT(wm) get_font_height_by_pad(wm, MENU_FONT)
+#define MENU_ITEM_HEIGHT(wm) get_font_height_by_pad(MENU_FONT)
 
 struct menu_tag // 一級多行多列菜單 
 {

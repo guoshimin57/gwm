@@ -235,7 +235,7 @@ struct wm_tag // 窗口管理器相關信息
     long map_count; // 所有客戶窗口的累計映射次數
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
     Rect workarea; // 工作區坐標和尺寸
-    Window root_win, hint_win, wm_check_win; // 提示窗口、WM檢測窗口
+    Window hint_win, wm_check_win; // 提示窗口、WM檢測窗口
     Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
     GC gc; // 窗口管理器的圖形信息
     Client *clients; // 頭結點
@@ -248,7 +248,6 @@ struct wm_tag // 窗口管理器相關信息
     XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
     XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色
     void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
-    Config *cfg; // 窗口管理器配置
 };
 typedef struct wm_tag WM;
 

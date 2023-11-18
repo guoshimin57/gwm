@@ -16,15 +16,18 @@ static void set_signals(void);
 static void ready_to_quit(int signum);
 
 sig_atomic_t run_flag=1;
-Xinfo xinfo; // 一經顯式初始化，就不再修改
+
+/* 以下全局變量一經顯式初始化，就不再修改 */
+Xinfo xinfo;
+Config *cfg;
 
 int main(void)
 {
     WM wm;
     clear_zombies(0);
     init_wm(&wm);
-    XSetScreenSaver(xinfo.display, wm.cfg->screen_saver_time_out,
-        wm.cfg->screen_saver_interval, PreferBlanking, AllowExposures);
+    XSetScreenSaver(xinfo.display, cfg->screen_saver_time_out,
+        cfg->screen_saver_interval, PreferBlanking, AllowExposures);
     set_signals();
     set_ewmh(&wm);
     handle_events(&wm);
@@ -38,7 +41,7 @@ static void set_ewmh(WM *wm)
     set_net_desktop_geometry(xinfo.screen_width, xinfo.screen_height);
     set_net_desktop_viewport( 0, 0);
     set_net_current_desktop(wm->cur_desktop-1);
-    set_net_desktop_names(&wm->cfg->taskbar_button_text[DESKTOP_BUTTON_BEGIN], DESKTOP_N);
+    set_net_desktop_names(&cfg->taskbar_button_text[DESKTOP_BUTTON_BEGIN], DESKTOP_N);
     set_net_workarea(wm->workarea.x, wm->workarea.y, wm->workarea.w, wm->workarea.h, DESKTOP_N);
     set_net_supporting_wm_check(wm->wm_check_win, "gwm");
     set_net_showing_desktop(false);

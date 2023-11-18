@@ -190,12 +190,6 @@ bool has_focus_hint(const XWMHints *hint)
     return !hint || ((hint->flags & InputHint) && hint->input);
 }
 
-bool is_focusable(Window win, const XWMHints *hint)
-{
-    return has_focus_hint(hint)
-        || has_spec_wm_protocol(win, icccm_atoms[WM_TAKE_FOCUS]);
-}
-
 void set_urgency(Window win, XWMHints *h, bool urg)
 {
     if(!h)

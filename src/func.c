@@ -180,7 +180,7 @@ void clear_wm(WM *wm)
     for(size_t i=0; i<DESKTOP_N; i++)
         free(wm->desktop[i]);
     vfree(wm->taskbar->status_text, wm->taskbar, wm->act_center, wm->run_cmd,
-        wm->cfg, NULL);
+        cfg, NULL);
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)
@@ -237,7 +237,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
         Desktop *d=DESKTOP(wm);
         double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
         long mw=mr*wm->workarea.w, sw=wm->workarea.w*(1-fr)-mw;
-        if(sw>=wm->cfg->resize_inc && mw>=wm->cfg->resize_inc)
+        if(sw>=cfg->resize_inc && mw>=cfg->resize_inc)
         {
             d->main_area_ratio=mr;
             update_layout(wm);
@@ -255,7 +255,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
         Desktop *d=DESKTOP(wm);
         double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
         long mw=wm->workarea.w*(mr-arg.change_ratio), fw=wm->workarea.w*fr;
-        if(mw>=wm->cfg->resize_inc && fw>=wm->cfg->resize_inc)
+        if(mw>=cfg->resize_inc && fw>=cfg->resize_inc)
         {
             d->main_area_ratio-=arg.change_ratio, d->fixed_area_ratio=fr;
             update_layout(wm);
@@ -599,7 +599,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
         if(ev.type == MotionNotify)
         {
             nx=ev.xmotion.x, dx=nx-ox;
-            if(abs(dx)>=wm->cfg->resize_inc && change_layout_ratio(wm, ox, nx))
+            if(abs(dx)>=cfg->resize_inc && change_layout_ratio(wm, ox, nx))
                 update_layout(wm), ox=nx;
         }
         else
@@ -633,8 +633,8 @@ void change_default_place_type(WM *wm, XEvent *e, Func_arg arg)
 
 void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    wm->cfg->focus_mode = wm->cfg->focus_mode==ENTER_FOCUS ? CLICK_FOCUS : ENTER_FOCUS;
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    cfg->focus_mode = cfg->focus_mode==ENTER_FOCUS ? CLICK_FOCUS : ENTER_FOCUS;
 }
 
 void open_act_center(WM *wm, XEvent *e, Func_arg arg)
@@ -653,7 +653,7 @@ void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    c->border_w = c->border_w ? 0 : wm->cfg->border_width;
+    c->border_w = c->border_w ? 0 : cfg->border_width;
     XSetWindowBorderWidth(xinfo.display, c->frame, c->border_w);
     update_layout(wm);
 }
@@ -662,7 +662,7 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    c->titlebar_h = c->titlebar_h ? 0 : TITLEBAR_HEIGHT(wm);
+    c->titlebar_h = c->titlebar_h ? 0 : TITLEBAR_HEIGHT;
     if(c->titlebar_h)
     {
         create_titlebar(wm, c);
@@ -743,7 +743,7 @@ void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
     srand((unsigned int)time(NULL));
     unsigned long r1=rand(), r2=rand(), color=(r1<<16)|r2|0xff000000UL;
     Pixmap pixmap=None;
-    if(wm->cfg->wallpaper_paths)
+    if(cfg->wallpaper_paths)
     {
         File *f=wm->cur_wallpaper;
         if(f)
@@ -759,8 +759,8 @@ void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
 
 void print_screen(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    print_area(wm, xinfo.root_win, 0, 0, xinfo.screen_width, xinfo.screen_height);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    print_area(xinfo.root_win, 0, 0, xinfo.screen_width, xinfo.screen_height);
 }
 
 void print_win(WM *wm, XEvent *e, Func_arg arg)
@@ -768,16 +768,16 @@ void print_win(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
-        print_area(wm, c->frame, 0, 0, c->w, c->h);
+        print_area(c->frame, 0, 0, c->w, c->h);
 }
 
 void switch_color_theme(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    if(wm->cfg->color_theme < COLOR_THEME_N-1)
-        wm->cfg->color_theme++;
+    if(cfg->color_theme < COLOR_THEME_N-1)
+        cfg->color_theme++;
     else
-        wm->cfg->color_theme=0;
+        cfg->color_theme=0;
     // 以下函數會產生Expose事件，而處理Expose事件時會更新窗口的文字
     // 內容及其顏色，故此處不必更新構件文字顏色。
     update_widget_bg(wm);
@@ -791,5 +791,5 @@ void toggle_compositor(WM *wm, XEvent *e, Func_arg arg)
     if(win)
         XKillClient(xinfo.display, win);
     else
-        exec(wm, e, (Func_arg)SH_CMD((char *)wm->cfg->compositor));
+        exec(wm, e, (Func_arg)SH_CMD((char *)cfg->compositor));
 }

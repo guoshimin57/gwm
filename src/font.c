@@ -19,10 +19,10 @@ void load_font(WM *wm)
     {
         XftFont *p=NULL;
         for(size_t j=0; j<i && !p; j++)
-            if(strcmp(wm->cfg->font_name[j], wm->cfg->font_name[i]) == 0)
+            if(strcmp(cfg->font_name[j], cfg->font_name[i]) == 0)
                 p=wm->font[j];
         if(!p)
-            p=XftFontOpenName(xinfo.display, xinfo.screen, wm->cfg->font_name[i]);
+            p=XftFontOpenName(xinfo.display, xinfo.screen, cfg->font_name[i]);
         if(p)
             wm->font[i]=p;
         else
@@ -74,7 +74,7 @@ static int get_str_rect_by_fmt(WM *wm, const String_format *f, const char *str, 
     XftFont *font=wm->font[f->font_type];
     int cx, cy, pad, left, right, top, bottom;
 
-    pad = f->pad ? get_font_pad(wm, f->font_type) : 0;
+    pad = f->pad ? get_font_pad(f->font_type) : 0;
     get_string_size(font, str, w, h);
     cx=f->r.x+f->r.w/2-*w/2, cy=f->r.y+f->r.h/2-*h/2+font->ascent;
     left=f->r.x+pad, right=f->r.x+f->r.w-*w-pad;
@@ -164,12 +164,12 @@ int get_scale_font_size(double scale)
     return scale*get_min_font_size();
 }
 
-int get_font_pad(WM *wm, Font_type type)
+int get_font_pad(Font_type type)
 {
-    return wm->cfg->font_size[type]*wm->cfg->font_pad_ratio+0.5;
+    return cfg->font_size[type]*cfg->font_pad_ratio+0.5;
 }
 
-int get_font_height_by_pad(WM *wm, Font_type type)
+int get_font_height_by_pad(Font_type type)
 {
-    return wm->cfg->font_size[type]*(1+wm->cfg->font_pad_ratio*2)+0.5;
+    return cfg->font_size[type]*(1+cfg->font_pad_ratio*2)+0.5;
 }

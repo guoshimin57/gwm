@@ -15,13 +15,13 @@ static unsigned int get_num_lock_mask(void);
 static unsigned int get_valid_mask(unsigned int mask);
 static unsigned int get_modifier_mask(KeySym key_sym);
 
-void grab_keys(WM *wm)
+void grab_keys(void)
 {
     unsigned int num_lock_mask=get_num_lock_mask();
     unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     KeyCode code;
     XUngrabKey(xinfo.display, AnyKey, AnyModifier, xinfo.root_win);
-    for(const Keybind *kb=wm->cfg->keybind; kb->func; kb++)
+    for(const Keybind *kb=cfg->keybind; kb->func; kb++)
         if((code=XKeysymToKeycode(xinfo.display, kb->keysym)))
             for(size_t j=0; j<ARRAY_NUM(masks); j++)
                 XGrabKey(xinfo.display, code, kb->modifier|masks[j],
@@ -41,13 +41,13 @@ static unsigned int get_num_lock_mask(void)
     return 0;
 }
     
-void grab_buttons(WM *wm, Client *c)
+void grab_buttons(Client *c)
 {
     unsigned int num_lock_mask=get_num_lock_mask(),
                  masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
 
     XUngrabButton(xinfo.display, AnyButton, AnyModifier, c->win);
-    for(const Buttonbind *b=wm->cfg->buttonbind; b->func; b++)
+    for(const Buttonbind *b=cfg->buttonbind; b->func; b++)
     {
         if(b->widget_type == CLIENT_WIN)
         {

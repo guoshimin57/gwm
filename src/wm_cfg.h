@@ -17,17 +17,17 @@
     "ps -o stat= $pid | head -n1 | grep T > /dev/null ; } " \
     "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
 #define DESKTOPN_BUTTON(n) DESKTOP ## n ##_BUTTON // 獲取虛擬桌面按鈕類型
-#define SET_FONT(wm, type, family, size) /* 設置字體 */ \
-    sprintf(wm->cfg->font_name[type], "%s:pixelsize=%u", \
-        family, wm->cfg->font_size[type]=size)
-#define SET_TITLE_BUTTON_TEXT(wm, type, text) /* 設置標題按鈕文字 */ \
-    wm->cfg->title_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
-#define SET_TASKBAR_BUTTON_TEXT(wm, type, text) /* 設置任務欄按鈕文字 */ \
-    wm->cfg->taskbar_button_text[WIDGET_INDEX(type, TASKBAR_BUTTON)]=text
-#define SET_ACT_CENTER_ITEM_TEXT(wm, type, text) /* 設置操作中心菜單項文字 */ \
-    wm->cfg->act_center_item_text[WIDGET_INDEX(type, ACT_CENTER_ITEM)]=text
-#define SET_CLIENT_MENU_ITEM_TEXT(wm, type, text) /* 設置客戶窗口菜單項文字 */ \
-    wm->cfg->client_menu_item_text[WIDGET_INDEX(type, CLIENT_MENU_ITEM)]=text
+#define SET_FONT(type, family, size) /* 設置字體 */ \
+    sprintf(cfg->font_name[type], "%s:pixelsize=%u", \
+        family, cfg->font_size[type]=size)
+#define SET_TITLE_BUTTON_TEXT(type, text) /* 設置標題按鈕文字 */ \
+    cfg->title_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
+#define SET_TASKBAR_BUTTON_TEXT(type, text) /* 設置任務欄按鈕文字 */ \
+    cfg->taskbar_button_text[WIDGET_INDEX(type, TASKBAR_BUTTON)]=text
+#define SET_ACT_CENTER_ITEM_TEXT(type, text) /* 設置操作中心菜單項文字 */ \
+    cfg->act_center_item_text[WIDGET_INDEX(type, ACT_CENTER_ITEM)]=text
+#define SET_CLIENT_MENU_ITEM_TEXT(type, text) /* 設置客戶窗口菜單項文字 */ \
+    cfg->client_menu_item_text[WIDGET_INDEX(type, CLIENT_MENU_ITEM)]=text
 
 /* 功能：設置應由窗口管理器去設定的定位器相關功能綁定。
  * 說明：通常把單擊的相關功能綁定放在這裏。

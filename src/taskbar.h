@@ -12,7 +12,7 @@
 #ifndef TASKBAR_H
 #define TASKBAR_H
 
-#define TASKBAR_HEIGHT(wm) get_font_height_by_pad(wm, TASKBAR_FONT)
+#define TASKBAR_HEIGHT get_font_height_by_pad(TASKBAR_FONT)
 
 struct taskbar_tag // 窗口管理器的任務欄
 {

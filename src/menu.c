@@ -14,7 +14,7 @@
 Menu *create_menu(WM *wm, const char *item_text[], int n, int col)
 {
     Menu *menu=malloc_s(sizeof(Menu));
-    int w=0, maxw=0, sw=xinfo.screen_width, pad=get_font_pad(wm, MENU_FONT);
+    int w=0, maxw=0, sw=xinfo.screen_width, pad=get_font_pad(MENU_FONT);
 
     for(int i=0; i<n; i++, maxw = w>maxw ? w : maxw)
         get_string_size(wm->font[MENU_FONT], item_text[i], &w, NULL);
@@ -57,12 +57,12 @@ void update_menu_item_fg(WM *wm, Window win)
     Widget_type t=get_widget_type(wm, win);
     if(IS_WIDGET_CLASS(t, ACT_CENTER_ITEM))
     {
-        text=wm->cfg->act_center_item_text[WIDGET_INDEX(t, ACT_CENTER_ITEM)];
+        text=cfg->act_center_item_text[WIDGET_INDEX(t, ACT_CENTER_ITEM)];
         m=wm->act_center;
     }
     else
     {
-        text=wm->cfg->client_menu_item_text[WIDGET_INDEX(t, CLIENT_MENU_ITEM)];
+        text=cfg->client_menu_item_text[WIDGET_INDEX(t, CLIENT_MENU_ITEM)];
         m=wm->client_menu;
     }
 

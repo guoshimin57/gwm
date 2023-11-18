@@ -20,7 +20,7 @@
 
 // 獲取無狀態（即不區分是否當前的或被選中）構件上的文字顏色
 #define TEXT_COLOR(wm, ctype) \
-    wm->text_color[wm->cfg->color_theme][ctype ## _TEXT_COLOR]
+    wm->text_color[cfg->color_theme][ctype ## _TEXT_COLOR]
 
 // 根據選中與否的條件而得出按鈕的顏色
 #define NCHOSEN_BUTTON_COLOR(wm, wtype, normal_wcolor) \
@@ -44,7 +44,7 @@
 
 // 根據是否當前桌面的當前客戶窗口而得出文字顏色
 #define CLI_TEXT_COLOR(wm, c, ctype) \
-    wm->text_color[wm->cfg->color_theme][c==CUR_FOC_CLI(wm) ? \
+    wm->text_color[cfg->color_theme][c==CUR_FOC_CLI(wm) ? \
     CURRENT_ ## ctype ## _TEXT_COLOR : NORMAL_ ## ctype ## _TEXT_COLOR]
 
 void alloc_color(WM *wm);

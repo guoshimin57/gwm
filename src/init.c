@@ -24,7 +24,7 @@ static void create_clients(WM *wm);
 static void init_imlib(void);
 static void init_wallpaper_files(WM *wm);
 static void init_root_win_background(WM *wm);
-static void exec_autostart(WM *wm);
+static void exec_autostart(void);
 
 void init_wm(WM *wm)
 {
@@ -43,9 +43,9 @@ void init_wm(WM *wm)
     set_visual_info();
     create_refer_wins(wm);
     wm->gc=XCreateGC(xinfo.display, wm->wm_check_win, 0, NULL);
-    config(wm);
+    config();
     init_imlib();
-    if(wm->cfg->wallpaper_paths)
+    if(cfg->wallpaper_paths)
         init_wallpaper_files(wm);
     init_desktop(wm);
     reg_event_handlers(wm);
@@ -61,8 +61,8 @@ void init_wm(WM *wm)
     create_hint_win(wm);
     create_client_menu(wm);
     create_clients(wm);
-    grab_keys(wm);
-    exec_autostart(wm);
+    grab_keys();
+    exec_autostart();
 }
 
 static void create_refer_wins(WM *wm)
@@ -83,22 +83,22 @@ static void set_visual_info(void)
 
 static void set_workarea(WM *wm)
 {
-    long sw=xinfo.screen_width, sh=xinfo.screen_height, th=TASKBAR_HEIGHT(wm);
+    long sw=xinfo.screen_width, sh=xinfo.screen_height, th=TASKBAR_HEIGHT;
 
     wm->workarea=(Rect){0, 0, sw, sh};
-    if(wm->cfg->show_taskbar)
+    if(cfg->show_taskbar)
     {
-        wm->workarea.h-=th+wm->cfg->win_gap;
-        if(wm->cfg->taskbar_on_top)
-            wm->workarea.y=th+wm->cfg->win_gap;
+        wm->workarea.h-=th+cfg->win_gap;
+        if(cfg->taskbar_on_top)
+            wm->workarea.y=th+cfg->win_gap;
     }
 }
 
-static void exec_autostart(WM *wm)
+static void exec_autostart(void)
 {
     char cmd[BUFSIZ];
-    sprintf(cmd, "[ -x '%s' ] && '%s'", wm->cfg->autostart, wm->cfg->autostart);
-    const char *sh_cmd[]={"/bin/sh", "-c", wm->cfg->autostart, NULL};
+    sprintf(cmd, "[ -x '%s' ] && '%s'", cfg->autostart, cfg->autostart);
+    const char *sh_cmd[]={"/bin/sh", "-c", cfg->autostart, NULL};
     exec_cmd((char *const *)sh_cmd);
 }
 
@@ -127,17 +127,17 @@ static void set_atoms(void)
 static void create_cursors(WM *wm)
 {
     for(size_t i=0; i<POINTER_ACT_N; i++)
-        wm->cursors[i]=XCreateFontCursor(xinfo.display, wm->cfg->cursor_shape[i]);
+        wm->cursors[i]=XCreateFontCursor(xinfo.display, cfg->cursor_shape[i]);
 }
 
 static void create_run_cmd_entry(WM *wm)
 {
-    int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=wm->cfg->border_width,
-        ew, eh=ENTRY_HEIGHT(wm), pad=get_font_pad(wm, ENTRY_FONT);
-    get_string_size(wm->font[ENTRY_FONT], wm->cfg->run_cmd_entry_hint, &ew, NULL);
+    int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
+        ew, eh=ENTRY_HEIGHT, pad=get_font_pad(ENTRY_FONT);
+    get_string_size(wm->font[ENTRY_FONT], cfg->run_cmd_entry_hint, &ew, NULL);
     ew += 2*pad, ew = (ew>=sw/4 && ew<=sw-2*bw) ? ew : sw/4;
     Rect r={(sw-ew)/2-bw, (sh-eh)/2-bw, ew, eh};
-    wm->run_cmd=create_entry(wm, &r, wm->cfg->run_cmd_entry_hint);
+    wm->run_cmd=create_entry(wm, &r, cfg->run_cmd_entry_hint);
 }
 
 static void create_hint_win(WM *wm)
@@ -149,7 +149,7 @@ static void create_hint_win(WM *wm)
 
 static void create_client_menu(WM *wm)
 {
-    wm->client_menu=create_menu(wm, wm->cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
+    wm->client_menu=create_menu(wm, cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */
@@ -186,14 +186,14 @@ static void init_imlib(void)
 
 static void init_wallpaper_files(WM *wm)
 {
-    const char *paths=wm->cfg->wallpaper_paths, *reg="*.png|*.jpg|*.svg|*.webp";
+    const char *paths=cfg->wallpaper_paths, *reg="*.png|*.jpg|*.svg|*.webp";
     wm->wallpapers=get_files_in_paths(paths, reg, NOSORT, true, NULL);
     wm->cur_wallpaper=wm->wallpapers->next;
 }
 
 static void init_root_win_background(WM *wm)
 {
-    const char *name=wm->cfg->wallpaper_filename;
+    const char *name=cfg->wallpaper_filename;
 
     Pixmap pixmap=create_pixmap_from_file(xinfo.root_win, name ? name : "");
     update_win_bg(xinfo.root_win, WIDGET_COLOR(wm, ROOT_WIN), pixmap);

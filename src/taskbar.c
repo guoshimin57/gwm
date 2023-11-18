@@ -20,8 +20,8 @@ static void draw_client_icon(WM *wm, Client *c);
 void create_taskbar(WM *wm)
 {
     Taskbar *b=wm->taskbar=malloc_s(sizeof(Taskbar));
-    b->w=xinfo.screen_width, b->h=TASKBAR_HEIGHT(wm);
-    b->x=0, b->y=(wm->cfg->taskbar_on_top ? 0 : xinfo.screen_height-b->h);
+    b->w=xinfo.screen_width, b->h=TASKBAR_HEIGHT;
+    b->x=0, b->y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-b->h);
     b->win=create_widget_win(xinfo.root_win, b->x, b->y, b->w, b->h,
         0, 0, WIDGET_COLOR(wm, TASKBAR));
     XSelectInput(xinfo.display, b->win, CROSSING_MASK);
@@ -30,14 +30,14 @@ void create_taskbar(WM *wm)
     create_icon_area(wm);
     create_act_center(wm);
     XMapSubwindows(xinfo.display, b->win);
-    if(wm->cfg->show_taskbar)
+    if(cfg->show_taskbar)
         XMapWindow(xinfo.display, b->win);
 }
 
 static void create_taskbar_buttons(WM *wm)
 {
     Taskbar *b=wm->taskbar;
-    int w=wm->cfg->taskbar_button_width, h=b->h;
+    int w=cfg->taskbar_button_width, h=b->h;
 
     for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
     {
@@ -50,7 +50,7 @@ static void create_taskbar_buttons(WM *wm)
 static void create_icon_area(WM *wm)
 {
     Taskbar *b=wm->taskbar;
-    int bw=wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N,
+    int bw=cfg->taskbar_button_width*TASKBAR_BUTTON_N,
         w=b->w-bw-b->status_area_w;
     b->icon_area=create_widget_win(b->win,
         bw, 0, w, b->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
@@ -63,8 +63,8 @@ static void create_status_area(WM *wm)
     if(!b->status_text)
         b->status_text=copy_string("gwm");
     get_string_size(wm->font[TASKBAR_FONT], b->status_text, &b->status_area_w, NULL);
-    if(b->status_area_w > wm->cfg->status_area_width_max)
-        b->status_area_w=wm->cfg->status_area_width_max;
+    if(b->status_area_w > cfg->status_area_width_max)
+        b->status_area_w=cfg->status_area_width_max;
     else if(b->status_area_w == 0)
         b->status_area_w=1;
     wm->taskbar->status_area=create_widget_win(b->win,
@@ -75,8 +75,8 @@ static void create_status_area(WM *wm)
 
 static void create_act_center(WM *wm)
 {
-    wm->act_center=create_menu(wm, wm->cfg->act_center_item_text,
-        ACT_CENTER_ITEM_N, wm->cfg->act_center_col);
+    wm->act_center=create_menu(wm, cfg->act_center_item_text,
+        ACT_CENTER_ITEM_N, cfg->act_center_col);
 }
 
 void update_taskbar_buttons_bg(WM *wm)
@@ -107,9 +107,9 @@ void update_taskbar_button_bg(WM *wm, Widget_type type)
 void update_taskbar_button_fg(WM *wm, Widget_type type)
 {
     size_t i=WIDGET_INDEX(type, TASKBAR_BUTTON);
-    String_format f={{0, 0, wm->cfg->taskbar_button_width, wm->taskbar->h},
+    String_format f={{0, 0, cfg->taskbar_button_width, wm->taskbar->h},
         CENTER, true, false, false, 0, TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
-    draw_string(wm, wm->taskbar->buttons[i], wm->cfg->taskbar_button_text[i], &f);
+    draw_string(wm, wm->taskbar->buttons[i], cfg->taskbar_button_text[i], &f);
 }
 
 void update_status_area_fg(WM *wm)
@@ -122,12 +122,12 @@ void update_status_area_fg(WM *wm)
 
 void update_icon_status_area(WM *wm)
 {
-    int w, bw=wm->cfg->taskbar_button_width*TASKBAR_BUTTON_N;
+    int w, bw=cfg->taskbar_button_width*TASKBAR_BUTTON_N;
     Taskbar *b=wm->taskbar;
 
     get_string_size(wm->font[TASKBAR_FONT], b->status_text, &w, NULL);
-    if(w > wm->cfg->status_area_width_max)
-        w=wm->cfg->status_area_width_max;
+    if(w > cfg->status_area_width_max)
+        w=cfg->status_area_width_max;
     if(w != b->status_area_w)
     {
         XMoveResizeWindow(xinfo.display, b->status_area, b->w-w, 0, w, b->h);

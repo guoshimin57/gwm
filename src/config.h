@@ -70,6 +70,8 @@ struct config_tag
     const Rule *rule; // 窗口管理器對窗口的管理規則
 };
 
-void config(WM *wm);
+extern Config *cfg; // 窗口管理器配置
+
+void config(void);
 
 #endif
