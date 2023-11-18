@@ -167,13 +167,6 @@ enum widget_type_tag // 構件類型
 };
 typedef enum widget_type_tag Widget_type;
 
-enum font_type_tag // 字體類型, 按字符顯示位置分類
-{
-    DEFAULT_FONT, TITLEBAR_FONT, MENU_FONT, TASKBAR_FONT,
-    CLASS_FONT, ENTRY_FONT, HINT_FONT, FONT_N
-};
-typedef enum font_type_tag Font_type;
-
 struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 {
     int x, y; // 坐標
@@ -239,7 +232,6 @@ struct wm_tag // 窗口管理器相關信息
     Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
     GC gc; // 窗口管理器的圖形信息
     Client *clients; // 頭結點
-    XftFont *font[FONT_N]; // 窗口管理器用到的字體
     File *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
     Cursor cursors[POINTER_ACT_N]; // 光標
     Taskbar *taskbar; // 任務欄

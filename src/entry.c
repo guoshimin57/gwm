@@ -11,7 +11,7 @@
 
 #include "gwm.h"
 
-static int get_entry_cursor_x(WM *wm, Entry *e);
+static int get_entry_cursor_x(Entry *e);
 static void hint_for_run_cmd_entry(WM *wm, const char *regex);
 static char *get_match_cmd(const char *regex);
 static char *get_part_match_regex(Entry *e);
@@ -41,11 +41,11 @@ void show_entry(WM *wm, Entry *e)
 
 void update_entry_text(WM *wm, Entry *e)
 {
-    int x=get_entry_cursor_x(wm, e);
+    int x=get_entry_cursor_x(e);
     bool empty = e->text[0]==L'\0';
     XftColor color = empty ? TEXT_COLOR(wm, HINT) : TEXT_COLOR(wm, ENTRY);
     String_format f={{0, 0, e->w, e->h}, CENTER_LEFT, false, true, false, 0,
-        color, ENTRY_FONT};
+        color};
 
     if(empty)
         draw_string(wm, e->win, e->hint, &f);
@@ -54,7 +54,7 @@ void update_entry_text(WM *wm, Entry *e)
     XDrawLine(xinfo.display, e->win, wm->gc, x, 0, x, e->h);
 }
 
-static int get_entry_cursor_x(WM *wm, Entry *e)
+static int get_entry_cursor_x(Entry *e)
 {
     size_t n=e->cursor_offset*MB_CUR_MAX+1;
     int w=0;
@@ -63,9 +63,9 @@ static int get_entry_cursor_x(WM *wm, Entry *e)
 
     e->text[e->cursor_offset]=L'\0'; 
     if(wcstombs(mbs, e->text, n) != (size_t)-1)
-        get_string_size(wm->font[ENTRY_FONT], mbs, &w, NULL);
+        get_string_size(mbs, &w, NULL);
     e->text[e->cursor_offset]=wc; 
-    return get_font_pad(ENTRY_FONT)+w;
+    return get_font_pad()+w;
 }
 
 static void hint_for_run_cmd_entry(WM *wm, const char *regex)
@@ -79,7 +79,7 @@ static void hint_for_run_cmd_entry(WM *wm, const char *regex)
             x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+2*bw,
             i, n, max=(wm->workarea.h-y)/h;
         String_format fmt={{0, 0, w, h}, CENTER_LEFT, false, true, false, 0,
-            TEXT_COLOR(wm, HINT), HINT_FONT};
+            TEXT_COLOR(wm, HINT)};
 
         File *f, *files=get_files_in_paths(paths, regex, RISE, false, &n);
         if(n)

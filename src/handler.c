@@ -550,7 +550,7 @@ static void update_title_logo_fg(WM *wm, Client *c)
     else
     {
         String_format f={{0, 0, c->titlebar_h, c->titlebar_h}, CENTER, true,
-            false, false, 0, TEXT_COLOR(wm, CLASS), CLASS_FONT};
+            false, false, 0, TEXT_COLOR(wm, CLASS)};
         draw_string(wm, c->logo, c->class_name, &f);
     }
 }
@@ -562,7 +562,7 @@ static void update_title_area_fg(WM *wm, Client *c)
 
     Rect r=get_title_area_rect(wm, c);
     String_format f={{0, 0, r.w, r.h}, CENTER, true, true, false, 0,
-        CLI_TEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
+        CLI_TEXT_COLOR(wm, c, TITLEBAR)};
     draw_string(wm, c->title_area, c->title_text, &f);
 }
 
@@ -571,9 +571,9 @@ static void update_title_button_fg(WM *wm, Client *c, size_t index)
     if(c->titlebar_h <= 0)
         return;
 
-    int w=cfg->title_button_width, h=TITLEBAR_HEIGHT;
+    int w=cfg->title_button_width, h=get_font_height_by_pad();
     String_format f={{0, 0, w, h}, CENTER, true, false, false, 0,
-        CLI_TEXT_COLOR(wm, c, TITLEBAR), TITLEBAR_FONT};
+        CLI_TEXT_COLOR(wm, c, TITLEBAR)};
     draw_string(wm, c->buttons[index], cfg->title_button_text[index], &f);
 }
 

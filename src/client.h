@@ -15,8 +15,6 @@
 #include "drawable.h"
 #include "ewmh.h"
 
-#define TITLEBAR_HEIGHT get_font_height_by_pad(TITLEBAR_FONT)
-
 struct icon_tag // 縮微窗口相關信息
 {
     Window win; // 位於任務欄的縮微窗口（可能含有圖標名）

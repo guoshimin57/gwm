@@ -42,7 +42,7 @@ static void add_subgroup(Client *head, Client *subgroup_leader);
 static void del_subgroup(Client *subgroup_leader);
 static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
 static int cmp_client_store_order(WM *wm, Client *c1, Client *c2);
-static bool update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
+static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(WM *wm, unsigned int desktop_n, Client *c);
@@ -99,7 +99,7 @@ static Client *new_client(WM *wm, Window win)
     c->subgroup_leader=get_subgroup_leader(c);
     c->place_type=TILE_LAYER_MAIN;
     if(!should_hide_frame(c))
-        c->border_w=cfg->border_width, c->titlebar_h=TITLEBAR_HEIGHT;
+        c->border_w=cfg->border_width, c->titlebar_h=get_font_height_by_pad();
     c->class_name="?";
     XGetClassHint(xinfo.display, c->win, &c->class_hint);
     update_size_hint(c->win, cfg->resize_inc, &c->size_hint);
@@ -367,13 +367,13 @@ static Rect get_frame_rect(Client *c)
 Rect get_title_area_rect(WM *wm, Client *c)
 {
     int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7},
-        n=buttons_n[DESKTOP(wm)->cur_layout], size=TITLEBAR_HEIGHT;
+        n=buttons_n[DESKTOP(wm)->cur_layout], size=get_font_height_by_pad();
     return (Rect){size, 0, c->w-cfg->title_button_width*n-size, size};
 }
 
 static Rect get_button_rect(Client *c, size_t index)
 {
-    int cw=c->w, w=cfg->title_button_width, h=TITLEBAR_HEIGHT;
+    int cw=c->w, w=cfg->title_button_width, h=get_font_height_by_pad();
     return (Rect){cw-w*(TITLE_BUTTON_N-index), 0, w, h};
 }
 
@@ -691,8 +691,7 @@ Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
  * 樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
 void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 {
-    if(!update_focus_client_pointer(wm, desktop_n, c))
-        return;
+    update_focus_client_pointer(wm, desktop_n, c);
 
     Desktop *d=wm->desktop[desktop_n-1];
     Client *pc=d->cur_focus_client, *pp=d->prev_focus_client;
@@ -712,19 +711,17 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     }
     update_client_bg(wm, desktop_n, pc);
     update_client_bg(wm, desktop_n, pp);
-    raise_client(wm, pc);
     set_net_active_window(pc->win);
 }
 
-static bool update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
+static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
 {
     Desktop *d=wm->desktop[desktop_n-1];
     Client *p=NULL, **pp=&d->prev_focus_client, **pc=&d->cur_focus_client;
-    bool update_pp=false, update_pc=false;
 
     if(!c)  // 當某個client在desktop_n中變得不可見時，即既有可能被刪除了，
     {       // 也可能是被縮微化了，還有可能是移動到其他虛擬桌面了。
-        if(!is_map_client(wm, desktop_n, *pc))
+        if(!is_map_client(wm, desktop_n, *pc)) // 非當前窗口被非wm手段關閉（如kill）
         {
             p = (*pc)->owner ? (*pc)->owner : *pp;
             if(is_map_client(wm, desktop_n, p))
@@ -735,7 +732,6 @@ static bool update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
                 *pc=p;
             else
                 *pc=wm->clients;
-            update_pc=true;
         }
 
         if(!is_map_client(wm, desktop_n, *pp))
@@ -748,16 +744,13 @@ static bool update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
                 *pp=p;
             else
                 *pp=wm->clients;
-            update_pp=true;
         }
     }
     else if(c != *pc)
     {
         p=get_top_transient_client(c->subgroup_leader, true);
-        *pp=*pc, *pc=(p ? p : c), update_pc=update_pp=true;
+        *pp=*pc, *pc=(p ? p : c);
     }
-
-    return update_pc || update_pp;
 }
 
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c)
@@ -856,7 +849,7 @@ void update_icon_area(WM *wm)
             i->w=wm->taskbar->h;
             if(have_same_class_icon_client(wm, c))
             {
-                get_string_size(wm->font[TITLEBAR_FONT], i->title_text, &w, NULL);
+                get_string_size(i->title_text, &w, NULL);
                 i->w=MIN(i->w+w, cfg->icon_win_width_max);
                 i->show_text=true;
             }

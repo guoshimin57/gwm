@@ -320,10 +320,10 @@ void exec_cmd(char *const *cmd)
 
 void update_hint_win_for_info(WM *wm, Window hover, const char *info)
 {
-    int x, y, rx, ry, pad=get_font_pad(HINT_FONT),
-        w=0, h=get_font_height_by_pad(HINT_FONT);
+    int x, y, rx, ry, pad=get_font_pad(),
+        w=0, h=get_font_height_by_pad();
 
-    get_string_size(wm->font[HINT_FONT], info, &w, NULL);
+    get_string_size(info, &w, NULL);
     w+=pad*2;
     if(hover)
     {
@@ -338,6 +338,6 @@ void update_hint_win_for_info(WM *wm, Window hover, const char *info)
     XMoveResizeWindow(xinfo.display, wm->hint_win, x, y, w, h);
     XMapRaised(xinfo.display, wm->hint_win);
     String_format f={{0, 0, w, h}, CENTER, true, true, false, 0,
-        TEXT_COLOR(wm, HINT), HINT_FONT};
+        TEXT_COLOR(wm, HINT)};
     draw_string(wm, wm->hint_win, info, &f);
 }

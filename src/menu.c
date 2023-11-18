@@ -14,14 +14,14 @@
 Menu *create_menu(WM *wm, const char *item_text[], int n, int col)
 {
     Menu *menu=malloc_s(sizeof(Menu));
-    int w=0, maxw=0, sw=xinfo.screen_width, pad=get_font_pad(MENU_FONT);
+    int w=0, maxw=0, sw=xinfo.screen_width, pad=get_font_pad();
 
     for(int i=0; i<n; i++, maxw = w>maxw ? w : maxw)
-        get_string_size(wm->font[MENU_FONT], item_text[i], &w, NULL);
+        get_string_size(item_text[i], &w, NULL);
     w = ((maxw+2*pad)*col > sw) ? sw/col : maxw+2*pad;
 
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
-    menu->x=menu->y=0, menu->w=w, menu->h=MENU_ITEM_HEIGHT(wm), menu->pad=pad;
+    menu->x=menu->y=0, menu->w=w, menu->h=get_font_height_by_pad(), menu->pad=pad;
     menu->bg=WIDGET_COLOR(wm, MENU);
     menu->win=create_widget_win(xinfo.root_win, 0, 0, w*col,
         menu->h*menu->row, 0, 0, menu->bg);
@@ -67,6 +67,6 @@ void update_menu_item_fg(WM *wm, Window win)
     }
 
     String_format f={{0, 0, m->w, m->h}, CENTER_LEFT, true, true, false, 0,
-        TEXT_COLOR(wm, MENU), MENU_FONT};
+        TEXT_COLOR(wm, MENU)};
     draw_string(wm, win, text, &f);
 }

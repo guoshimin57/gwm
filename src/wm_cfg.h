@@ -17,9 +17,6 @@
     "ps -o stat= $pid | head -n1 | grep T > /dev/null ; } " \
     "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
 #define DESKTOPN_BUTTON(n) DESKTOP ## n ##_BUTTON // 獲取虛擬桌面按鈕類型
-#define SET_FONT(type, family, size) /* 設置字體 */ \
-    sprintf(cfg->font_name[type], "%s:pixelsize=%u", \
-        family, cfg->font_size[type]=size)
 #define SET_TITLE_BUTTON_TEXT(type, text) /* 設置標題按鈕文字 */ \
     cfg->title_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
 #define SET_TASKBAR_BUTTON_TEXT(type, text) /* 設置任務欄按鈕文字 */ \

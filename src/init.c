@@ -50,7 +50,7 @@ void init_wm(WM *wm)
     init_desktop(wm);
     reg_event_handlers(wm);
     set_atoms();
-    load_font(wm);
+    load_font();
     alloc_color(wm);
     init_root_win_background(wm);
     create_cursors(wm);
@@ -83,7 +83,7 @@ static void set_visual_info(void)
 
 static void set_workarea(WM *wm)
 {
-    long sw=xinfo.screen_width, sh=xinfo.screen_height, th=TASKBAR_HEIGHT;
+    long sw=xinfo.screen_width, sh=xinfo.screen_height, th=get_font_height_by_pad();
 
     wm->workarea=(Rect){0, 0, sw, sh};
     if(cfg->show_taskbar)
@@ -133,8 +133,8 @@ static void create_cursors(WM *wm)
 static void create_run_cmd_entry(WM *wm)
 {
     int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
-        ew, eh=ENTRY_HEIGHT, pad=get_font_pad(ENTRY_FONT);
-    get_string_size(wm->font[ENTRY_FONT], cfg->run_cmd_entry_hint, &ew, NULL);
+        ew, eh=get_font_height_by_pad(), pad=get_font_pad();
+    get_string_size(cfg->run_cmd_entry_hint, &ew, NULL);
     ew += 2*pad, ew = (ew>=sw/4 && ew<=sw-2*bw) ? ew : sw/4;
     Rect r={(sw-ew)/2-bw, (sh-eh)/2-bw, ew, eh};
     wm->run_cmd=create_entry(wm, &r, cfg->run_cmd_entry_hint);

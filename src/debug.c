@@ -118,11 +118,11 @@ void print_client_win(Client *c)
 
 void show_top_win(WM *wm)
 {
-    int h=cfg->font_size[CLASS_FONT]*2, w=10*h;
+    int h=cfg->font_size*2, w=10*h;
     char *s[]={"DESKTOP_TOP", "BELOW_TOP", "NORMAL_TOP", "FLOAT_TOP",
         "DOCK_TOP", "ABOVE_TOP", "FULLSCREEN_TOP"};
     String_format f={{0, 0, w, h}, CENTER_LEFT, false,
-        false, false, 0, TEXT_COLOR(wm, CLASS), CLASS_FONT};
+        false, false, 0, TEXT_COLOR(wm, CLASS)};
 
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
     {

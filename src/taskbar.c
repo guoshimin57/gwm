@@ -20,7 +20,7 @@ static void draw_client_icon(WM *wm, Client *c);
 void create_taskbar(WM *wm)
 {
     Taskbar *b=wm->taskbar=malloc_s(sizeof(Taskbar));
-    b->w=xinfo.screen_width, b->h=TASKBAR_HEIGHT;
+    b->w=xinfo.screen_width, b->h=get_font_height_by_pad();
     b->x=0, b->y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-b->h);
     b->win=create_widget_win(xinfo.root_win, b->x, b->y, b->w, b->h,
         0, 0, WIDGET_COLOR(wm, TASKBAR));
@@ -62,7 +62,7 @@ static void create_status_area(WM *wm)
     b->status_text=get_text_prop(xinfo.root_win, XA_WM_NAME);
     if(!b->status_text)
         b->status_text=copy_string("gwm");
-    get_string_size(wm->font[TASKBAR_FONT], b->status_text, &b->status_area_w, NULL);
+    get_string_size(b->status_text, &b->status_area_w, NULL);
     if(b->status_area_w > cfg->status_area_width_max)
         b->status_area_w=cfg->status_area_width_max;
     else if(b->status_area_w == 0)
@@ -108,7 +108,7 @@ void update_taskbar_button_fg(WM *wm, Widget_type type)
 {
     size_t i=WIDGET_INDEX(type, TASKBAR_BUTTON);
     String_format f={{0, 0, cfg->taskbar_button_width, wm->taskbar->h},
-        CENTER, true, false, false, 0, TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
+        CENTER, true, false, false, 0, TEXT_COLOR(wm, TASKBAR)};
     draw_string(wm, wm->taskbar->buttons[i], cfg->taskbar_button_text[i], &f);
 }
 
@@ -116,7 +116,7 @@ void update_status_area_fg(WM *wm)
 {
     Taskbar *b=wm->taskbar;
     String_format f={{0, 0, b->status_area_w, b->h}, CENTER_RIGHT, true,
-        false, false, 0, TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
+        false, false, 0, TEXT_COLOR(wm, TASKBAR)};
     draw_string(wm, b->status_area, b->status_text, &f);
 }
 
@@ -125,7 +125,7 @@ void update_icon_status_area(WM *wm)
     int w, bw=cfg->taskbar_button_width*TASKBAR_BUTTON_N;
     Taskbar *b=wm->taskbar;
 
-    get_string_size(wm->font[TASKBAR_FONT], b->status_text, &w, NULL);
+    get_string_size(b->status_text, &w, NULL);
     if(w > cfg->status_area_width_max)
         w=cfg->status_area_width_max;
     if(w != b->status_area_w)
@@ -148,8 +148,7 @@ void update_client_icon_fg(WM *wm, Window win)
     if(i->show_text)
     {
         String_format f={{wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h},
-            CENTER, true, false, false, 0, 
-            TEXT_COLOR(wm, TASKBAR), TASKBAR_FONT};
+            CENTER, true, false, false, 0, TEXT_COLOR(wm, TASKBAR)};
         draw_string(wm, i->win, i->title_text, &f);
     }
 }
@@ -162,7 +161,7 @@ static void draw_client_icon(WM *wm, Client *c)
     else
     {
         String_format f={{0, 0, size, size}, CENTER, true, false, false, 0,
-            TEXT_COLOR(wm, CLASS), CLASS_FONT};
+            TEXT_COLOR(wm, CLASS)};
         draw_string(wm, c->icon->win, c->class_name, &f);
     }
 }

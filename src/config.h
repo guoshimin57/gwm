@@ -17,7 +17,6 @@ struct config_tag
 {
     bool set_frame_prop; // true表示把窗口特性復制到窗口框架（代價是每個窗口可能要多消耗幾十到幾百KB內存），false表示不復制
     bool show_taskbar, taskbar_on_top; // 是否顯示任務欄、是否在屏幕頂部顯示
-    char font_name[FONT_N][FONT_NAME_MAX]; // 本窗口管理器所使用的字庫名稱列表。注意：每增加一種不同的字體，就會增加2M左右的內存佔用
     Focus_mode focus_mode; // 聚焦模式
     Layout default_layout; // 默認的窗口布局模式
     Color_theme color_theme; // 顏色主題
@@ -29,7 +28,7 @@ struct config_tag
     int default_n_main_max; // 默認的主區域最大窗口數量
     int act_center_col; // 操作中心按鈕列數
 
-    int font_size[FONT_N]; // 字體尺寸列表
+    int font_size; // 字體尺寸列表
     /* 以下尺寸根據相應字體來確定就有不錯的效果 */
     int border_width; // 窗口框架边框的宽度
     int title_button_width; // 窗口按鈕的寬度
@@ -50,6 +49,7 @@ struct config_tag
     double default_fixed_area_ratio; // 默認的固定區域比例
     float global_opacity; // 全局構件背景色不透明度
     float widget_opacity[COLOR_THEME_N][WIDGET_COLOR_N]; // 各種構件背景色的不透明度
+    const char *font_name; // 本窗口管理器所使用的字庫名稱。
     const char *autostart; // 在gwm剛啓動時執行的腳本
     const char *cur_icon_theme; // 當前圖標主題
     const char *screenshot_path; // 屏幕截圖的文件保存路徑，請自行確保路徑存在

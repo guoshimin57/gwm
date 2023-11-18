@@ -11,23 +11,28 @@
 
 #include "gwm.h"
 
-static int get_str_rect_by_fmt(WM *wm, const String_format *f, const char *str, int *x, int *y, int *w, int *h);
+static int get_str_rect_by_fmt(const String_format *f, const char *str, int *x, int *y, int *w, int *h);
 
-void load_font(WM *wm)
+static XftFont *font=NULL; // 窗口管理器用到的字體，一經顯式初始化便不再修改
+
+void load_font(void)
 {
-    for(size_t i=0; i<FONT_N; i++)
+    char name[BUFSIZ];
+
+    if(cfg->font_name)
     {
-        XftFont *p=NULL;
-        for(size_t j=0; j<i && !p; j++)
-            if(strcmp(cfg->font_name[j], cfg->font_name[i]) == 0)
-                p=wm->font[j];
-        if(!p)
-            p=XftFontOpenName(xinfo.display, xinfo.screen, cfg->font_name[i]);
-        if(p)
-            wm->font[i]=p;
-        else
-            exit_with_msg(_("錯誤：不能加載必要的字體。"));
+        sprintf(name, "%s:pixelsize=%u", cfg->font_name, cfg->font_size);
+        font=XftFontOpenName(xinfo.display, xinfo.screen, name);
     }
+
+    if(font == NULL)
+    {
+        sprintf(name, ":pixelsize=%u", cfg->font_size);
+        font=XftFontOpenName(xinfo.display, xinfo.screen, name);
+    }
+
+    if(font == NULL)
+        exit_with_msg(_("錯誤：不能加載必要的字體。"));
 }
 
 void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f)
@@ -43,10 +48,9 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
     if(!str)
         return;
 
-    XftFont *font=wm->font[f->font_type];
     int x=f->r.x, y=f->r.y, w=f->r.w, h=f->r.h, sx, sy, sw, sh, pad, n;
 
-    pad=get_str_rect_by_fmt(wm, f, str, &sx, &sy, &sw, &sh);
+    pad=get_str_rect_by_fmt(f, str, &sx, &sy, &sw, &sh);
     n=strlen(str);
     XClearArea(xinfo.display, d, x, y, w, h, False); 
     if(f->change_bg)
@@ -62,20 +66,19 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
     {
         const char *es="︙";
         int ew, en=strlen(es);
-        get_string_size(font, es, &ew, NULL);
+        get_string_size(es, &ew, NULL);
         XClearArea(xinfo.display, d, x+w-ew, 0, ew, h, False); 
         XftDrawStringUtf8(draw, &TEXT_COLOR(wm, HINT), font, x+w-ew, sy, (const FcChar8 *)es, en);
     }
     XftDrawDestroy(draw);
 }
 
-static int get_str_rect_by_fmt(WM *wm, const String_format *f, const char *str, int *x, int *y, int *w, int *h)
+static int get_str_rect_by_fmt(const String_format *f, const char *str, int *x, int *y, int *w, int *h)
 {
-    XftFont *font=wm->font[f->font_type];
     int cx, cy, pad, left, right, top, bottom;
 
-    pad = f->pad ? get_font_pad(f->font_type) : 0;
-    get_string_size(font, str, w, h);
+    pad = f->pad ? get_font_pad() : 0;
+    get_string_size(str, w, h);
     cx=f->r.x+f->r.w/2-*w/2, cy=f->r.y+f->r.h/2-*h/2+font->ascent;
     left=f->r.x+pad, right=f->r.x+f->r.w-*w-pad;
     top=f->r.y+*h, bottom=f->r.y+f->r.h;
@@ -97,7 +100,7 @@ static int get_str_rect_by_fmt(WM *wm, const String_format *f, const char *str, 
     return pad;
 }
 
-void get_string_size(XftFont *font, const char *str, int *w, int *h)
+void get_string_size(const char *str, int *w, int *h)
 {
     /* libXrender文檔沒有解釋XGlyphInfo結構體成員的含義。
        猜測xOff指字符串原點到字符串限定框最右邊的偏移量。*/
@@ -111,16 +114,9 @@ void get_string_size(XftFont *font, const char *str, int *w, int *h)
         *h=font->ascent+font->descent;
 }
 
-void close_fonts(WM *wm)
+void close_font(void)
 {
-    for(size_t i=0, j=0; i<FONT_N; i++)
-    {
-        for(j=0; j<i; j++)
-            if(wm->font[i] == wm->font[j])
-                break;
-        if(j == i)
-            XftFontClose(xinfo.display, wm->font[i]);
-    }
+    XftFontClose(xinfo.display, font);
 }
 
 /*
@@ -164,12 +160,12 @@ int get_scale_font_size(double scale)
     return scale*get_min_font_size();
 }
 
-int get_font_pad(Font_type type)
+int get_font_pad(void)
 {
-    return cfg->font_size[type]*cfg->font_pad_ratio+0.5;
+    return cfg->font_size*cfg->font_pad_ratio+0.5;
 }
 
-int get_font_height_by_pad(Font_type type)
+int get_font_height_by_pad(void)
 {
-    return cfg->font_size[type]*(1+cfg->font_pad_ratio*2)+0.5;
+    return cfg->font_size*(1+cfg->font_pad_ratio*2)+0.5;
 }

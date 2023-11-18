@@ -19,17 +19,16 @@ struct string_format_tag // 字符串格式
     bool trunc, pad, change_bg; // 當字符串寬度大於r.w時是否截斷顯示的標志，兩端是否留白, 是否改變背景色的標志
     unsigned long bg; // r區域的背景色
     XftColor fg; // 字符串的前景色
-    Font_type font_type; // 字體類型
 };
 
-void load_font(WM *wm);
+void load_font(void);
 void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f);
 void draw_string(WM *wm, Drawable d, const char *str, const String_format *f);
-void get_string_size(XftFont *font, const char *str, int *w, int *h);
-void close_fonts(WM *wm);
+void get_string_size(const char *str, int *w, int *h);
+void close_font();
 int get_min_font_size(void);
 int get_scale_font_size(double scale);
-int get_font_pad(Font_type type);
-int get_font_height_by_pad(Font_type type);
+int get_font_pad(void);
+int get_font_height_by_pad(void);
 
 #endif

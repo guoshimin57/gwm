@@ -171,7 +171,7 @@ void clear_wm(WM *wm)
         XDestroyIC(wm->run_cmd->xic);
     if(xinfo.xim)
         XCloseIM(xinfo.xim);
-    close_fonts(wm);
+    close_font(wm);
     XClearWindow(xinfo.display, xinfo.root_win);
     XFlush(xinfo.display);
     XCloseDisplay(xinfo.display);
@@ -662,7 +662,7 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    c->titlebar_h = c->titlebar_h ? 0 : TITLEBAR_HEIGHT;
+    c->titlebar_h = c->titlebar_h ? 0 : get_font_height_by_pad();
     if(c->titlebar_h)
     {
         create_titlebar(wm, c);

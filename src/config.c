@@ -177,24 +177,15 @@ static const Rule rule[] =
 };
 
 /* 功能：設置字體。
- * 說明：字體類型（*_FONT）的定義詳見：gwm.h:Font_type。每增加一種不同的字體，
- * 就會增加2M左右的內存佔用。可通過以下命令查看可用字體：
- *         fc-list -f "%{fullname}\n" :lang=zh | sed 's/,/\n/g' | sort -u
- *     縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
- * 近視之人應按近視程度設置大於1.0的合適值。
+ * 說明：縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
+ * 近視之人應按近視程度設置大於1.0的合適值。當font_name等於NULL或""或"*"時，
+ * 使用系統默認字體。可通過以下命令查看可用字體：
+ *     fc-list -f "%{fullname}\n" :lang=zh | sed 's/,/\n/g' | sort -u
  */
 static void config_font(void)
 {
-    int size=get_scale_font_size(2.0);
-
-    /*       字體類型       字體系列     字號 */
-    SET_FONT(DEFAULT_FONT,  "monospace", size);
-    SET_FONT(TITLEBAR_FONT, "monospace", size);
-    SET_FONT(MENU_FONT,     "monospace", size);
-    SET_FONT(TASKBAR_FONT,  "monospace", size);
-    SET_FONT(CLASS_FONT,    "monospace", size);
-    SET_FONT(ENTRY_FONT,    "monospace", size);
-    SET_FONT(HINT_FONT,     "monospace", size);
+    cfg->font_size=get_scale_font_size(2.0);
+    cfg->font_name="monospace";
 }
 
 /* 功能：設置構件尺寸。
@@ -202,15 +193,15 @@ static void config_font(void)
  */
 static void config_widget_size(void)
 {
-    cfg->border_width=cfg->font_size[DEFAULT_FONT]/8.0+0.5;
-    cfg->title_button_width=get_font_height_by_pad(TITLEBAR_FONT);
+    cfg->border_width=cfg->font_size/8.0+0.5;
+    cfg->title_button_width=get_font_height_by_pad();
     cfg->win_gap=cfg->border_width*2;
-    cfg->status_area_width_max=cfg->font_size[TASKBAR_FONT]*30;
-    cfg->taskbar_button_width=get_font_height_by_pad(TASKBAR_FONT)/0.618+0.5;
-    cfg->icon_win_width_max=cfg->font_size[TASKBAR_FONT]*15;
-    cfg->icon_image_size=cfg->font_size[TASKBAR_FONT]*15;
-    cfg->icon_gap=cfg->font_size[TASKBAR_FONT]/2.0+0.5;
-    cfg->resize_inc=cfg->font_size[DEFAULT_FONT];
+    cfg->status_area_width_max=cfg->font_size*30;
+    cfg->taskbar_button_width=get_font_height_by_pad()/0.618+0.5;
+    cfg->icon_win_width_max=cfg->font_size*15;
+    cfg->icon_image_size=cfg->font_size*15;
+    cfg->icon_gap=cfg->font_size/2.0+0.5;
+    cfg->resize_inc=cfg->font_size;
 }
 
 /* 功能：設置與定位器操作類型相對應的光標符號。
