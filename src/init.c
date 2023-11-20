@@ -23,7 +23,7 @@ static void create_client_menu(WM *wm);
 static void create_clients(WM *wm);
 static void init_imlib(void);
 static void init_wallpaper_files(WM *wm);
-static void init_root_win_background(WM *wm);
+static void init_root_win_background(void);
 static void exec_autostart(void);
 
 void init_wm(WM *wm)
@@ -51,8 +51,8 @@ void init_wm(WM *wm)
     reg_event_handlers(wm);
     set_atoms();
     load_font();
-    alloc_color(wm);
-    init_root_win_background(wm);
+    alloc_color();
+    init_root_win_background();
     create_cursors(wm);
     XDefineCursor(xinfo.display, xinfo.root_win, wm->cursors[NO_OP]);
     set_workarea(wm);
@@ -143,13 +143,13 @@ static void create_run_cmd_entry(WM *wm)
 static void create_hint_win(WM *wm)
 {
     wm->hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
-        WIDGET_COLOR(wm, HINT_WIN));
+        get_widget_color(HINT_WIN_COLOR));
     XSelectInput(xinfo.display, wm->hint_win, ExposureMask);
 }
 
 static void create_client_menu(WM *wm)
 {
-    wm->client_menu=create_menu(wm, cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
+    wm->client_menu=create_menu(cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */
@@ -191,12 +191,12 @@ static void init_wallpaper_files(WM *wm)
     wm->cur_wallpaper=wm->wallpapers->next;
 }
 
-static void init_root_win_background(WM *wm)
+static void init_root_win_background(void)
 {
     const char *name=cfg->wallpaper_filename;
 
     Pixmap pixmap=create_pixmap_from_file(xinfo.root_win, name ? name : "");
-    update_win_bg(xinfo.root_win, WIDGET_COLOR(wm, ROOT_WIN), pixmap);
+    update_win_bg(xinfo.root_win, get_widget_color(ROOT_WIN_COLOR), pixmap);
     if(pixmap && !have_compositor())
         XFreePixmap(xinfo.display, pixmap);
 }

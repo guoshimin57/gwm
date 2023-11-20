@@ -121,13 +121,13 @@ void show_top_win(WM *wm)
     int h=cfg->font_size*2, w=10*h;
     char *s[]={"DESKTOP_TOP", "BELOW_TOP", "NORMAL_TOP", "FLOAT_TOP",
         "DOCK_TOP", "ABOVE_TOP", "FULLSCREEN_TOP"};
-    String_format f={{0, 0, w, h}, CENTER_LEFT, false,
-        false, false, 0, TEXT_COLOR(wm, CLASS)};
+    Str_fmt f={0, 0, w, h, CENTER_LEFT, false, false, 0xff0000,
+        get_text_color(CLASS_TEXT_COLOR)};
 
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
     {
-        XMoveResizeWindow(xinfo.display, wm->top_wins[i], i*w/2, wm->taskbar->y, w, h);
+        XMoveResizeWindow(xinfo.display, wm->top_wins[i], i*w/2, wm->taskbar->y-h, w, h);
         XMapWindow(xinfo.display, wm->top_wins[i]);
-        draw_string(wm, wm->top_wins[i], s[i], &f);
+        draw_string(wm->top_wins[i], s[i], &f);
     }
 }

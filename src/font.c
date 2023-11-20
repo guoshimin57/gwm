@@ -11,7 +11,7 @@
 
 #include "gwm.h"
 
-static int get_str_rect_by_fmt(const String_format *f, const char *str, int *x, int *y, int *w, int *h);
+static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *y, int *w, int *h);
 
 static XftFont *font=NULL; // 窗口管理器用到的字體，一經顯式初始化便不再修改
 
@@ -35,22 +35,23 @@ void load_font(void)
         exit_with_msg(_("錯誤：不能加載必要的字體。"));
 }
 
-void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f)
+void draw_wcs(Drawable d, const wchar_t *wcs, const Str_fmt *f)
 {
     size_t n=wcslen(wcs)*MB_CUR_MAX+1;
     char mbs[n];
     wcstombs(mbs, wcs, n);
-    draw_string(wm, d, mbs, f);
+    draw_string(d, mbs, f);
 }
 
-void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
+void draw_string(Drawable d, const char *str, const Str_fmt *f)
 {
     if(!str)
         return;
 
-    int x=f->r.x, y=f->r.y, w=f->r.w, h=f->r.h, sx, sy, sw, sh, pad, n;
+    int x=f->x, y=f->y, w=f->w, h=f->h, sx, sy, sw, sh, n;
 
-    pad=get_str_rect_by_fmt(f, str, &sx, &sy, &sw, &sh);
+    
+    get_str_rect_by_fmt(f, str, &sx, &sy, &sw, &sh);
     n=strlen(str);
     XClearArea(xinfo.display, d, x, y, w, h, False); 
     if(f->change_bg)
@@ -62,26 +63,18 @@ void draw_string(WM *wm, Drawable d, const char *str, const String_format *f)
 
     XftDraw *draw=XftDrawCreate(xinfo.display, d, xinfo.visual, xinfo.colormap);
     XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
-    if(f->trunc && sw+2*pad>w)
-    {
-        const char *es="︙";
-        int ew, en=strlen(es);
-        get_string_size(es, &ew, NULL);
-        XClearArea(xinfo.display, d, x+w-ew, 0, ew, h, False); 
-        XftDrawStringUtf8(draw, &TEXT_COLOR(wm, HINT), font, x+w-ew, sy, (const FcChar8 *)es, en);
-    }
     XftDrawDestroy(draw);
 }
 
-static int get_str_rect_by_fmt(const String_format *f, const char *str, int *x, int *y, int *w, int *h)
+static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *y, int *w, int *h)
 {
     int cx, cy, pad, left, right, top, bottom;
 
     pad = f->pad ? get_font_pad() : 0;
     get_string_size(str, w, h);
-    cx=f->r.x+f->r.w/2-*w/2, cy=f->r.y+f->r.h/2-*h/2+font->ascent;
-    left=f->r.x+pad, right=f->r.x+f->r.w-*w-pad;
-    top=f->r.y+*h, bottom=f->r.y+f->r.h;
+    cx=f->x+f->w/2-*w/2, cy=f->y+f->h/2-*h/2+font->ascent;
+    left=f->x+pad, right=f->x+f->w-*w-pad;
+    top=f->y+*h, bottom=f->y+f->h;
 
     switch(f->align)
     {
@@ -95,9 +88,8 @@ static int get_str_rect_by_fmt(const String_format *f, const char *str, int *x, 
         case BOTTOM_CENTER: *x=cx, *y=bottom; break;
         case BOTTOM_RIGHT: *x=right, *y=bottom; break;
     }
-    if(f->trunc && *w+2*pad>f->r.w)
+    if(*w+2*pad>f->w)
         *x=left;
-    return pad;
 }
 
 void get_string_size(const char *str, int *w, int *h)

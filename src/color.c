@@ -19,6 +19,9 @@ static void update_run_cmd_bg(WM *wm);
 static void update_client_menu_bg(WM *wm);
 static void update_clients_bg(WM *wm);
 
+static XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
+static XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色
+
 static void alloc_widget_color(const char *color_name, XColor *color)
 {
     XParseColor(xinfo.display, xinfo.colormap, color_name, color); 
@@ -30,16 +33,14 @@ static void alloc_text_color(const char *color_name, XftColor *color)
     XftColorAllocName(xinfo.display, xinfo.visual, xinfo.colormap, color_name, color);
 }
 
-void alloc_color(WM *wm)
+void alloc_color(void)
 {
     for(Color_theme i=0; i<COLOR_THEME_N; i++)
         for(Widget_color j=0; j<WIDGET_COLOR_N; j++)
-            alloc_widget_color( cfg->widget_color_name[i][j],
-                &wm->widget_color[i][j]);
+            alloc_widget_color(cfg->widget_color_name[i][j], &widget_color[i][j]);
     for(Color_theme i=0; i<COLOR_THEME_N; i++)
         for(Text_color j=0; j<TEXT_COLOR_N; j++)
-            alloc_text_color(cfg->text_color_name[i][j],
-                &wm->text_color[i][j]);
+            alloc_text_color(cfg->text_color_name[i][j], &text_color[i][j]);
 }
 
 void update_widget_bg(WM *wm)
@@ -47,14 +48,14 @@ void update_widget_bg(WM *wm)
     update_taskbar_bg(wm);
     update_act_center_bg(wm);
     update_run_cmd_bg(wm);
-    update_win_bg(wm->hint_win, WIDGET_COLOR(wm, HINT_WIN), None);
+    update_win_bg(wm->hint_win, get_widget_color(HINT_WIN_COLOR), None);
     update_client_menu_bg(wm);
     update_clients_bg(wm);
 }
 
 static void update_taskbar_bg(WM *wm)
 {
-    unsigned long bg=WIDGET_COLOR(wm, TASKBAR);
+    unsigned long bg=get_widget_color(TASKBAR_COLOR);
     update_taskbar_buttons_bg(wm);
     update_win_bg(wm->taskbar->icon_area, bg, None);
     /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
@@ -66,7 +67,7 @@ static void update_taskbar_bg(WM *wm)
 
 static void update_act_center_bg(WM *wm)
 {
-    unsigned long bg=WIDGET_COLOR(wm, MENU);
+    unsigned long bg=get_widget_color(MENU_COLOR);
     update_win_bg(wm->act_center->win, bg, None);
     for(size_t i=0; i<ACT_CENTER_ITEM_N; i++)
         update_win_bg(wm->act_center->items[i], bg,None);
@@ -75,13 +76,13 @@ static void update_act_center_bg(WM *wm)
 static void update_run_cmd_bg(WM *wm)
 {
     Window win=wm->run_cmd->win;
-    update_win_bg(win, WIDGET_COLOR(wm, ENTRY), None);
-    XSetWindowBorder(xinfo.display, win, WIDGET_COLOR(wm, CURRENT_BORDER));
+    update_win_bg(win, get_widget_color(ENTRY_COLOR), None);
+    XSetWindowBorder(xinfo.display, win, get_widget_color(CURRENT_BORDER_COLOR));
 }
 
 static void update_client_menu_bg(WM *wm)
 {
-    unsigned long bg=WIDGET_COLOR(wm, MENU);
+    unsigned long bg=get_widget_color(MENU_COLOR);
     update_win_bg(wm->client_menu->win, bg, None);
     for(size_t i=0; i<CLIENT_MENU_ITEM_N; i++)
         update_win_bg(wm->client_menu->items[i], bg, None);
@@ -101,8 +102,8 @@ void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
     Desktop *d=wm->desktop[desktop_n-1];
     if(c->icon && d->cur_layout!=PREVIEW)
         update_win_bg(c->icon->win, c==d->cur_focus_client ?
-            WIDGET_COLOR(wm, ENTERED_NORMAL_BUTTON) :
-            WIDGET_COLOR(wm, TASKBAR), None);
+            get_widget_color(ENTERED_NORMAL_BUTTON_COLOR) :
+            get_widget_color(TASKBAR_COLOR), None);
     else
         update_frame_bg(wm, desktop_n, c);
 }
@@ -110,13 +111,13 @@ void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
 void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
 {
     bool cur=(c==wm->desktop[desktop_n-1]->cur_focus_client);
-    unsigned long color=NCUR_WIDGET_COLOR(wm, cur, BORDER);
+    unsigned long color=get_widget_color(cur ? CURRENT_BORDER_COLOR : NORMAL_BORDER_COLOR);
 
     if(c->border_w)
         XSetWindowBorder(xinfo.display, c->frame, color);
     if(c->titlebar_h)
     {
-        color=NCUR_WIDGET_COLOR(wm, cur, TITLEBAR);
+        color=get_widget_color(cur ? CURRENT_TITLEBAR_COLOR : NORMAL_TITLEBAR_COLOR);
         update_win_bg(c->logo, color, 0);
         update_win_bg(c->title_area, color, 0);
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
@@ -124,10 +125,15 @@ void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
     }
 }
 
-unsigned long get_widget_color(WM *wm, Widget_color wc)
+unsigned long get_widget_color(Widget_color wc)
 {
     float wo=cfg->widget_opacity[cfg->color_theme][wc];
-    unsigned long rgb=wm->widget_color[cfg->color_theme][wc].pixel;
+    unsigned long rgb=widget_color[cfg->color_theme][wc].pixel;
 
     return ((rgb & 0x00ffffff) | ((unsigned long)(0xff*wo))<<24);
+}
+
+XftColor get_text_color(Text_color color_id)
+{
+    return text_color[cfg->color_theme][color_id];
 }

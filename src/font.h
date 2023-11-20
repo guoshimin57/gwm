@@ -12,18 +12,18 @@
 #ifndef FONT_H
 #define FONT_H
 
-struct string_format_tag // 字符串格式
+typedef struct // 字符串格式
 {
-    Rect r; // 坐標和尺寸信息
+    int x, y, w, h; // 字符串區域的坐標和尺寸信息
     Align_type align; // 對齊方式
-    bool trunc, pad, change_bg; // 當字符串寬度大於r.w時是否截斷顯示的標志，兩端是否留白, 是否改變背景色的標志
-    unsigned long bg; // r區域的背景色
+    bool pad, change_bg; // 兩端是否留白, 是否改變背景色的標志
+    unsigned long bg; // 字符串區域的背景色
     XftColor fg; // 字符串的前景色
-};
+} Str_fmt;
 
 void load_font(void);
-void draw_wcs(WM *wm, Drawable d, const wchar_t *wcs, const String_format *f);
-void draw_string(WM *wm, Drawable d, const char *str, const String_format *f);
+void draw_wcs(Drawable d, const wchar_t *wcs, const Str_fmt *f);
+void draw_string(Drawable d, const char *str, const Str_fmt *f);
 void get_string_size(const char *str, int *w, int *h);
 void close_font();
 int get_min_font_size(void);

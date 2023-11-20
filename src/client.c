@@ -323,7 +323,7 @@ static void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c);
     c->frame=create_widget_win(xinfo.root_win, fr.x, fr.y, fr.w, fr.h,
-        c->border_w, WIDGET_COLOR(wm, CURRENT_BORDER), 0);
+        c->border_w, get_widget_color(CURRENT_BORDER_COLOR), 0);
     XSelectInput(xinfo.display, c->frame, FRAME_EVENT_MASK);
     if(cfg->set_frame_prop)
         copy_prop(c->frame, c->win);
@@ -347,14 +347,14 @@ void create_titlebar(WM *wm, Client *c)
     {
         Rect br=get_button_rect(c, i);
         c->buttons[i]=create_widget_win(c->frame, br.x, br.y,
-            br.w, br.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
+            br.w, br.h, 0, 0, get_widget_color(CURRENT_TITLEBAR_COLOR));
         XSelectInput(xinfo.display, c->buttons[i], BUTTON_EVENT_MASK);
     }
     c->title_area=create_widget_win(c->frame, tr.x, tr.y,
-        tr.w, tr.h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
+        tr.w, tr.h, 0, 0, get_widget_color(CURRENT_TITLEBAR_COLOR));
     XSelectInput(xinfo.display, c->title_area, TITLE_AREA_EVENT_MASK);
     c->logo=create_widget_win(c->frame, 0, 0, c->titlebar_h,
-        c->titlebar_h, 0, 0, WIDGET_COLOR(wm, CURRENT_TITLEBAR));
+        c->titlebar_h, 0, 0, get_widget_color(CURRENT_TITLEBAR_COLOR));
     XSelectInput(xinfo.display, c->logo, BUTTON_EVENT_MASK);
 }
 
@@ -711,6 +711,7 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     }
     update_client_bg(wm, desktop_n, pc);
     update_client_bg(wm, desktop_n, pp);
+    raise_client(wm, pc);
     set_net_active_window(pc->win);
 }
 
@@ -805,7 +806,7 @@ void iconify(WM *wm, Client *c)
     {
         create_icon(wm, p);
         p->icon->title_text=get_icon_title_text(p->win, p->title_text);
-        update_win_bg(p->icon->win, WIDGET_COLOR(wm, TASKBAR), None);
+        update_win_bg(p->icon->win, get_widget_color(TASKBAR_COLOR), None);
         update_icon_area(wm);
         XMapWindow(xinfo.display, p->icon->win);
         XUnmapWindow(xinfo.display, p->frame);
@@ -834,7 +835,7 @@ void create_icon(WM *wm, Client *c)
     i->x=i->y=0, i->w=i->h=wm->taskbar->h;
     i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
     i->win=create_widget_win(wm->taskbar->icon_area, 0, 0,
-        i->w, i->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
+        i->w, i->h, 0, 0, get_widget_color(TASKBAR_COLOR));
     XSelectInput(xinfo.display, c->icon->win, ICON_WIN_EVENT_MASK);
 }
 

@@ -47,7 +47,7 @@ static void handle_enter_notify(WM *wm, XEvent *e);
 static void handle_pointer_hover(WM *wm, Window hover, Widget_type type);
 static const char *get_tooltip(WM *wm, Window win, Widget_type type);
 static void handle_expose(WM *wm, XEvent *e);
-static void update_title_logo_fg(WM *wm, Client *c);
+static void update_title_logo_fg(Client *c);
 static void update_title_area_fg(WM *wm, Client *c);
 static void update_title_button_fg(WM *wm, Client *c, size_t index);
 static void handle_focus_in(WM *wm, XEvent *e);
@@ -455,7 +455,8 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         && get_clients_n(wm, TILE_LAYER_MAIN, false, false, false))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_BUTTON(type))
-        update_win_bg(win, ENTERED_NCLOSE_BUTTON_COLOR(wm, type), None);
+        update_win_bg(win, get_widget_color(type==CLOSE_BUTTON ?
+            ENTERED_CLOSE_BUTTON_COLOR : ENTERED_NORMAL_BUTTON_COLOR), None);
     else if(type == CLIENT_FRAME)
         act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
@@ -534,7 +535,7 @@ static void handle_expose(WM *wm, XEvent *e)
     else if(type == STATUS_AREA)
         update_status_area_fg(wm);
     else if(type == TITLE_LOGO)
-        update_title_logo_fg(wm, c);
+        update_title_logo_fg(c);
     else if(type == TITLE_AREA)
         update_title_area_fg(wm, c);
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
@@ -543,15 +544,15 @@ static void handle_expose(WM *wm, XEvent *e)
         update_entry_text(wm, wm->run_cmd);
 }
 
-static void update_title_logo_fg(WM *wm, Client *c)
+static void update_title_logo_fg(Client *c)
 {
     if(c->image)
         draw_image(c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
     else
     {
-        String_format f={{0, 0, c->titlebar_h, c->titlebar_h}, CENTER, true,
-            false, false, 0, TEXT_COLOR(wm, CLASS)};
-        draw_string(wm, c->logo, c->class_name, &f);
+        Str_fmt f={0, 0, c->titlebar_h, c->titlebar_h, CENTER, false, false, 0,
+            get_text_color(CLASS_TEXT_COLOR)};
+        draw_string(c->logo, c->class_name, &f);
     }
 }
 
@@ -561,9 +562,11 @@ static void update_title_area_fg(WM *wm, Client *c)
         return;
 
     Rect r=get_title_area_rect(wm, c);
-    String_format f={{0, 0, r.w, r.h}, CENTER, true, true, false, 0,
-        CLI_TEXT_COLOR(wm, c, TITLEBAR)};
-    draw_string(wm, c->title_area, c->title_text, &f);
+    Text_color id = (c==CUR_FOC_CLI(wm)) ?
+        CURRENT_TITLEBAR_TEXT_COLOR : NORMAL_TITLEBAR_TEXT_COLOR;
+    Str_fmt f={0, 0, r.w, r.h, CENTER, true, false, 0,
+        get_text_color(id)};
+    draw_string(c->title_area, c->title_text, &f);
 }
 
 static void update_title_button_fg(WM *wm, Client *c, size_t index)
@@ -572,9 +575,11 @@ static void update_title_button_fg(WM *wm, Client *c, size_t index)
         return;
 
     int w=cfg->title_button_width, h=get_font_height_by_pad();
-    String_format f={{0, 0, w, h}, CENTER, true, false, false, 0,
-        CLI_TEXT_COLOR(wm, c, TITLEBAR)};
-    draw_string(wm, c->buttons[index], cfg->title_button_text[index], &f);
+    Text_color id = (c==CUR_FOC_CLI(wm)) ?
+        CURRENT_TITLEBAR_TEXT_COLOR : NORMAL_TITLEBAR_TEXT_COLOR;
+    Str_fmt f={0, 0, w, h, CENTER, false, false, 0,
+        get_text_color(id)};
+    draw_string(c->buttons[index], cfg->title_button_text[index], &f);
 }
 
 static void handle_focus_in(WM *wm, XEvent *e)
@@ -631,13 +636,15 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
         update_taskbar_button_bg(wm, type);
     else if(type == CLIENT_ICON)
-        update_win_bg(win, WIDGET_COLOR(wm, TASKBAR), None);
+        update_win_bg(win, get_widget_color(TASKBAR_COLOR), None);
     else if(IS_MENU_ITEM(type))
-        update_win_bg(win, WIDGET_COLOR(wm, MENU), None);
+        update_win_bg(win, get_widget_color(MENU_COLOR), None);
     else if(type == TITLE_LOGO)
-        update_win_bg(win, CLI_WIDGET_COLOR(wm, c, TITLEBAR), None);
+        update_win_bg(win, get_widget_color(c==CUR_FOC_CLI(wm) ?
+            CURRENT_TITLEBAR_COLOR : NORMAL_TITLEBAR_COLOR), None);
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
-        update_win_bg(win, CLI_WIDGET_COLOR(wm, c, TITLEBAR), None);
+        update_win_bg(win, get_widget_color(c==CUR_FOC_CLI(wm) ?
+            CURRENT_TITLEBAR_COLOR : NORMAL_TITLEBAR_COLOR), None);
     if(type != UNDEFINED)
         XDefineCursor(xinfo.display, win, wm->cursors[NO_OP]);
 }

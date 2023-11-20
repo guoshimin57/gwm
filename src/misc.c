@@ -337,7 +337,7 @@ void update_hint_win_for_info(WM *wm, Window hover, const char *info)
         x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
     XMoveResizeWindow(xinfo.display, wm->hint_win, x, y, w, h);
     XMapRaised(xinfo.display, wm->hint_win);
-    String_format f={{0, 0, w, h}, CENTER, true, true, false, 0,
-        TEXT_COLOR(wm, HINT)};
-    draw_string(wm, wm->hint_win, info, &f);
+    Str_fmt f={0, 0, w, h, CENTER, true, false, 0,
+        get_text_color(HINT_TEXT_COLOR)};
+    draw_string(wm->hint_win, info, &f);
 }

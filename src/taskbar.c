@@ -23,7 +23,7 @@ void create_taskbar(WM *wm)
     b->w=xinfo.screen_width, b->h=get_font_height_by_pad();
     b->x=0, b->y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-b->h);
     b->win=create_widget_win(xinfo.root_win, b->x, b->y, b->w, b->h,
-        0, 0, WIDGET_COLOR(wm, TASKBAR));
+        0, 0, get_widget_color(TASKBAR_COLOR));
     XSelectInput(xinfo.display, b->win, CROSSING_MASK);
     create_taskbar_buttons(wm);
     create_status_area(wm);
@@ -41,8 +41,9 @@ static void create_taskbar_buttons(WM *wm)
 
     for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
     {
-        b->buttons[i]=create_widget_win(b->win, w*i, 0, w, h, 0, 0,
-            NCHOSEN_BUTTON_COLOR(wm, TASKBAR_BUTTON_BEGIN+i, TASKBAR_COLOR));
+        unsigned long color=get_widget_color(is_chosen_button(wm,
+            TASKBAR_BUTTON_BEGIN+i) ? CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
+        b->buttons[i]=create_widget_win(b->win, w*i, 0, w, h, 0, 0, color);
         XSelectInput(xinfo.display, b->buttons[i], BUTTON_EVENT_MASK);
     }
 }
@@ -53,7 +54,7 @@ static void create_icon_area(WM *wm)
     int bw=cfg->taskbar_button_width*TASKBAR_BUTTON_N,
         w=b->w-bw-b->status_area_w;
     b->icon_area=create_widget_win(b->win,
-        bw, 0, w, b->h, 0, 0, WIDGET_COLOR(wm, TASKBAR));
+        bw, 0, w, b->h, 0, 0, get_widget_color(TASKBAR_COLOR));
 }
 
 static void create_status_area(WM *wm)
@@ -69,13 +70,13 @@ static void create_status_area(WM *wm)
         b->status_area_w=1;
     wm->taskbar->status_area=create_widget_win(b->win,
         b->w-b->status_area_w, 0, b->status_area_w, b->h,
-        0, 0, WIDGET_COLOR(wm, TASKBAR));
+        0, 0, get_widget_color(TASKBAR_COLOR));
     XSelectInput(xinfo.display, b->status_area, ExposureMask);
 }
 
 static void create_act_center(WM *wm)
 {
-    wm->act_center=create_menu(wm, cfg->act_center_item_text,
+    wm->act_center=create_menu(cfg->act_center_item_text,
         ACT_CENTER_ITEM_N, cfg->act_center_col);
 }
 
@@ -88,7 +89,7 @@ void update_taskbar_buttons_bg(WM *wm)
 void update_taskbar_button_bg(WM *wm, Widget_type type)
 {
     Window win=wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
-    unsigned long color=NCHOSEN_BUTTON_COLOR(wm, type, TASKBAR_COLOR);
+    unsigned long color=get_widget_color(TASKBAR_COLOR);
 
     if(IS_WIDGET_CLASS(type, DESKTOP_BUTTON))
     {
@@ -96,9 +97,11 @@ void update_taskbar_button_bg(WM *wm, Widget_type type)
         if(desktop_n != wm->cur_desktop)
         {
             if(have_urgency(wm, desktop_n))
-                color=get_widget_color(wm, URGENCY_WIDGET_COLOR);
+                color=get_widget_color(URGENCY_WIDGET_COLOR);
             else if(have_attention(wm, desktop_n))
-                color=get_widget_color(wm, ATTENTION_WIDGET_COLOR);
+                color=get_widget_color(ATTENTION_WIDGET_COLOR);
+            else if(is_chosen_button(wm, type))
+                color=get_widget_color(CHOSEN_BUTTON_COLOR);
         }
     }
     update_win_bg(win, color, None);
@@ -107,17 +110,17 @@ void update_taskbar_button_bg(WM *wm, Widget_type type)
 void update_taskbar_button_fg(WM *wm, Widget_type type)
 {
     size_t i=WIDGET_INDEX(type, TASKBAR_BUTTON);
-    String_format f={{0, 0, cfg->taskbar_button_width, wm->taskbar->h},
-        CENTER, true, false, false, 0, TEXT_COLOR(wm, TASKBAR)};
-    draw_string(wm, wm->taskbar->buttons[i], cfg->taskbar_button_text[i], &f);
+    Str_fmt f={0, 0, cfg->taskbar_button_width, wm->taskbar->h, CENTER,
+        false, false, 0, get_text_color(TASKBAR_TEXT_COLOR)};
+    draw_string(wm->taskbar->buttons[i], cfg->taskbar_button_text[i], &f);
 }
 
 void update_status_area_fg(WM *wm)
 {
     Taskbar *b=wm->taskbar;
-    String_format f={{0, 0, b->status_area_w, b->h}, CENTER_RIGHT, true,
-        false, false, 0, TEXT_COLOR(wm, TASKBAR)};
-    draw_string(wm, b->status_area, b->status_text, &f);
+    Str_fmt f={0, 0, b->status_area_w, b->h, CENTER_RIGHT, false, false, 0,
+        get_text_color(TASKBAR_TEXT_COLOR)};
+    draw_string(b->status_area, b->status_text, &f);
 }
 
 void update_icon_status_area(WM *wm)
@@ -147,9 +150,9 @@ void update_client_icon_fg(WM *wm, Window win)
     draw_client_icon(wm, c);
     if(i->show_text)
     {
-        String_format f={{wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h},
-            CENTER, true, false, false, 0, TEXT_COLOR(wm, TASKBAR)};
-        draw_string(wm, i->win, i->title_text, &f);
+        Str_fmt f={wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h, CENTER,
+            false, false, 0, get_text_color(TASKBAR_TEXT_COLOR)};
+        draw_string(i->win, i->title_text, &f);
     }
 }
 
@@ -160,8 +163,8 @@ static void draw_client_icon(WM *wm, Client *c)
         draw_image(c->image, c->icon->win, 0, 0, size, size);
     else
     {
-        String_format f={{0, 0, size, size}, CENTER, true, false, false, 0,
-            TEXT_COLOR(wm, CLASS)};
-        draw_string(wm, c->icon->win, c->class_name, &f);
+        Str_fmt f={0, 0, size, size, CENTER, false, false, 0,
+            get_text_color(CLASS_TEXT_COLOR)};
+        draw_string(c->icon->win, c->class_name, &f);
     }
 }

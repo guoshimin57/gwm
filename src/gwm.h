@@ -83,13 +83,11 @@
 #define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
 #define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client
 
-typedef struct config_tag Config;
 typedef struct desktop_tag Desktop;
 typedef struct taskbar_tag Taskbar;
 typedef struct client_tag Client;
 typedef struct menu_tag Menu;
 typedef struct entry_tag Entry;
-typedef struct string_format_tag String_format;
 
 typedef struct // 與X相關的信息
 {
@@ -237,8 +235,6 @@ struct wm_tag // 窗口管理器相關信息
     Taskbar *taskbar; // 任務欄
     Menu *act_center, *client_menu; // 操作中心, 客戶窗口菜單
     Entry *run_cmd; // 輸入命令並執行的構件
-    XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
-    XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色
     void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
 };
 typedef struct wm_tag WM;

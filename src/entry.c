@@ -23,8 +23,8 @@ Entry *create_entry(WM *wm, Rect *r, const char *hint)
     Entry *e=wm->run_cmd=malloc_s(sizeof(Entry));
     e->x=r->x, e->y=r->y, e->w=r->w, e->h=r->h, e->hint=hint;
     e->win=create_widget_win(xinfo.root_win, e->x, e->y, e->w, e->h,
-        cfg->border_width, WIDGET_COLOR(wm, CURRENT_BORDER), 
-        WIDGET_COLOR(wm, ENTRY));
+        cfg->border_width, get_widget_color(CURRENT_BORDER_COLOR), 
+        get_widget_color(ENTRY_COLOR));
     XSelectInput(xinfo.display, e->win, ENTRY_EVENT_MASK);
     set_xic(e->win, &e->xic);
     return e;
@@ -43,14 +43,13 @@ void update_entry_text(WM *wm, Entry *e)
 {
     int x=get_entry_cursor_x(e);
     bool empty = e->text[0]==L'\0';
-    XftColor color = empty ? TEXT_COLOR(wm, HINT) : TEXT_COLOR(wm, ENTRY);
-    String_format f={{0, 0, e->w, e->h}, CENTER_LEFT, false, true, false, 0,
-        color};
+    Str_fmt f={0, 0, e->w, e->h, CENTER_LEFT, true, false, 0,
+        get_text_color(empty ? HINT_TEXT_COLOR : ENTRY_TEXT_COLOR)};
 
     if(empty)
-        draw_string(wm, e->win, e->hint, &f);
+        draw_string(e->win, e->hint, &f);
     else
-        draw_wcs(wm, e->win, e->text, &f);
+        draw_wcs(e->win, e->text, &f);
     XDrawLine(xinfo.display, e->win, wm->gc, x, 0, x, e->h);
 }
 
@@ -78,8 +77,8 @@ static void hint_for_run_cmd_entry(WM *wm, const char *regex)
         int bw=cfg->border_width, w=wm->run_cmd->w, h=wm->run_cmd->h,
             x=wm->run_cmd->x+bw, y=wm->run_cmd->y+wm->run_cmd->h+2*bw,
             i, n, max=(wm->workarea.h-y)/h;
-        String_format fmt={{0, 0, w, h}, CENTER_LEFT, false, true, false, 0,
-            TEXT_COLOR(wm, HINT)};
+        Str_fmt fmt={0, 0, w, h, CENTER_LEFT, true, false, 0,
+            get_text_color(HINT_TEXT_COLOR)};
 
         File *f, *files=get_files_in_paths(paths, regex, RISE, false, &n);
         if(n)
@@ -88,7 +87,7 @@ static void hint_for_run_cmd_entry(WM *wm, const char *regex)
             XMapWindow(xinfo.display, win);
             XClearWindow(xinfo.display, win);
             for(i=0, f=files->next; f && i<max; f=f->next, i++)
-                draw_string(wm, win, i<max-1 ? f->name : "...", &fmt), fmt.r.y+=h;
+                draw_string(win, i<max-1 ? f->name : "...", &fmt), fmt.y+=h;
             free_files(files);
             return;
         }

@@ -11,7 +11,7 @@
 
 #include "gwm.h"
 
-Menu *create_menu(WM *wm, const char *item_text[], int n, int col)
+Menu *create_menu(const char *item_text[], int n, int col)
 {
     Menu *menu=malloc_s(sizeof(Menu));
     int w=0, maxw=0, sw=xinfo.screen_width, pad=get_font_pad();
@@ -22,7 +22,7 @@ Menu *create_menu(WM *wm, const char *item_text[], int n, int col)
 
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
     menu->x=menu->y=0, menu->w=w, menu->h=get_font_height_by_pad(), menu->pad=pad;
-    menu->bg=WIDGET_COLOR(wm, MENU);
+    menu->bg=get_widget_color(MENU_COLOR);
     menu->win=create_widget_win(xinfo.root_win, 0, 0, w*col,
         menu->h*menu->row, 0, 0, menu->bg);
     menu->items=malloc_s(n*sizeof(Window));
@@ -66,7 +66,7 @@ void update_menu_item_fg(WM *wm, Window win)
         m=wm->client_menu;
     }
 
-    String_format f={{0, 0, m->w, m->h}, CENTER_LEFT, true, true, false, 0,
-        TEXT_COLOR(wm, MENU)};
-    draw_string(wm, win, text, &f);
+    Str_fmt f={0, 0, m->w, m->h, CENTER_LEFT, true, false, 0,
+        get_text_color(MENU_TEXT_COLOR)};
+    draw_string(win, text, &f);
 }

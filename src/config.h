@@ -13,7 +13,7 @@
 #define CONFIG_H
 
 // 說明：尺寸單位均爲像素
-struct config_tag
+typedef struct
 {
     bool set_frame_prop; // true表示把窗口特性復制到窗口框架（代價是每個窗口可能要多消耗幾十到幾百KB內存），false表示不復制
     bool show_taskbar, taskbar_on_top; // 是否顯示任務欄、是否在屏幕頂部顯示
@@ -68,7 +68,7 @@ struct config_tag
     const Keybind *keybind; // 按鍵功能綁定。有的鍵盤同時按多個鍵會衝突，故組合鍵宜盡量少
     const Buttonbind *buttonbind; // 定位器按鈕功能綁定。
     const Rule *rule; // 窗口管理器對窗口的管理規則
-};
+} Config;
 
 extern Config *cfg; // 窗口管理器配置
 
