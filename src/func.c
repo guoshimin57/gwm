@@ -21,7 +21,7 @@ static bool fix_delta_rect_for_nonprefer_size(Client *c, XSizeHints *hint, Delta
 static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
 static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh);
 static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, int dh, Delta_rect *d);
-static void update_hint_win_for_move_resize(WM *wm, Client *c);
+static void update_hint_win_for_move_resize(Client *c);
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
 
 bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg))
@@ -101,7 +101,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     if(fix_move_resize_delta_rect(c, &d, is_move))
     {
         move_resize_client(wm, c, &d);
-        update_hint_win_for_move_resize(wm, c);
+        update_hint_win_for_move_resize(c);
         while(1)
         {
             XEvent ev;
@@ -109,7 +109,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
             if( ev.type==KeyRelease && ev.xkey.state==e->xkey.state
                 && ev.xkey.keycode==e->xkey.keycode)
             {
-                XUnmapWindow(xinfo.display, wm->hint_win);
+                XUnmapWindow(xinfo.display, xinfo.hint_win);
                 break;
             }
             else
@@ -157,9 +157,9 @@ void clear_wm(WM *wm)
     XDestroyWindow(xinfo.display, wm->taskbar->win);
     XDestroyWindow(xinfo.display, wm->act_center->win);
     XDestroyWindow(xinfo.display, wm->client_menu->win);
-    XDestroyWindow(xinfo.display, wm->run_cmd->win);
-    XDestroyWindow(xinfo.display, wm->hint_win);
+    XDestroyWindow(xinfo.display, xinfo.hint_win);
     XDestroyWindow(xinfo.display, wm->wm_check_win);
+    destroy_entry(wm->run_cmd);
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
         XDestroyWindow(xinfo.display, wm->top_wins[i]);
     XFreeGC(xinfo.display, wm->gc);
@@ -167,8 +167,6 @@ void clear_wm(WM *wm)
     for(size_t i=0; i<POINTER_ACT_N; i++)
         XFreeCursor(xinfo.display, wm->cursors[i]);
     XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
-    if(wm->run_cmd->xic)
-        XDestroyIC(wm->run_cmd->xic);
     if(xinfo.xim)
         XCloseIM(xinfo.xim);
     close_font(wm);
@@ -176,7 +174,7 @@ void clear_wm(WM *wm)
     XFlush(xinfo.display);
     XCloseDisplay(xinfo.display);
     clear_zombies(0);
-    free_files(wm->wallpapers);
+    free_strings(wm->wallpapers);
     for(size_t i=0; i<DESKTOP_N; i++)
         free(wm->desktop[i]);
     vfree(wm->taskbar->status_text, wm->taskbar, wm->act_center, wm->run_cmd,
@@ -397,7 +395,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
             wm->event_handlers[ev.type](wm, &ev);
     }while(!is_match_button_release(e, &ev));
     XUngrabPointer(xinfo.display, CurrentTime);
-    XUnmapWindow(xinfo.display, wm->hint_win);
+    XUnmapWindow(xinfo.display, xinfo.hint_win);
     update_win_state_for_move_resize(wm, c);
 }
 
@@ -409,7 +407,7 @@ static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointe
         return;
 
     move_resize_client(wm, c, &d);
-    update_hint_win_for_move_resize(wm, c);
+    update_hint_win_for_move_resize(c);
     if(act != MOVE)
     {
         if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
@@ -490,14 +488,14 @@ static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, 
     return true;
 }
 
-static void update_hint_win_for_move_resize(WM *wm, Client *c)
+static void update_hint_win_for_move_resize(Client *c)
 {
     char str[BUFSIZ];
     long col=get_win_col(c->w, &c->size_hint),
          row=get_win_row(c->h, &c->size_hint);
 
     sprintf(str, "(%d, %d) %ldx%ld", c->x, c->y, col, row);
-    update_hint_win_for_info(wm, None, str);
+    update_hint_win_for_info(None, str);
 }
 
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act)
@@ -734,7 +732,7 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    show_entry(wm, wm->run_cmd);
+    show_entry(wm->run_cmd);
 }
 
 void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
@@ -745,11 +743,11 @@ void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
     Pixmap pixmap=None;
     if(cfg->wallpaper_paths)
     {
-        File *f=wm->cur_wallpaper;
+        Strings *f=wm->cur_wallpaper;
         if(f)
         {
             f=wm->cur_wallpaper=(f->next ? f->next : wm->wallpapers->next);
-            pixmap=create_pixmap_from_file(xinfo.root_win, f->name);
+            pixmap=create_pixmap_from_file(xinfo.root_win, f->str);
         }
     }
     update_win_bg(xinfo.root_win, color, pixmap);

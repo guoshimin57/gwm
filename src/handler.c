@@ -131,7 +131,7 @@ static void unmap_for_click(WM *wm, Widget_type type)
     if(type!=RUN_CMD_ENTRY && type!=RUN_BUTTON)
     {
         XUnmapWindow(xinfo.display, wm->run_cmd->win);
-        XUnmapWindow(xinfo.display, wm->hint_win);
+        XUnmapWindow(xinfo.display, xinfo.hint_win);
     }
 }
 
@@ -486,7 +486,7 @@ static void handle_pointer_hover(WM *wm, Window hover, Widget_type type)
             XNextEvent(xinfo.display, &ev);
                 wm->event_handlers[ev.type](wm, &ev);
             if(ev.type == MotionNotify && ev.xmotion.window==hover)
-                XUnmapWindow(xinfo.display, wm->hint_win), t=t0, done=false;
+                XUnmapWindow(xinfo.display, xinfo.hint_win), t=t0, done=false;
             else if(ev.type==LeaveNotify && ev.xcrossing.window==hover)
                 break;
         }
@@ -500,11 +500,11 @@ static void handle_pointer_hover(WM *wm, Window hover, Widget_type type)
             {
                 t=t0;
                 if(!done)
-                    update_hint_win_for_info(wm, hover, tooltip), done=true;
+                    update_hint_win_for_info(hover, tooltip), done=true;
             }
         }
     }
-    XUnmapWindow(xinfo.display, wm->hint_win);
+    XUnmapWindow(xinfo.display, xinfo.hint_win);
 }
 
 static const char *get_tooltip(WM *wm, Window win, Widget_type type)
@@ -541,7 +541,7 @@ static void handle_expose(WM *wm, XEvent *e)
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
         update_title_button_fg(wm, c, WIDGET_INDEX(type, TITLE_BUTTON));
     else if(type == RUN_CMD_ENTRY)
-        update_entry_text(wm, wm->run_cmd);
+        update_entry_text(wm->run_cmd);
 }
 
 static void update_title_logo_fg(Client *c)
@@ -619,7 +619,7 @@ static void handle_key_press(WM *wm, XEvent *e)
 
 static void key_run_cmd(WM *wm, XKeyEvent *e)
 {
-    if(!input_for_entry(wm, wm->run_cmd, e))
+    if(!input_for_entry(wm->run_cmd, e))
         return;
 
     char cmd[BUFSIZ]={0};
@@ -786,5 +786,5 @@ static void handle_selection_notify(WM *wm, XEvent *e)
     Window win=e->xselection.requestor;
     if( is_spec_icccm_atom(e->xselection.property, UTF8_STRING)
         && win==wm->run_cmd->win)
-        paste_for_entry(wm, wm->run_cmd);
+        paste_for_entry(wm->run_cmd);
 }

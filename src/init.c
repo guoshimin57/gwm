@@ -18,7 +18,7 @@ static void set_workarea(WM *wm);
 static void set_atoms(void);
 static void create_cursors(WM *wm);
 static void create_run_cmd_entry(WM *wm);
-static void create_hint_win(WM *wm);
+static void create_hint_win(void);
 static void create_client_menu(WM *wm);
 static void create_clients(WM *wm);
 static void init_imlib(void);
@@ -58,7 +58,7 @@ void init_wm(WM *wm)
     set_workarea(wm);
     create_taskbar(wm);
     create_run_cmd_entry(wm);
-    create_hint_win(wm);
+    create_hint_win();
     create_client_menu(wm);
     create_clients(wm);
     grab_keys();
@@ -133,18 +133,18 @@ static void create_cursors(WM *wm)
 static void create_run_cmd_entry(WM *wm)
 {
     int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
-        ew, eh=get_font_height_by_pad(), pad=get_font_pad();
-    get_string_size(cfg->run_cmd_entry_hint, &ew, NULL);
-    ew += 2*pad, ew = (ew>=sw/4 && ew<=sw-2*bw) ? ew : sw/4;
-    Rect r={(sw-ew)/2-bw, (sh-eh)/2-bw, ew, eh};
-    wm->run_cmd=create_entry(wm, &r, cfg->run_cmd_entry_hint);
+        x, y, w, h=get_font_height_by_pad(), pad=get_font_pad();
+    get_string_size(cfg->run_cmd_entry_hint, &w, NULL);
+    w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
+    x=(sw-w)/2-bw, y=(sh-h)/2-bw;
+    wm->run_cmd=create_cmd_entry(x, y, w, h, cfg->run_cmd_entry_hint);
 }
 
-static void create_hint_win(WM *wm)
+static void create_hint_win(void)
 {
-    wm->hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
+    xinfo.hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
         get_widget_color(HINT_WIN_COLOR));
-    XSelectInput(xinfo.display, wm->hint_win, ExposureMask);
+    XSelectInput(xinfo.display, xinfo.hint_win, ExposureMask);
 }
 
 static void create_client_menu(WM *wm)

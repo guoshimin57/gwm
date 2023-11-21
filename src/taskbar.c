@@ -89,7 +89,8 @@ void update_taskbar_buttons_bg(WM *wm)
 void update_taskbar_button_bg(WM *wm, Widget_type type)
 {
     Window win=wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
-    unsigned long color=get_widget_color(TASKBAR_COLOR);
+    unsigned long color=get_widget_color(is_chosen_button(wm, type) ?
+        CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
 
     if(IS_WIDGET_CLASS(type, DESKTOP_BUTTON))
     {
@@ -100,8 +101,6 @@ void update_taskbar_button_bg(WM *wm, Widget_type type)
                 color=get_widget_color(URGENCY_WIDGET_COLOR);
             else if(have_attention(wm, desktop_n))
                 color=get_widget_color(ATTENTION_WIDGET_COLOR);
-            else if(is_chosen_button(wm, type))
-                color=get_widget_color(CHOSEN_BUTTON_COLOR);
         }
     }
     update_win_bg(win, color, None);

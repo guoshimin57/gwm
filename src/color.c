@@ -48,7 +48,7 @@ void update_widget_bg(WM *wm)
     update_taskbar_bg(wm);
     update_act_center_bg(wm);
     update_run_cmd_bg(wm);
-    update_win_bg(wm->hint_win, get_widget_color(HINT_WIN_COLOR), None);
+    update_win_bg(xinfo.hint_win, get_widget_color(HINT_WIN_COLOR), None);
     update_client_menu_bg(wm);
     update_clients_bg(wm);
 }

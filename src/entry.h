@@ -21,12 +21,15 @@ struct entry_tag // 輸入構件
     const char *hint; // 構件的提示文字
     size_t cursor_offset; // 光標位置
     XIC xic; // 輸入法句柄
+    Strings *(*complete)(Entry *, int *);
 };
 
-Entry *create_entry(WM *wm, Rect *r, const char *hint);
-void show_entry(WM *wm, Entry *e);
-bool input_for_entry(WM *wm, Entry *e, XKeyEvent *ke);
-void update_entry_text(WM *wm, Entry *e);
-void paste_for_entry(WM *wm, Entry *e);
+Entry *create_entry(int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *));
+Entry *create_cmd_entry(int x, int y, int w, int h, const char *hint);
+void show_entry(Entry *entry);
+void update_entry_text(Entry *entry);
+bool input_for_entry(Entry *entry, XKeyEvent *ke);
+void destroy_entry(Entry *entry);
+void paste_for_entry(Entry *entry);
 
 #endif
