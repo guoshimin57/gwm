@@ -47,7 +47,6 @@ static void handle_enter_notify(WM *wm, XEvent *e);
 static void handle_pointer_hover(WM *wm, Window hover, Widget_type type);
 static const char *get_tooltip(WM *wm, Window win, Widget_type type);
 static void handle_expose(WM *wm, XEvent *e);
-static void update_title_logo_fg(Client *c);
 static void update_title_area_fg(WM *wm, Client *c);
 static void update_title_button_fg(WM *wm, Client *c, size_t index);
 static void handle_focus_in(WM *wm, XEvent *e);
@@ -535,25 +534,13 @@ static void handle_expose(WM *wm, XEvent *e)
     else if(type == STATUS_AREA)
         update_status_area_fg(wm);
     else if(type == TITLE_LOGO)
-        update_title_logo_fg(c);
+        draw_icon(c->logo, c->image, c->class_name, c->titlebar_h);
     else if(type == TITLE_AREA)
         update_title_area_fg(wm, c);
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
         update_title_button_fg(wm, c, WIDGET_INDEX(type, TITLE_BUTTON));
     else if(type == RUN_CMD_ENTRY)
         update_entry_text(wm->run_cmd);
-}
-
-static void update_title_logo_fg(Client *c)
-{
-    if(c->image)
-        draw_image(c->image, c->logo, 0, 0, c->titlebar_h, c->titlebar_h);
-    else
-    {
-        Str_fmt f={0, 0, c->titlebar_h, c->titlebar_h, CENTER, false, false, 0,
-            get_text_color(CLASS_TEXT_COLOR)};
-        draw_string(c->logo, c->class_name, &f);
-    }
 }
 
 static void update_title_area_fg(WM *wm, Client *c)

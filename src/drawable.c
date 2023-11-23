@@ -291,3 +291,16 @@ void restack_win(WM *wm, Window win)
         wins[0]=wm->top_wins[NORMAL_TOP];
     XRestackWindows(xinfo.display, wins, 2);
 }
+
+void draw_icon(Drawable d, Imlib_Image image, const char *name, int size)
+{
+    if(image)
+        draw_image(image, d, 0, 0, size, size);
+    else
+    {
+        char s[2]={name[0], '\0'};
+        XftColor color=get_text_color(CLASS_TEXT_COLOR);
+        Str_fmt fmt={0, 0, size, size, CENTER, false, false, 0, color};
+        draw_string(d, s, &fmt);
+    }
+}

@@ -27,5 +27,6 @@ Pixmap create_pixmap_from_file(Window win, const char *filename);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void set_visual_for_imlib(Drawable d);
 void restack_win(WM *wm, Window win);
+void draw_icon(Drawable d, Imlib_Image image, const char *name, int size);
 
 #endif

@@ -103,7 +103,7 @@ void set_net_number_of_desktops(int n);
 void set_net_desktop_geometry(int w, int h);
 void set_net_desktop_viewport(int x, int y);
 void set_net_current_desktop(unsigned int cur_desktop);
-unsigned int get_net_wm_desktop(Window win);
+bool get_net_wm_desktop(Window win, unsigned int *desktop);
 void set_net_desktop_names(const char **names, int n);
 void set_net_active_window(Window act_win);
 void set_net_workarea(int x, int y, int w, int h, int desktop_n);

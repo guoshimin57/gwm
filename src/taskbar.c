@@ -15,7 +15,6 @@ static void create_taskbar_buttons(WM *wm);
 static void create_icon_area(WM *wm);
 static void create_status_area(WM *wm);
 static void create_act_center(WM *wm);
-static void draw_client_icon(WM *wm, Client *c);
 
 void create_taskbar(WM *wm)
 {
@@ -146,24 +145,11 @@ void update_client_icon_fg(WM *wm, Window win)
         return;
 
     Icon *i=c->icon;
-    draw_client_icon(wm, c);
+    draw_icon(c->icon->win, c->image, c->class_name, wm->taskbar->h);
     if(i->show_text)
     {
         Str_fmt f={wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h, CENTER,
             false, false, 0, get_text_color(TASKBAR_TEXT_COLOR)};
         draw_string(i->win, i->title_text, &f);
-    }
-}
-
-static void draw_client_icon(WM *wm, Client *c)
-{
-    int size=wm->taskbar->h;
-    if(c->image)
-        draw_image(c->image, c->icon->win, 0, 0, size, size);
-    else
-    {
-        Str_fmt f={0, 0, size, size, CENTER, false, false, 0,
-            get_text_color(CLASS_TEXT_COLOR)};
-        draw_string(c->icon->win, c->class_name, &f);
     }
 }

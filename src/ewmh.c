@@ -123,16 +123,16 @@ void set_net_current_desktop(unsigned int cur_desktop)
     replace_cardinal_prop(xinfo.root_win, prop, &cur, 1);
 }
 
-unsigned int get_net_wm_desktop(Window win)
+bool get_net_wm_desktop(Window win, unsigned int *desktop)
 {
-        unsigned char *p=get_prop(win, ewmh_atoms[NET_WM_DESKTOP], NULL);
+    unsigned char *p=get_prop(win, ewmh_atoms[NET_WM_DESKTOP], NULL);
 
-        if(!p)
-           return 0;
+    if(!p)
+       return false;
 
-        unsigned int desktop=*(unsigned long *)p;
-        XFree(p);
-        return desktop;
+    *desktop=*(unsigned long *)p;
+    XFree(p);
+    return true;
 }
 
 void set_net_desktop_names(const char **names, int n)

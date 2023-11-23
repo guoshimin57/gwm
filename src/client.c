@@ -14,7 +14,7 @@
 
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);
-static void set_default_desktop_mask(Client *c);
+static void set_default_desktop_mask(Client *c, unsigned int cur_desktop);
 static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static Client *get_head_for_add_client(WM *wm, Client *c);
@@ -105,7 +105,7 @@ static Client *new_client(WM *wm, Window win)
     update_size_hint(c->win, cfg->resize_inc, &c->size_hint);
     c->image=get_icon_image(c->win, c->wm_hint, c->class_hint.res_name,
         cfg->icon_image_size, cfg->cur_icon_theme);
-    set_default_desktop_mask(c);
+    set_default_desktop_mask(c, wm->cur_desktop);
 
     return c;
 }
@@ -116,14 +116,16 @@ static bool should_hide_frame(Client *c)
         || c->win_state.skip_pager || c->win_state.skip_taskbar;
 }
 
-static void set_default_desktop_mask(Client *c)
+static void set_default_desktop_mask(Client *c, unsigned int cur_desktop)
 {
     if(c->win_state.sticky)
         c->desktop_mask=~0U;
     else
     {
-        unsigned int desktop=get_net_wm_desktop(c->win)+1;
-        c->desktop_mask = desktop==~0U ? desktop : get_desktop_mask(desktop);
+        unsigned int desktop;
+        if(!get_net_wm_desktop(c->win, &desktop))
+            desktop=cur_desktop-1;
+        c->desktop_mask = desktop==~0U ? desktop : get_desktop_mask(desktop+1);
     }
 }
 
