@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.7.8\n"
+"Project-Id-Version: gwm 2.7.9\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-11-18 20:07+0800\n"
+"POT-Creation-Date: 2023-11-26 12:45+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -18,233 +18,233 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. 操作中心按鈕類型             按鈕文字
-#: src/config.c:469
+#: src/config.c:471
 msgid "幫助"
 msgstr "Help"
 
-#: src/config.c:470
+#: src/config.c:472
 msgid "文件"
 msgstr "File"
 
-#: src/config.c:471
+#: src/config.c:473
 msgid "終端模擬器"
 msgstr "Terminal"
 
-#: src/config.c:472
+#: src/config.c:474
 msgid "網絡瀏覽器"
 msgstr "Web browser"
 
-#: src/config.c:474
+#: src/config.c:476
 msgid "遊戲"
 msgstr "Game"
 
-#: src/config.c:475
+#: src/config.c:477
 msgid "播放影音"
 msgstr "Start Play"
 
-#: src/config.c:476
+#: src/config.c:478
 msgid "切換播放狀態"
 msgstr "Toggle Play"
 
-#: src/config.c:477
+#: src/config.c:479
 msgid "關閉影音"
 msgstr "Quit Play"
 
-#: src/config.c:479
+#: src/config.c:481
 msgid "减小音量"
 msgstr "Volume down"
 
-#: src/config.c:480
+#: src/config.c:482
 msgid "增大音量"
 msgstr "Volume up"
 
-#: src/config.c:481
+#: src/config.c:483
 msgid "最大音量"
 msgstr "Volume max"
 
-#: src/config.c:482
+#: src/config.c:484
 msgid "靜音切換"
 msgstr "Mute toggle"
 
-#: src/config.c:484
+#: src/config.c:486
 msgid "暫主區開窗"
 msgstr "Main next"
 
-#: src/config.c:485
+#: src/config.c:487
 msgid "暫次區開窗"
 msgstr "Sec next"
 
-#: src/config.c:486
+#: src/config.c:488
 msgid "暫固定區開窗"
 msgstr "Fixed next"
 
-#: src/config.c:487
+#: src/config.c:489
 msgid "暫懸浮層開窗"
 msgstr "Float next"
 
-#: src/config.c:489
+#: src/config.c:491
 msgid "增大主區容量"
 msgstr "Main area n+"
 
-#: src/config.c:490
+#: src/config.c:492
 msgid "减小主區容量"
 msgstr "Main area n-"
 
-#: src/config.c:491
+#: src/config.c:493
 msgid "開關當前窗口標題欄"
 msgstr "Toggle cur win titlebar"
 
-#: src/config.c:492
+#: src/config.c:494
 msgid "開關當前窗口邊框"
 msgstr "Toggle cur win border"
 
-#: src/config.c:494
+#: src/config.c:496
 msgid "關閉桌面所有窗口"
 msgstr "Close all win on desktop"
 
-#: src/config.c:495
+#: src/config.c:497
 msgid "當前窗口截圖"
 msgstr "Cur win screenshot"
 
-#: src/config.c:496
+#: src/config.c:498
 msgid "全屏截圖"
 msgstr "Full screen screenshot"
 
-#: src/config.c:497
+#: src/config.c:499
 msgid "切換聚焦模式"
 msgstr "Toggle focus"
 
-#: src/config.c:499
+#: src/config.c:501
 msgid "開關合成器"
 msgstr "Toggle compositor"
 
-#: src/config.c:500
+#: src/config.c:502
 msgid "切換壁紙"
 msgstr "Switch wallpaper"
 
-#: src/config.c:501
+#: src/config.c:503
 msgid "切換顏色主題"
 msgstr "Switch color theme"
 
-#: src/config.c:502
+#: src/config.c:504
 msgid "退出gwm"
 msgstr "Quit gwm"
 
-#: src/config.c:504
+#: src/config.c:506
 msgid "注銷"
 msgstr "Logout"
 
-#: src/config.c:505
+#: src/config.c:507
 msgid "重啓"
 msgstr "Reboot"
 
-#: src/config.c:506
+#: src/config.c:508
 msgid "關機"
 msgstr "Shutdown"
 
-#: src/config.c:507
+#: src/config.c:509
 msgid "運行"
 msgstr "Run"
 
 #. 客戶窗口菜單項類型       按鈕文字
-#: src/config.c:516
+#: src/config.c:518
 msgid "卷起/放下"
 msgstr "Roll up / Put down"
 
-#: src/config.c:517
+#: src/config.c:519
 msgid "縱向最大化"
 msgstr "Vertical max"
 
-#: src/config.c:518
+#: src/config.c:520
 msgid "橫向最大化"
 msgstr "Horizontal max"
 
-#: src/config.c:519
+#: src/config.c:521
 msgid "最大化至上半屏"
 msgstr "Max to top half screen"
 
-#: src/config.c:520
+#: src/config.c:522
 msgid "最大化至下半屏"
 msgstr "Max to bottom half screen"
 
-#: src/config.c:521
+#: src/config.c:523
 msgid "最大化至左半屏"
 msgstr "Max to left half screen"
 
-#: src/config.c:522
+#: src/config.c:524
 msgid "最大化至右半屏"
 msgstr "Max to right half screen"
 
-#: src/config.c:523
+#: src/config.c:525
 msgid "完全最大化"
 msgstr "fully max"
 
 #. 構件類型             構件功能提示文字
-#: src/config.c:535
+#: src/config.c:537
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: src/config.c:536
+#: src/config.c:538
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: src/config.c:537
+#: src/config.c:539
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: src/config.c:538
+#: src/config.c:540
 msgid "切換到懸浮層"
 msgstr "To float layer"
 
-#: src/config.c:539
+#: src/config.c:541
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: src/config.c:540
+#: src/config.c:542
 msgid "最大化/還原窗口"
 msgstr "Max/Restore window"
 
-#: src/config.c:541
+#: src/config.c:543
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: src/config.c:542
+#: src/config.c:544
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: src/config.c:543
+#: src/config.c:545
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: src/config.c:544
+#: src/config.c:546
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: src/config.c:545
+#: src/config.c:547
 msgid "切換到預覽模式"
 msgstr "To preview mode"
 
-#: src/config.c:546
+#: src/config.c:548
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: src/config.c:547
+#: src/config.c:549
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: src/config.c:548
+#: src/config.c:550
 msgid "顯示桌面"
 msgstr "Show desktop"
 
-#: src/config.c:549
+#: src/config.c:551
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: src/config.c:550
+#: src/config.c:552
 msgid "打開窗口菜單"
 msgstr "Open window menu"
 
-#: src/config.c:579
+#: src/config.c:581
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
@@ -302,32 +302,32 @@ msgstr "Error: The corresponding modifier key for the specified key symbol could
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "Error: The key symbol specified does not have a corresponding key code!\n"
 
-#: src/gwm.c:53
+#: src/gwm.c:52
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "SIGCHLD signal handler function cannot be installed"
 
-#: src/gwm.c:55
+#: src/gwm.c:54
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "SIGINT signal handler cannot be installed"
 
-#: src/gwm.c:57
+#: src/gwm.c:56
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "SIGTERM signal handler cannot be installed"
 
-#: src/gwm.c:59
+#: src/gwm.c:58
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "SIGQUIT signal handler cannot be installed"
 
-#: src/gwm.c:61
+#: src/gwm.c:60
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 
-#: src/init.c:117
+#: src/init.c:116
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: src/init.c:169
+#: src/init.c:158
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 

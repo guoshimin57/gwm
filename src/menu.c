@@ -11,6 +11,8 @@
 
 #include "gwm.h"
 
+Menu *act_center=NULL, *client_menu=NULL; // 操作中心, 客戶窗口菜單
+
 Menu *create_menu(const char *item_text[], int n, int col)
 {
     Menu *menu=malloc_s(sizeof(Menu));
@@ -50,23 +52,32 @@ void show_menu(XEvent *e, Menu *menu, Window bind)
     XMapWindow(xinfo.display, menu->win);
 }
 
-void update_menu_item_fg(WM *wm, Window win)
+void update_menu_bg(Menu *menu, int n)
 {
-    Menu *m=NULL;
-    const char *text=NULL;
-    Widget_type t=get_widget_type(wm, win);
-    if(IS_WIDGET_CLASS(t, ACT_CENTER_ITEM))
-    {
-        text=cfg->act_center_item_text[WIDGET_INDEX(t, ACT_CENTER_ITEM)];
-        m=wm->act_center;
-    }
-    else
-    {
-        text=cfg->client_menu_item_text[WIDGET_INDEX(t, CLIENT_MENU_ITEM)];
-        m=wm->client_menu;
-    }
+    unsigned long bg=get_widget_color(MENU_COLOR);
+    update_win_bg(menu->win, bg, None);
+    for(int i=0; i<n; i++)
+        update_win_bg(menu->items[i], bg, None);
+}
 
-    Str_fmt f={0, 0, m->w, m->h, CENTER_LEFT, true, false, 0,
+void update_menu_item_fg(Menu *menu, int i)
+{
+    const char *text=NULL;
+
+    if(menu == act_center)
+        text=cfg->act_center_item_text[i];
+    else if(menu == client_menu)
+        text=cfg->client_menu_item_text[i];
+    else
+        return;
+
+    Str_fmt fmt={0, 0, menu->w, menu->h, CENTER_LEFT, true, false, 0,
         get_text_color(MENU_TEXT_COLOR)};
-    draw_string(win, text, &f);
+    draw_string(menu->items[i], text, &fmt);
+}
+
+void destroy_menu(Menu *menu)
+{
+    XDestroyWindow(xinfo.display, menu->win);
+    vfree(menu->items, menu);
 }

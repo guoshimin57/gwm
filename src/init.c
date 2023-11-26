@@ -17,9 +17,8 @@ static void create_refer_wins(WM *wm);
 static void set_workarea(WM *wm);
 static void set_atoms(void);
 static void create_cursors(WM *wm);
-static void create_run_cmd_entry(WM *wm);
 static void create_hint_win(void);
-static void create_client_menu(WM *wm);
+static void create_client_menu(void);
 static void create_clients(WM *wm);
 static void init_imlib(void);
 static void init_wallpaper_files(WM *wm);
@@ -57,9 +56,9 @@ void init_wm(WM *wm)
     XDefineCursor(xinfo.display, xinfo.root_win, wm->cursors[NO_OP]);
     set_workarea(wm);
     create_taskbar(wm);
-    create_run_cmd_entry(wm);
+    cmd_entry=create_cmd_entry();
     create_hint_win();
-    create_client_menu(wm);
+    create_client_menu();
     create_clients(wm);
     grab_keys();
     exec_autostart();
@@ -130,16 +129,6 @@ static void create_cursors(WM *wm)
         wm->cursors[i]=XCreateFontCursor(xinfo.display, cfg->cursor_shape[i]);
 }
 
-static void create_run_cmd_entry(WM *wm)
-{
-    int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
-        x, y, w, h=get_font_height_by_pad(), pad=get_font_pad();
-    get_string_size(cfg->run_cmd_entry_hint, &w, NULL);
-    w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
-    x=(sw-w)/2-bw, y=(sh-h)/2-bw;
-    wm->run_cmd=create_cmd_entry(x, y, w, h, cfg->run_cmd_entry_hint);
-}
-
 static void create_hint_win(void)
 {
     xinfo.hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
@@ -147,9 +136,9 @@ static void create_hint_win(void)
     XSelectInput(xinfo.display, xinfo.hint_win, ExposureMask);
 }
 
-static void create_client_menu(WM *wm)
+static void create_client_menu(void)
 {
-    wm->client_menu=create_menu(cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
+    client_menu=create_menu(cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */

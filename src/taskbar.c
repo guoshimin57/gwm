@@ -14,7 +14,7 @@
 static void create_taskbar_buttons(WM *wm);
 static void create_icon_area(WM *wm);
 static void create_status_area(WM *wm);
-static void create_act_center(WM *wm);
+static void create_act_center(void);
 
 void create_taskbar(WM *wm)
 {
@@ -27,7 +27,7 @@ void create_taskbar(WM *wm)
     create_taskbar_buttons(wm);
     create_status_area(wm);
     create_icon_area(wm);
-    create_act_center(wm);
+    create_act_center();
     XMapSubwindows(xinfo.display, b->win);
     if(cfg->show_taskbar)
         XMapWindow(xinfo.display, b->win);
@@ -73,9 +73,9 @@ static void create_status_area(WM *wm)
     XSelectInput(xinfo.display, b->status_area, ExposureMask);
 }
 
-static void create_act_center(WM *wm)
+static void create_act_center(void)
 {
-    wm->act_center=create_menu(cfg->act_center_item_text,
+    act_center=create_menu(cfg->act_center_item_text,
         ACT_CENTER_ITEM_N, cfg->act_center_col);
 }
 

@@ -155,11 +155,11 @@ void clear_wm(WM *wm)
         del_client(wm, c, true);
     }
     XDestroyWindow(xinfo.display, wm->taskbar->win);
-    XDestroyWindow(xinfo.display, wm->act_center->win);
-    XDestroyWindow(xinfo.display, wm->client_menu->win);
     XDestroyWindow(xinfo.display, xinfo.hint_win);
     XDestroyWindow(xinfo.display, wm->wm_check_win);
-    destroy_entry(wm->run_cmd);
+    destroy_entry(cmd_entry);
+    destroy_menu(act_center);
+    destroy_menu(client_menu);
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
         XDestroyWindow(xinfo.display, wm->top_wins[i]);
     XFreeGC(xinfo.display, wm->gc);
@@ -177,8 +177,7 @@ void clear_wm(WM *wm)
     free_strings(wm->wallpapers);
     for(size_t i=0; i<DESKTOP_N; i++)
         free(wm->desktop[i]);
-    vfree(wm->taskbar->status_text, wm->taskbar, wm->act_center, wm->run_cmd,
-        cfg, NULL);
+    vfree(wm->taskbar->status_text, wm->taskbar, cfg, NULL);
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)
@@ -637,14 +636,14 @@ void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)
 
 void open_act_center(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(arg);
-    show_menu(e, wm->act_center, e->xbutton.window);
+    UNUSED(wm), UNUSED(arg);
+    show_menu(e, act_center, e->xbutton.window);
 }
 
 void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(arg);
-    show_menu(e, wm->client_menu, e->xbutton.window);
+    UNUSED(wm), UNUSED(arg);
+    show_menu(e, client_menu, e->xbutton.window);
 }
 
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
@@ -731,8 +730,8 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    show_entry(wm->run_cmd);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    show_entry(cmd_entry);
 }
 
 void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)

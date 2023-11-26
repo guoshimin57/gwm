@@ -16,7 +16,7 @@
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
-static void unmap_for_click(WM *wm, Widget_type type);
+static void unmap_for_click(Widget_type type);
 static bool is_func_click(Widget_type type, const Buttonbind *b, XEvent *e);
 static void focus_clicked_client(WM *wm, Window win);
 static void handle_client_message(WM *wm, XEvent *e);
@@ -118,18 +118,18 @@ static void handle_button_press(WM *wm, XEvent *e)
                 b->func(wm, e, b->arg);
         }
     }
-    unmap_for_click(wm, type);
+    unmap_for_click(type);
 }
 
-static void unmap_for_click(WM *wm, Widget_type type)
+static void unmap_for_click(Widget_type type)
 {
     if(type != ACT_CENTER_ITEM)
-        XUnmapWindow(xinfo.display, wm->act_center->win);
+        XUnmapWindow(xinfo.display, act_center->win);
     if(type != TITLE_LOGO)
-        XUnmapWindow(xinfo.display, wm->client_menu->win);
+        XUnmapWindow(xinfo.display, client_menu->win);
     if(type!=RUN_CMD_ENTRY && type!=RUN_BUTTON)
     {
-        XUnmapWindow(xinfo.display, wm->run_cmd->win);
+        XUnmapWindow(xinfo.display, cmd_entry->win);
         XUnmapWindow(xinfo.display, xinfo.hint_win);
     }
 }
@@ -529,8 +529,10 @@ static void handle_expose(WM *wm, XEvent *e)
         update_client_icon_fg(wm, win);
     else if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
         update_taskbar_button_fg(wm, type);
-    else if(IS_MENU_ITEM(type))
-        update_menu_item_fg(wm, win);
+    else if(IS_WIDGET_CLASS(type, ACT_CENTER_ITEM))
+        update_menu_item_fg(act_center, WIDGET_INDEX(type, ACT_CENTER_ITEM));
+    else if(IS_WIDGET_CLASS(type, CLIENT_MENU_ITEM))
+        update_menu_item_fg(client_menu, WIDGET_INDEX(type, CLIENT_MENU_ITEM));
     else if(type == STATUS_AREA)
         update_status_area_fg(wm);
     else if(type == TITLE_LOGO)
@@ -540,7 +542,7 @@ static void handle_expose(WM *wm, XEvent *e)
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
         update_title_button_fg(wm, c, WIDGET_INDEX(type, TITLE_BUTTON));
     else if(type == RUN_CMD_ENTRY)
-        update_entry_text(wm->run_cmd);
+        update_entry_text(cmd_entry);
 }
 
 static void update_title_area_fg(WM *wm, Client *c)
@@ -588,7 +590,7 @@ static void handle_focus_out(WM *wm, XEvent *e)
 
 static void handle_key_press(WM *wm, XEvent *e)
 {
-    if(e->xkey.window == wm->run_cmd->win)
+    if(e->xkey.window == cmd_entry->win)
         key_run_cmd(wm, &e->xkey);
     else
     {
@@ -606,11 +608,11 @@ static void handle_key_press(WM *wm, XEvent *e)
 
 static void key_run_cmd(WM *wm, XKeyEvent *e)
 {
-    if(!input_for_entry(wm->run_cmd, e))
+    if(!input_for_entry(cmd_entry, e))
         return;
 
     char cmd[BUFSIZ]={0};
-    wcstombs(cmd, wm->run_cmd->text, BUFSIZ);
+    wcstombs(cmd, cmd_entry->text, BUFSIZ);
     exec(wm, NULL, (Func_arg)SH_CMD(cmd));
 }
 
@@ -770,8 +772,9 @@ static void handle_wm_transient_for_notify(WM *wm, Window win)
 
 static void handle_selection_notify(WM *wm, XEvent *e)
 {
+    UNUSED(wm);
     Window win=e->xselection.requestor;
     if( is_spec_icccm_atom(e->xselection.property, UTF8_STRING)
-        && win==wm->run_cmd->win)
-        paste_for_entry(wm->run_cmd);
+        && win==cmd_entry->win)
+        paste_for_entry(cmd_entry);
 }

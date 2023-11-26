@@ -86,8 +86,6 @@
 typedef struct desktop_tag Desktop;
 typedef struct taskbar_tag Taskbar;
 typedef struct client_tag Client;
-typedef struct menu_tag Menu;
-typedef struct entry_tag Entry;
 
 typedef struct // 與X相關的信息
 {
@@ -226,15 +224,13 @@ struct wm_tag // 窗口管理器相關信息
     long map_count; // 所有客戶窗口的累計映射次數
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
     Rect workarea; // 工作區坐標和尺寸
-    Window hint_win, wm_check_win; // 提示窗口、WM檢測窗口
+    Window wm_check_win; // WM檢測窗口
     Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
     GC gc; // 窗口管理器的圖形信息
     Client *clients; // 頭結點
     Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
     Cursor cursors[POINTER_ACT_N]; // 光標
     Taskbar *taskbar; // 任務欄
-    Menu *act_center, *client_menu; // 操作中心, 客戶窗口菜單
-    Entry *run_cmd; // 輸入命令並執行的構件
     void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
 };
 typedef struct wm_tag WM;
@@ -308,9 +304,6 @@ struct delta_rect_tag /* 調整窗口尺寸的信息 */
 };
 typedef struct delta_rect_tag Delta_rect;
 
-extern sig_atomic_t run_flag; // 程序運行標志
-extern Xinfo xinfo;
-
 #include "client.h"
 #include "color.h"
 #include "config.h"
@@ -331,5 +324,9 @@ extern Xinfo xinfo;
 #include "misc.h"
 #include "prop.h"
 #include "taskbar.h"
+
+extern sig_atomic_t run_flag; // 程序運行標志
+extern Xinfo xinfo;
+extern Entry *cmd_entry; // 輸入命令並執行的構件
 
 #endif

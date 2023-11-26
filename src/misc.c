@@ -58,7 +58,7 @@ Widget_type get_widget_type(WM *wm, Window win)
     Client *c;
     if(win == xinfo.root_win)
         return ROOT_WIN;
-    if(win == wm->run_cmd->win)
+    if(win == cmd_entry->win)
         return RUN_CMD_ENTRY;
     if(win == xinfo.hint_win)
         return HINT_WIN;
@@ -71,10 +71,10 @@ Widget_type get_widget_type(WM *wm, Window win)
         if(c->icon && win==c->icon->win)
             return CLIENT_ICON;
     for(type=ACT_CENTER_ITEM_BEGIN; type<=ACT_CENTER_ITEM_END; type++)
-        if(win == wm->act_center->items[WIDGET_INDEX(type, ACT_CENTER_ITEM)])
+        if(win == act_center->items[WIDGET_INDEX(type, ACT_CENTER_ITEM)])
             return type;
     for(type=CLIENT_MENU_ITEM_BEGIN; type<=CLIENT_MENU_ITEM_END; type++)
-        if(win == wm->client_menu->items[WIDGET_INDEX(type, CLIENT_MENU_ITEM)])
+        if(win == client_menu->items[WIDGET_INDEX(type, CLIENT_MENU_ITEM)])
             return type;
     if((c=win_to_client(wm, win)))
     {

@@ -12,7 +12,9 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-struct entry_tag // 輸入構件
+typedef struct _entry_tag Entry; // 輸入構件
+
+struct _entry_tag
 {
     Window win;  // 輸入構件的窗口
     int x, y; // 坐標
@@ -25,11 +27,12 @@ struct entry_tag // 輸入構件
 };
 
 Entry *create_entry(int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *));
-Entry *create_cmd_entry(int x, int y, int w, int h, const char *hint);
 void show_entry(Entry *entry);
+void update_entry_bg(Entry *entry);
 void update_entry_text(Entry *entry);
 bool input_for_entry(Entry *entry, XKeyEvent *ke);
 void destroy_entry(Entry *entry);
 void paste_for_entry(Entry *entry);
+Entry *create_cmd_entry(void);
 
 #endif

@@ -55,6 +55,8 @@
     {Mod1Mask|ShiftMask,    key, all_attach_to_desktop,   {.desktop_n=n}}, \
     {ShiftMask|ControlMask, key, attach_to_all_desktops,  {.desktop_n=n}}
 
+Config *cfg=NULL;
+
 /* 功能：設置按鍵功能綁定。
  * 說明：Keybind的定義詳見gwm.h。
  */
@@ -576,7 +578,7 @@ static void config_misc(void)
     cfg->screenshot_format="png";
     cfg->wallpaper_paths="/usr/share/backgrounds/fedora-workstation:/usr/share/wallpapers";
     cfg->wallpaper_filename="/usr/share/backgrounds/gwm.png";
-    cfg->run_cmd_entry_hint=_("請輸入命令，然後按回車執行");
+    cfg->cmd_entry_hint=_("請輸入命令，然後按回車執行");
     cfg->compositor="picom";
     cfg->keybind=keybind;
     cfg->buttonbind=buttonbind;

@@ -14,8 +14,10 @@
 static int get_entry_cursor_x(Entry *entry);
 static char *get_part_match_regex(Entry *entry);
 static void complete_for_entry(Entry *entry, bool show);
-static Strings *get_cmd_completion_for_entry(Entry *entry, int *n);
 static void hide_entry(Entry *entry);
+static Strings *get_cmd_completion_for_entry(Entry *entry, int *n);
+
+Entry *cmd_entry=NULL; // 輸入命令並執行的構件
 
 Entry *create_entry(int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
 {
@@ -29,19 +31,20 @@ Entry *create_entry(int x, int y, int w, int h, const char *hint, Strings *(*com
     return entry;
 }
 
-Entry *create_cmd_entry(int x, int y, int w, int h, const char *hint)
-{
-    return create_entry(x, y, w, h, hint, get_cmd_completion_for_entry);
-}
-
 void show_entry(Entry *entry)
 {
     entry->text[0]=L'\0', entry->cursor_offset=0;
-    XRaiseWindow(xinfo.display, entry->win);
-    XMapWindow(xinfo.display, entry->win);
+    XMapRaised(xinfo.display, entry->win);
     update_entry_text(entry);
     XGrabKeyboard(xinfo.display, entry->win, False,
         GrabModeAsync, GrabModeAsync, CurrentTime);
+}
+
+void update_entry_bg(Entry *entry)
+{
+    update_win_bg(entry->win, get_widget_color(ENTRY_COLOR), None);
+    XSetWindowBorder(xinfo.display, entry->win,
+        get_widget_color(CURRENT_BORDER_COLOR));
 }
 
 void update_entry_text(Entry *entry)
@@ -156,15 +159,6 @@ static void complete_for_entry(Entry *entry, bool show)
     free_strings(strs);
 }
 
-static Strings *get_cmd_completion_for_entry(Entry *entry, int *n)
-{
-    char *regex=get_part_match_regex(entry);
-    char *paths=getenv("PATH");
-    Strings *cmds=get_files_in_paths(paths, regex, RISE, false, n);
-    free(regex);
-    return cmds;
-}
-
 static void hide_entry(Entry *entry)
 {
     XUngrabKeyboard(xinfo.display, CurrentTime);
@@ -177,6 +171,7 @@ void destroy_entry(Entry *entry)
     XDestroyWindow(xinfo.display, entry->win);
     if(entry->xic)
         XDestroyIC(entry->xic);
+    free(entry);
 }
 
 void paste_for_entry(Entry *entry)
@@ -193,4 +188,26 @@ void paste_for_entry(Entry *entry)
     wcsncpy(src, text, n);
     entry->cursor_offset += n;
     update_entry_text(entry);
+}
+
+Entry *create_cmd_entry(void)
+{
+    int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
+        x, y, w, h=get_font_height_by_pad(), pad=get_font_pad();
+
+    get_string_size(cfg->cmd_entry_hint, &w, NULL);
+    w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
+    x=(sw-w)/2-bw, y=(sh-h)/2-bw;
+
+    return create_entry(x, y, w, h, cfg->cmd_entry_hint,
+        get_cmd_completion_for_entry);
+}
+
+static Strings *get_cmd_completion_for_entry(Entry *entry, int *n)
+{
+    char *regex=get_part_match_regex(entry);
+    char *paths=getenv("PATH");
+    Strings *cmds=get_files_in_paths(paths, regex, RISE, false, n);
+    free(regex);
+    return cmds;
 }

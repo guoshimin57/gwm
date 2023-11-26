@@ -14,9 +14,6 @@
 static void alloc_widget_color(const char *color_name, XColor *color);
 static void alloc_text_color(const char *color_name, XftColor *color);
 static void update_taskbar_bg(WM *wm);
-static void update_act_center_bg(WM *wm);
-static void update_run_cmd_bg(WM *wm);
-static void update_client_menu_bg(WM *wm);
 static void update_clients_bg(WM *wm);
 
 static XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
@@ -46,10 +43,10 @@ void alloc_color(void)
 void update_widget_bg(WM *wm)
 {
     update_taskbar_bg(wm);
-    update_act_center_bg(wm);
-    update_run_cmd_bg(wm);
+    update_menu_bg(act_center, ACT_CENTER_ITEM_N);
+    update_menu_bg(client_menu, CLIENT_MENU_ITEM_N);
+    update_entry_bg(cmd_entry);
     update_win_bg(xinfo.hint_win, get_widget_color(HINT_WIN_COLOR), None);
-    update_client_menu_bg(wm);
     update_clients_bg(wm);
 }
 
@@ -63,29 +60,6 @@ static void update_taskbar_bg(WM *wm)
      * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
     XClearWindow(xinfo.display, wm->taskbar->icon_area);
     update_win_bg(wm->taskbar->status_area, bg, None);
-}
-
-static void update_act_center_bg(WM *wm)
-{
-    unsigned long bg=get_widget_color(MENU_COLOR);
-    update_win_bg(wm->act_center->win, bg, None);
-    for(size_t i=0; i<ACT_CENTER_ITEM_N; i++)
-        update_win_bg(wm->act_center->items[i], bg,None);
-}
-
-static void update_run_cmd_bg(WM *wm)
-{
-    Window win=wm->run_cmd->win;
-    update_win_bg(win, get_widget_color(ENTRY_COLOR), None);
-    XSetWindowBorder(xinfo.display, win, get_widget_color(CURRENT_BORDER_COLOR));
-}
-
-static void update_client_menu_bg(WM *wm)
-{
-    unsigned long bg=get_widget_color(MENU_COLOR);
-    update_win_bg(wm->client_menu->win, bg, None);
-    for(size_t i=0; i<CLIENT_MENU_ITEM_N; i++)
-        update_win_bg(wm->client_menu->items[i], bg, None);
 }
 
 static void update_clients_bg(WM *wm)

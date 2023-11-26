@@ -12,17 +12,21 @@
 #ifndef MENU_H
 #define MENU_H
 
-struct menu_tag // 一級多行多列菜單 
+typedef struct // 一級多行多列菜單 
 {
     Window win, *items; // 菜單窗口和菜單項
     int n, col, row, w, h, pad; // 菜單項數量、列數、行數、寬度、高度、四周空白
     int x, y; // 菜單窗口的坐標
     unsigned long bg; // 菜單的背景色
-};
+} Menu;
+
+extern Menu *act_center, *client_menu;
 
 Menu *create_menu(const char *item_text[], int n, int col);
 void show_menu(XEvent *e, Menu *menu, Window bind);
 void set_menu_pos_for_click(WM *wm, Window win, int x, int y, Menu *menu);
-void update_menu_item_fg(WM *wm, Window win);
+void update_menu_bg(Menu *menu, int n);
+void update_menu_item_fg(Menu *menu, int i);
+void destroy_menu(Menu *menu);
 
 #endif

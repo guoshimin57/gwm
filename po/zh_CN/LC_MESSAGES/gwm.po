@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.7.8\n"
+"Project-Id-Version: gwm 2.7.9\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-11-18 20:07+0800\n"
+"POT-Creation-Date: 2023-11-26 12:45+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -18,233 +18,233 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #. 操作中心按鈕類型             按鈕文字
-#: src/config.c:469
+#: src/config.c:471
 msgid "幫助"
 msgstr "帮助"
 
-#: src/config.c:470
+#: src/config.c:472
 msgid "文件"
 msgstr "文件"
 
-#: src/config.c:471
+#: src/config.c:473
 msgid "終端模擬器"
 msgstr "终端模拟器"
 
-#: src/config.c:472
+#: src/config.c:474
 msgid "網絡瀏覽器"
 msgstr "网络浏览器"
 
-#: src/config.c:474
+#: src/config.c:476
 msgid "遊戲"
 msgstr "游戏"
 
-#: src/config.c:475
+#: src/config.c:477
 msgid "播放影音"
 msgstr "播放影音"
 
-#: src/config.c:476
+#: src/config.c:478
 msgid "切換播放狀態"
 msgstr "切换播放状态"
 
-#: src/config.c:477
+#: src/config.c:479
 msgid "關閉影音"
 msgstr "关闭影音"
 
-#: src/config.c:479
+#: src/config.c:481
 msgid "减小音量"
 msgstr "减小音量"
 
-#: src/config.c:480
+#: src/config.c:482
 msgid "增大音量"
 msgstr "增大音量"
 
-#: src/config.c:481
+#: src/config.c:483
 msgid "最大音量"
 msgstr "最大音量"
 
-#: src/config.c:482
+#: src/config.c:484
 msgid "靜音切換"
 msgstr "静音切换"
 
-#: src/config.c:484
+#: src/config.c:486
 msgid "暫主區開窗"
 msgstr "暂主区开窗"
 
-#: src/config.c:485
+#: src/config.c:487
 msgid "暫次區開窗"
 msgstr "暂次区开窗"
 
-#: src/config.c:486
+#: src/config.c:488
 msgid "暫固定區開窗"
 msgstr "暂固定区开窗"
 
-#: src/config.c:487
+#: src/config.c:489
 msgid "暫懸浮層開窗"
 msgstr "暂悬浮层开窗"
 
-#: src/config.c:489
+#: src/config.c:491
 msgid "增大主區容量"
 msgstr "增大主区容量"
 
-#: src/config.c:490
+#: src/config.c:492
 msgid "减小主區容量"
 msgstr "减小主区容量"
 
-#: src/config.c:491
+#: src/config.c:493
 msgid "開關當前窗口標題欄"
 msgstr "开关当前窗口标题栏"
 
-#: src/config.c:492
+#: src/config.c:494
 msgid "開關當前窗口邊框"
 msgstr "开关当前窗口边框"
 
-#: src/config.c:494
+#: src/config.c:496
 msgid "關閉桌面所有窗口"
 msgstr "关闭桌面所有窗口"
 
-#: src/config.c:495
+#: src/config.c:497
 msgid "當前窗口截圖"
 msgstr "当前窗口截图"
 
-#: src/config.c:496
+#: src/config.c:498
 msgid "全屏截圖"
 msgstr "全屏截图"
 
-#: src/config.c:497
+#: src/config.c:499
 msgid "切換聚焦模式"
 msgstr "切换聚焦模式"
 
-#: src/config.c:499
+#: src/config.c:501
 msgid "開關合成器"
 msgstr "开关合成器"
 
-#: src/config.c:500
+#: src/config.c:502
 msgid "切換壁紙"
 msgstr "切换壁纸"
 
-#: src/config.c:501
+#: src/config.c:503
 msgid "切換顏色主題"
 msgstr "切换颜色主题"
 
-#: src/config.c:502
+#: src/config.c:504
 msgid "退出gwm"
 msgstr "退出gwm"
 
-#: src/config.c:504
+#: src/config.c:506
 msgid "注銷"
 msgstr "注销"
 
-#: src/config.c:505
+#: src/config.c:507
 msgid "重啓"
 msgstr "重启"
 
-#: src/config.c:506
+#: src/config.c:508
 msgid "關機"
 msgstr "关机"
 
-#: src/config.c:507
+#: src/config.c:509
 msgid "運行"
 msgstr "运行"
 
 #. 客戶窗口菜單項類型       按鈕文字
-#: src/config.c:516
+#: src/config.c:518
 msgid "卷起/放下"
 msgstr "卷起/放下"
 
-#: src/config.c:517
+#: src/config.c:519
 msgid "縱向最大化"
 msgstr "纵向最大化"
 
-#: src/config.c:518
+#: src/config.c:520
 msgid "橫向最大化"
 msgstr "横向最大化"
 
-#: src/config.c:519
+#: src/config.c:521
 msgid "最大化至上半屏"
 msgstr "最大化至上半屏"
 
-#: src/config.c:520
+#: src/config.c:522
 msgid "最大化至下半屏"
 msgstr "最大化至下半屏"
 
-#: src/config.c:521
+#: src/config.c:523
 msgid "最大化至左半屏"
 msgstr "最大化至左半屏"
 
-#: src/config.c:522
+#: src/config.c:524
 msgid "最大化至右半屏"
 msgstr "最大化至右半屏"
 
-#: src/config.c:523
+#: src/config.c:525
 msgid "完全最大化"
 msgstr "完全最大化"
 
 #. 構件類型             構件功能提示文字
-#: src/config.c:535
+#: src/config.c:537
 msgid "切換到次要區域"
 msgstr "切换到次要区域"
 
-#: src/config.c:536
+#: src/config.c:538
 msgid "切換到主要區域"
 msgstr "切换到主要区域"
 
-#: src/config.c:537
+#: src/config.c:539
 msgid "切換到固定區域"
 msgstr "切换到固定区域"
 
-#: src/config.c:538
+#: src/config.c:540
 msgid "切換到懸浮層"
 msgstr "切换到悬浮层"
 
-#: src/config.c:539
+#: src/config.c:541
 msgid "切換到圖符區域"
 msgstr "切换到图符区域"
 
-#: src/config.c:540
+#: src/config.c:542
 msgid "最大化/還原窗口"
 msgstr "最大化/还原窗口"
 
-#: src/config.c:541
+#: src/config.c:543
 msgid "關閉窗口"
 msgstr "关闭窗口"
 
-#: src/config.c:542
+#: src/config.c:544
 msgid "切換到虛擬桌面1"
 msgstr "切换到虚拟桌面1"
 
-#: src/config.c:543
+#: src/config.c:545
 msgid "切換到虛擬桌面2"
 msgstr "切换到虚拟桌面2"
 
-#: src/config.c:544
+#: src/config.c:546
 msgid "切換到虛擬桌面3"
 msgstr "切换到虚拟桌面3"
 
-#: src/config.c:545
+#: src/config.c:547
 msgid "切換到預覽模式"
 msgstr "切换到预览模式"
 
-#: src/config.c:546
+#: src/config.c:548
 msgid "切換到堆疊模式"
 msgstr "切换到堆叠模式"
 
-#: src/config.c:547
+#: src/config.c:549
 msgid "切換到平鋪模式"
 msgstr "切换到平铺模式"
 
-#: src/config.c:548
+#: src/config.c:550
 msgid "顯示桌面"
 msgstr "显示桌面"
 
-#: src/config.c:549
+#: src/config.c:551
 msgid "打開操作中心"
 msgstr "打开操作中心"
 
-#: src/config.c:550
+#: src/config.c:552
 msgid "打開窗口菜單"
 msgstr "打开窗口菜单"
 
-#: src/config.c:579
+#: src/config.c:581
 msgid "請輸入命令，然後按回車執行"
 msgstr "请输入命令，然后按回车执行"
 
@@ -302,32 +302,32 @@ msgstr "错误：找不到指定的键符号相应的功能转换键！\n"
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "错误：指定的键符号不存在对应的键代码！\n"
 
-#: src/gwm.c:53
+#: src/gwm.c:52
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "不能安装SIGCHLD信号处理函数"
 
-#: src/gwm.c:55
+#: src/gwm.c:54
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "不能安装SIGINT信号处理函数"
 
-#: src/gwm.c:57
+#: src/gwm.c:56
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "不能安装SIGTERM信号处理函数"
 
-#: src/gwm.c:59
+#: src/gwm.c:58
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "不能安装SIGQUIT信号处理函数"
 
-#: src/gwm.c:61
+#: src/gwm.c:60
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 
-#: src/init.c:117
+#: src/init.c:116
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "错误： 不能设置输入法"
 
-#: src/init.c:169
+#: src/init.c:158
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 

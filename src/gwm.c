@@ -19,7 +19,6 @@ sig_atomic_t run_flag=1;
 
 /* 以下全局變量一經顯式初始化，就不再修改 */
 Xinfo xinfo;
-Config *cfg;
 
 int main(void)
 {
