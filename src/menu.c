@@ -79,5 +79,5 @@ void update_menu_item_fg(Menu *menu, int i)
 void destroy_menu(Menu *menu)
 {
     XDestroyWindow(xinfo.display, menu->win);
-    vfree(menu->items, menu);
+    vfree(menu->items, menu, NULL);
 }

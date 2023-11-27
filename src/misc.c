@@ -63,9 +63,9 @@ Widget_type get_widget_type(WM *wm, Window win)
     if(win == xinfo.hint_win)
         return HINT_WIN;
     for(type=TASKBAR_BUTTON_BEGIN; type<=TASKBAR_BUTTON_END; type++)
-        if(win == wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)])
+        if(win == taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)])
             return type;
-    if(win == wm->taskbar->status_area)
+    if(win == taskbar->status_area)
         return STATUS_AREA;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
         if(c->icon && win==c->icon->win)

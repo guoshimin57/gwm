@@ -57,8 +57,6 @@ void add_client(WM *wm, Window win)
 
     apply_rules(c);
     add_client_node(get_head_for_add_client(wm, c), c);
-    fix_place_type_for_hint(wm, c);
-    fix_place_type_for_tile(wm);
     set_default_win_rect(wm, c);
     save_place_info_of_client(c);
     grab_buttons(c);
@@ -98,6 +96,8 @@ static Client *new_client(WM *wm, Window win)
     c->owner=win_to_client(wm, get_transient_for(c->win));
     c->subgroup_leader=get_subgroup_leader(c);
     c->place_type=TILE_LAYER_MAIN;
+    fix_place_type_for_hint(wm, c);
+    fix_place_type_for_tile(wm);
     if(!should_hide_frame(c))
         c->border_w=cfg->border_width, c->titlebar_h=get_font_height_by_pad();
     c->class_name="?";
@@ -131,7 +131,7 @@ static void set_default_desktop_mask(Client *c, unsigned int cur_desktop)
 
 static void apply_rules(Client *c)
 {
-    if(!c->class_hint.res_class && !c->class_hint.res_name)
+    if(!c->class_hint.res_class && !c->class_hint.res_name && !c->title_text)
         return;
 
     c->class_name=c->class_hint.res_class;
@@ -139,7 +139,8 @@ static void apply_rules(Client *c)
     {
         if(have_rule(r, c))
         {
-            c->place_type=r->place_type;
+            if(r->place_type != ANY_PLACE)
+                c->place_type=r->place_type;
             if(!r->show_border)
                 c->border_w=0;
             if(!r->show_titlebar)
@@ -154,10 +155,13 @@ static void apply_rules(Client *c)
 
 static bool have_rule(const Rule *r, Client *c)
 {
-    const char *pc=r->app_class, *pn=r->app_name,
-        *class=c->class_hint.res_class, *name=c->class_hint.res_name;
-    return ((pc && ((class && strstr(class, pc)) || strcmp(pc, "*")==0))
-        || ((pn && ((name && strstr(name, pn)) || strcmp(pc, "*")==0))));
+    const char *pc=r->app_class, *pn=r->app_name, *pt=r->title,
+        *class=c->class_hint.res_class, *name=c->class_hint.res_name,
+        *title=c->title_text;
+    
+    return((!pc || !class || !strcmp(class, pc) || !strcmp(pc, "*"))
+        && (!pn || !name  || !strcmp(name, pn)  || !strcmp(pn, "*"))
+        && (!pt || !title || !strcmp(title, pt) || !strcmp(pt, "*")));
 }
 
 static Client *get_head_for_add_client(WM *wm, Client *c)
@@ -657,9 +661,9 @@ Client *get_head_client(WM *wm, Place_type type)
         if(c->place_type == type)
             return c->prev;
     for(Client *c=head->prev; c!=wm->clients; c=c->prev)
-        if(c->place_type > type)
+        if(c->place_type < type)
             return c->prev;
-    return head->prev;
+    return head;
 }
 
 int get_subgroup_n(Client *c)
@@ -806,7 +810,7 @@ void iconify(WM *wm, Client *c)
     move_client_node(wm, c, get_icon_client_head(wm), ANY_PLACE);
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
-        create_icon(wm, p);
+        create_icon(p);
         p->icon->title_text=get_icon_title_text(p->win, p->title_text);
         update_win_bg(p->icon->win, get_widget_color(TASKBAR_COLOR), None);
         update_icon_area(wm);
@@ -831,12 +835,12 @@ static Client *get_icon_client_head(WM *wm)
     return wm->clients->prev;
 }
 
-void create_icon(WM *wm, Client *c)
+void create_icon(Client *c)
 {
     Icon *i=c->icon=malloc_s(sizeof(Icon));
-    i->x=i->y=0, i->w=i->h=wm->taskbar->h;
+    i->x=i->y=0, i->w=i->h=taskbar->h;
     i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
-    i->win=create_widget_win(wm->taskbar->icon_area, 0, 0,
+    i->win=create_widget_win(taskbar->icon_area, 0, 0,
         i->w, i->h, 0, 0, get_widget_color(TASKBAR_COLOR));
     XSelectInput(xinfo.display, c->icon->win, ICON_WIN_EVENT_MASK);
 }
@@ -849,7 +853,7 @@ void update_icon_area(WM *wm)
         if(is_on_cur_desktop(wm, c) && c->icon)
         {
             Icon *i=c->icon;
-            i->w=wm->taskbar->h;
+            i->w=taskbar->h;
             if(have_same_class_icon_client(wm, c))
             {
                 get_string_size(i->title_text, &w, NULL);

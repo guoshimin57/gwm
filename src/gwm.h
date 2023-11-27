@@ -84,7 +84,6 @@
 #define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client
 
 typedef struct desktop_tag Desktop;
-typedef struct taskbar_tag Taskbar;
 typedef struct client_tag Client;
 
 typedef struct // 與X相關的信息
@@ -209,8 +208,8 @@ enum color_theme_tag // 顏色主題
 typedef enum color_theme_tag Color_theme;
 
 struct rule_tag // 窗口管理器的規則
-{
-    const char *app_class, *app_name; // 分別爲客戶窗口的程序類型和程序名稱
+{// 分別爲客戶窗口的程序類型和程序名稱、標題，NULL或*表示匹配任何字符串
+    const char *app_class, *app_name, *title;
     const char *class_alias; // 客戶窗口的類型別名
     Place_type place_type; // 客戶窗口的位置類型
     bool show_titlebar, show_border; // 是否顯示客戶窗口標題欄和邊框
@@ -230,7 +229,6 @@ struct wm_tag // 窗口管理器相關信息
     Client *clients; // 頭結點
     Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
     Cursor cursors[POINTER_ACT_N]; // 光標
-    Taskbar *taskbar; // 任務欄
     void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
 };
 typedef struct wm_tag WM;

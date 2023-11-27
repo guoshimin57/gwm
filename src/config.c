@@ -161,20 +161,26 @@ static const Buttonbind buttonbind[] =
 };
 
 /* 功能：設置窗口管理器規則。
- * 說明：Rule的定義詳見gwm.h。可通過xprop命令查看客戶程序類型和客戶程序名稱。其結果表示爲：
+ * 說明：Rule的定義詳見gwm.h。可通過xprop命令查看客戶程序類型和客戶程序名稱、標題。其結果表示爲：
  *     WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"
+ *     WM_NAME(STRING) = "標題"
+ *     _NET_WM_NAME(UTF8_STRING) = "標題"
+ * 當客戶程序類型和客戶程序名稱、標題取NULL或"*"時，表示匹配任何字符串。
  * 一個窗口可以歸屬多個桌面，桌面從1開始編號，桌面n的掩碼計算公式：1<<(n-1)。
  * 譬如，桌面1的掩碼是1<<(1-1)，即1；桌面2的掩碼是1<<(2-1)，即2；1&2即3表示窗口歸屬桌面1和2。
  * 若掩碼爲0，表示窗口歸屬默認桌面。
  */
 static const Rule rule[] =
 {
-    /* 客戶程序類型        客戶程序名稱 客戶程序的類型別名   窗口放置位置(詳gwm.h)  是否顯示標題欄 是否顯示邊框 桌面掩碼 */
-    {"QQ",                 "qq",                 "QQ",       FLOAT_LAYER,           false,         false,        0},
-    {"explorer.exe",       "explorer.exe",       NULL,       FLOAT_LAYER,           false,         false,        0},
-    {"Thunder.exe",        "Thunder.exe",        NULL,       FLOAT_LAYER,           true,          true,         0},
-    {"Google-chrome",      "google-chrome",      "chrome",   TILE_LAYER_MAIN,       true,          true,         0},
-    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "Nautilus", TILE_LAYER_MAIN,       true,          true,         0},
+    /* 客戶程序類型        客戶程序名稱          標題   客戶程序的類型別名 窗口放置位置      是否顯示標題欄 是否顯示邊框 桌面掩碼 */
+    {"QQ",                 "qq",                 "*",          "QQ",       ANY_PLACE,        false,         false,        0},
+    {"QQ",                 "qq",                 "QQ",         "QQ",       TILE_LAYER_FIXED, false,         false,        0},
+    {"explorer.exe",       "explorer.exe",       "*",          NULL,       FLOAT_LAYER,      false,         false,        0},
+    {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       FLOAT_LAYER,      true,          true,         0},
+    {"sketchup.exe",       "sketchup.exe",       "SketchUp",   NULL,       ABOVE_LAYER,      false,         false,        0},
+    {"firefox",            "Toolkit",            "*",          NULL,       TILE_LAYER_MAIN,  true,          true,         0},
+    {"Google-chrome",      "google-chrome",      "*",          "chrome",   ANY_PLACE,        true,          true,         0},
+    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "*",          "Nautilus", ANY_PLACE,        true,          true,         0},
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 

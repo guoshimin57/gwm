@@ -154,9 +154,9 @@ void clear_wm(WM *wm)
         XReparentWindow(xinfo.display, c->win, xinfo.root_win, c->x, c->y);
         del_client(wm, c, true);
     }
-    XDestroyWindow(xinfo.display, wm->taskbar->win);
     XDestroyWindow(xinfo.display, xinfo.hint_win);
     XDestroyWindow(xinfo.display, wm->wm_check_win);
+    destroy_taskbar(taskbar);
     destroy_entry(cmd_entry);
     destroy_menu(act_center);
     destroy_menu(client_menu);
@@ -177,7 +177,7 @@ void clear_wm(WM *wm)
     free_strings(wm->wallpapers);
     for(size_t i=0; i<DESKTOP_N; i++)
         free(wm->desktop[i]);
-    vfree(wm->taskbar->status_text, wm->taskbar, cfg, NULL);
+    free(cfg);
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)

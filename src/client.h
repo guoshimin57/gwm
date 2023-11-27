@@ -76,7 +76,7 @@ bool is_on_desktop_n(unsigned int n, Client *c);
 bool is_on_cur_desktop(WM *wm, Client *c);
 unsigned int get_desktop_mask(unsigned int desktop_n);
 void iconify(WM *wm, Client *c);
-void create_icon(WM *wm, Client *c);
+void create_icon(Client *c);
 void update_icon_area(WM *wm);
 void deiconify(WM *wm, Client *c);
 void del_icon(WM *wm, Client *c);

@@ -528,13 +528,13 @@ static void handle_expose(WM *wm, XEvent *e)
     if(type == CLIENT_ICON)
         update_client_icon_fg(wm, win);
     else if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
-        update_taskbar_button_fg(wm, type);
+        update_taskbar_button_fg(type);
     else if(IS_WIDGET_CLASS(type, ACT_CENTER_ITEM))
         update_menu_item_fg(act_center, WIDGET_INDEX(type, ACT_CENTER_ITEM));
     else if(IS_WIDGET_CLASS(type, CLIENT_MENU_ITEM))
         update_menu_item_fg(client_menu, WIDGET_INDEX(type, CLIENT_MENU_ITEM));
     else if(type == STATUS_AREA)
-        update_status_area_fg(wm);
+        update_status_area_fg();
     else if(type == TITLE_LOGO)
         draw_icon(c->logo, c->image, c->class_name, c->titlebar_h);
     else if(type == TITLE_AREA)
@@ -739,9 +739,9 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
 
     if(win == xinfo.root_win)
     {
-        free(wm->taskbar->status_text);
-        wm->taskbar->status_text=s;
-        update_icon_status_area(wm);
+        free(taskbar->status_text);
+        taskbar->status_text=s;
+        update_icon_status_area();
     }
     else
     {

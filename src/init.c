@@ -55,7 +55,7 @@ void init_wm(WM *wm)
     create_cursors(wm);
     XDefineCursor(xinfo.display, xinfo.root_win, wm->cursors[NO_OP]);
     set_workarea(wm);
-    create_taskbar(wm);
+    taskbar=create_taskbar(wm);
     cmd_entry=create_cmd_entry();
     create_hint_win();
     create_client_menu();

@@ -11,66 +11,70 @@
 
 #include "gwm.h"
 
+
 static void create_taskbar_buttons(WM *wm);
-static void create_icon_area(WM *wm);
-static void create_status_area(WM *wm);
+static void create_icon_area(void);
+static void create_status_area(void);
 static void create_act_center(void);
 
-void create_taskbar(WM *wm)
+Taskbar *taskbar=NULL;
+
+Taskbar *create_taskbar(WM *wm)
 {
-    Taskbar *b=wm->taskbar=malloc_s(sizeof(Taskbar));
-    b->w=xinfo.screen_width, b->h=get_font_height_by_pad();
-    b->x=0, b->y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-b->h);
-    b->win=create_widget_win(xinfo.root_win, b->x, b->y, b->w, b->h,
-        0, 0, get_widget_color(TASKBAR_COLOR));
-    XSelectInput(xinfo.display, b->win, CROSSING_MASK);
+    taskbar=malloc_s(sizeof(Taskbar));
+
+    taskbar->w=xinfo.screen_width, taskbar->h=get_font_height_by_pad();
+    taskbar->x=0;
+    taskbar->y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-taskbar->h);
+    taskbar->win=create_widget_win(xinfo.root_win, taskbar->x, taskbar->y,
+        taskbar->w, taskbar->h, 0, 0, get_widget_color(TASKBAR_COLOR));
+    XSelectInput(xinfo.display, taskbar->win, CROSSING_MASK);
     create_taskbar_buttons(wm);
-    create_status_area(wm);
-    create_icon_area(wm);
+    create_status_area();
+    create_icon_area();
     create_act_center();
-    XMapSubwindows(xinfo.display, b->win);
+    XMapSubwindows(xinfo.display, taskbar->win);
     if(cfg->show_taskbar)
-        XMapWindow(xinfo.display, b->win);
+        XMapWindow(xinfo.display, taskbar->win);
+
+    return taskbar;
 }
 
 static void create_taskbar_buttons(WM *wm)
 {
-    Taskbar *b=wm->taskbar;
-    int w=cfg->taskbar_button_width, h=b->h;
+    int w=cfg->taskbar_button_width, h=taskbar->h;
 
-    for(size_t i=0; i<TASKBAR_BUTTON_N; i++)
+    for(int i=0; i<TASKBAR_BUTTON_N; i++)
     {
         unsigned long color=get_widget_color(is_chosen_button(wm,
             TASKBAR_BUTTON_BEGIN+i) ? CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
-        b->buttons[i]=create_widget_win(b->win, w*i, 0, w, h, 0, 0, color);
-        XSelectInput(xinfo.display, b->buttons[i], BUTTON_EVENT_MASK);
+        taskbar->buttons[i]=create_widget_win(taskbar->win, w*i, 0, w, h, 0, 0, color);
+        XSelectInput(xinfo.display, taskbar->buttons[i], BUTTON_EVENT_MASK);
     }
 }
 
-static void create_icon_area(WM *wm)
+static void create_icon_area(void)
 {
-    Taskbar *b=wm->taskbar;
     int bw=cfg->taskbar_button_width*TASKBAR_BUTTON_N,
-        w=b->w-bw-b->status_area_w;
-    b->icon_area=create_widget_win(b->win,
-        bw, 0, w, b->h, 0, 0, get_widget_color(TASKBAR_COLOR));
+        w=taskbar->w-bw-taskbar->status_area_w;
+    taskbar->icon_area=create_widget_win(taskbar->win,
+        bw, 0, w, taskbar->h, 0, 0, get_widget_color(TASKBAR_COLOR));
 }
 
-static void create_status_area(WM *wm)
+static void create_status_area(void)
 {
-    Taskbar *b=wm->taskbar;
-    b->status_text=get_text_prop(xinfo.root_win, XA_WM_NAME);
-    if(!b->status_text)
-        b->status_text=copy_string("gwm");
-    get_string_size(b->status_text, &b->status_area_w, NULL);
-    if(b->status_area_w > cfg->status_area_width_max)
-        b->status_area_w=cfg->status_area_width_max;
-    else if(b->status_area_w == 0)
-        b->status_area_w=1;
-    wm->taskbar->status_area=create_widget_win(b->win,
-        b->w-b->status_area_w, 0, b->status_area_w, b->h,
-        0, 0, get_widget_color(TASKBAR_COLOR));
-    XSelectInput(xinfo.display, b->status_area, ExposureMask);
+    taskbar->status_text=get_text_prop(xinfo.root_win, XA_WM_NAME);
+    if(!taskbar->status_text)
+        taskbar->status_text=copy_string("gwm");
+    get_string_size(taskbar->status_text, &taskbar->status_area_w, NULL);
+    if(taskbar->status_area_w > cfg->status_area_width_max)
+        taskbar->status_area_w=cfg->status_area_width_max;
+    else if(taskbar->status_area_w == 0)
+        taskbar->status_area_w=1;
+    taskbar->status_area=create_widget_win(taskbar->win,
+        taskbar->w-taskbar->status_area_w, 0, taskbar->status_area_w,
+        taskbar->h, 0, 0, get_widget_color(TASKBAR_COLOR));
+    XSelectInput(xinfo.display, taskbar->status_area, ExposureMask);
 }
 
 static void create_act_center(void)
@@ -87,7 +91,7 @@ void update_taskbar_buttons_bg(WM *wm)
 
 void update_taskbar_button_bg(WM *wm, Widget_type type)
 {
-    Window win=wm->taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
+    Window win=taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
     unsigned long color=get_widget_color(is_chosen_button(wm, type) ?
         CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
 
@@ -105,37 +109,37 @@ void update_taskbar_button_bg(WM *wm, Widget_type type)
     update_win_bg(win, color, None);
 }
 
-void update_taskbar_button_fg(WM *wm, Widget_type type)
+void update_taskbar_button_fg(Widget_type type)
 {
     size_t i=WIDGET_INDEX(type, TASKBAR_BUTTON);
-    Str_fmt f={0, 0, cfg->taskbar_button_width, wm->taskbar->h, CENTER,
+    Str_fmt fmt={0, 0, cfg->taskbar_button_width, taskbar->h, CENTER,
         false, false, 0, get_text_color(TASKBAR_TEXT_COLOR)};
-    draw_string(wm->taskbar->buttons[i], cfg->taskbar_button_text[i], &f);
+    draw_string(taskbar->buttons[i], cfg->taskbar_button_text[i], &fmt);
 }
 
-void update_status_area_fg(WM *wm)
+void update_status_area_fg(void)
 {
-    Taskbar *b=wm->taskbar;
-    Str_fmt f={0, 0, b->status_area_w, b->h, CENTER_RIGHT, false, false, 0,
-        get_text_color(TASKBAR_TEXT_COLOR)};
-    draw_string(b->status_area, b->status_text, &f);
+    Str_fmt fmt={0, 0, taskbar->status_area_w, taskbar->h, CENTER_RIGHT,
+        false, false, 0, get_text_color(TASKBAR_TEXT_COLOR)};
+    draw_string(taskbar->status_area, taskbar->status_text, &fmt);
 }
 
-void update_icon_status_area(WM *wm)
+void update_icon_status_area(void)
 {
     int w, bw=cfg->taskbar_button_width*TASKBAR_BUTTON_N;
-    Taskbar *b=wm->taskbar;
 
-    get_string_size(b->status_text, &w, NULL);
+    get_string_size(taskbar->status_text, &w, NULL);
     if(w > cfg->status_area_width_max)
         w=cfg->status_area_width_max;
-    if(w != b->status_area_w)
+    if(w != taskbar->status_area_w)
     {
-        XMoveResizeWindow(xinfo.display, b->status_area, b->w-w, 0, w, b->h);
-        XMoveResizeWindow(xinfo.display, b->icon_area, bw, 0, b->w-bw-w, b->h);
+        XMoveResizeWindow(xinfo.display, taskbar->status_area,
+            taskbar->w-w, 0, w, taskbar->h);
+        XMoveResizeWindow(xinfo.display, taskbar->icon_area,
+            bw, 0, taskbar->w-bw-w, taskbar->h);
     }
-    b->status_area_w=w;
-    update_status_area_fg(wm);
+    taskbar->status_area_w=w;
+    update_status_area_fg();
 }
 
 void update_client_icon_fg(WM *wm, Window win)
@@ -145,11 +149,17 @@ void update_client_icon_fg(WM *wm, Window win)
         return;
 
     Icon *i=c->icon;
-    draw_icon(c->icon->win, c->image, c->class_name, wm->taskbar->h);
+    draw_icon(c->icon->win, c->image, c->class_name, taskbar->h);
     if(i->show_text)
     {
-        Str_fmt f={wm->taskbar->h, 0, i->w-wm->taskbar->h, i->h, CENTER,
+        Str_fmt fmt={taskbar->h, 0, i->w-taskbar->h, i->h, CENTER,
             false, false, 0, get_text_color(TASKBAR_TEXT_COLOR)};
-        draw_string(i->win, i->title_text, &f);
+        draw_string(i->win, i->title_text, &fmt);
     }
+}
+
+void destroy_taskbar(Taskbar *taskbar)
+{
+    XDestroyWindow(xinfo.display, taskbar->win);
+    vfree(taskbar->status_text, taskbar, NULL);
 }
