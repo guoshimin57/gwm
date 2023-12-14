@@ -127,12 +127,6 @@ void clear_zombies(int signum)
         ;
 }
 
-bool is_chosen_button(WM *wm, Widget_type type)
-{
-    return(type == DESKTOP_BUTTON_BEGIN+wm->cur_desktop-1
-        || type == LAYOUT_BUTTON_BEGIN+DESKTOP(wm)->cur_layout);
-}
-
 void set_xic(Window win, XIC *ic)
 {
     if(xinfo.xim == NULL)

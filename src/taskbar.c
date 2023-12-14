@@ -12,24 +12,25 @@
 #include "gwm.h"
 
 
-static void create_taskbar_buttons(WM *wm);
+static void create_taskbar_buttons(void);
+static bool is_chosen_taskbar_button(Widget_type type);
 static void create_icon_area(void);
 static void create_status_area(void);
 static void create_act_center(void);
 
 Taskbar *taskbar=NULL;
 
-Taskbar *create_taskbar(WM *wm)
+Taskbar *create_taskbar(void)
 {
     taskbar=malloc_s(sizeof(Taskbar));
+    memset(taskbar, 0, sizeof(Taskbar));
 
     taskbar->w=xinfo.screen_width, taskbar->h=get_font_height_by_pad();
-    taskbar->x=0;
     taskbar->y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-taskbar->h);
     taskbar->win=create_widget_win(xinfo.root_win, taskbar->x, taskbar->y,
         taskbar->w, taskbar->h, 0, 0, get_widget_color(TASKBAR_COLOR));
     XSelectInput(xinfo.display, taskbar->win, CROSSING_MASK);
-    create_taskbar_buttons(wm);
+    create_taskbar_buttons();
     create_status_area();
     create_icon_area();
     create_act_center();
@@ -40,17 +41,26 @@ Taskbar *create_taskbar(WM *wm)
     return taskbar;
 }
 
-static void create_taskbar_buttons(WM *wm)
+static void create_taskbar_buttons(void)
 {
     int w=cfg->taskbar_button_width, h=taskbar->h;
 
     for(int i=0; i<TASKBAR_BUTTON_N; i++)
     {
-        unsigned long color=get_widget_color(is_chosen_button(wm,
-            TASKBAR_BUTTON_BEGIN+i) ? CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
+        bool chosen=is_chosen_taskbar_button(TASKBAR_BUTTON_BEGIN+i);
+        unsigned long color=get_widget_color(chosen ? CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
         taskbar->buttons[i]=create_widget_win(taskbar->win, w*i, 0, w, h, 0, 0, color);
         XSelectInput(xinfo.display, taskbar->buttons[i], BUTTON_EVENT_MASK);
     }
+}
+
+static bool is_chosen_taskbar_button(Widget_type type)
+{
+    unsigned int desk;
+    Layout lay;
+
+    return ((get_net_current_desktop(&desk) && type==DESKTOP_BUTTON_BEGIN+desk)
+        || (get_gwm_current_layout(&lay) && type==LAYOUT_BUTTON_BEGIN+lay));
 }
 
 static void create_icon_area(void)
@@ -92,17 +102,17 @@ void update_taskbar_buttons_bg(WM *wm)
 void update_taskbar_button_bg(WM *wm, Widget_type type)
 {
     Window win=taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
-    unsigned long color=get_widget_color(is_chosen_button(wm, type) ?
-        CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
+    bool chosen=is_chosen_taskbar_button(type);
+    unsigned long color=get_widget_color(chosen ? CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
 
     if(IS_WIDGET_CLASS(type, DESKTOP_BUTTON))
     {
         unsigned int desktop_n=WIDGET_INDEX(type, DESKTOP_BUTTON)+1;
         if(desktop_n != wm->cur_desktop)
         {
-            if(have_urgency(wm, desktop_n))
+            if(taskbar->urgency_n[desktop_n-1])
                 color=get_widget_color(URGENCY_WIDGET_COLOR);
-            else if(have_attention(wm, desktop_n))
+            else if(taskbar->attent_n[desktop_n-1])
                 color=get_widget_color(ATTENTION_WIDGET_COLOR);
         }
     }

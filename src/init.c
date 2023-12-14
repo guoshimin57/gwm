@@ -15,6 +15,7 @@ static void set_visual_info(void);
 static void set_locale(void);
 static void create_refer_wins(WM *wm);
 static void set_workarea(WM *wm);
+static void set_ewmh(WM *wm);
 static void set_atoms(void);
 static void create_cursors(WM *wm);
 static void create_hint_win(void);
@@ -55,7 +56,9 @@ void init_wm(WM *wm)
     create_cursors(wm);
     XDefineCursor(xinfo.display, xinfo.root_win, wm->cursors[NO_OP]);
     set_workarea(wm);
-    taskbar=create_taskbar(wm);
+    set_ewmh(wm);
+    set_gwm_current_layout(DESKTOP(wm)->cur_layout);
+    taskbar=create_taskbar();
     cmd_entry=create_cmd_entry();
     create_hint_win();
     create_client_menu();
@@ -93,6 +96,19 @@ static void set_workarea(WM *wm)
     }
 }
 
+static void set_ewmh(WM *wm)
+{
+    set_net_supported();
+    set_net_number_of_desktops(DESKTOP_N);
+    set_net_desktop_geometry(xinfo.screen_width, xinfo.screen_height);
+    set_net_desktop_viewport(0, 0);
+    set_net_current_desktop(wm->cur_desktop-1);
+    set_net_desktop_names(&cfg->taskbar_button_text[DESKTOP_BUTTON_BEGIN], DESKTOP_N);
+    set_net_workarea(wm->workarea.x, wm->workarea.y, wm->workarea.w, wm->workarea.h, DESKTOP_N);
+    set_net_supporting_wm_check(wm->wm_check_win, "gwm");
+    set_net_showing_desktop(false);
+}
+
 static void exec_autostart(void)
 {
     char cmd[BUFSIZ];
@@ -121,6 +137,7 @@ static void set_atoms(void)
 {
     set_icccm_atoms();
     set_ewmh_atoms();
+    set_gwm_atoms();
 }
 
 static void create_cursors(WM *wm)

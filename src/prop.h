@@ -12,14 +12,23 @@
 #ifndef PROP_H
 #define PROP_H
 
+typedef enum // 與gwm自定義標識符名稱表(gwm_atom_names)相應的ID
+{
+    GWM_CURRENT_LAYOUT, GWM_ATOM_N
+} GWM_atom_id;
+
+void set_gwm_atoms(void);
 Window get_transient_for(Window win);
 unsigned char *get_prop(Window win, Atom prop, unsigned long *n);
 char *get_text_prop(Window win, Atom atom);
+bool get_cardinal_prop(Window win, Atom prop, CARD32 *result);
 void replace_atom_prop(Window win, Atom prop, const Atom *values, int n);
 void replace_window_prop(Window win, Atom prop, const Window *wins, int n);
-void replace_cardinal_prop(Window win, Atom prop, const CARD32 *values, int n);
+void replace_cardinal_prop(Window win, Atom prop, const long *values, int n);
 void copy_prop(Window dest, Window src);
 bool send_client_msg(Atom wm_protocols, Atom proto, Window win);
 bool has_spec_wm_protocol(Window win, Atom protocol);
+void set_gwm_current_layout(Layout cur_layout);
+bool get_gwm_current_layout(Layout *cur_layout);
 
 #endif

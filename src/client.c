@@ -709,9 +709,9 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
         else if(!pc->icon)
         {
             set_input_focus(pc->win, pc->wm_hint);
-            if(have_urgency(wm, desktop_n))
-                set_urgency(pc->win, pc->wm_hint, false);
-            if(have_attention(wm, desktop_n))
+            if(taskbar->urgency_n[desktop_n-1])
+                set_urgency(wm, pc, false);
+            if(taskbar->attent_n[desktop_n-1])
                 set_attention(wm, pc, false);
         }
     }
@@ -1091,6 +1091,19 @@ void set_attention(WM *wm, Client *c, bool attent)
 {
     c->win_state.attent=attent;
     update_net_wm_state(c->win, c->win_state);
+
+    for(unsigned int i=1; i<=DESKTOP_N; i++)
+        if(is_on_desktop_n(i, c))
+            taskbar->attent_n[i-1] += (attent ? 1 : -1);
     update_taskbar_buttons_bg(wm);
 }
 
+void set_urgency(WM *wm, Client *c, bool urg)
+{
+    set_urgency_hint(c->win, c->wm_hint, urg);
+
+    for(unsigned int i=1; i<=DESKTOP_N; i++)
+        if(is_on_desktop_n(i, c))
+            taskbar->urgency_n[i-1] += (urg ? 1 : -1);
+    update_taskbar_buttons_bg(wm);
+}

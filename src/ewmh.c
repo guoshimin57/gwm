@@ -92,16 +92,23 @@ void set_net_client_list_by_order(const Window *wins, int n, bool stack)
 
 void set_net_number_of_desktops(int n)
 {
-    CARD32 count=n;
+    Atom prop=ewmh_atoms[NET_NUMBER_OF_DESKTOPS];
+    long num=n;
+
+    replace_cardinal_prop(xinfo.root_win, prop, &num, 1);
+}
+
+bool get_net_number_of_desktops(int *n)
+{
     Atom prop=ewmh_atoms[NET_NUMBER_OF_DESKTOPS];
 
-    replace_cardinal_prop(xinfo.root_win, prop, &count, 1);
+    return get_cardinal_prop(xinfo.root_win, prop, (CARD32 *)n);
 }
 
 void set_net_desktop_geometry(int w, int h)
 {
     Atom prop=ewmh_atoms[NET_DESKTOP_GEOMETRY];
-    CARD32 size[2]={w, h};
+    long size[2]={w, h};
     
     replace_cardinal_prop(xinfo.root_win, prop, size, 2);
 }
@@ -109,7 +116,7 @@ void set_net_desktop_geometry(int w, int h)
 void set_net_desktop_viewport(int x, int y)
 {
     Atom prop=ewmh_atoms[NET_DESKTOP_GEOMETRY];
-    CARD32 pos[2]={x, y};
+    long pos[2]={x, y};
 
     replace_cardinal_prop(xinfo.root_win, prop, pos, 2);
 }
@@ -117,22 +124,20 @@ void set_net_desktop_viewport(int x, int y)
 /* EWMH桌面編號從0起算，gwm則從1起算 */
 void set_net_current_desktop(unsigned int cur_desktop)
 {
-    CARD32 cur=cur_desktop;
+    long cur=cur_desktop;
     Atom prop=ewmh_atoms[NET_CURRENT_DESKTOP];
 
     replace_cardinal_prop(xinfo.root_win, prop, &cur, 1);
 }
 
+bool get_net_current_desktop(unsigned int *cur_desktop)
+{
+    return get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_CURRENT_DESKTOP], (CARD32 *)cur_desktop);
+}
+
 bool get_net_wm_desktop(Window win, unsigned int *desktop)
 {
-    unsigned char *p=get_prop(win, ewmh_atoms[NET_WM_DESKTOP], NULL);
-
-    if(!p)
-       return false;
-
-    *desktop=*(unsigned long *)p;
-    XFree(p);
-    return true;
+    return get_cardinal_prop(win, ewmh_atoms[NET_WM_DESKTOP], (CARD32 *)desktop);
 }
 
 void set_net_desktop_names(const char **names, int n)
@@ -155,7 +160,7 @@ void set_net_active_window(Window act_win)
 void set_net_workarea(int x, int y, int w, int h, int desktop_n)
 {
     Atom prop=ewmh_atoms[NET_WORKAREA];
-    CARD32 rect[DESKTOP_N][4];
+    long rect[DESKTOP_N][4];
 
     for(size_t i=0; i<DESKTOP_N; i++)
         rect[i][0]=x, rect[i][1]=y, rect[i][2]=w, rect[i][3]=h;
@@ -174,7 +179,7 @@ void set_net_supporting_wm_check(Window check_win, const char *wm_name)
 
 void set_net_showing_desktop(bool show)
 {
-    CARD32 showing=show;
+    long showing=show;
     Atom prop=ewmh_atoms[NET_SHOWING_DESKTOP];
 
     replace_cardinal_prop(xinfo.root_win, prop, &showing, 1);

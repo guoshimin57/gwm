@@ -388,7 +388,7 @@ static void activate_win(WM *wm, Window win, unsigned long src)
         if(is_on_cur_desktop(wm, c))
             focus_client(wm, wm->cur_desktop, c);
         else
-            set_urgency(c->win, c->wm_hint, true);
+            set_urgency(wm, c, true);
     }
     else // 源自應用程序
         set_attention(wm, c, true);

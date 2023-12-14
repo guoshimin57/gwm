@@ -11,6 +11,19 @@
 
 #include "gwm.h"
 
+static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
+{
+    "GWM_CURRENT_LAYOUT",
+};
+
+static Atom gwm_atoms[GWM_ATOM_N];
+
+void set_gwm_atoms(void)
+{
+    for(int i=0; i<GWM_ATOM_N; i++)
+        gwm_atoms[i]=XInternAtom(xinfo.display, gwm_atom_names[i], False);
+}
+
 Window get_transient_for(Window win)
 {
     Window owner;
@@ -69,6 +82,16 @@ char *get_text_prop(Window win, Atom atom)
     return result;
 }
 
+bool get_cardinal_prop(Window win, Atom prop, CARD32 *result)
+{
+    CARD32 *p=(CARD32 *)get_prop(win, prop, NULL);
+    if(!p)
+        return false;
+    *result=*p;
+    XFree(p);
+    return true;
+}
+
 void replace_atom_prop(Window win, Atom prop, const Atom *values, int n)
 {
     XChangeProperty(xinfo.display, win, prop, XA_ATOM, 32, PropModeReplace,
@@ -81,10 +104,11 @@ void replace_window_prop(Window win, Atom prop, const Window *wins, int n)
         (unsigned char *)wins, n);
 }
 
-void replace_cardinal_prop(Window win, Atom prop, const CARD32 *values, int n)
+/* 根據XChangeProperty顯示，當format爲32時，data必須是long類型的數組 */
+void replace_cardinal_prop(Window win, Atom prop, const long *values, int n)
 {
     XChangeProperty(xinfo.display, win, prop, XA_CARDINAL, 32, PropModeReplace,
-        (unsigned char *)&values, n);
+        (unsigned char *)values, n);
 }
 
 void copy_prop(Window dest, Window src)
@@ -135,4 +159,16 @@ bool has_spec_wm_protocol(Window win, Atom protocol)
             if(protocols[i] == protocol)
                 { XFree(protocols); return true; }
     return false;
+}
+
+void set_gwm_current_layout(Layout cur_layout)
+{
+    long cur=cur_layout;
+    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], &cur, 1);
+}
+
+bool get_gwm_current_layout(Layout *cur_layout)
+{
+    return get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT],
+        (CARD32 *)cur_layout);
 }

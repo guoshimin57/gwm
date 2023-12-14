@@ -190,7 +190,7 @@ bool has_focus_hint(const XWMHints *hint)
     return !hint || ((hint->flags & InputHint) && hint->input);
 }
 
-void set_urgency(Window win, XWMHints *h, bool urg)
+void set_urgency_hint(Window win, XWMHints *h, bool urg)
 {
     if(!h)
         return;

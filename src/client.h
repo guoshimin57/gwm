@@ -95,5 +95,6 @@ bool is_win_state_max(Client *c);
 Window *get_client_win_list(WM *wm, int *n);
 Window *get_client_win_list_stacking(WM *wm, int *n);
 void set_attention(WM *wm, Client *c, bool attent);
+void set_urgency(WM *wm, Client *c, bool urg);
 
 #endif
