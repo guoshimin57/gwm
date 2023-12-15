@@ -67,7 +67,7 @@ void focus_desktop_n(WM *wm, unsigned int n)
     focus_client(wm, wm->cur_desktop, CUR_FOC_CLI(wm));
     update_layout(wm);
     update_icon_area(wm);
-    update_taskbar_buttons_bg(wm);
+    update_taskbar_buttons_bg();
     set_all_net_client_list(wm);
 }
 
@@ -152,21 +152,4 @@ void all_attach_to_desktop_n(WM *wm, unsigned int n)
     else
         focus_client(wm, n, wm->desktop[n-1]->cur_focus_client);
     set_all_net_client_list(wm);
-}
-
-bool have_urgency(WM *wm, unsigned int desktop_n)
-{
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if( is_on_desktop_n(desktop_n, c)
-            && c->wm_hint && (c->wm_hint->flags & XUrgencyHint))
-            return true;
-    return false;
-}
-
-bool have_attention(WM *wm, unsigned int desktop_n)
-{
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_desktop_n(desktop_n, c) && c->win_state.attent)
-            return true;
-    return false;
 }

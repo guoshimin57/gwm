@@ -577,7 +577,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
 
     update_layout(wm);
     update_titlebar_layout(wm);
-    update_taskbar_buttons_bg(wm);
+    update_taskbar_buttons_bg();
     set_gwm_current_layout(*cl);
 }
 

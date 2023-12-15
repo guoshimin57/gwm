@@ -16,7 +16,6 @@ void alloc_color(void);
 void update_widget_bg(WM *wm);
 unsigned long get_widget_color(Widget_color wc);
 XftColor get_text_color(Text_color color_id);
-void update_taskbar_buttons_bg(WM *wm);
 void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);
 void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c);
 

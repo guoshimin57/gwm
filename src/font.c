@@ -72,9 +72,9 @@ static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *
 
     pad = f->pad ? get_font_pad() : 0;
     get_string_size(str, w, h);
-    cx=f->x+f->w/2-*w/2, cy=f->y+f->h/2-*h/2+font->ascent;
+    cx=f->x+f->w/2-*w/2, cy=f->y+(f->h-font->height)/2+font->ascent;
     left=f->x+pad, right=f->x+f->w-*w-pad;
-    top=f->y+*h, bottom=f->y+f->h;
+    top=f->y+font->ascent, bottom=f->y+f->h-font->descent;
 
     switch(f->align)
     {

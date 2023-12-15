@@ -31,7 +31,5 @@ void all_change_to_desktop_n(WM *wm, unsigned int n);
 void attach_to_desktop_n(WM *wm, Client *c, unsigned int n);
 void attach_to_desktop_all(WM *wm, Client *c);
 void all_attach_to_desktop_n(WM *wm, unsigned int n);
-bool have_urgency(WM *wm, unsigned int desktop_n);
-bool have_attention(WM *wm, unsigned int desktop_n);
 
 #endif

@@ -16,7 +16,8 @@ typedef struct // 窗口管理器的任務欄
 {
     /* 分別爲任務欄的窗口、按鈕、縮微區域、狀態區域 */
     Window win, buttons[TASKBAR_BUTTON_N], icon_area, status_area;
-    int urgency_n[DESKTOP_N], attent_n[DESKTOP_N]; // 分別爲存儲各桌面的緊急、注意提示數量的數組
+    // 分別爲存儲各桌面的發出緊急、注意提示的窗口數量的數組
+    int urgency_n[DESKTOP_N], attent_n[DESKTOP_N];
     int x, y; // win的坐標
     int w, h, status_area_w; // win的尺寸、按鈕的尺寸和狀態區域的寬度
     char *status_text; // 狀態區域要顯示的文字
@@ -25,12 +26,13 @@ typedef struct // 窗口管理器的任務欄
 extern Taskbar *taskbar;
 
 Taskbar *create_taskbar(void);
-void update_taskbar_buttons_bg(WM *wm);
-void update_taskbar_button_bg(WM *wm, Widget_type type);
+void update_taskbar_buttons_bg(void);
+void update_taskbar_button_bg(Widget_type type);
 void update_taskbar_button_fg(Widget_type type);
 void update_status_area_fg(void);
 void update_icon_status_area(void);
 void update_client_icon_fg(WM *wm, Window win);
+void update_taskbar_bg(void);
 void destroy_taskbar(Taskbar *taskbar);
 
 #endif

@@ -362,8 +362,9 @@ static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
 
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 {
+    UNUSED(wm);
     c->win_state.attent=SHOULD_ADD_STATE(c, act, attent);
-    update_taskbar_buttons_bg(wm);
+    update_taskbar_buttons_bg();
 }
 
 static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
@@ -623,7 +624,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     Client *c=win_to_client(wm, win);
 
     if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
-        update_taskbar_button_bg(wm, type);
+        update_taskbar_button_bg(type);
     else if(type == CLIENT_ICON)
         update_win_bg(win, get_widget_color(TASKBAR_COLOR), None);
     else if(IS_MENU_ITEM(type))
@@ -711,7 +712,7 @@ static void handle_wm_hints_notify(WM *wm, Window win)
     XWMHints *oh=c->wm_hint, *nh=XGetWMHints(xinfo.display, win);
     if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
         set_attention(wm, c, true);
-    update_taskbar_buttons_bg(wm);
+    update_taskbar_buttons_bg();
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
 }

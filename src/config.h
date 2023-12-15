@@ -28,7 +28,7 @@ typedef struct
     int default_n_main_max; // 默認的主區域最大窗口數量
     int act_center_col; // 操作中心按鈕列數
 
-    int font_size; // 字體尺寸列表
+    int font_size; // 字體尺寸
     /* 以下尺寸根據相應字體來確定就有不錯的效果 */
     int border_width; // 窗口框架边框的宽度
     int title_button_width; // 窗口按鈕的寬度

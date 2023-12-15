@@ -13,7 +13,6 @@
 
 static void alloc_widget_color(const char *color_name, XColor *color);
 static void alloc_text_color(const char *color_name, XftColor *color);
-static void update_taskbar_bg(WM *wm);
 static void update_clients_bg(WM *wm);
 
 static XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
@@ -42,24 +41,12 @@ void alloc_color(void)
 
 void update_widget_bg(WM *wm)
 {
-    update_taskbar_bg(wm);
+    update_taskbar_bg();
     update_menu_bg(act_center, ACT_CENTER_ITEM_N);
     update_menu_bg(client_menu, CLIENT_MENU_ITEM_N);
     update_entry_bg(cmd_entry);
     update_win_bg(xinfo.hint_win, get_widget_color(HINT_WIN_COLOR), None);
     update_clients_bg(wm);
-}
-
-static void update_taskbar_bg(WM *wm)
-{
-    unsigned long bg=get_widget_color(TASKBAR_COLOR);
-    update_taskbar_buttons_bg(wm);
-    update_win_bg(taskbar->icon_area, bg, None);
-    /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
-     * 雖然給icon_area發送了Expose事件，但實際上沒更新背景。也許當窗口沒有內容
-     * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
-    XClearWindow(xinfo.display, taskbar->icon_area);
-    update_win_bg(taskbar->status_area, bg, None);
 }
 
 static void update_clients_bg(WM *wm)

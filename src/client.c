@@ -1089,21 +1089,27 @@ Window *get_client_win_list_stacking(WM *wm, int *n)
 
 void set_attention(WM *wm, Client *c, bool attent)
 {
+    if(c->win_state.attent == attent) // 避免重復設置
+        return;
+
     c->win_state.attent=attent;
     update_net_wm_state(c->win, c->win_state);
 
+    int incr = attent ? 1 : -1;
     for(unsigned int i=1; i<=DESKTOP_N; i++)
-        if(is_on_desktop_n(i, c))
-            taskbar->attent_n[i-1] += (attent ? 1 : -1);
-    update_taskbar_buttons_bg(wm);
+        if(is_on_desktop_n(i, c) && i!=wm->cur_desktop)
+            taskbar->attent_n[i-1] += incr;
+    update_taskbar_buttons_bg();
 }
 
 void set_urgency(WM *wm, Client *c, bool urg)
 {
-    set_urgency_hint(c->win, c->wm_hint, urg);
+    if(!set_urgency_hint(c->win, c->wm_hint, urg))
+        return;
 
+    int incr = (urg ? 1 : -1);
     for(unsigned int i=1; i<=DESKTOP_N; i++)
-        if(is_on_desktop_n(i, c))
-            taskbar->urgency_n[i-1] += (urg ? 1 : -1);
-    update_taskbar_buttons_bg(wm);
+        if(is_on_desktop_n(i, c) && i!=wm->cur_desktop)
+            taskbar->urgency_n[i-1] += incr;
+    update_taskbar_buttons_bg();
 }

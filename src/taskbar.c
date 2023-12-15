@@ -93,13 +93,13 @@ static void create_act_center(void)
         ACT_CENTER_ITEM_N, cfg->act_center_col);
 }
 
-void update_taskbar_buttons_bg(WM *wm)
+void update_taskbar_buttons_bg(void)
 {
     for(Widget_type t=TASKBAR_BUTTON_BEGIN; t<=TASKBAR_BUTTON_END; t++)
-        update_taskbar_button_bg(wm, t);
+        update_taskbar_button_bg(t);
 }
 
-void update_taskbar_button_bg(WM *wm, Widget_type type)
+void update_taskbar_button_bg(Widget_type type)
 {
     Window win=taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)];
     bool chosen=is_chosen_taskbar_button(type);
@@ -107,8 +107,8 @@ void update_taskbar_button_bg(WM *wm, Widget_type type)
 
     if(IS_WIDGET_CLASS(type, DESKTOP_BUTTON))
     {
-        unsigned int desktop_n=WIDGET_INDEX(type, DESKTOP_BUTTON)+1;
-        if(desktop_n != wm->cur_desktop)
+        unsigned int cur, desktop_n=WIDGET_INDEX(type, DESKTOP_BUTTON)+1;
+        if(get_net_current_desktop(&cur) && desktop_n!=cur)
         {
             if(taskbar->urgency_n[desktop_n-1])
                 color=get_widget_color(URGENCY_WIDGET_COLOR);
@@ -166,6 +166,18 @@ void update_client_icon_fg(WM *wm, Window win)
             false, false, 0, get_text_color(TASKBAR_TEXT_COLOR)};
         draw_string(i->win, i->title_text, &fmt);
     }
+}
+
+void update_taskbar_bg(void)
+{
+    unsigned long bg=get_widget_color(TASKBAR_COLOR);
+    update_taskbar_buttons_bg();
+    update_win_bg(taskbar->icon_area, bg, None);
+    /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
+     * 雖然給icon_area發送了Expose事件，但實際上沒更新背景。也許當窗口沒有內容
+     * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
+    XClearWindow(xinfo.display, taskbar->icon_area);
+    update_win_bg(taskbar->status_area, bg, None);
 }
 
 void destroy_taskbar(Taskbar *taskbar)
