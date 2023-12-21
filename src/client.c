@@ -60,6 +60,7 @@ void add_client(WM *wm, Window win)
     set_default_win_rect(wm, c);
     save_place_info_of_client(c);
     grab_buttons(c);
+    set_gwm_widget_type(win, CLIENT_WIN);
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     XDefineCursor(xinfo.display, win, wm->cursors[NO_OP]);
     frame_client(wm, c);
@@ -328,8 +329,8 @@ static void fix_win_size_by_workarea(WM *wm, Client *c)
 static void frame_client(WM *wm, Client *c)
 {
     Rect fr=get_frame_rect(c);
-    c->frame=create_widget_win(xinfo.root_win, fr.x, fr.y, fr.w, fr.h,
-        c->border_w, get_widget_color(CURRENT_BORDER_COLOR), 0);
+    c->frame=create_widget_win(CLIENT_FRAME, xinfo.root_win, fr.x, fr.y,
+        fr.w, fr.h, c->border_w, get_widget_color(CURRENT_BORDER_COLOR), 0);
     XSelectInput(xinfo.display, c->frame, FRAME_EVENT_MASK);
     if(cfg->set_frame_prop)
         copy_prop(c->frame, c->win);
@@ -352,14 +353,14 @@ void create_titlebar(WM *wm, Client *c)
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(c, i);
-        c->buttons[i]=create_widget_win(c->frame, br.x, br.y,
-            br.w, br.h, 0, 0, get_widget_color(CURRENT_TITLEBAR_COLOR));
+        c->buttons[i]=create_widget_win(TITLE_BUTTON_BEGIN+i, c->frame, br.x,
+            br.y, br.w, br.h, 0, 0, get_widget_color(CURRENT_TITLEBAR_COLOR));
         XSelectInput(xinfo.display, c->buttons[i], BUTTON_EVENT_MASK);
     }
-    c->title_area=create_widget_win(c->frame, tr.x, tr.y,
+    c->title_area=create_widget_win(TITLE_AREA, c->frame, tr.x, tr.y,
         tr.w, tr.h, 0, 0, get_widget_color(CURRENT_TITLEBAR_COLOR));
     XSelectInput(xinfo.display, c->title_area, TITLE_AREA_EVENT_MASK);
-    c->logo=create_widget_win(c->frame, 0, 0, c->titlebar_h,
+    c->logo=create_widget_win(TITLE_LOGO, c->frame, 0, 0, c->titlebar_h,
         c->titlebar_h, 0, 0, get_widget_color(CURRENT_TITLEBAR_COLOR));
     XSelectInput(xinfo.display, c->logo, BUTTON_EVENT_MASK);
 }
@@ -415,8 +416,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     if(!c)
         return;
 
-    if(is_win_exist(c->win, c->frame))
-        XReparentWindow(xinfo.display, c->win, xinfo.root_win, c->x, c->y);
+    XReparentWindow(xinfo.display, c->win, xinfo.root_win, c->x, c->y);
     XDestroyWindow(xinfo.display, c->frame);
     if(c->image)
         imlib_context_set_image(c->image), imlib_free_image();
@@ -840,8 +840,8 @@ void create_icon(Client *c)
     Icon *i=c->icon=malloc_s(sizeof(Icon));
     i->x=i->y=0, i->w=i->h=taskbar->h;
     i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
-    i->win=create_widget_win(taskbar->icon_area, 0, 0,
-        i->w, i->h, 0, 0, get_widget_color(TASKBAR_COLOR));
+    i->win=create_widget_win(CLIENT_ICON, taskbar->icon_area, 0, 0, i->w, i->h,
+        0, 0, get_widget_color(TASKBAR_COLOR));
     XSelectInput(xinfo.display, c->icon->win, ICON_WIN_EVENT_MASK);
 }
 
@@ -1112,4 +1112,80 @@ void set_urgency(WM *wm, Client *c, bool urg)
         if(is_on_desktop_n(i, c) && i!=wm->cur_desktop)
             taskbar->urgency_n[i-1] += incr;
     update_taskbar_buttons_bg();
+}
+
+bool is_wm_win(WM *wm, Window win, bool before_wm)
+{
+    XWindowAttributes a;
+    bool status=XGetWindowAttributes(xinfo.display, win, &a);
+
+    if( !status || a.override_redirect
+        || !is_on_screen( a.x, a.y, a.width, a.height))
+        return false;
+
+    if(!before_wm)
+        return !win_to_client(wm, win);
+
+    return is_iconic_state(win) || a.map_state==IsViewable;
+}
+
+void restack_win(WM *wm, Window win)
+{
+    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
+        if(win==wm->top_wins[i])
+            return;
+
+    Client *c=win_to_client(wm, win);
+    Net_wm_win_type type=get_net_wm_win_type(win);
+    Window wins[2]={None, c ? c->frame : win};
+
+    if(type.desktop)
+        wins[0]=wm->top_wins[DESKTOP_TOP];
+    else if(type.dock)
+        wins[0]=wm->top_wins[DOCK_TOP];
+    else if(c)
+    {
+        raise_client(wm, c);
+        return;
+    }
+    else
+        wins[0]=wm->top_wins[NORMAL_TOP];
+    XRestackWindows(xinfo.display, wins, 2);
+}
+
+void update_clients_bg(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        update_client_bg(wm, wm->cur_desktop, c);
+}
+
+void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
+{
+    if(!c || c==wm->clients)
+        return;
+
+    Desktop *d=wm->desktop[desktop_n-1];
+    if(c->icon && d->cur_layout!=PREVIEW)
+        update_win_bg(c->icon->win, c==d->cur_focus_client ?
+            get_widget_color(ENTERED_NORMAL_BUTTON_COLOR) :
+            get_widget_color(TASKBAR_COLOR), None);
+    else
+        update_frame_bg(wm, desktop_n, c);
+}
+
+void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
+{
+    bool cur=(c==wm->desktop[desktop_n-1]->cur_focus_client);
+    unsigned long color=get_widget_color(cur ? CURRENT_BORDER_COLOR : NORMAL_BORDER_COLOR);
+
+    if(c->border_w)
+        XSetWindowBorder(xinfo.display, c->frame, color);
+    if(c->titlebar_h)
+    {
+        color=get_widget_color(cur ? CURRENT_TITLEBAR_COLOR : NORMAL_TITLEBAR_COLOR);
+        update_win_bg(c->logo, color, 0);
+        update_win_bg(c->title_area, color, 0);
+        for(size_t i=0; i<TITLE_BUTTON_N; i++)
+            update_win_bg(c->buttons[i], color, None);
+    }
 }

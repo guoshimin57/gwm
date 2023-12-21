@@ -33,10 +33,12 @@ int x_fatal_handler(Display *display, XErrorEvent *e)
 
     if(rc==X_ChangeWindowAttributes && ec==BadAccess)
         exit_with_msg(_("錯誤：已經有其他窗口管理器在運行！"));
+    if(ec == BadWindow) // Xlib沒提供檢測窗口是否已經被銷毀的API，故忽略這種錯誤
+        return 0;
+    if(rc==X_ConfigureWindow && ec==BadMatch)
+		return -1;
     fprintf(stderr, _("X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"),
         e->resourceid, e->serial, ec, rc, e->minor_code);
-	if(ec == BadWindow || (rc==X_ConfigureWindow && ec==BadMatch))
-		return -1;
     return 0;
 }
 
@@ -50,48 +52,6 @@ void exit_with_msg(const char *msg)
 {
     fprintf(stderr, "%s\n", msg);
     exit(EXIT_FAILURE);
-}
-
-Widget_type get_widget_type(WM *wm, Window win)
-{
-    Widget_type type;
-    Client *c;
-    if(win == xinfo.root_win)
-        return ROOT_WIN;
-    if(win == cmd_entry->win)
-        return RUN_CMD_ENTRY;
-    if(win == xinfo.hint_win)
-        return HINT_WIN;
-    for(type=TASKBAR_BUTTON_BEGIN; type<=TASKBAR_BUTTON_END; type++)
-        if(win == taskbar->buttons[WIDGET_INDEX(type, TASKBAR_BUTTON)])
-            return type;
-    if(win == taskbar->status_area)
-        return STATUS_AREA;
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(c->icon && win==c->icon->win)
-            return CLIENT_ICON;
-    for(type=ACT_CENTER_ITEM_BEGIN; type<=ACT_CENTER_ITEM_END; type++)
-        if(win == act_center->items[WIDGET_INDEX(type, ACT_CENTER_ITEM)])
-            return type;
-    for(type=CLIENT_MENU_ITEM_BEGIN; type<=CLIENT_MENU_ITEM_END; type++)
-        if(win == client_menu->items[WIDGET_INDEX(type, CLIENT_MENU_ITEM)])
-            return type;
-    if((c=win_to_client(wm, win)))
-    {
-        if(win == c->win)
-            return CLIENT_WIN;
-        else if(win == c->frame)
-            return CLIENT_FRAME;
-        else if(win == c->logo)
-            return TITLE_LOGO;
-        else if(win == c->title_area)
-            return TITLE_AREA;
-        else
-            for(type=TITLE_BUTTON_BEGIN; type<=TITLE_BUTTON_END; type++)
-                if(win == c->buttons[WIDGET_INDEX(type, TITLE_BUTTON)])
-                    return type;
-    }
-    return UNDEFINED;
 }
 
 Pointer_act get_resize_act(Client *c, const Move_info *m)
@@ -312,26 +272,24 @@ void exec_cmd(char *const *cmd)
         perror(_("未能成功地爲命令創建新進程"));
 }
 
-void update_hint_win_for_info(Window hover, const char *info)
+char *get_title_text(Window win, const char *fallback)
 {
-    int x, y, rx, ry, pad=get_font_pad(),
-        w=0, h=get_font_height_by_pad();
+    char *s=NULL;
 
-    get_string_size(info, &w, NULL);
-    w+=pad*2;
-    if(hover)
-    {
-        Window r, c;
-        unsigned int m;
-        if(!XQueryPointer(xinfo.display, hover, &r, &c, &rx, &ry, &x, &y, &m))
-            return;
-        set_pos_for_click(hover, rx, &x, &y, w, h);
-    }
-    else
-        x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
-    XMoveResizeWindow(xinfo.display, xinfo.hint_win, x, y, w, h);
-    XMapRaised(xinfo.display, xinfo.hint_win);
-    Str_fmt f={0, 0, w, h, CENTER, true, false, 0,
-        get_text_color(HINT_TEXT_COLOR)};
-    draw_string(xinfo.hint_win, info, &f);
+    if((s=get_net_wm_name(win)) && strlen(s))
+        return s;
+    if((s=get_wm_name(win)) && strlen(s))
+        return s;
+    return copy_string(fallback);
+}
+
+char *get_icon_title_text(Window win, const char *fallback)
+{
+    char *s=NULL;
+
+    if((s=get_net_wm_icon_name(win)) && strlen(s))
+        return s;
+    if((s=get_wm_icon_name(win)) && strlen(s))
+        return s;
+    return copy_string(fallback);
 }

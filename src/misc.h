@@ -22,7 +22,6 @@ void *malloc_s(size_t size);
 int x_fatal_handler(Display *display, XErrorEvent *e);
 void exit_with_perror(const char *s);
 void exit_with_msg(const char *msg);
-Widget_type get_widget_type(WM *wm, Window win);
 Pointer_act get_resize_act(Client *c, const Move_info *m);
 void clear_zombies(int signum);
 void set_xic(Window win, XIC *ic);
@@ -35,6 +34,7 @@ void free_strings(Strings *head);
 int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
 void exec_cmd(char *const*cmd);
-void update_hint_win_for_info(Window hover, const char *info);
+char *get_title_text(Window win, const char *fallback);
+char *get_icon_title_text(Window win, const char *fallback);
 
 #endif

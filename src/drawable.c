@@ -14,28 +14,6 @@
 static Pixmap create_pixmap_with_color(Drawable d, unsigned long color);
 static void change_prop_for_root_bg(Pixmap pixmap);
 
-char *get_title_text(Window win, const char *fallback)
-{
-    char *s=NULL;
-
-    if((s=get_net_wm_name(win)) && strlen(s))
-        return s;
-    if((s=get_wm_name(win)) && strlen(s))
-        return s;
-    return copy_string(fallback);
-}
-
-char *get_icon_title_text(Window win, const char *fallback)
-{
-    char *s=NULL;
-
-    if((s=get_net_wm_icon_name(win)) && strlen(s))
-        return s;
-    if((s=get_wm_icon_name(win)) && strlen(s))
-        return s;
-    return copy_string(fallback);
-}
-
 bool is_pointer_on_win(Window win)
 {
     Window r, c;
@@ -81,21 +59,6 @@ void print_area(Drawable d, int x, int y, int w, int h)
     sprintf(name+strlen(name), ".%s", cfg->screenshot_format);
     imlib_save_image(name);
     imlib_free_image();
-}
-
-bool is_wm_win(WM *wm, Window win, bool before_wm)
-{
-    XWindowAttributes a;
-    bool status=XGetWindowAttributes(xinfo.display, win, &a);
-
-    if( !status || a.override_redirect
-        || !is_on_screen( a.x, a.y, a.width, a.height))
-        return false;
-
-    if(!before_wm)
-        return !win_to_client(wm, win);
-
-    return is_iconic_state(win) || a.map_state==IsViewable;
 }
 
 /* 當存在合成器時，合成器會在根窗口上放置特效，即使用XSetWindowBackground*設置
@@ -217,18 +180,6 @@ void set_pos_for_click(Window click, int cx, int *px, int *py, int pw, int ph)
     *py = y+(h+bw+ph)<sh ? y+h+bw+1: (y-bw-ph>0 ? y-bw-ph-1 : 0);
 }
 
-bool is_win_exist(Window win, Window parent)
-{
-    Window root, pwin, *child=NULL;
-    unsigned int n;
-
-    if(XQueryTree(xinfo.display, parent, &root, &pwin, &child, &n))
-        for(unsigned int i=0; i<n; i++)
-            if(win == child[i])
-                { XFree(child); return true; }
-    return false;
-}
-
 Pixmap create_pixmap_from_file(Window win, const char *filename)
 {
     int w, h;
@@ -247,60 +198,10 @@ Pixmap create_pixmap_from_file(Window win, const char *filename)
     return bg;
 }
 
-Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
-{
-    XSetWindowAttributes attr;
-    attr.colormap=xinfo.colormap;
-    attr.border_pixel=border_pixel;
-    attr.background_pixel=bg_pixel;
-    attr.override_redirect=True;
-
-    return XCreateWindow(xinfo.display, parent, x, y, w, h, border_w, xinfo.depth,
-        InputOutput, xinfo.visual,
-        CWColormap | CWBorderPixel | CWBackPixel | CWOverrideRedirect, &attr);
-}
-
 void set_visual_for_imlib(Drawable d)
 {
     if(d == xinfo.root_win)
         imlib_context_set_visual(DefaultVisual(xinfo.display, xinfo.screen));
     else
         imlib_context_set_visual(xinfo.visual);
-}
-
-void restack_win(WM *wm, Window win)
-{
-    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
-        if(win==wm->top_wins[i])
-            return;
-
-    Client *c=win_to_client(wm, win);
-    Net_wm_win_type type=get_net_wm_win_type(win);
-    Window wins[2]={None, c ? c->frame : win};
-
-    if(type.desktop)
-        wins[0]=wm->top_wins[DESKTOP_TOP];
-    else if(type.dock)
-        wins[0]=wm->top_wins[DOCK_TOP];
-    else if(c)
-    {
-        raise_client(wm, c);
-        return;
-    }
-    else
-        wins[0]=wm->top_wins[NORMAL_TOP];
-    XRestackWindows(xinfo.display, wins, 2);
-}
-
-void draw_icon(Drawable d, Imlib_Image image, const char *name, int size)
-{
-    if(image)
-        draw_image(image, d, 0, 0, size, size);
-    else
-    {
-        char s[2]={name[0], '\0'};
-        XftColor color=get_text_color(CLASS_TEXT_COLOR);
-        Str_fmt fmt={0, 0, size, size, CENTER, false, false, 0, color};
-        draw_string(d, s, &fmt);
-    }
 }

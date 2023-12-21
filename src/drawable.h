@@ -12,21 +12,14 @@
 #ifndef DRAWABLE_H
 #define DRAWABLE_H
 
-char *get_title_text(Window win, const char *fallback);
-char *get_icon_title_text(Window win, const char *fallback);
 bool is_pointer_on_win(Window win);
 bool is_on_screen(int x, int y, int w, int h);
 void print_area(Drawable d, int x, int y, int w, int h);
-bool is_wm_win(WM *wm, Window win, bool before_wm);
 void update_win_bg(Window win, unsigned long color, Pixmap pixmap);
 void set_override_redirect(Window win);
 bool get_geometry(Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth);
 void set_pos_for_click(Window click, int cx, int *px, int *py, int pw, int ph);
-bool is_win_exist(Window win, Window parent);
 Pixmap create_pixmap_from_file(Window win, const char *filename);
-Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void set_visual_for_imlib(Drawable d);
-void restack_win(WM *wm, Window win);
-void draw_icon(Drawable d, Imlib_Image image, const char *name, int size);
 
 #endif

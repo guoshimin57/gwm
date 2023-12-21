@@ -26,13 +26,13 @@ struct _entry_tag
     Strings *(*complete)(Entry *, int *);
 };
 
-Entry *create_entry(int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *));
+Entry *create_entry(Widget_type type, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *));
 void show_entry(Entry *entry);
 void update_entry_bg(Entry *entry);
 void update_entry_text(Entry *entry);
 bool input_for_entry(Entry *entry, XKeyEvent *ke);
 void destroy_entry(Entry *entry);
 void paste_for_entry(Entry *entry);
-Entry *create_cmd_entry(void);
+Entry *create_cmd_entry(Widget_type type);
 
 #endif

@@ -12,6 +12,13 @@
 #ifndef FONT_H
 #define FONT_H
 
+typedef enum align_type_tag // 文字對齊方式
+{
+    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
+    CENTER_LEFT, CENTER, CENTER_RIGHT,
+    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT,
+} Align_type;
+
 typedef struct // 字符串格式
 {
     int x, y, w, h; // 字符串區域的坐標和尺寸信息

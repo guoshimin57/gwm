@@ -22,9 +22,8 @@ typedef struct // 一級多行多列菜單
 
 extern Menu *act_center, *client_menu;
 
-Menu *create_menu(const char *item_text[], int n, int col);
+Menu *create_menu(Widget_type menu_type, Widget_type item_type[], const char *item_text[], int n, int col);
 void show_menu(XEvent *e, Menu *menu, Window bind);
-void set_menu_pos_for_click(WM *wm, Window win, int x, int y, Menu *menu);
 void update_menu_bg(Menu *menu, int n);
 void update_menu_item_fg(Menu *menu, int i);
 void destroy_menu(Menu *menu);

@@ -29,12 +29,12 @@ void init_desktop(WM *wm)
     }
 }
 
-unsigned int get_desktop_n(WM *wm, XEvent *e, Func_arg arg)
+unsigned int get_desktop_n(XEvent *e, Func_arg arg)
 {
     if(e->type == KeyPress)
         return (arg.n>=0 && arg.n<=DESKTOP_N) ? arg.n : 1;
     if(e->type == ButtonPress)
-        return WIDGET_INDEX(get_widget_type(wm, e->xbutton.window), TASKBAR_BUTTON)+1;
+        return WIDGET_INDEX(get_widget_type(e->xbutton.window), TASKBAR_BUTTON)+1;
     return 1;
 }
 

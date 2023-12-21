@@ -104,7 +104,7 @@ static void handle_button_press(WM *wm, XEvent *e)
     Window win=e->xbutton.window;
     Client *c=win_to_client(wm, win),
            *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
-    Widget_type type=get_widget_type(wm, win);
+    Widget_type type=get_widget_type(win);
 
     for(const Buttonbind *b=cfg->buttonbind; b->func; b++)
     {
@@ -444,7 +444,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
 {
     int x=e->xcrossing.x_root, y=e->xcrossing.y_root;
     Window win=e->xcrossing.window;
-    Widget_type type=get_widget_type(wm, win);
+    Widget_type type=get_widget_type(win);
     Client *c=win_to_client(wm, win);
     Pointer_act act=NO_OP;
     Move_info m={x, y, 0, 0};
@@ -461,7 +461,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         act=get_resize_act(c, &m);
     else if(type == TITLE_AREA)
         act=MOVE;
-    if(type != UNDEFINED)
+    if(type != NON_WIDGET)
         XDefineCursor(xinfo.display, win, wm->cursors[act]);
     handle_pointer_hover(wm, win, type);
 }
@@ -523,8 +523,8 @@ static void handle_expose(WM *wm, XEvent *e)
         return;
 
     Window win=e->xexpose.window;
+    Widget_type type=get_widget_type(win);
     Client *c=win_to_client(wm, win);
-    Widget_type type=get_widget_type(wm, win);
 
     if(type == CLIENT_ICON)
         update_client_icon_fg(wm, win);
@@ -620,7 +620,7 @@ static void key_run_cmd(WM *wm, XKeyEvent *e)
 static void handle_leave_notify(WM *wm, XEvent *e)
 {
     Window win=e->xcrossing.window;
-    Widget_type type=get_widget_type(wm, win);
+    Widget_type type=get_widget_type(win);
     Client *c=win_to_client(wm, win);
 
     if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
@@ -635,7 +635,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     else if(IS_WIDGET_CLASS(type, TITLE_BUTTON))
         update_win_bg(win, get_widget_color(c==CUR_FOC_CLI(wm) ?
             CURRENT_TITLEBAR_COLOR : NORMAL_TITLEBAR_COLOR), None);
-    if(type != UNDEFINED)
+    if(type != NON_WIDGET)
         XDefineCursor(xinfo.display, win, wm->cursors[NO_OP]);
 }
 

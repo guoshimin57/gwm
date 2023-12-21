@@ -13,7 +13,7 @@
 
 static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 {
-    "GWM_CURRENT_LAYOUT",
+    "GWM_CURRENT_LAYOUT", "GWM_WIDGET_TYPE",
 };
 
 static Atom gwm_atoms[GWM_ATOM_N];
@@ -161,14 +161,26 @@ bool has_spec_wm_protocol(Window win, Atom protocol)
     return false;
 }
 
-void set_gwm_current_layout(Layout cur_layout)
+void set_gwm_current_layout(long cur_layout)
 {
-    long cur=cur_layout;
-    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], &cur, 1);
+    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT],
+        &cur_layout, 1);
 }
 
-bool get_gwm_current_layout(Layout *cur_layout)
+bool get_gwm_current_layout(int *cur_layout)
 {
-    return get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT],
-        (CARD32 *)cur_layout);
+    CARD32 cur;
+    bool flag=get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], &cur);
+    *cur_layout=cur;
+    return flag;
+}
+
+void set_gwm_widget_type(Window win, long type)
+{
+    replace_cardinal_prop(win, gwm_atoms[GWM_WIDGET_TYPE], &type, 1);
+}
+
+bool get_gwm_widget_type(Window win, CARD32 *type)
+{
+    return get_cardinal_prop(win, gwm_atoms[GWM_WIDGET_TYPE], type);
 }

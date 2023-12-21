@@ -13,7 +13,7 @@
 
 Menu *act_center=NULL, *client_menu=NULL; // 操作中心, 客戶窗口菜單
 
-Menu *create_menu(const char *item_text[], int n, int col)
+Menu *create_menu(Widget_type menu_type, Widget_type item_type[], const char *item_text[], int n, int col)
 {
     Menu *menu=malloc_s(sizeof(Menu));
     int w=0, maxw=0, sw=xinfo.screen_width, pad=get_font_pad();
@@ -25,12 +25,12 @@ Menu *create_menu(const char *item_text[], int n, int col)
     menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
     menu->x=menu->y=0, menu->w=w, menu->h=get_font_height_by_pad(), menu->pad=pad;
     menu->bg=get_widget_color(MENU_COLOR);
-    menu->win=create_widget_win(xinfo.root_win, 0, 0, w*col,
+    menu->win=create_widget_win(menu_type, xinfo.root_win, 0, 0, w*col,
         menu->h*menu->row, 0, 0, menu->bg);
     menu->items=malloc_s(n*sizeof(Window));
     for(int i=0; i<n; i++)
     {
-         menu->items[i]=create_widget_win(menu->win, w*(i%col),
+         menu->items[i]=create_widget_win(item_type[i], menu->win, w*(i%col),
              menu->h*(i/col), w, menu->h, 0, 0, menu->bg);
         XSelectInput(xinfo.display, menu->items[i], BUTTON_EVENT_MASK);
     }

@@ -27,8 +27,9 @@ Taskbar *create_taskbar(void)
 
     taskbar->w=xinfo.screen_width, taskbar->h=get_font_height_by_pad();
     taskbar->y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-taskbar->h);
-    taskbar->win=create_widget_win(xinfo.root_win, taskbar->x, taskbar->y,
-        taskbar->w, taskbar->h, 0, 0, get_widget_color(TASKBAR_COLOR));
+    taskbar->win=create_widget_win(TASKBAR, xinfo.root_win,
+        taskbar->x, taskbar->y, taskbar->w, taskbar->h, 0, 0,
+        get_widget_color(TASKBAR_COLOR));
     XSelectInput(xinfo.display, taskbar->win, CROSSING_MASK);
     create_taskbar_buttons();
     create_status_area();
@@ -49,7 +50,8 @@ static void create_taskbar_buttons(void)
     {
         bool chosen=is_chosen_taskbar_button(TASKBAR_BUTTON_BEGIN+i);
         unsigned long color=get_widget_color(chosen ? CHOSEN_BUTTON_COLOR : TASKBAR_COLOR);
-        taskbar->buttons[i]=create_widget_win(taskbar->win, w*i, 0, w, h, 0, 0, color);
+        taskbar->buttons[i]=create_widget_win(TASKBAR_BUTTON_BEGIN+i,
+            taskbar->win, w*i, 0, w, h, 0, 0, color);
         XSelectInput(xinfo.display, taskbar->buttons[i], BUTTON_EVENT_MASK);
     }
 }
@@ -60,14 +62,14 @@ static bool is_chosen_taskbar_button(Widget_type type)
     Layout lay;
 
     return ((get_net_current_desktop(&desk) && type==DESKTOP_BUTTON_BEGIN+desk)
-        || (get_gwm_current_layout(&lay) && type==LAYOUT_BUTTON_BEGIN+lay));
+        || (get_gwm_current_layout((int *)&lay) && type==LAYOUT_BUTTON_BEGIN+lay));
 }
 
 static void create_icon_area(void)
 {
     int bw=cfg->taskbar_button_width*TASKBAR_BUTTON_N,
         w=taskbar->w-bw-taskbar->status_area_w;
-    taskbar->icon_area=create_widget_win(taskbar->win,
+    taskbar->icon_area=create_widget_win(ICON_AREA, taskbar->win,
         bw, 0, w, taskbar->h, 0, 0, get_widget_color(TASKBAR_COLOR));
 }
 
@@ -81,7 +83,7 @@ static void create_status_area(void)
         taskbar->status_area_w=cfg->status_area_width_max;
     else if(taskbar->status_area_w == 0)
         taskbar->status_area_w=1;
-    taskbar->status_area=create_widget_win(taskbar->win,
+    taskbar->status_area=create_widget_win(STATUS_AREA, taskbar->win,
         taskbar->w-taskbar->status_area_w, 0, taskbar->status_area_w,
         taskbar->h, 0, 0, get_widget_color(TASKBAR_COLOR));
     XSelectInput(xinfo.display, taskbar->status_area, ExposureMask);
@@ -89,7 +91,10 @@ static void create_status_area(void)
 
 static void create_act_center(void)
 {
-    act_center=create_menu(cfg->act_center_item_text,
+    Widget_type types[ACT_CENTER_ITEM_N];
+    for(int i=0; i<ACT_CENTER_ITEM_N; i++)
+        types[i]=ACT_CENTER_ITEM_BEGIN+i;
+    act_center=create_menu(ACT_CENTER, types, cfg->act_center_item_text,
         ACT_CENTER_ITEM_N, cfg->act_center_col);
 }
 

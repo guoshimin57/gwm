@@ -33,6 +33,15 @@
 #include <X11/Xft/Xft.h>
 #include <X11/Xproto.h>
 
+#include "widget.h"
+#include "drawable.h"
+#include "ewmh.h"
+#include "font.h"
+#include "menu.h"
+#include "icccm.h"
+#include "icon.h"
+#include "prop.h"
+
 #define _(s) gettext(s)
 
 #define NET_WM_STATE_REMOVE 0
@@ -47,11 +56,6 @@
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define FUNC_ARG(var, data) (Func_arg){.var=data}
 
-#define TITLE_BUTTON_N (TITLE_BUTTON_END-TITLE_BUTTON_BEGIN+1)
-#define TASKBAR_BUTTON_N (TASKBAR_BUTTON_END-TASKBAR_BUTTON_BEGIN+1)
-#define ACT_CENTER_ITEM_N (ACT_CENTER_ITEM_END-ACT_CENTER_ITEM_BEGIN+1)
-#define CLIENT_MENU_ITEM_N (CLIENT_MENU_ITEM_END-CLIENT_MENU_ITEM_BEGIN+1)
-#define DESKTOP_N (DESKTOP_BUTTON_END-DESKTOP_BUTTON_BEGIN+1)
 #define FONT_NAME_MAX 64
 
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
@@ -64,21 +68,6 @@
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
 #define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 #define ICON_WIN_EVENT_MASK (BUTTON_EVENT_MASK|PointerMotionMask)
-#define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
-
-#define WIDGET_INDEX(type_name, type_class) ((type_name) - type_class ## _BEGIN)
-#define DESKTOP_BUTTON_N(n) (DESKTOP_BUTTON_BEGIN+n-1)
-#define IS_WIDGET_CLASS(type_name, type_class) \
-    (type_class ## _BEGIN <= (type_name) && (type_name) <= type_class ## _END)
-#define IS_BUTTON(type) \
-    (  type==CLIENT_ICON || type==TITLE_LOGO \
-    || IS_WIDGET_CLASS(type, TITLE_BUTTON) \
-    || IS_WIDGET_CLASS(type, CLIENT_MENU_ITEM) \
-    || IS_WIDGET_CLASS(type, TASKBAR_BUTTON) \
-    || IS_WIDGET_CLASS(type, ACT_CENTER_ITEM))
-#define IS_MENU_ITEM(type) \
-    (  IS_WIDGET_CLASS(type, CLIENT_MENU_ITEM) \
-    || IS_WIDGET_CLASS(type, ACT_CENTER_ITEM))
 
 #define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
 #define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client
@@ -99,10 +88,10 @@ typedef struct // 與X相關的信息
     Window hint_win; // 提示窗口
 } Xinfo;
 
-typedef struct _strings_tag
+typedef struct strings_tag
 {
     char *str;
-    struct _strings_tag *next;
+    struct strings_tag *next;
 } Strings;
 
 enum focus_mode_tag // 窗口聚焦模式
@@ -126,42 +115,6 @@ enum top_win_type_tag // 窗口疊次序分層類型
 };
 typedef enum top_win_type_tag Top_win_type;
 
-enum widget_type_tag // 構件類型
-{
-    UNDEFINED, ROOT_WIN, STATUS_AREA, RUN_CMD_ENTRY,
-    CLIENT_WIN, CLIENT_FRAME, TITLE_LOGO, TITLE_AREA, HINT_WIN, CLIENT_ICON,
-
-    SECOND_BUTTON, MAIN_BUTTON, FIXED_BUTTON, FLOAT_BUTTON,
-    ICON_BUTTON, MAX_BUTTON, CLOSE_BUTTON,
-
-    DESKTOP1_BUTTON, DESKTOP2_BUTTON, DESKTOP3_BUTTON, 
-
-    PREVIEW_BUTTON, STACK_BUTTON, TILE_BUTTON, DESKTOP_BUTTON,
-
-    ACT_CENTER_ITEM,
-    HELP_BUTTON, FILE_BUTTON, TERM_BUTTON, BROWSER_BUTTON, 
-    GAME_BUTTON, PLAY_START_BUTTON, PLAY_TOGGLE_BUTTON, PLAY_QUIT_BUTTON,
-    VOLUME_DOWN_BUTTON, VOLUME_UP_BUTTON, VOLUME_MAX_BUTTON, VOLUME_TOGGLE_BUTTON,
-    MAIN_NEW_BUTTON, SEC_NEW_BUTTON, FIX_NEW_BUTTON, FLOAT_NEW_BUTTON,
-    N_MAIN_UP_BUTTON, N_MAIN_DOWN_BUTTON, TITLEBAR_TOGGLE_BUTTON, CLI_BORDER_TOGGLE_BUTTON,
-    CLOSE_ALL_CLIENTS_BUTTON, PRINT_WIN_BUTTON, PRINT_SCREEN_BUTTON, FOCUS_MODE_BUTTON,
-    COMPOSITOR_BUTTON, WALLPAPER_BUTTON, COLOR_THEME_BUTTON, QUIT_WM_BUTTON,
-    LOGOUT_BUTTON, REBOOT_BUTTON, POWEROFF_BUTTON, RUN_BUTTON,
-
-    SHADE_BUTTON, VERT_MAX_BUTTON, HORZ_MAX_BUTTON, TOP_MAX_BUTTON,
-    BOTTOM_MAX_BUTTON, LEFT_MAX_BUTTON, RIGHT_MAX_BUTTON, FULL_MAX_BUTTON,
-
-    WIDGET_N,
-
-    TITLE_BUTTON_BEGIN=SECOND_BUTTON, TITLE_BUTTON_END=CLOSE_BUTTON,
-    TASKBAR_BUTTON_BEGIN=DESKTOP1_BUTTON, TASKBAR_BUTTON_END=ACT_CENTER_ITEM,
-    LAYOUT_BUTTON_BEGIN=PREVIEW_BUTTON, LAYOUT_BUTTON_END=TILE_BUTTON, 
-    DESKTOP_BUTTON_BEGIN=DESKTOP1_BUTTON, DESKTOP_BUTTON_END=DESKTOP3_BUTTON,
-    ACT_CENTER_ITEM_BEGIN=HELP_BUTTON, ACT_CENTER_ITEM_END=RUN_BUTTON,
-    CLIENT_MENU_ITEM_BEGIN=SHADE_BUTTON, CLIENT_MENU_ITEM_END=FULL_MAX_BUTTON, 
-};
-typedef enum widget_type_tag Widget_type;
-
 struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 {
     int x, y; // 坐標
@@ -183,29 +136,10 @@ enum pointer_act_tag // 定位器操作類型
 };
 typedef enum pointer_act_tag Pointer_act;
 
-enum widget_color_tag // 構件顏色類型
-{
-    NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR, NORMAL_TITLEBAR_COLOR,
-    CURRENT_TITLEBAR_COLOR, ENTERED_NORMAL_BUTTON_COLOR,
-    ENTERED_CLOSE_BUTTON_COLOR, CHOSEN_BUTTON_COLOR, MENU_COLOR, TASKBAR_COLOR,
-    ENTRY_COLOR, HINT_WIN_COLOR, URGENCY_WIDGET_COLOR, ATTENTION_WIDGET_COLOR,
-    ROOT_WIN_COLOR, WIDGET_COLOR_N 
-};
-typedef enum widget_color_tag Widget_color;
-
-enum text_color_tag // 文本顏色類型
-{
-    NORMAL_TITLEBAR_TEXT_COLOR, CURRENT_TITLEBAR_TEXT_COLOR,
-    TASKBAR_TEXT_COLOR, CLASS_TEXT_COLOR, MENU_TEXT_COLOR,
-    ENTRY_TEXT_COLOR, HINT_TEXT_COLOR, TEXT_COLOR_N 
-};
-typedef enum text_color_tag Text_color;
-
-enum color_theme_tag // 顏色主題
+typedef enum // 顏色主題
 {
     DARK_THEME, NORMAL_THEME, LIGHT_THEME, COLOR_THEME_N
-};
-typedef enum color_theme_tag Color_theme;
+} Color_theme;
 
 struct rule_tag // 窗口管理器的規則
 {// 分別爲客戶窗口的程序類型和程序名稱、標題，NULL或*表示匹配任何字符串
@@ -282,14 +216,6 @@ struct buttonbind_tag // 定位器按鈕功能綁定
 };
 typedef struct buttonbind_tag Buttonbind;
 
-enum align_type_tag // 文字對齊方式
-{
-    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
-    CENTER_LEFT, CENTER, CENTER_RIGHT,
-    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT,
-};
-typedef enum align_type_tag Align_type;
-
 struct move_info_tag /* 定位器所點擊的窗口位置每次合理移動或調整尺寸所對應的舊、新坐標信息 */
 {
     int ox, oy, nx, ny; /* 分別爲舊、新坐標 */
@@ -303,24 +229,16 @@ struct delta_rect_tag /* 調整窗口尺寸的信息 */
 typedef struct delta_rect_tag Delta_rect;
 
 #include "client.h"
-#include "color.h"
 #include "config.h"
 #include "debug.h"
 #include "desktop.h"
-#include "drawable.h"
 #include "entry.h"
-#include "ewmh.h"
-#include "font.h"
 #include "func.h"
 #include "grab.h"
 #include "handler.h"
-#include "icccm.h"
-#include "icon.h"
 #include "init.h"
 #include "layout.h"
-#include "menu.h"
 #include "misc.h"
-#include "prop.h"
 #include "taskbar.h"
 
 extern sig_atomic_t run_flag; // 程序運行標志

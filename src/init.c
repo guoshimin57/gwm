@@ -39,6 +39,8 @@ void init_wm(WM *wm)
     xinfo.screen_height=DisplayHeight(xinfo.display, xinfo.screen);
     xinfo.mod_map=XGetModifierMapping(xinfo.display);
     xinfo.root_win=RootWindow(xinfo.display, xinfo.screen);
+    set_atoms();
+    set_gwm_widget_type(xinfo.root_win, ROOT_WIN);
     XSelectInput(xinfo.display, xinfo.root_win, ROOT_EVENT_MASK);
     set_visual_info();
     create_refer_wins(wm);
@@ -49,7 +51,6 @@ void init_wm(WM *wm)
         init_wallpaper_files(wm);
     init_desktop(wm);
     reg_event_handlers(wm);
-    set_atoms();
     load_font();
     alloc_color();
     init_root_win_background();
@@ -59,7 +60,7 @@ void init_wm(WM *wm)
     set_ewmh(wm);
     set_gwm_current_layout(DESKTOP(wm)->cur_layout);
     taskbar=create_taskbar();
-    cmd_entry=create_cmd_entry();
+    cmd_entry=create_cmd_entry(RUN_CMD_ENTRY);
     create_hint_win();
     create_client_menu();
     create_clients(wm);
@@ -69,9 +70,10 @@ void init_wm(WM *wm)
 
 static void create_refer_wins(WM *wm)
 {
+    Window w=xinfo.root_win;
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
-        wm->top_wins[i]=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
-    wm->wm_check_win=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
+        wm->top_wins[i]=create_widget_win(NON_WIDGET, w, -1, -1, 1, 1, 0, 0, 0);
+    wm->wm_check_win=create_widget_win(NON_WIDGET, w, -1, -1, 1, 1, 0, 0, 0);
 }
 
 static void set_visual_info(void)
@@ -148,14 +150,18 @@ static void create_cursors(WM *wm)
 
 static void create_hint_win(void)
 {
-    xinfo.hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
+    xinfo.hint_win=create_widget_win(HINT_WIN, xinfo.root_win, 0, 0, 1, 1, 0, 0,
         get_widget_color(HINT_WIN_COLOR));
     XSelectInput(xinfo.display, xinfo.hint_win, ExposureMask);
 }
 
 static void create_client_menu(void)
 {
-    client_menu=create_menu(cfg->client_menu_item_text, CLIENT_MENU_ITEM_N, 1);
+    Widget_type types[CLIENT_MENU_ITEM_N];
+    for(int i=0; i<CLIENT_MENU_ITEM_N; i++)
+        types[i]=CLIENT_MENU_ITEM_BEGIN+i;
+    client_menu=create_menu(CLIENT_MENU, types, cfg->client_menu_item_text,
+        CLIENT_MENU_ITEM_N, 1);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */

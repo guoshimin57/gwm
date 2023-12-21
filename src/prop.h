@@ -14,7 +14,7 @@
 
 typedef enum // 與gwm自定義標識符名稱表(gwm_atom_names)相應的ID
 {
-    GWM_CURRENT_LAYOUT, GWM_ATOM_N
+    GWM_CURRENT_LAYOUT, GWM_WIDGET_TYPE, GWM_ATOM_N
 } GWM_atom_id;
 
 void set_gwm_atoms(void);
@@ -28,7 +28,9 @@ void replace_cardinal_prop(Window win, Atom prop, const long *values, int n);
 void copy_prop(Window dest, Window src);
 bool send_client_msg(Atom wm_protocols, Atom proto, Window win);
 bool has_spec_wm_protocol(Window win, Atom protocol);
-void set_gwm_current_layout(Layout cur_layout);
-bool get_gwm_current_layout(Layout *cur_layout);
+void set_gwm_current_layout(long cur_layout);
+bool get_gwm_current_layout(int *cur_layout);
+void set_gwm_widget_type(Window win, long type);
+bool get_gwm_widget_type(Window win, CARD32 *type);
 
 #endif

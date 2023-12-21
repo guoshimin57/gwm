@@ -96,5 +96,10 @@ Window *get_client_win_list(WM *wm, int *n);
 Window *get_client_win_list_stacking(WM *wm, int *n);
 void set_attention(WM *wm, Client *c, bool attent);
 void set_urgency(WM *wm, Client *c, bool urg);
+bool is_wm_win(WM *wm, Window win, bool before_wm);
+void restack_win(WM *wm, Window win);
+void update_clients_bg(WM *wm);
+void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);
+void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c);
 
 #endif

@@ -11,6 +11,8 @@
 
 #include "gwm.h"
 
+#define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
+
 static int get_entry_cursor_x(Entry *entry);
 static char *get_part_match_regex(Entry *entry);
 static void complete_for_entry(Entry *entry, bool show);
@@ -19,13 +21,14 @@ static Strings *get_cmd_completion_for_entry(Entry *entry, int *n);
 
 Entry *cmd_entry=NULL; // 輸入命令並執行的構件
 
-Entry *create_entry(int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
+Entry *create_entry(Widget_type type, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
 {
     Entry *entry=malloc_s(sizeof(Entry));
     entry->x=x, entry->y=y, entry->w=w, entry->h=h;
     entry->hint=hint, entry->complete=complete;
-    entry->win=create_widget_win(xinfo.root_win, x, y, w, h, cfg->border_width,
-        get_widget_color(CURRENT_BORDER_COLOR), get_widget_color(ENTRY_COLOR));
+    entry->win=create_widget_win(type, xinfo.root_win, x, y, w, h,
+        cfg->border_width, get_widget_color(CURRENT_BORDER_COLOR),
+        get_widget_color(ENTRY_COLOR));
     XSelectInput(xinfo.display, entry->win, ENTRY_EVENT_MASK);
     set_xic(entry->win, &entry->xic);
     return entry;
@@ -190,7 +193,7 @@ void paste_for_entry(Entry *entry)
     update_entry_text(entry);
 }
 
-Entry *create_cmd_entry(void)
+Entry *create_cmd_entry(Widget_type type)
 {
     int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
         x, y, w, h=get_font_height_by_pad(), pad=get_font_pad();
@@ -199,7 +202,7 @@ Entry *create_cmd_entry(void)
     w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
     x=(sw-w)/2-bw, y=(sh-h)/2-bw;
 
-    return create_entry(x, y, w, h, cfg->cmd_entry_hint,
+    return create_entry(type, x, y, w, h, cfg->cmd_entry_hint,
         get_cmd_completion_for_entry);
 }
 

@@ -39,7 +39,7 @@ static bool is_grab_root_act(Pointer_act act)
 
 bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
 {
-    if(act==CHOOSE && get_widget_type(wm, oe->xbutton.window)==CLIENT_WIN)
+    if(act==CHOOSE && get_widget_type(oe->xbutton.window)==CLIENT_WIN)
         return true;
 
     Window win = is_grab_root_act(act) ? xinfo.root_win : oe->xbutton.window;
@@ -678,7 +678,7 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
 
 void focus_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    focus_desktop_n(wm, get_desktop_n(wm, e, arg));
+    focus_desktop_n(wm, get_desktop_n(e, arg));
 }
 
 void next_desktop(WM *wm, XEvent *e, Func_arg arg)
@@ -695,27 +695,27 @@ void prev_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    move_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(wm, e, arg));
+    move_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(e, arg));
 }
 
 void all_move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    all_move_to_desktop_n(wm, get_desktop_n(wm, e, arg));
+    all_move_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
 void change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    change_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(wm, e, arg));
+    change_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(e, arg));
 }
 
 void all_change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    all_change_to_desktop_n(wm, get_desktop_n(wm, e, arg));
+    all_change_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
 void attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    attach_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(wm, e, arg));
+    attach_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(e, arg));
 }
 
 void attach_to_all_desktops(WM *wm, XEvent *e, Func_arg arg)
@@ -726,7 +726,7 @@ void attach_to_all_desktops(WM *wm, XEvent *e, Func_arg arg)
 
 void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    all_attach_to_desktop_n(wm, get_desktop_n(wm, e, arg));
+    all_attach_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
 void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg)
@@ -778,7 +778,12 @@ void switch_color_theme(WM *wm, XEvent *e, Func_arg arg)
         cfg->color_theme=0;
     // 以下函數會產生Expose事件，而處理Expose事件時會更新窗口的文字
     // 內容及其顏色，故此處不必更新構件文字顏色。
-    update_widget_bg(wm);
+    update_taskbar_bg();
+    update_menu_bg(act_center, ACT_CENTER_ITEM_N);
+    update_menu_bg(client_menu, CLIENT_MENU_ITEM_N);
+    update_entry_bg(cmd_entry);
+    update_win_bg(xinfo.hint_win, get_widget_color(HINT_WIN_COLOR), None);
+    update_clients_bg(wm);
 }
 
 void toggle_compositor(WM *wm, XEvent *e, Func_arg arg)
