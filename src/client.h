@@ -101,5 +101,7 @@ void restack_win(WM *wm, Window win);
 void update_clients_bg(WM *wm);
 void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);
 void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c);
+Pointer_act get_resize_act(Client *c, const Move_info *m);
+void create_clients(WM *wm);
 
 #endif

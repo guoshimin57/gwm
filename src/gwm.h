@@ -36,6 +36,7 @@
 #include "widget.h"
 #include "drawable.h"
 #include "ewmh.h"
+#include "file.h"
 #include "font.h"
 #include "menu.h"
 #include "icccm.h"
@@ -88,12 +89,6 @@ typedef struct // 與X相關的信息
     Window hint_win; // 提示窗口
 } Xinfo;
 
-typedef struct strings_tag
-{
-    char *str;
-    struct strings_tag *next;
-} Strings;
-
 enum focus_mode_tag // 窗口聚焦模式
 {
     ENTER_FOCUS, CLICK_FOCUS,
@@ -128,14 +123,6 @@ enum layout_tag // 窗口管理器的布局模式
 };
 typedef enum layout_tag Layout;
 
-enum pointer_act_tag // 定位器操作類型
-{
-    NO_OP, CHOOSE, MOVE, SWAP, CHANGE, TOP_RESIZE, BOTTOM_RESIZE, LEFT_RESIZE,
-    RIGHT_RESIZE, TOP_LEFT_RESIZE, TOP_RIGHT_RESIZE, BOTTOM_LEFT_RESIZE,
-    BOTTOM_RIGHT_RESIZE, ADJUST_LAYOUT_RATIO, POINTER_ACT_N
-};
-typedef enum pointer_act_tag Pointer_act;
-
 typedef enum // 顏色主題
 {
     DARK_THEME, NORMAL_THEME, LIGHT_THEME, COLOR_THEME_N
@@ -162,7 +149,6 @@ struct wm_tag // 窗口管理器相關信息
     GC gc; // 窗口管理器的圖形信息
     Client *clients; // 頭結點
     Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
-    Cursor cursors[POINTER_ACT_N]; // 光標
     void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
 };
 typedef struct wm_tag WM;
@@ -234,7 +220,6 @@ typedef struct delta_rect_tag Delta_rect;
 #include "desktop.h"
 #include "entry.h"
 #include "func.h"
-#include "grab.h"
 #include "handler.h"
 #include "init.h"
 #include "layout.h"

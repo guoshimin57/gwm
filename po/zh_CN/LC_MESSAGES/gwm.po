@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.7.13\n"
+"Project-Id-Version: gwm 2.7.14\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-12-21 19:41+0800\n"
+"POT-Creation-Date: 2023-12-25 11:43+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -16,6 +16,10 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: src/client.c:1233
+msgid "錯誤：查詢窗口清單失敗！"
+msgstr "错误：查询窗口列表失败！"
 
 #. 操作中心按鈕類型             按鈕文字
 #: src/config.c:477
@@ -288,19 +292,21 @@ msgstr "以下是%lx窗口的位置窗口：\n"
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "以下是自底向顶排列的客户窗口和分层参照窗口列表：\n"
 
+#: src/file.c:121
+msgid "未能成功地爲命令創建新會話"
+msgstr "未能成功地为命令创建新会话"
+
+#: src/file.c:123
+msgid "命令執行錯誤"
+msgstr "命令执行错误"
+
+#: src/file.c:126
+msgid "未能成功地爲命令創建新進程"
+msgstr "未能成功地为命令创建新进程"
+
 #: src/font.c:35
 msgid "錯誤：不能加載必要的字體。"
 msgstr "错误：不能加载必要的字体。"
-
-#: src/grab.c:82
-#, c-format
-msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
-msgstr "错误：找不到指定的键符号相应的功能转换键！\n"
-
-#: src/grab.c:85
-#, c-format
-msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
-msgstr "错误：指定的键符号不存在对应的键代码！\n"
 
 #: src/gwm.c:37
 msgid "不能安裝SIGCHLD信號處理函數"
@@ -322,44 +328,38 @@ msgstr "不能安装SIGQUIT信号处理函数"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 
-#: src/init.c:134
+#: src/init.c:120
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "错误： 不能设置输入法"
 
-#: src/init.c:181
-msgid "錯誤：查詢窗口清單失敗！"
-msgstr "错误：查询窗口列表失败！"
-
-#: src/misc.c:25
+#: src/misc.c:18
 msgid "錯誤：申請內存失敗"
 msgstr "错误：申请内存失败"
 
-#: src/misc.c:35
+#: src/misc.c:28
 msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "错误：已经有其他窗口管理器在运行！"
 
-#: src/misc.c:40
+#: src/misc.c:33
 #, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X错误：资源号=%#lx，请求量=%lu，错误码=%d，主请求码=%d，次请求码=%d\n"
 
-#: src/misc.c:96
+#: src/widget.c:124
 #, c-format
 msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
 msgstr "错误：窗口（0x%lx）输入法设置失败！"
 
-#: src/misc.c:267
-msgid "未能成功地爲命令創建新會話"
-msgstr "未能成功地为命令创建新会话"
+#: src/widget.c:240
+#, c-format
+msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
+msgstr "错误：找不到指定的键符号相应的功能转换键！\n"
 
-#: src/misc.c:269
-msgid "命令執行錯誤"
-msgstr "命令执行错误"
-
-#: src/misc.c:272
-msgid "未能成功地爲命令創建新進程"
-msgstr "未能成功地为命令创建新进程"
+#: src/widget.c:243
+#, c-format
+msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
+msgstr "错误：指定的键符号不存在对应的键代码！\n"
 
 #~ msgid "切換到全屏模式"
 #~ msgstr "切换到全屏模式"

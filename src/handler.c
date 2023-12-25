@@ -462,7 +462,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     else if(type == TITLE_AREA)
         act=MOVE;
     if(type != NON_WIDGET)
-        XDefineCursor(xinfo.display, win, wm->cursors[act]);
+        set_cursor(win, act);
     handle_pointer_hover(wm, win, type);
 }
 
@@ -636,7 +636,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
         update_win_bg(win, get_widget_color(c==CUR_FOC_CLI(wm) ?
             CURRENT_TITLEBAR_COLOR : NORMAL_TITLEBAR_COLOR), None);
     if(type != NON_WIDGET)
-        XDefineCursor(xinfo.display, win, wm->cursors[NO_OP]);
+        set_cursor(win, NO_OP);
 }
 
 static void handle_map_request(WM *wm, XEvent *e)

@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "misc.h"
 
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
 

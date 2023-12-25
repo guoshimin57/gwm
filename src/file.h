@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     grab.h：與grab.c相應的頭文件。
+ *     file.h：與file.c相應的頭文件。
  *     版權 (C) 2020-2023 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,12 +9,19 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef GRAB_H
-#define GRAB_H
+#ifndef FILE_H 
+#define FILE_H 
 
-void grab_keys(void);
-void grab_buttons(Client *c);
-bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
-bool grab_pointer(WM *wm, Window win, Pointer_act act);
+#include "misc.h"
+
+typedef enum // 文件名排序类型
+{
+    RISE=-1, NOSORT=0, FALL=1 // 依次为升序、不排序、降序
+} Order;
+
+Strings *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, int *n);
+void exec_cmd(char *const*cmd);
+void exec_autostart(void);
+bool is_accessible(const char *filename);
 
 #endif

@@ -37,7 +37,6 @@ static void fix_icon_dir_info(Icon_dir_info *info);
 static FILE *open_index_theme(const char *base_dir, const char *theme);
 static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
-static bool is_accessible(const char *filename);
 
 void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
@@ -387,13 +386,4 @@ static size_t get_spec_char_num(const char *str, int ch)
 static char **get_parent_themes(const char *base_dir, const char *theme)
 {
     return get_list_val_from_index_theme(base_dir, theme, "Inherits=", NULL);
-}
-
-static bool is_accessible(const char *filename)
-{
-    if(filename == NULL)
-        return false;
-
-    struct stat buf;
-    return !stat(filename, &buf);
 }

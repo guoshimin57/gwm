@@ -59,10 +59,10 @@ void add_client(WM *wm, Window win)
     add_client_node(get_head_for_add_client(wm, c), c);
     set_default_win_rect(wm, c);
     save_place_info_of_client(c);
-    grab_buttons(c);
+    grab_buttons(c->win);
     set_gwm_widget_type(win, CLIENT_WIN);
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
-    XDefineCursor(xinfo.display, win, wm->cursors[NO_OP]);
+    set_cursor(win, NO_OP);
     frame_client(wm, c);
     update_layout(wm);
     XMapWindow(xinfo.display, c->frame);
@@ -1188,4 +1188,54 @@ void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             update_win_bg(c->buttons[i], color, None);
     }
+}
+
+Pointer_act get_resize_act(Client *c, const Move_info *m)
+{   // 窗口邊框寬度、標題欄調試、可調整尺寸區域的寬度、高度
+    // 以及窗口框架左、右橫坐標和上、下縱坐標
+    int bw=c->border_w, bh=c->titlebar_h, rw=c->w/4, rh=c->h/4,
+        lx=c->x-bw, rx=c->x+c->w+bw, ty=c->y-bh-bw, by=c->y+c->h+bw;
+
+    if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=ty && m->oy<ty+bw+rh)
+        return TOP_LEFT_RESIZE;
+    else if(m->ox>=rx-bw-rw && m->ox<rx && m->oy>=ty && m->oy<ty+bw+rh)
+        return TOP_RIGHT_RESIZE;
+    else if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=by-bw-rh && m->oy<by)
+        return BOTTOM_LEFT_RESIZE;
+    else if(m->ox>=rx-bw-rw && m->ox<rx && m->oy>=by-bw-rh && m->oy<by)
+        return BOTTOM_RIGHT_RESIZE;
+    else if(m->oy>=ty && m->oy<ty+bw+rh)
+        return TOP_RESIZE;
+    else if(m->oy>=by-bw-rh && m->oy<by)
+        return BOTTOM_RESIZE;
+    else if(m->ox>=lx && m->ox<lx+bw+rw)
+        return LEFT_RESIZE;
+    else if(m->ox>=rx-bw-rw && m->ox<rx)
+        return RIGHT_RESIZE;
+    else
+        return NO_OP;
+}
+
+/* 生成帶表頭結點的雙向循環鏈表 */
+void create_clients(WM *wm)
+{
+    Window root, parent, *child=NULL;
+    unsigned int n;
+    Desktop **d=wm->desktop;
+
+    wm->clients=malloc_s(sizeof(Client));
+    memset(wm->clients, 0, sizeof(Client));
+    for(size_t i=0; i<DESKTOP_N; i++)
+        d[i]->cur_focus_client=d[i]->prev_focus_client=wm->clients;
+    wm->clients->win=xinfo.root_win;
+    wm->clients->prev=wm->clients->next=wm->clients;
+    if(!XQueryTree(xinfo.display, xinfo.root_win, &root, &parent, &child, &n))
+        exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
+    for(size_t i=0; i<n; i++)
+    {
+        if(is_wm_win(wm, child[i], true))
+            add_client(wm, child[i]);
+        restack_win(wm, child[i]);
+    }
+    XFree(child);
 }

@@ -1,3 +1,17 @@
+/* *************************************************************************
+ *     widget.h：與widget.c相應的頭文件。
+ *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
+ * GNU通用公共許可證重新發布、修改本程序。
+ *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
+ * 定目標之適用性的暗示性擔保。詳見GNU通用公共許可證。
+ *     你應該已經收到一份附隨此程序的GNU通用公共許可證副本。否則，請參閱
+ * <http://www.gnu.org/licenses/>。
+ * ************************************************************************/
+
+#ifndef WIDGET_H
+#define WIDGET_H
+
 typedef enum // 構件顏色類型
 {
     NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR, NORMAL_TITLEBAR_COLOR,
@@ -53,6 +67,13 @@ typedef enum // 構件類型
     CLIENT_MENU_ITEM_BEGIN=SHADE_BUTTON, CLIENT_MENU_ITEM_END=FULL_MAX_BUTTON, 
 } Widget_type;
 
+typedef enum // 定位器操作類型
+{
+    NO_OP, CHOOSE, MOVE, SWAP, CHANGE, TOP_RESIZE, BOTTOM_RESIZE, LEFT_RESIZE,
+    RIGHT_RESIZE, TOP_LEFT_RESIZE, TOP_RIGHT_RESIZE, BOTTOM_LEFT_RESIZE,
+    BOTTOM_RIGHT_RESIZE, ADJUST_LAYOUT_RATIO, POINTER_ACT_N
+} Pointer_act;
+
 #define TITLE_BUTTON_N (TITLE_BUTTON_END-TITLE_BUTTON_BEGIN+1)
 #define TASKBAR_BUTTON_N (TASKBAR_BUTTON_END-TASKBAR_BUTTON_BEGIN+1)
 #define ACT_CENTER_ITEM_N (ACT_CENTER_ITEM_END-ACT_CENTER_ITEM_BEGIN+1)
@@ -81,3 +102,16 @@ Window create_widget_win(Widget_type type, Window parent, int x, int y, int w, i
 Widget_type get_widget_type(Window win);
 void update_hint_win_for_info(Window hover, const char *info);
 void draw_icon(Drawable d, Imlib_Image image, const char *name, int size);
+void set_xic(Window win, XIC *ic);
+KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
+void create_hint_win(void);
+void create_client_menu(void);
+void create_cursors(void);
+void set_cursor(Window win, Pointer_act act);
+void free_cursors(void);
+void grab_keys(void);
+void grab_buttons(Window win);
+bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
+bool grab_pointer(Window win, Pointer_act act);
+
+#endif

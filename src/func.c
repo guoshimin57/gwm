@@ -43,7 +43,7 @@ bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
         return true;
 
     Window win = is_grab_root_act(act) ? xinfo.root_win : oe->xbutton.window;
-    if(act!=NO_OP && !grab_pointer(wm, win, act))
+    if(act!=NO_OP && !grab_pointer(win, act))
         return false;
 
     XEvent e, *p=(ne ? ne : &e);
@@ -164,8 +164,7 @@ void clear_wm(WM *wm)
         XDestroyWindow(xinfo.display, wm->top_wins[i]);
     XFreeGC(xinfo.display, wm->gc);
     XFreeModifiermap(xinfo.mod_map);
-    for(size_t i=0; i<POINTER_ACT_N; i++)
-        XFreeCursor(xinfo.display, wm->cursors[i]);
+    free_cursors();
     XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
     if(xinfo.xim)
         XCloseIM(xinfo.xim);
@@ -374,7 +373,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
 
-    if(layout==PREVIEW || !grab_pointer(wm, xinfo.root_win, act))
+    if(layout==PREVIEW || !grab_pointer(xinfo.root_win, act))
         return;
 
     XEvent ev;
@@ -586,7 +585,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(arg);
     if( DESKTOP(wm)->cur_layout!=TILE
         || !is_layout_adjust_area(wm, e->xbutton.window, e->xbutton.x_root)
-        || !grab_pointer(wm, xinfo.root_win, ADJUST_LAYOUT_RATIO))
+        || !grab_pointer(xinfo.root_win, ADJUST_LAYOUT_RATIO))
         return;
 
     int ox=e->xbutton.x_root, nx, dx;

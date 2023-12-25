@@ -12,28 +12,23 @@
 #ifndef MISC_H
 #define MISC_H
 
-enum order_tag // 文件名排序类型
+typedef struct strings_tag // 字符串鏈表
 {
-    RISE=-1, NOSORT=0, FALL=1 // 依次为升序、不排序、降序
-};
-typedef enum order_tag Order;
+    char *str;
+    struct strings_tag *next;
+} Strings;
 
 void *malloc_s(size_t size);
 int x_fatal_handler(Display *display, XErrorEvent *e);
 void exit_with_perror(const char *s);
 void exit_with_msg(const char *msg);
-Pointer_act get_resize_act(Client *c, const Move_info *m);
 void clear_zombies(int signum);
-void set_xic(Window win, XIC *ic);
-KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
 void vfree(void *ptr, ...);
-Strings *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, int *n);
 void free_strings(Strings *head);
 int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
-void exec_cmd(char *const*cmd);
 char *get_title_text(Window win, const char *fallback);
 char *get_icon_title_text(Window win, const char *fallback);
 

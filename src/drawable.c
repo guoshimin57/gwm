@@ -205,3 +205,13 @@ void set_visual_for_imlib(Drawable d)
     else
         imlib_context_set_visual(xinfo.visual);
 }
+
+void init_root_win_background(void)
+{
+    const char *name=cfg->wallpaper_filename;
+
+    Pixmap pixmap=create_pixmap_from_file(xinfo.root_win, name ? name : "");
+    update_win_bg(xinfo.root_win, get_widget_color(ROOT_WIN_COLOR), pixmap);
+    if(pixmap && !have_compositor())
+        XFreePixmap(xinfo.display, pixmap);
+}

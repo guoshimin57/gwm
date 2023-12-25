@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.7.13\n"
+"Project-Id-Version: gwm 2.7.14\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2023-12-21 19:41+0800\n"
+"POT-Creation-Date: 2023-12-25 11:43+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -16,6 +16,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/client.c:1233
+msgid "錯誤：查詢窗口清單失敗！"
+msgstr "Error: Failed to query window list!"
 
 #. 操作中心按鈕類型             按鈕文字
 #: src/config.c:477
@@ -288,19 +292,21 @@ msgstr "The following are place info of the %lx window:\n"
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "The following is a list of client windows and layer reference windows arranged from bottom to top:\n"
 
+#: src/file.c:121
+msgid "未能成功地爲命令創建新會話"
+msgstr "Failed to successfully create a new session for the command"
+
+#: src/file.c:123
+msgid "命令執行錯誤"
+msgstr "Command execution error"
+
+#: src/file.c:126
+msgid "未能成功地爲命令創建新進程"
+msgstr "Failed to successfully create a new process for the command"
+
 #: src/font.c:35
 msgid "錯誤：不能加載必要的字體。"
 msgstr "Error: Unable to load necessary fonts."
-
-#: src/grab.c:82
-#, c-format
-msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
-msgstr "Error: The corresponding modifier key for the specified key symbol could not be found!\n"
-
-#: src/grab.c:85
-#, c-format
-msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
-msgstr "Error: The key symbol specified does not have a corresponding key code!\n"
 
 #: src/gwm.c:37
 msgid "不能安裝SIGCHLD信號處理函數"
@@ -322,44 +328,38 @@ msgstr "SIGQUIT signal handler cannot be installed"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 
-#: src/init.c:134
+#: src/init.c:120
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: src/init.c:181
-msgid "錯誤：查詢窗口清單失敗！"
-msgstr "Error: Failed to query window list!"
-
-#: src/misc.c:25
+#: src/misc.c:18
 msgid "錯誤：申請內存失敗"
 msgstr "Error: Failed to allocate memory"
 
-#: src/misc.c:35
+#: src/misc.c:28
 msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "Error: There is already another window manager running!"
 
-#: src/misc.c:40
+#: src/misc.c:33
 #, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X error: Resource number=%#lx, Request number=%lu, Error code=%d, Major request code=%d, Minor request code=%d\n"
 
-#: src/misc.c:96
+#: src/widget.c:124
 #, c-format
 msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
 msgstr "Error: Window (0x%lx) input method setup failed!"
 
-#: src/misc.c:267
-msgid "未能成功地爲命令創建新會話"
-msgstr "Failed to successfully create a new session for the command"
+#: src/widget.c:240
+#, c-format
+msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
+msgstr "Error: The corresponding modifier key for the specified key symbol could not be found!\n"
 
-#: src/misc.c:269
-msgid "命令執行錯誤"
-msgstr "Command execution error"
-
-#: src/misc.c:272
-msgid "未能成功地爲命令創建新進程"
-msgstr "Failed to successfully create a new process for the command"
+#: src/widget.c:243
+#, c-format
+msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
+msgstr "Error: The key symbol specified does not have a corresponding key code!\n"
 
 #~ msgid "切換到全屏模式"
 #~ msgstr "To full screen mode"
