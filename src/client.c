@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     client.c：實現X client相關功能。
- *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -64,7 +64,7 @@ void add_client(WM *wm, Window win)
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
     frame_client(wm, c);
-    update_layout(wm);
+    request_layout_update();
     XMapWindow(xinfo.display, c->frame);
     XMapSubwindows(xinfo.display, c->frame);
     focus_client(wm, wm->cur_desktop, c);
@@ -433,7 +433,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     vfree(c->title_text, c, NULL);
 
     if(!is_for_quit)
-        update_layout(wm);
+        request_layout_update();
     set_all_net_client_list(wm);
 }
 
@@ -534,7 +534,7 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
             to ? to->place_type : type);
         fix_place_type_for_tile(wm);
         raise_client(wm, from);
-        update_layout(wm);
+        request_layout_update();
     }
 }
 
@@ -630,7 +630,7 @@ void swap_clients(WM *wm, Client *a, Client *b)
         del_subgroup(b_leader), add_subgroup(a_prev, b_leader);
 
     raise_client(wm, oa);
-    update_layout(wm);
+    request_layout_update();
 }
 
 static int cmp_client_store_order(WM *wm, Client *c1, Client *c2)
@@ -824,7 +824,7 @@ void iconify(WM *wm, Client *c)
         p->win_state.hidden=1;
         update_net_wm_state(p->win, p->win_state);
     }
-    update_layout(wm);
+    request_layout_update();
 }
 
 static Client *get_icon_client_head(WM *wm)
@@ -896,7 +896,7 @@ void deiconify(WM *wm, Client *c)
             update_net_wm_state(p->win, p->win_state);
         }
     }
-    update_layout(wm);
+    request_layout_update();
 }
 
 void del_icon(WM *wm, Client *c)

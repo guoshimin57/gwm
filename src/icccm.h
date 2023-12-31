@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     icccm.h：與icccm.c相應的頭文件。
- *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -29,6 +29,8 @@ void fix_win_size_by_hint(const XSizeHints *size_hint, int *w, int *h);
 bool is_prefer_size(int w, int h, const XSizeHints *hint);
 void set_input_focus(Window win, const XWMHints *hint);
 bool has_focus_hint(const XWMHints *hint);
+bool send_wm_protocol_msg(Atom protocol, Window win);
+bool has_spec_wm_protocol(Window win, Atom protocol);
 bool set_urgency_hint(Window win, XWMHints *h, bool urg);
 bool is_iconic_state(Window win);
 void close_win(Window win);

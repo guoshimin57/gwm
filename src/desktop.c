@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     desktop.c：實現虛擬桌面功能。
- *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -65,7 +65,7 @@ void focus_desktop_n(WM *wm, unsigned int n)
     }
 
     focus_client(wm, wm->cur_desktop, CUR_FOC_CLI(wm));
-    update_layout(wm);
+    request_layout_update();
     update_icon_area(wm);
     update_taskbar_buttons_bg();
     set_all_net_client_list(wm);

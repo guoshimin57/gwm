@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     func.c：實現按鍵和按鍵所要綁定的功能。
- *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -219,7 +219,7 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
     {
         int *m=&DESKTOP(wm)->n_main_max;
         *m = *m+arg.desktop_n>=1 ? *m+arg.desktop_n : 1;
-        update_layout(wm);
+        request_layout_update();
     }
 }
 
@@ -236,7 +236,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
         if(sw>=cfg->resize_inc && mw>=cfg->resize_inc)
         {
             d->main_area_ratio=mr;
-            update_layout(wm);
+            request_layout_update();
         }
     }
 }
@@ -254,7 +254,7 @@ void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
         if(mw>=cfg->resize_inc && fw>=cfg->resize_inc)
         {
             d->main_area_ratio-=arg.change_ratio, d->fixed_area_ratio=fr;
-            update_layout(wm);
+            request_layout_update();
         }
     }
 }
@@ -574,7 +574,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
             if(is_on_cur_desktop(wm, c) && c->place_type==FLOAT_LAYER)
                 c->place_type=TILE_LAYER_MAIN;
 
-    update_layout(wm);
+    request_layout_update();
     update_titlebar_layout(wm);
     update_taskbar_buttons_bg();
     set_gwm_current_layout(*cl);
@@ -597,7 +597,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
         {
             nx=ev.xmotion.x, dx=nx-ox;
             if(abs(dx)>=cfg->resize_inc && change_layout_ratio(wm, ox, nx))
-                update_layout(wm), ox=nx;
+                request_layout_update(), ox=nx;
         }
         else
             wm->event_handlers[ev.type](wm, &ev);
@@ -652,7 +652,7 @@ void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     c->border_w = c->border_w ? 0 : cfg->border_width;
     XSetWindowBorderWidth(xinfo.display, c->frame, c->border_w);
-    update_layout(wm);
+    request_layout_update();
 }
 
 void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
@@ -672,7 +672,7 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
         XDestroyWindow(xinfo.display, c->title_area);
         XDestroyWindow(xinfo.display, c->logo);
     }
-    update_layout(wm);
+    request_layout_update();
 }
 
 void focus_desktop(WM *wm, XEvent *e, Func_arg arg)

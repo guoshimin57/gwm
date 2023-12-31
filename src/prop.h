@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     prop.h：與prop.c相應的頭文件。
- *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -14,9 +14,10 @@
 
 typedef enum // 與gwm自定義標識符名稱表(gwm_atom_names)相應的ID
 {
-    GWM_CURRENT_LAYOUT, GWM_WIDGET_TYPE, GWM_ATOM_N
+    GWM_CURRENT_LAYOUT, GWM_UPDATE_LAYOUT, GWM_WIDGET_TYPE, GWM_ATOM_N
 } GWM_atom_id;
 
+bool is_spec_gwm_atom(Atom spec, GWM_atom_id id);
 void set_gwm_atoms(void);
 Window get_transient_for(Window win);
 unsigned char *get_prop(Window win, Atom prop, unsigned long *n);
@@ -26,11 +27,10 @@ void replace_atom_prop(Window win, Atom prop, const Atom *values, int n);
 void replace_window_prop(Window win, Atom prop, const Window *wins, int n);
 void replace_cardinal_prop(Window win, Atom prop, const long *values, int n);
 void copy_prop(Window dest, Window src);
-bool send_client_msg(Atom wm_protocols, Atom proto, Window win);
-bool has_spec_wm_protocol(Window win, Atom protocol);
 void set_gwm_current_layout(long cur_layout);
 bool get_gwm_current_layout(int *cur_layout);
 void set_gwm_widget_type(Window win, long type);
 bool get_gwm_widget_type(Window win, CARD32 *type);
+void request_layout_update(void);
 
 #endif

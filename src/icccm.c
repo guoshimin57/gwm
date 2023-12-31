@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     icccm.c：實現ICCCM規範。
- *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -181,13 +181,40 @@ void set_input_focus(Window win, const XWMHints *hint)
     if(has_focus_hint(hint))
         XSetInputFocus(xinfo.display, win, RevertToPointerRoot, CurrentTime);
     if(has_spec_wm_protocol(win, icccm_atoms[WM_TAKE_FOCUS]))
-        send_client_msg(icccm_atoms[WM_PROTOCOLS], icccm_atoms[WM_TAKE_FOCUS], win);
+        send_wm_protocol_msg(icccm_atoms[WM_TAKE_FOCUS], win);
 }
 
 bool has_focus_hint(const XWMHints *hint)
 {
     // 若未設置hint，則視爲暗示可聚焦
     return !hint || ((hint->flags & InputHint) && hint->input);
+}
+
+bool send_wm_protocol_msg(Atom protocol, Window win)
+{
+    if(has_spec_wm_protocol(win, protocol))
+    {
+        XEvent event;
+        event.type=ClientMessage;
+        event.xclient.window=win;
+        event.xclient.message_type=icccm_atoms[WM_PROTOCOLS];
+        event.xclient.format=32;
+        event.xclient.data.l[0]=protocol;
+        event.xclient.data.l[1]=CurrentTime;
+        return XSendEvent(xinfo.display, win, False, NoEventMask, &event);
+    }
+    return false;
+}
+
+bool has_spec_wm_protocol(Window win, Atom protocol)
+{
+	int i, n;
+	Atom *protocols=NULL;
+	if(XGetWMProtocols(xinfo.display, win, &protocols, &n))
+        for(i=0; i<n; i++)
+            if(protocols[i] == protocol)
+                { XFree(protocols); return true; }
+    return false;
 }
 
 bool set_urgency_hint(Window win, XWMHints *h, bool urg)
@@ -213,8 +240,7 @@ bool is_iconic_state(Window win)
 
 void close_win(Window win)
 {
-    if(!send_client_msg(icccm_atoms[WM_PROTOCOLS],
-        icccm_atoms[WM_DELETE_WINDOW], win))
+    if(!send_wm_protocol_msg(icccm_atoms[WM_DELETE_WINDOW], win))
         XKillClient(xinfo.display, win);
 }
 

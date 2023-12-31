@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     prop.c：實現與X特性相關的功能。
- *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -13,10 +13,15 @@
 
 static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 {
-    "GWM_CURRENT_LAYOUT", "GWM_WIDGET_TYPE",
+    "GWM_CURRENT_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE",
 };
 
 static Atom gwm_atoms[GWM_ATOM_N];
+
+bool is_spec_gwm_atom(Atom spec, GWM_atom_id id)
+{
+    return spec==gwm_atoms[id];
+}
 
 void set_gwm_atoms(void)
 {
@@ -134,33 +139,6 @@ void copy_prop(Window dest, Window src)
     XFree(props);
 }
 
-bool send_client_msg(Atom wm_protocols, Atom proto, Window win)
-{
-    if(has_spec_wm_protocol(win, proto))
-    {
-        XEvent event;
-        event.type=ClientMessage;
-        event.xclient.window=win;
-        event.xclient.message_type=wm_protocols;
-        event.xclient.format=32;
-        event.xclient.data.l[0]=proto;
-        event.xclient.data.l[1]=CurrentTime;
-        return XSendEvent(xinfo.display, win, False, NoEventMask, &event);
-    }
-    return false;
-}
-
-bool has_spec_wm_protocol(Window win, Atom protocol)
-{
-	int i, n;
-	Atom *protocols=NULL;
-	if(XGetWMProtocols(xinfo.display, win, &protocols, &n))
-        for(i=0; i<n; i++)
-            if(protocols[i] == protocol)
-                { XFree(protocols); return true; }
-    return false;
-}
-
 void set_gwm_current_layout(long cur_layout)
 {
     replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT],
@@ -183,4 +161,10 @@ void set_gwm_widget_type(Window win, long type)
 bool get_gwm_widget_type(Window win, CARD32 *type)
 {
     return get_cardinal_prop(win, gwm_atoms[GWM_WIDGET_TYPE], type);
+}
+
+void request_layout_update(void)
+{
+    long f=true;
+    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_UPDATE_LAYOUT], &f, 1);
 }

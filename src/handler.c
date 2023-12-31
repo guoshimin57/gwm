@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     handler.c：實現X事件處理功能。
- *     版權 (C) 2020-2023 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -216,7 +216,7 @@ static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
         c->desktop_mask=~0U;
     else
         c->desktop_mask=get_desktop_mask(wm->cur_desktop);
-    update_layout(wm);
+    request_layout_update();
     c->win_state.sticky=add;
 }
 
@@ -701,6 +701,8 @@ static void handle_property_notify(WM *wm, XEvent *e)
         if(c->icon)
             draw_image(c->image, c->icon->win, 0, 0, c->titlebar_h, c->titlebar_h);
     }
+    else if(is_spec_gwm_atom(atom, GWM_UPDATE_LAYOUT))
+        update_layout(wm);
 }
 
 static void handle_wm_hints_notify(WM *wm, Window win)
@@ -760,7 +762,7 @@ static void handle_wm_normal_hints_notify(WM *wm, Window win)
         update_size_hint(c->win, cfg->resize_inc, &c->size_hint);
         if( DESKTOP(wm)->cur_layout!=TILE
             || (c->place_type!=FULLSCREEN_LAYER && !is_tile_client(wm, c)))
-            fix_win_rect(wm, c), update_layout(wm);
+            fix_win_rect(wm, c), request_layout_update();
     }
 }
 
