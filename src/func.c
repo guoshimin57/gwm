@@ -10,24 +10,14 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "mv_resize.h"
 
-static bool is_match_button_release(XEvent *oe, XEvent *ne);
 static bool is_valid_click(XEvent *oe, XEvent *ne);
-static Delta_rect get_key_delta_rect(Client *c, Direction dir);
-static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act);
-static bool fix_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move);
-static bool is_prefer_move(Client *c, Delta_rect *d, bool is_move);
-static bool fix_delta_rect_for_nonprefer_size(Client *c, XSizeHints *hint, Delta_rect *d);
-static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
-static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh);
-static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, int dh, Delta_rect *d);
-static void update_hint_win_for_move_resize(Client *c);
-static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
 
 bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg))
 {
     return func == pointer_swap_clients
-        || func == pointer_move_resize_client
+        || func == move_resize
         || func == pointer_change_place
         || func == adjust_layout_ratio;
 }
@@ -57,15 +47,18 @@ bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
     return is_valid_click(oe, p);
 }
 
-static bool is_match_button_release(XEvent *oe, XEvent *ne)
-{
-    return (ne->type==ButtonRelease && ne->xbutton.button==oe->xbutton.button);
-}
-
 static bool is_valid_click(XEvent *oe, XEvent *ne)
 {
     return is_equal_modifier_mask(oe->xbutton.state, ne->xbutton.state)
         && is_pointer_on_win(ne->xbutton.window);
+}
+
+void move_resize(WM *wm, XEvent *e, Func_arg arg)
+{
+    if(e->type == KeyPress)
+        key_move_resize_client(wm, e, arg.direction);
+    else
+        pointer_move_resize_client(wm, e, arg.resize);
 }
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
@@ -83,61 +76,6 @@ void exec(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e);
     exec_cmd(arg.cmd);
-}
-
-void key_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
-{
-    if(DESKTOP(wm)->cur_layout == PREVIEW)
-        return;
-
-    Client *c=CUR_FOC_CLI(wm);
-    Direction dir=arg.direction;
-    bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
-    Delta_rect d=get_key_delta_rect(c, dir);
-    Place_type type=get_dest_place_type_for_move(wm, c);
-
-    if(c->place_type!=FLOAT_LAYER && type==FLOAT_LAYER)
-        move_client(wm, c, NULL, type);
-    if(fix_move_resize_delta_rect(c, &d, is_move))
-    {
-        move_resize_client(wm, c, &d);
-        update_hint_win_for_move_resize(c);
-        while(1)
-        {
-            XEvent ev;
-            XMaskEvent(xinfo.display, ROOT_EVENT_MASK|KeyReleaseMask, &ev);
-            if( ev.type==KeyRelease && ev.xkey.state==e->xkey.state
-                && ev.xkey.keycode==e->xkey.keycode)
-            {
-                XUnmapWindow(xinfo.display, xinfo.hint_win);
-                break;
-            }
-            else
-                wm->event_handlers[ev.type](wm, &ev);
-        }
-    }
-    update_win_state_for_move_resize(wm, c);
-}
-
-static Delta_rect get_key_delta_rect(Client *c, Direction dir)
-{
-    int wi=c->size_hint.width_inc, hi=c->size_hint.height_inc;
-    Delta_rect dr[] =
-    {
-        [UP]          = {  0, -hi,   0,   0},
-        [DOWN]        = {  0,  hi,   0,   0},
-        [LEFT]        = {-wi,   0,   0,   0},
-        [RIGHT]       = { wi,   0,   0,   0},
-        [LEFT2LEFT]   = {-wi,   0,  wi,   0},
-        [LEFT2RIGHT]  = { wi,   0, -wi,   0},
-        [RIGHT2LEFT]  = {  0,   0, -wi,   0},
-        [RIGHT2RIGHT] = {  0,   0,  wi,   0},
-        [UP2UP]       = {  0, -hi,   0,  hi},
-        [UP2DOWN]     = {  0,  hi,   0, -hi},
-        [DOWN2UP]     = {  0,   0,   0, -hi},
-        [DOWN2DOWN]   = {  0,   0,   0,  hi},
-    };
-    return dr[dir];
 }
 
 void quit_wm(WM *wm, XEvent *e, Func_arg arg)
@@ -364,155 +302,6 @@ void toggle_shade_client_mode(Client *c, bool shade)
     else if(!shade)
         XResizeWindow(xinfo.display, c->frame, c->w, c->titlebar_h+c->h);
     c->win_state.shaded=shade;
-}
-
-void pointer_move_resize_client(WM *wm, XEvent *e, Func_arg arg)
-{
-    Layout layout=DESKTOP(wm)->cur_layout;
-    Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
-    Client *c=CUR_FOC_CLI(wm);
-    Pointer_act act=(arg.resize ? get_resize_act(c, &m) : MOVE);
-
-    if(layout==PREVIEW || !grab_pointer(xinfo.root_win, act))
-        return;
-
-    XEvent ev;
-    Place_type type=get_dest_place_type_for_move(wm, c);
-    do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
-    {
-        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
-        if(ev.type == MotionNotify)
-        {
-            if(c->place_type!=FLOAT_LAYER && type==FLOAT_LAYER)
-                move_client(wm, c, NULL, type);
-            /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
-            m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
-            do_valid_pointer_move_resize(wm, c, &m, act);
-        }
-        else
-            wm->event_handlers[ev.type](wm, &ev);
-    }while(!is_match_button_release(e, &ev));
-    XUngrabPointer(xinfo.display, CurrentTime);
-    XUnmapWindow(xinfo.display, xinfo.hint_win);
-    update_win_state_for_move_resize(wm, c);
-}
-
-static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act)
-{
-    Delta_rect d=get_pointer_delta_rect(m, act);
-
-    if(!fix_move_resize_delta_rect(c, &d, act==MOVE))
-        return;
-
-    move_resize_client(wm, c, &d);
-    update_hint_win_for_move_resize(c);
-    if(act != MOVE)
-    {
-        if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
-            m->ox = d.dx ? m->ox-d.dw : m->ox+d.dw;
-        if(d.dh) // dy爲0表示定位器從窗口下邊調整尺寸，非0則表示上邊調整
-            m->oy = d.dy ? m->oy-d.dh : m->oy+d.dh;
-    }
-    else
-        m->ox=m->nx, m->oy=m->ny;
-}
-
-static bool fix_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move)
-{
-    if( is_prefer_move(c, d, is_move)
-        || fix_delta_rect_for_nonprefer_size(c, &c->size_hint, d))
-        return true;
-
-    int dw=d->dw, dh=d->dh;
-    fix_dw_by_width_hint(c->w, &c->size_hint, &dw);
-    fix_dh_by_height_hint(c->w, &c->size_hint, &dh);
-    return fix_delta_rect_for_prefer_size(c, &c->size_hint, dw, dh, d);
-}
-
-static bool is_prefer_move(Client *c, Delta_rect *d, bool is_move)
-{
-    return (is_move && is_on_screen(c->x+d->dx, c->y+d->dy, c->w, c->h));
-}
-
-static bool fix_delta_rect_for_nonprefer_size(Client *c, XSizeHints *hint, Delta_rect *d)
-{
-    // 首次調整尺寸時才要考慮爲偏好而修正尺寸
-    if((!d->dw && !d->dh) || is_prefer_size(c->w, c->h, hint))
-        return false;
-
-    int ox=c->x, oy=c->y, ow=c->w, oh=c->h;
-    fix_win_size_by_hint(&c->size_hint, &c->w, &c->h);
-    d->dx=c->x-ox, d->dy=c->y-oy, d->dw=c->w-ow, d->dh=c->h-oh;
-    c->x=ox, c->y=oy, c->w=ow, c->h=oh;
-    return true;
-}
-
-static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw)
-{
-    if(*dw/hint->width_inc)
-    {
-        int max=MAX(hint->width_inc, hint->min_width);
-        *dw=base_n_floor(*dw, hint->width_inc);
-        if(w+*dw < max)
-            *dw=max-w;
-    }
-    else
-        *dw=0;
-}
-
-static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh)
-{
-    if(*dh/hint->height_inc)
-    {
-        int max=MAX(hint->height_inc, hint->min_height);
-        *dh=base_n_floor(*dh, hint->height_inc);
-        if(h+*dh < max)
-            *dh=max-h;
-    }
-    else
-        *dh=0;
-}
-
-static bool fix_delta_rect_for_prefer_size(Client *c, XSizeHints *hint, int dw, int dh, Delta_rect *d)
-{
-    if((!dw && !dh) || !is_prefer_size(c->w+dw, c->h+dh, hint))
-        return false;
-
-    d->dw=dw, d->dh=dh;
-    if(d->dx)
-        d->dx=-dw;
-    if(d->dy)
-        d->dy=-dh;
-    return true;
-}
-
-static void update_hint_win_for_move_resize(Client *c)
-{
-    char str[BUFSIZ];
-    long col=get_win_col(c->w, &c->size_hint),
-         row=get_win_row(c->h, &c->size_hint);
-
-    sprintf(str, "(%d, %d) %ldx%ld", c->x, c->y, col, row);
-    update_hint_win_for_info(None, str);
-}
-
-static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act)
-{
-    int dx=m->nx-m->ox, dy=m->ny-m->oy;
-    Delta_rect dr[] =
-    {
-        [NO_OP]               = { 0,  0,   0,   0},
-        [MOVE]                = {dx, dy,   0,   0},
-        [TOP_RESIZE]          = { 0, dy,   0, -dy},
-        [BOTTOM_RESIZE]       = { 0,  0,   0,  dy},
-        [LEFT_RESIZE]         = {dx,  0, -dx,   0},
-        [RIGHT_RESIZE]        = { 0,  0,  dx,   0},
-        [TOP_LEFT_RESIZE]     = {dx, dy, -dx, -dy},
-        [TOP_RIGHT_RESIZE]    = { 0, dy,  dx, -dy},
-        [BOTTOM_LEFT_RESIZE]  = {dx,  0, -dx,  dy},
-        [BOTTOM_RIGHT_RESIZE] = { 0,  0,  dx,  dy},
-    };
-    return dr[act];
 }
 
 void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)

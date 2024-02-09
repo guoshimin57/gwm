@@ -224,6 +224,7 @@ typedef struct delta_rect_tag Delta_rect;
 #include "init.h"
 #include "layout.h"
 #include "misc.h"
+#include "mv_resize.h"
 #include "taskbar.h"
 
 extern sig_atomic_t run_flag; // 程序運行標志

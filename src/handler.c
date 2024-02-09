@@ -60,7 +60,6 @@ static void handle_property_notify(WM *wm, XEvent *e);
 static void handle_wm_hints_notify(WM *wm, Window win);
 static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom);
 static void handle_wm_name_notify(WM *wm, Window win, Atom atom);
-static void handle_wm_normal_hints_notify(WM *wm, Window win);
 static void handle_wm_transient_for_notify(WM *wm, Window win);
 static void handle_selection_notify(WM *wm, XEvent *e);
 
@@ -689,8 +688,6 @@ static void handle_property_notify(WM *wm, XEvent *e)
         handle_wm_icon_name_notify(wm, win, atom);
     else if(atom == XA_WM_NAME || is_spec_ewmh_atom(atom, NET_WM_NAME))
         handle_wm_name_notify(wm, win, atom);
-    else if(atom == XA_WM_NORMAL_HINTS)
-        handle_wm_normal_hints_notify(wm, win);
     else if(atom == XA_WM_TRANSIENT_FOR)
         handle_wm_transient_for_notify(wm, win);
     else if(c && is_spec_ewmh_atom(atom, NET_WM_ICON))
@@ -751,18 +748,6 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
         free(c->title_text);
         c->title_text=s;
         update_title_area_fg(wm, c);
-    }
-}
-
-static void handle_wm_normal_hints_notify(WM *wm, Window win)
-{
-    Client *c=win_to_client(wm, win);
-    if(c)
-    {
-        update_size_hint(c->win, cfg->resize_inc, &c->size_hint);
-        if( DESKTOP(wm)->cur_layout!=TILE
-            || (c->place_type!=FULLSCREEN_LAYER && !is_tile_client(wm, c)))
-            fix_win_rect(wm, c), request_layout_update();
     }
 }
 

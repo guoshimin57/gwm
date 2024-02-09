@@ -128,3 +128,8 @@ char *get_icon_title_text(Window win, const char *fallback)
         return s;
     return copy_string(fallback);
 }
+
+bool is_match_button_release(XEvent *oe, XEvent *ne)
+{
+    return (ne->type==ButtonRelease && ne->xbutton.button==oe->xbutton.button);
+}

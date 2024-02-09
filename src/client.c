@@ -23,16 +23,9 @@ static void fix_place_type_for_hint(WM *wm, Client *c);
 static bool should_float(WM *wm, Client *c);
 static bool is_max_state(Client *c);
 static void set_default_win_rect(WM *wm, Client *c);
-static void set_win_rect_by_attr(WM *wm, Client *c);
-static bool fix_win_pos_by_hint(Client *c);
-static void fix_win_pos_by_prop(WM *wm, Client *c);
-static void set_transient_win_pos(Client *c);
-static void fix_win_pos_by_workarea(WM *wm, Client *c);
-static void fix_win_size(WM *wm, Client *c);
-static void fix_win_size_by_workarea(WM *wm, Client *c);
+static void fix_win_rect_by_state(WM *wm, Client *c);
+static void set_win_rect_by_attr(Client *c);
 static void frame_client(WM *wm, Client *c);
-static Rect get_frame_rect(Client *c);
-static Rect get_button_rect(Client *c, size_t index);
 static void del_client_node(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
@@ -57,12 +50,12 @@ void add_client(WM *wm, Window win)
 
     apply_rules(c);
     add_client_node(get_head_for_add_client(wm, c), c);
-    set_default_win_rect(wm, c);
-    save_place_info_of_client(c);
     grab_buttons(c->win);
     set_gwm_widget_type(win, CLIENT_WIN);
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
+    set_default_win_rect(wm, c);
+    save_place_info_of_client(c);
     frame_client(wm, c);
     request_layout_update();
     XMapWindow(xinfo.display, c->frame);
@@ -103,7 +96,6 @@ static Client *new_client(WM *wm, Window win)
         c->border_w=cfg->border_width, c->titlebar_h=get_font_height_by_pad();
     c->class_name="?";
     XGetClassHint(xinfo.display, c->win, &c->class_hint);
-    update_size_hint(c->win, cfg->resize_inc, &c->size_hint);
     c->image=get_icon_image(c->win, c->wm_hint, c->class_hint.res_name,
         cfg->icon_image_size, cfg->cur_icon_theme);
     set_default_desktop_mask(c, wm->cur_desktop);
@@ -232,98 +224,37 @@ void set_win_rect_by_frame(Client *c, const Rect *frame)
 
 static void set_default_win_rect(WM *wm, Client *c)
 {
-    int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
-        ww=wm->workarea.w, wh=wm->workarea.h;
+    c->x=wm->workarea.x, c->y=wm->workarea.y;
+    c->w=wm->workarea.w/4, c->h=wm->workarea.h/4;
+    set_win_rect_by_attr(c);
+    fix_win_rect_by_state(wm, c);
+}
 
-    if(c->win_state.vmax)
-        c->x=wx+bw, c->w=ww-2*bw;
-    if(c->win_state.hmax)
-        c->y=wy+bw+th, c->h=wh-th-2*bw;
-    if(c->win_state.fullscreen)
+static void fix_win_rect_by_state(WM *wm, Client *c)
+{
+    if(is_win_state_max(c))
+    {
+        Max_way way;
+        if(c->win_state.vmax)   way=VERT_MAX;
+        if(c->win_state.hmax)   way=HORZ_MAX;
+        if(c->win_state.tmax)   way=TOP_MAX;
+        if(c->win_state.bmax)   way=BOTTOM_MAX;
+        if(c->win_state.lmax)   way=LEFT_MAX;
+        if(c->win_state.rmax)   way=RIGHT_MAX;
+        if(c->win_state.vmax && c->win_state.hmax)
+            way=FULL_MAX;
+        set_max_rect(wm, c, way);
+    }
+    else if(c->win_state.fullscreen)
         c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
-
-    if(!is_max_state(c) && !c->win_state.fullscreen)
-        set_win_rect_by_attr(wm, c), fix_win_rect(wm, c);
 }
 
-static void set_win_rect_by_attr(WM *wm, Client *c)
+
+static void set_win_rect_by_attr(Client *c)
 {
-    XWindowAttributes a={.x=wm->workarea.x, .y=wm->workarea.y,
-        .width=wm->workarea.w/4, .height=wm->workarea.h/4};
-    XGetWindowAttributes(xinfo.display, c->win, &a);
-    c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
-}
-
-void fix_win_rect(WM *wm, Client *c)
-{
-    fix_win_size(wm, c);
-    fix_win_pos(wm, c);
-}
-
-void fix_win_pos(WM *wm, Client *c)
-{
-    if(!fix_win_pos_by_hint(c))
-        fix_win_pos_by_prop(wm, c), fix_win_pos_by_workarea(wm, c);
-}
-
-static bool fix_win_pos_by_hint(Client *c)
-{
-    XSizeHints *p=&c->size_hint;
-    bool fix=(!c->owner && ((p->flags & USPosition) || (p->flags & PPosition)));
-
-    if(fix)
-        c->x=p->x+c->border_w, c->y=p->y+c->border_w+c->titlebar_h;
-    return fix;
-}
-
-static void fix_win_pos_by_prop(WM *wm, Client *c)
-{
-    if(c->owner)
-        set_transient_win_pos(c);
-    else if(c->win_type.dialog)
-        c->x=wm->workarea.x+(wm->workarea.w-c->w)/2,
-        c->y=wm->workarea.y+(wm->workarea.h-c->h)/2;
-}
-
-static void set_transient_win_pos(Client *c)
-{
-    c->x=c->owner->x+(c->owner->w-c->w)/2;
-    c->y=c->owner->y+(c->owner->h-c->h)/2;
-}
-
-static void fix_win_pos_by_workarea(WM *wm, Client *c)
-{
-    if(!c->win_type.normal)
-        return;
-
-    int w=c->w, h=c->h, bw=c->border_w, bh=c->titlebar_h, wx=wm->workarea.x,
-         wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
-    if(c->x >= wx+ww-w-bw) // 窗口在工作區右邊出界
-        c->x=wx+ww-w-bw;
-    if(c->x < wx+bw) // 窗口在工作區左邊出界
-        c->x=wx+bw;
-    if(c->y >= wy+wh-bw-h) // 窗口在工作區下邊出界
-        c->y=wy+wh-bw-h;
-    if(c->y < wy+bw+bh) // 窗口在工作區上邊出界
-        c->y=wy+bw+bh;
-}
-
-static void fix_win_size(WM *wm, Client *c)
-{
-    fix_win_size_by_hint(&c->size_hint, &c->w, &c->h);
-    fix_win_size_by_workarea(wm, c);
-}
-
-static void fix_win_size_by_workarea(WM *wm, Client *c)
-{
-    if(!c->win_type.normal)
-        return;
-
-    long ww=wm->workarea.w, wh=wm->workarea.h, bh=c->titlebar_h, bw=c->border_w;
-    if(c->w+2*bw > ww)
-        c->w=ww-2*bw;
-    if(c->h+bh+2*bw > wh)
-        c->h=wh-bh-2*bw;
+    XWindowAttributes a;
+    if(XGetWindowAttributes(xinfo.display, c->win, &a))
+        c->x=a.x, c->y=a.y, c->w=a.width, c->h=a.height;
 }
 
 static void frame_client(WM *wm, Client *c)
@@ -365,7 +296,7 @@ void create_titlebar(WM *wm, Client *c)
     XSelectInput(xinfo.display, c->logo, BUTTON_EVENT_MASK);
 }
 
-static Rect get_frame_rect(Client *c)
+Rect get_frame_rect(Client *c)
 {
     long bw=c->border_w, bh=c->titlebar_h;
     return (Rect){c->x-bw, c->y-bh-bw, c->w, c->h+bh};
@@ -378,7 +309,7 @@ Rect get_title_area_rect(WM *wm, Client *c)
     return (Rect){size, 0, c->w-cfg->title_button_width*n-size, size};
 }
 
-static Rect get_button_rect(Client *c, size_t index)
+Rect get_button_rect(Client *c, size_t index)
 {
     int cw=c->w, w=cfg->title_button_width, h=get_font_height_by_pad();
     return (Rect){cw-w*(TITLE_BUTTON_N-index), 0, w, h};
@@ -441,24 +372,6 @@ static void del_client_node(Client *c)
 {
     c->prev->next=c->next;
     c->next->prev=c->prev;
-}
-
-void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
-{
-    if(d)
-        c->x+=d->dx, c->y+=d->dy, c->w+=d->dw, c->h+=d->dh;
-    Rect fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
-    if(c->titlebar_h)
-    {
-        for(size_t i=0; i<TITLE_BUTTON_N; i++)
-        {
-            Rect br=get_button_rect(c, i);
-            XMoveWindow(xinfo.display, c->buttons[i], br.x, br.y);
-        }
-        XResizeWindow(xinfo.display, c->title_area, tr.w, tr.h);
-    }
-    XMoveResizeWindow(xinfo.display, c->frame, fr.x, fr.y, fr.w, fr.h);
-    XMoveResizeWindow(xinfo.display, c->win, 0, c->titlebar_h, c->w, c->h);
 }
 
 Client *win_to_iconic_state_client(WM *wm, Window win)
@@ -1002,10 +915,16 @@ bool is_tile_client(WM *wm, Client *c)
 
 void max_client(WM *wm, Client *c, Max_way max_way)
 {
-    int left_x, top_y, max_w, max_h, mid_x, mid_y, half_w, half_h;
-
     if(!is_win_state_max(c))
         save_place_info_of_client(c);
+    set_max_rect(wm, c, max_way);
+    move_client(wm, c, NULL, get_dest_place_type_for_move(wm, c));
+    move_resize_client(wm, c, NULL);
+}
+
+void set_max_rect(WM *wm, Client *c, Max_way max_way)
+{
+    int left_x, top_y, max_w, max_h, mid_x, mid_y, half_w, half_h;
     get_max_rect(wm, c, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
 
     bool vmax=(c->h == max_h), hmax=(c->w == max_w), fmax=false;
@@ -1022,10 +941,6 @@ void max_client(WM *wm, Client *c, Max_way max_way)
     }
     if(fmax)
         c->x=left_x, c->y=top_y, c->w=max_w, c->h=max_h;
-
-    Place_type type=get_dest_place_type_for_move(wm, c);
-    move_client(wm, c, NULL, type);
-    move_resize_client(wm, c, NULL);
 }
 
 Place_type get_dest_place_type_for_move(WM *wm, Client *c)

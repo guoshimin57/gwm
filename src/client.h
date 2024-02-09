@@ -39,26 +39,22 @@ struct client_tag // 客戶窗口相關信息
     Imlib_Image image; // 圖標映像
     const char *class_name; // 客戶窗口的程序類型名
     XClassHint class_hint; // 客戶窗口的程序類型特性提示
-    XSizeHints size_hint; // 客戶窗口的正常窗口尺寸條件特性提示，
-                          // 其中size_hint.flags修改爲支持ICCCM，
-                          // 即用XGetWMNormalHints函數的最後一個參數代替
     XWMHints *wm_hint; // 客戶窗口的窗口管理程序條件特性提示
     // 分別爲前、後節點以及主窗口節點、亚組組長節點（同屬一個程序實例的客戶構成一個亞組）
     struct client_tag *prev, *next, *owner, *subgroup_leader;
 };
 
+Rect get_frame_rect(Client *c);
+Rect get_button_rect(Client *c, size_t index);
 void add_client(WM *wm, Window win);
 void set_all_net_client_list(WM *wm);
 void fix_place_type_for_tile(WM *wm);
 void set_win_rect_by_frame(Client *c, const Rect *frame);
-void fix_win_rect(WM *wm, Client *c);
-void fix_win_pos(WM *wm, Client *c);
 void create_titlebar(WM *wm, Client *c);
 Rect get_title_area_rect(WM *wm, Client *c);
 int get_clients_n(WM *wm, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop);
 Client *win_to_client(WM *wm, Window win);
 void del_client(WM *wm, Client *c, bool is_for_quit);
-void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
 Client *win_to_iconic_state_client(WM *wm, Window win);
 void raise_client(WM *wm, Client *c);
 Client *get_next_client(WM *wm, Client *c);
@@ -90,6 +86,7 @@ void restore_place_info_of_clients(WM *wm);
 void restore_client(WM *wm, Client *c);
 bool is_tile_client(WM *wm, Client *c);
 void max_client(WM *wm, Client *c, Max_way max_way);
+void set_max_rect(WM *wm, Client *c, Max_way max_way);
 Place_type get_dest_place_type_for_move(WM *wm, Client *c);
 bool is_win_state_max(Client *c);
 Window *get_client_win_list(WM *wm, int *n);

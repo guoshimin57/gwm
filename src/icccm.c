@@ -19,7 +19,6 @@ const char *icccm_atom_names[ICCCM_ATOMS_N]= // ICCCM規範標識符名稱
 
 static Atom icccm_atoms[ICCCM_ATOMS_N]; // ICCCM規範的標識符
 
-static void fix_limit_size_hint(XSizeHints *h);
 static bool is_prefer_width(int w, const XSizeHints *hint);
 static bool is_prefer_height(int h, const XSizeHints *hint);
 static bool is_prefer_aspect(int w, int h, const XSizeHints *hint);
@@ -50,20 +49,23 @@ void set_icccm_atoms(void)
 
 int get_win_col(int width, const XSizeHints *hint)
 {
-    return (width-hint->base_width)/hint->width_inc;
+    return ((hint->flags & PBaseSize) && (hint->flags & PResizeInc)
+        && hint->width_inc) ? (width-hint->base_width)/hint->width_inc : 0;
 }
 
 int get_win_row(int height, const XSizeHints *hint)
 {
-    return (height-hint->base_height)/hint->height_inc;
+    return ((hint->flags & PBaseSize) && (hint->flags & PResizeInc)
+        && hint->height_inc) ? (height-hint->base_height)/hint->height_inc : 0;
 }
 
 /* 通常程序在創建窗口時就設置好窗口尺寸特性，一般情況下不會再修改。但實際上有些
  * 奇葩的程序會在調整窗口尺寸後才更新窗口尺寸特性，而有些程序則明明設置了窗口的
  * 尺寸特性標志位，但相應的XSizeHints結構成員其實沒有設置。因此，不要指望在添加
- * 客戶窗口時一勞永逸地存儲窗口尺寸特性。
+ * 客戶窗口時一勞永逸地存儲窗口尺寸特性。本函数修改XSizeHints的flags成员，使之
+ * 包含ICCCM新增标志以及使inc总是被设置。
  */
-void update_size_hint(Window win, int fallback_inc, XSizeHints *size_hint)
+XSizeHints get_size_hint(Window win)
 {
     long f=0, flags=0;
     XSizeHints h={0};
@@ -77,50 +79,31 @@ void update_size_hint(Window win, int fallback_inc, XSizeHints *size_hint)
             h.min_width=h.base_width, h.min_height=h.base_height, f|=PMinSize;
         if(!(f & PBaseSize) && (f & PMinSize))
             h.base_width=h.min_width, h.base_height=h.min_height, f|=PBaseSize;
-        if(!(f & PResizeInc))
-            h.width_inc=h.height_inc=fallback_inc;
+        h.flags=f;
     }
-    if(!h.width_inc)
-        h.width_inc=fallback_inc;
-    if(!h.height_inc)
-        h.height_inc=fallback_inc;
-    f|=PResizeInc;
-    h.flags=f;
-    fix_limit_size_hint(&h);
-    *size_hint=h;
+
+    return h;
 }
 
-// 有的窗口最大、最小尺寸設置不正確，需要修正，如：lxterminal
-static void fix_limit_size_hint(XSizeHints *h)
+bool is_resizable(const XSizeHints *h)
 {
-    if( h->flags & PMinSize && h->flags & PMaxSize
-        && h->min_width==h->max_width && h->min_height==h->max_height)
-        return;
-
-    int minw_incs=base_n_ceil(h->min_width-h->base_width, h->width_inc),
-        minh_incs=base_n_ceil(h->min_height-h->base_height, h->height_inc),
-        maxw_incs=base_n_floor(h->max_width-h->base_width, h->width_inc),
-        maxh_incs=base_n_floor(h->max_height-h->base_height, h->height_inc);
-
-    h->min_width=h->base_width+minw_incs;
-    h->min_height=h->base_height+minh_incs;
-    h->max_width=h->base_width+maxw_incs;
-    h->max_height=h->base_height+maxh_incs;
+    return !((h->flags & PMinSize) && (h->flags & PMaxSize)
+        && h->min_width==h->max_width && h->min_height==h->max_height);
 }
 
 void fix_win_size_by_hint(const XSizeHints *size_hint, int *w, int *h)
 {
     const XSizeHints *p=size_hint;
     long f=p->flags;
-    int col=get_win_col(*w, p), row=get_win_row(*w, p);
+    int col=get_win_col(*w, p), row=get_win_row(*h, p);
 
     if((f & USSize || f & PSize) && p->width)
         *w=p->width;
-    else if((f & PBaseSize) && p->base_width)
+    else if((f & PBaseSize) && (f & PResizeInc) && p->base_width)
         *w=p->base_width+col*p->width_inc;
     if((f & USSize || f & PSize) && p->height)
         *h=p->height;
-    else if((f & PBaseSize) && p->base_height)
+    else if((f & PBaseSize) && (f & PResizeInc) && p->base_height)
         *h=p->base_height+row*p->height_inc;
     if((f & PMinSize) && p->min_width)
         *w=MAX(*w, p->min_width);
@@ -155,7 +138,8 @@ static bool is_prefer_width(int w, const XSizeHints *hint)
     return !hint || !f ||
         (  (!(f & PMinSize) || w>=hint->min_width)
         && (!(f & PMaxSize) || w<=hint->max_width)
-        && (!(f & PBaseSize) || (w-hint->base_width)%hint->width_inc==0));
+        && (!(f & PBaseSize) || !(f & PResizeInc)
+            || (w-hint->base_width)%hint->width_inc == 0));
 }
 
 static bool is_prefer_height(int h, const XSizeHints *hint)
@@ -164,7 +148,8 @@ static bool is_prefer_height(int h, const XSizeHints *hint)
     return !hint || !f ||
         (  (!(f & PMinSize) || h>=hint->min_height)
         && (!(f & PMaxSize) || h<=hint->max_height)
-        && (!(f & PBaseSize) || (h-hint->base_height)%hint->height_inc==0));
+        && (!(f & PBaseSize) || !(f & PResizeInc)
+            || (h-hint->base_height)%hint->height_inc == 0));
 }
 
 static bool is_prefer_aspect(int w, int h, const XSizeHints *hint)
