@@ -10,7 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "mv_resize.h"
+#include "mvresize.h"
 
 static bool is_valid_click(XEvent *oe, XEvent *ne);
 
@@ -221,7 +221,7 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
         swap_clients(wm, from, to);
 }
 
-void minimize_client(WM *wm, XEvent *e, Func_arg arg)
+void minimize(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     iconify(wm, CUR_FOC_CLI(wm)); 
@@ -233,58 +233,16 @@ void deiconify_client(WM *wm, XEvent *e, Func_arg arg)
     deiconify(wm, CUR_FOC_CLI(wm)); 
 }
 
-void max_restore_client(WM *wm, XEvent *e, Func_arg arg)
+void max_restore(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    Client *c=CUR_FOC_CLI(wm);
-
-    if(c == wm->clients)
-        return;
-
-    if(is_win_state_max(c))
-    {
-        if(c->win_state.vmax)
-            c->win_state.vmax=0;
-        if(c->win_state.hmax)
-            c->win_state.hmax=0;
-        if(c->win_state.tmax)
-            c->win_state.tmax=0;
-        if(c->win_state.bmax)
-            c->win_state.bmax=0;
-        if(c->win_state.lmax)
-            c->win_state.lmax=0;
-        if(c->win_state.rmax)
-            c->win_state.rmax=0;
-        restore_client(wm, c);
-    }
-    else
-    {
-        max_client(wm, c, FULL_MAX);
-        c->win_state.vmax=c->win_state.hmax=1;
-    }
-    update_net_wm_state(c->win, c->win_state);
+    max_restore_client(wm, CUR_FOC_CLI(wm));
 }
 
-void maximize_client(WM *wm, XEvent *e, Func_arg arg)
+void maximize(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
-    Client *c=CUR_FOC_CLI(wm);
-
-    if(c == wm->clients)
-        return;
-
-    max_client(wm, c, arg.max_way);
-    switch(arg.max_way)
-    {
-        case VERT_MAX:   c->win_state.vmax=1; break;
-        case HORZ_MAX:   c->win_state.hmax=1; break;
-        case TOP_MAX:    c->win_state.tmax=1; break;
-        case BOTTOM_MAX: c->win_state.bmax=1; break;
-        case LEFT_MAX:   c->win_state.lmax=1; break;
-        case RIGHT_MAX:  c->win_state.rmax=1; break;
-        case FULL_MAX:   c->win_state.vmax=c->win_state.hmax=1; break;
-    }
-    update_net_wm_state(c->win, c->win_state);
+    maximize_client(wm, CUR_FOC_CLI(wm), arg.max_way);
 }
 
 void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg)

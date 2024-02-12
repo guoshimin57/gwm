@@ -11,9 +11,6 @@
 
 #include "gwm.h"
 
-#define SHOULD_ADD_STATE(c, act, flag) \
-    (act==NET_WM_STATE_ADD || (act==NET_WM_STATE_TOGGLE && !c->win_state.flag))
-
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
 static void unmap_for_click(Widget_type type);
@@ -23,17 +20,9 @@ static void handle_client_message(WM *wm, XEvent *e);
 static void change_net_wm_state(WM *wm, Client *c, long *full_act);
 static void change_net_wm_state_for_modal(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_tmax(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_bmax(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_lmax(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_rmax(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_shaded(Client *c, long act);
 static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_above(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_below(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act);
@@ -219,72 +208,6 @@ static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
     c->win_state.sticky=add;
 }
 
-static void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
-{
-    bool add=SHOULD_ADD_STATE(c, act, vmax);
-
-    if(add)
-        max_client(wm, c, VERT_MAX);
-    else
-        restore_client(wm, c);
-    c->win_state.vmax=add;
-}
-
-static void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
-{
-    bool add=SHOULD_ADD_STATE(c, act, hmax);
-
-    if(add)
-        max_client(wm, c, HORZ_MAX);
-    else
-        restore_client(wm, c);
-    c->win_state.hmax=add;
-}
-
-static void change_net_wm_state_for_tmax(WM *wm, Client *c, long act)
-{
-    bool add=SHOULD_ADD_STATE(c, act, tmax);
-
-    if(add)
-        max_client(wm, c, TOP_MAX);
-    else
-        restore_client(wm, c);
-    c->win_state.tmax=add;
-}
-
-static void change_net_wm_state_for_bmax(WM *wm, Client *c, long act)
-{
-    bool add=SHOULD_ADD_STATE(c, act, bmax);
-
-    if(add)
-        max_client(wm, c, BOTTOM_MAX);
-    else
-        restore_client(wm, c);
-    c->win_state.bmax=add;
-}
-
-static void change_net_wm_state_for_lmax(WM *wm, Client *c, long act)
-{
-    bool add=SHOULD_ADD_STATE(c, act, lmax);
-
-    if(add)
-        max_client(wm, c, LEFT_MAX);
-    else
-        restore_client(wm, c);
-    c->win_state.lmax=add;
-}
-
-static void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
-{
-    bool add=SHOULD_ADD_STATE(c, act, rmax);
-
-    if(add)
-        max_client(wm, c, RIGHT_MAX);
-    else
-        restore_client(wm, c);
-    c->win_state.rmax=add;
-}
-
 static void change_net_wm_state_for_shaded(Client *c, long act)
 {
     toggle_shade_client_mode(c, SHOULD_ADD_STATE(c, act, shaded));
@@ -304,29 +227,6 @@ static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
     c->win_state.skip_pager=SHOULD_ADD_STATE(c, act, skip_pager);
-}
-
-static void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
-{
-    if(SHOULD_ADD_STATE(c, act, hidden))
-        iconify(wm, c);
-    else
-        deiconify(wm, c->icon ? c : NULL);
-}
-
-static void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
-{
-    bool add=SHOULD_ADD_STATE(c, act, fullscreen);
-
-    if(add)
-    {
-        save_place_info_of_client(c);
-        c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
-        move_client(wm, c, NULL, FULLSCREEN_LAYER);
-    }
-    else
-        restore_client(wm, c);
-    c->win_state.fullscreen=add;
 }
 
 static void change_net_wm_state_for_above(WM *wm, Client *c, long act)

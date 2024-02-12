@@ -49,6 +49,10 @@
 #define NET_WM_STATE_ADD    1
 #define NET_WM_STATE_TOGGLE 2
 
+#define SHOULD_ADD_STATE(c, act, flag) \
+    (act==NET_WM_STATE_ADD || (act==NET_WM_STATE_TOGGLE && !c->win_state.flag))
+
+
 #define SET_NULL(array, n) for(size_t i=0; i<n; i++) array[i]=NULL
 #define UNUSED(x) ((void)(x))
 #define MIN(a, b) ((a)<(b) ? (a) : (b))
@@ -223,8 +227,9 @@ typedef struct delta_rect_tag Delta_rect;
 #include "handler.h"
 #include "init.h"
 #include "layout.h"
+#include "minimax.h"
 #include "misc.h"
-#include "mv_resize.h"
+#include "mvresize.h"
 #include "taskbar.h"
 
 extern sig_atomic_t run_flag; // 程序運行標志

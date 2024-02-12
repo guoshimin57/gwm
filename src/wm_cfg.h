@@ -69,20 +69,20 @@
     {POWEROFF_BUTTON,           0, Button1,  exec,                       SH_CMD("poweroff")},               \
     {RUN_BUTTON,                0, Button1,  enter_and_run_cmd,          {0}},                              \
     {TITLE_LOGO,                0, Button1,  open_client_menu,           {0}},                              \
-    {VERT_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=VERT_MAX}},              \
-    {HORZ_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=HORZ_MAX}},              \
-    {TOP_MAX_BUTTON,            0, Button1,  maximize_client,            {.max_way=TOP_MAX}},               \
-    {BOTTOM_MAX_BUTTON,         0, Button1,  maximize_client,            {.max_way=BOTTOM_MAX}},            \
-    {LEFT_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=LEFT_MAX}},              \
-    {RIGHT_MAX_BUTTON,          0, Button1,  maximize_client,            {.max_way=RIGHT_MAX}},             \
-    {FULL_MAX_BUTTON,           0, Button1,  maximize_client,            {.max_way=FULL_MAX}},              \
+    {VERT_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=VERT_MAX}},              \
+    {HORZ_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=HORZ_MAX}},              \
+    {TOP_MAX_BUTTON,            0, Button1,  maximize,                   {.max_way=TOP_MAX}},               \
+    {BOTTOM_MAX_BUTTON,         0, Button1,  maximize,                   {.max_way=BOTTOM_MAX}},            \
+    {LEFT_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=LEFT_MAX}},              \
+    {RIGHT_MAX_BUTTON,          0, Button1,  maximize,                   {.max_way=RIGHT_MAX}},             \
+    {FULL_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=FULL_MAX}},              \
     {ROOT_WIN,                  0, Button1,  adjust_layout_ratio,        {0}},                              \
     {MAIN_BUTTON,               0, Button1,  change_place,               {.place_type=TILE_LAYER_MAIN}},    \
     {SECOND_BUTTON,             0, Button1,  change_place,               {.place_type=TILE_LAYER_SECOND}},  \
     {FIXED_BUTTON,              0, Button1,  change_place,               {.place_type=TILE_LAYER_FIXED}},   \
     {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=FLOAT_LAYER}},        \
-    {ICON_BUTTON,               0, Button1,  minimize_client,            {0}},                              \
-    {MAX_BUTTON,                0, Button1,  max_restore_client,         {0}},                              \
+    {ICON_BUTTON,               0, Button1,  minimize,                   {0}},                              \
+    {MAX_BUTTON,                0, Button1,  max_restore,                {0}},                              \
     {SHADE_BUTTON,              0, Button1,  toggle_shade_client,        {0}},                              \
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},                              \
     {TITLE_AREA,                0, Button1,  move_resize,                {.resize=false}},                  \

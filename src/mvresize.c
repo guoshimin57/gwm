@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     mv_resize.c：實現按鍵和按鍵所要綁定的功能。
+ *     mvresize.c：實現按鍵和按鍵所要綁定的功能。
  *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -252,4 +252,34 @@ static void update_hint_win_for_move_resize(Client *c)
 
     sprintf(str, "(%d, %d) %ldx%ld", c->x, c->y, col, row);
     update_hint_win_for_info(None, str);
+}
+
+void update_win_state_for_move_resize(WM *wm, Client *c)
+{
+    int x=c->x, y=c->y, w=c->w, h=c->h, left_x, top_y, max_w, max_h,
+        mid_x, mid_y, half_w, half_h;
+    bool update=false;
+    Net_wm_state *s=&c->win_state;
+
+    get_max_rect(wm, c, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
+    if(s->vmax && (y!=top_y || h!=max_h))
+        s->vmax=0, update=true;
+
+    if(s->hmax && (x!=left_x || w!=max_w))
+        s->hmax=0, update=true;
+
+    if( s->tmax && (x!=left_x || y!=top_y || w!=max_w || h!=half_h))
+        s->tmax=0, update=true;
+
+    if( s->bmax && (x!=left_x || y!=mid_y || w!=max_w || h!=half_h))
+        s->bmax=0, update=true;
+
+    if( s->lmax && (x!=left_x || y!=top_y || w!=half_w || h!=max_h))
+        s->lmax=0, update=true;
+
+    if( s->rmax && (x!=mid_x || y!=top_y || w!=half_w || h!=max_h))
+        s->rmax=0, update=true;
+
+    if(update)
+        update_net_wm_state(c->win, c->win_state);
 }
