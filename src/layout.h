@@ -17,6 +17,9 @@ void update_titlebar_layout(WM *wm);
 bool is_main_sec_gap(WM *wm, int x);
 bool is_main_fix_gap(WM *wm, int x);
 bool is_layout_adjust_area(WM *wm, Window win, int x);
-bool change_layout_ratio(WM *wm, int ox, int nx);
+void change_to_spec_layout(WM *wm, Layout layout);
+void pointer_adjust_layout_ratio(WM *wm, XEvent *e);
+void key_adjust_main_area_ratio(WM *wm, double change_ratio);
+void key_adjust_fixed_area_ratio(WM *wm, double change_ratio);
 
 #endif

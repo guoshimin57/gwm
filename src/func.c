@@ -161,42 +161,6 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
     }
 }
 
-/* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
-void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    if( DESKTOP(wm)->cur_layout==TILE
-        && get_clients_n(wm, TILE_LAYER_SECOND, false, false, false))
-    {
-        Desktop *d=DESKTOP(wm);
-        double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
-        long mw=mr*wm->workarea.w, sw=wm->workarea.w*(1-fr)-mw;
-        if(sw>=cfg->resize_inc && mw>=cfg->resize_inc)
-        {
-            d->main_area_ratio=mr;
-            request_layout_update();
-        }
-    }
-}
-
-/* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
-void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
-{ 
-    UNUSED(e), UNUSED(arg);
-    if( DESKTOP(wm)->cur_layout==TILE
-        && get_clients_n(wm, TILE_LAYER_FIXED, false, false, false))
-    {
-        Desktop *d=DESKTOP(wm);
-        double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
-        long mw=wm->workarea.w*(mr-arg.change_ratio), fw=wm->workarea.w*fr;
-        if(mw>=cfg->resize_inc && fw>=cfg->resize_inc)
-        {
-            d->main_area_ratio-=arg.change_ratio, d->fixed_area_ratio=fr;
-            request_layout_update();
-        }
-    }
-}
-
 void change_place(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
@@ -290,66 +254,25 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
 void change_layout(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e);
-    Layout *cl=&DESKTOP(wm)->cur_layout, *pl=&DESKTOP(wm)->prev_layout;
-
-    if(*cl == arg.layout)
-        return;
-
-    if(arg.layout == PREVIEW)
-        save_place_info_of_clients(wm);
-    if(*cl == PREVIEW)
-        restore_place_info_of_clients(wm);
-
-    Display *d=xinfo.display;
-    *pl=*cl, *cl=arg.layout;
-    if(*pl == PREVIEW)
-        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(wm, c) && c->icon)
-                XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
-    if(*cl == PREVIEW)
-        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(wm, c) && c->icon)
-                XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
-
-    if(*pl==TILE && *cl==STACK)
-        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(wm, c) && is_normal_layer(c->place_type))
-                c->place_type=FLOAT_LAYER;
-
-    if(*pl==STACK && *cl==TILE)
-        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(wm, c) && c->place_type==FLOAT_LAYER)
-                c->place_type=TILE_LAYER_MAIN;
-
-    request_layout_update();
-    update_titlebar_layout(wm);
-    update_taskbar_buttons_bg();
-    set_gwm_current_layout(*cl);
+    change_to_spec_layout(wm, arg.layout);
 }
 
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(arg);
-    if( DESKTOP(wm)->cur_layout!=TILE
-        || !is_layout_adjust_area(wm, e->xbutton.window, e->xbutton.x_root)
-        || !grab_pointer(xinfo.root_win, ADJUST_LAYOUT_RATIO))
-        return;
+    pointer_adjust_layout_ratio(wm, e);
+}
 
-    int ox=e->xbutton.x_root, nx, dx;
-    XEvent ev;
-    do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
-    {
-        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
-        if(ev.type == MotionNotify)
-        {
-            nx=ev.xmotion.x, dx=nx-ox;
-            if(abs(dx)>=cfg->resize_inc && change_layout_ratio(wm, ox, nx))
-                request_layout_update(), ox=nx;
-        }
-        else
-            wm->event_handlers[ev.type](wm, &ev);
-    }while(!is_match_button_release(e, &ev));
-    XUngrabPointer(xinfo.display, CurrentTime);
+void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e);
+    key_adjust_main_area_ratio(wm, arg.change_ratio);
+}
+
+void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e);
+    key_adjust_fixed_area_ratio(wm, arg.change_ratio);
 }
 
 void show_desktop(WM *wm, XEvent *e, Func_arg arg)

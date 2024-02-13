@@ -27,6 +27,7 @@ static void set_rect_of_tile_win_for_tiling(WM *wm);
 static void set_rect_of_transient_win_for_tiling(WM *wm);
 static void set_rect_of_float_win_for_tiling(WM *wm);
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh);
+static bool change_layout_ratio(WM *wm, int ox, int nx);
 
 void update_layout(WM *wm)
 {
@@ -263,7 +264,70 @@ bool is_layout_adjust_area(WM *wm, Window win, int x)
         && (is_main_sec_gap(wm, x) || is_main_fix_gap(wm, x)));
 }
 
-bool change_layout_ratio(WM *wm, int ox, int nx)
+void change_to_spec_layout(WM *wm, Layout layout)
+{
+    Layout *cl=&DESKTOP(wm)->cur_layout, *pl=&DESKTOP(wm)->prev_layout;
+
+    if(layout == *cl)
+        return;
+
+    if(layout == PREVIEW)
+        save_place_info_of_clients(wm);
+    if(*cl == PREVIEW)
+        restore_place_info_of_clients(wm);
+
+    Display *d=xinfo.display;
+    if(*cl == PREVIEW)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_on_cur_desktop(wm, c) && c->icon)
+                XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
+    if(layout == PREVIEW)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_on_cur_desktop(wm, c) && c->icon)
+                XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
+
+    if(*cl==TILE && layout==STACK)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_on_cur_desktop(wm, c) && is_normal_layer(c->place_type))
+                c->place_type=FLOAT_LAYER;
+
+    if(*cl==STACK && layout==TILE)
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            if(is_on_cur_desktop(wm, c) && c->place_type==FLOAT_LAYER)
+                c->place_type=TILE_LAYER_MAIN;
+
+    *pl=*cl, *cl=layout;
+    request_layout_update();
+    update_titlebar_layout(wm);
+    update_taskbar_buttons_bg();
+    set_gwm_current_layout(*cl);
+}
+
+void pointer_adjust_layout_ratio(WM *wm, XEvent *e)
+{
+    if( DESKTOP(wm)->cur_layout!=TILE
+        || !is_layout_adjust_area(wm, e->xbutton.window, e->xbutton.x_root)
+        || !grab_pointer(xinfo.root_win, ADJUST_LAYOUT_RATIO))
+        return;
+
+    int ox=e->xbutton.x_root, nx, dx;
+    XEvent ev;
+    do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
+    {
+        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
+        if(ev.type == MotionNotify)
+        {
+            nx=ev.xmotion.x, dx=nx-ox;
+            if(abs(dx)>=cfg->resize_inc && change_layout_ratio(wm, ox, nx))
+                request_layout_update(), ox=nx;
+        }
+        else
+            wm->event_handlers[ev.type](wm, &ev);
+    }while(!is_match_button_release(e, &ev));
+    XUngrabPointer(xinfo.display, CurrentTime);
+}
+
+static bool change_layout_ratio(WM *wm, int ox, int nx)
 {
     Desktop *d=DESKTOP(wm);
     double dr;
@@ -275,4 +339,38 @@ bool change_layout_ratio(WM *wm, int ox, int nx)
     else
         return false;
     return true;
+}
+
+/* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
+void key_adjust_main_area_ratio(WM *wm, double change_ratio)
+{
+    if( DESKTOP(wm)->cur_layout==TILE
+        && get_clients_n(wm, TILE_LAYER_SECOND, false, false, false))
+    {
+        Desktop *d=DESKTOP(wm);
+        double mr=d->main_area_ratio+change_ratio, fr=d->fixed_area_ratio;
+        long mw=mr*wm->workarea.w, sw=wm->workarea.w*(1-fr)-mw;
+        if(sw>=cfg->resize_inc && mw>=cfg->resize_inc)
+        {
+            d->main_area_ratio=mr;
+            request_layout_update();
+        }
+    }
+}
+
+/* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
+void key_adjust_fixed_area_ratio(WM *wm, double change_ratio)
+{ 
+    if( DESKTOP(wm)->cur_layout==TILE
+        && get_clients_n(wm, TILE_LAYER_FIXED, false, false, false))
+    {
+        Desktop *d=DESKTOP(wm);
+        double fr=d->fixed_area_ratio+change_ratio, mr=d->main_area_ratio;
+        long mw=wm->workarea.w*(mr-change_ratio), fw=wm->workarea.w*fr;
+        if(mw>=cfg->resize_inc && fw>=cfg->resize_inc)
+        {
+            d->main_area_ratio-=change_ratio, d->fixed_area_ratio=fr;
+            request_layout_update();
+        }
+    }
 }
