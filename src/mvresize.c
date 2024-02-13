@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     mvresize.c：實現按鍵和按鍵所要綁定的功能。
+ *     mvresize.c：實現移動、調整窗口尺寸的功能。
  *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -11,6 +11,8 @@
 
 #include "gwm.h"
 
+static void key_move_resize_client(WM *wm, XEvent *e, Direction dir);
+static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize);
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
 static int get_width_inc(const XSizeHints *h);
 static int get_height_inc(const XSizeHints *h);
@@ -22,6 +24,14 @@ static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
 static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh);
 static bool fix_delta_rect(Client *c, Delta_rect *d);
 static void update_hint_win_for_move_resize(Client *c);
+
+void move_resize(WM *wm, XEvent *e, Func_arg arg)
+{
+    if(e->type == KeyPress)
+        key_move_resize_client(wm, e, arg.direction);
+    else
+        pointer_move_resize_client(wm, e, arg.resize);
+}
 
 void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
 {
@@ -282,4 +292,47 @@ void update_win_state_for_move_resize(WM *wm, Client *c)
 
     if(update)
         update_net_wm_state(c->win, c->win_state);
+}
+
+Pointer_act get_resize_act(Client *c, const Move_info *m)
+{   // 窗口邊框寬度、標題欄調試、可調整尺寸區域的寬度、高度
+    // 以及窗口框架左、右橫坐標和上、下縱坐標
+    int bw=c->border_w, bh=c->titlebar_h, rw=c->w/4, rh=c->h/4,
+        lx=c->x-bw, rx=c->x+c->w+bw, ty=c->y-bh-bw, by=c->y+c->h+bw;
+
+    if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=ty && m->oy<ty+bw+rh)
+        return TOP_LEFT_RESIZE;
+    else if(m->ox>=rx-bw-rw && m->ox<rx && m->oy>=ty && m->oy<ty+bw+rh)
+        return TOP_RIGHT_RESIZE;
+    else if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=by-bw-rh && m->oy<by)
+        return BOTTOM_LEFT_RESIZE;
+    else if(m->ox>=rx-bw-rw && m->ox<rx && m->oy>=by-bw-rh && m->oy<by)
+        return BOTTOM_RIGHT_RESIZE;
+    else if(m->oy>=ty && m->oy<ty+bw+rh)
+        return TOP_RESIZE;
+    else if(m->oy>=by-bw-rh && m->oy<by)
+        return BOTTOM_RESIZE;
+    else if(m->ox>=lx && m->ox<lx+bw+rw)
+        return LEFT_RESIZE;
+    else if(m->ox>=rx-bw-rw && m->ox<rx)
+        return RIGHT_RESIZE;
+    else
+        return NO_OP;
+}
+
+void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    static bool shade=false;
+
+    toggle_shade_client_mode(CUR_FOC_CLI(wm), shade=!shade);
+}
+
+void toggle_shade_client_mode(Client *c, bool shade)
+{
+    if(shade && c->titlebar_h)
+        XResizeWindow(xinfo.display, c->frame, c->w, c->titlebar_h);
+    else if(!shade)
+        XResizeWindow(xinfo.display, c->frame, c->w, c->titlebar_h+c->h);
+    c->win_state.shaded=shade;
 }

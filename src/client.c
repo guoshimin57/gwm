@@ -27,12 +27,6 @@ static void set_win_rect_by_attr(Client *c);
 static void frame_client(WM *wm, Client *c);
 static void del_client_node(Client *c);
 static Window get_top_win(WM *wm, Client *c);
-static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
-static bool is_valid_to_normal_layer_sec(WM *wm, Client *c);
-static void add_subgroup(Client *head, Client *subgroup_leader);
-static void del_subgroup(Client *subgroup_leader);
-static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
-static int cmp_client_store_order(WM *wm, Client *c1, Client *c2);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_map_client(WM *wm, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(WM *wm, unsigned int desktop_n, Client *c);
@@ -416,60 +410,12 @@ Client *get_prev_client(WM *wm, Client *c)
     return wm->clients;
 }
 
-void move_client(WM *wm, Client *from, Client *to, Place_type type)
-{
-    if(move_client_node(wm, from, to, type))
-    {
-        set_place_type_for_subgroup(from->subgroup_leader,
-            to ? to->place_type : type);
-        fix_place_type_for_tile(wm);
-        raise_client(wm, from);
-        request_layout_update();
-    }
-}
-
 bool is_normal_layer(Place_type t)
 {
     return t==TILE_LAYER_MAIN || t==TILE_LAYER_SECOND || t==TILE_LAYER_FIXED;
 }
 
-static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
-{
-    Layout l=DESKTOP(wm)->cur_layout;
-    Place_type t = to ? to->place_type : type;
-
-    return from != wm->clients
-        && (!to || from->subgroup_leader!=to->subgroup_leader)
-        && (t!=TILE_LAYER_SECOND || is_valid_to_normal_layer_sec(wm, from))
-        && (l==TILE || !is_normal_layer(t));
-}
-
-static bool is_valid_to_normal_layer_sec(WM *wm, Client *c)
-{
-    return c->place_type!=TILE_LAYER_MAIN
-        || get_clients_n(wm, TILE_LAYER_SECOND, false, false, false);
-}
-
-bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
-{
-    if(!is_valid_move(wm, from, to, type))
-        return false;
-
-    Client *head=NULL;
-    del_subgroup(from->subgroup_leader);
-    if(to)
-        head = cmp_client_store_order(wm, from, to) < 0 ? to : to->prev;
-    else
-    {
-        head=get_head_client(wm, type);
-        if(from->place_type==TILE_LAYER_MAIN && type==TILE_LAYER_SECOND)
-            head=head->next;
-    }
-    add_subgroup(head, from->subgroup_leader);
-    return true;
-}
-
-static void add_subgroup(Client *head, Client *subgroup_leader)
+void add_subgroup(Client *head, Client *subgroup_leader)
 {
     Client *top=get_top_transient_client(subgroup_leader, false),
            *begin=(top ? top : subgroup_leader), *end=subgroup_leader;
@@ -480,57 +426,13 @@ static void add_subgroup(Client *head, Client *subgroup_leader)
     end->next->prev=end;
 }
 
-static void del_subgroup(Client *subgroup_leader)
+void del_subgroup(Client *subgroup_leader)
 {
     Client *top=get_top_transient_client(subgroup_leader, false),
            *begin=(top ? top : subgroup_leader), *end=subgroup_leader;
 
     begin->prev->next=end->next;
     end->next->prev=begin->prev;
-}
-
-static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type)
-{
-    for(Client *ld=subgroup_leader, *c=ld; ld && c->subgroup_leader==ld; c=c->prev)
-        c->place_type=type;
-}
-
-void swap_clients(WM *wm, Client *a, Client *b)
-{
-    if(a->subgroup_leader == b->subgroup_leader)
-        return;
-
-    Client *tmp, *top, *a_begin, *b_begin, *a_prev, *a_leader, *b_leader, *oa=a;
-
-    if(cmp_client_store_order(wm, a, b) > 0)
-        tmp=a, a=b, b=tmp;
-
-    a_leader=a->subgroup_leader, b_leader=b->subgroup_leader;
-
-    top=get_top_transient_client(a_leader, false);
-    a_begin=(top ? top : a_leader);
-    a_prev=a_begin->prev;
-
-    top=get_top_transient_client(b_leader, false);
-    b_begin=(top ? top : b_leader);
-
-    del_subgroup(a_leader);
-    add_subgroup(b_leader, a_leader);
-    if(a_leader->next != b_begin) //不相邻
-        del_subgroup(b_leader), add_subgroup(a_prev, b_leader);
-
-    raise_client(wm, oa);
-    request_layout_update();
-}
-
-static int cmp_client_store_order(WM *wm, Client *c1, Client *c2)
-{
-    if(c1 == c2)
-        return 0;
-    for(Client *c=c1; c!=wm->clients; c=c->next)
-        if(c == c2)
-            return -1;
-    return 1;
 }
 
 bool is_last_typed_client(WM *wm, Client *c, Place_type type)
@@ -911,32 +813,6 @@ void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
             update_win_bg(c->buttons[i], color, None);
     }
-}
-
-Pointer_act get_resize_act(Client *c, const Move_info *m)
-{   // 窗口邊框寬度、標題欄調試、可調整尺寸區域的寬度、高度
-    // 以及窗口框架左、右橫坐標和上、下縱坐標
-    int bw=c->border_w, bh=c->titlebar_h, rw=c->w/4, rh=c->h/4,
-        lx=c->x-bw, rx=c->x+c->w+bw, ty=c->y-bh-bw, by=c->y+c->h+bw;
-
-    if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=ty && m->oy<ty+bw+rh)
-        return TOP_LEFT_RESIZE;
-    else if(m->ox>=rx-bw-rw && m->ox<rx && m->oy>=ty && m->oy<ty+bw+rh)
-        return TOP_RIGHT_RESIZE;
-    else if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=by-bw-rh && m->oy<by)
-        return BOTTOM_LEFT_RESIZE;
-    else if(m->ox>=rx-bw-rw && m->ox<rx && m->oy>=by-bw-rh && m->oy<by)
-        return BOTTOM_RIGHT_RESIZE;
-    else if(m->oy>=ty && m->oy<ty+bw+rh)
-        return TOP_RESIZE;
-    else if(m->oy>=by-bw-rh && m->oy<by)
-        return BOTTOM_RESIZE;
-    else if(m->ox>=lx && m->ox<lx+bw+rw)
-        return LEFT_RESIZE;
-    else if(m->ox>=rx-bw-rw && m->ox<rx)
-        return RIGHT_RESIZE;
-    else
-        return NO_OP;
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */

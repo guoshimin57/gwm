@@ -218,7 +218,7 @@ static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act)
     bool add=SHOULD_ADD_STATE(c, act, skip_taskbar);
 
     if(add && c->icon)
-        deiconify(wm, c);
+        deiconify_client(wm, c);
     c->win_state.skip_taskbar=add;
 }
 

@@ -12,18 +12,17 @@
 #ifndef MINIMAX_H
 #define MINIMAX_H
 
-void maximize_client(WM *wm, Client *c, Max_way way);
-void max_restore_client(WM *wm, Client *c);
+void minimize(WM *wm, XEvent *e, Func_arg arg);
+void deiconify(WM *wm, XEvent *e, Func_arg arg);
+void max_restore(WM *wm, XEvent *e, Func_arg arg);
+void maximize(WM *wm, XEvent *e, Func_arg arg);
 void fix_win_rect_by_state(WM *wm, Client *c);
 void restore_client(WM *wm, Client *c);
-void set_max_rect(WM *wm, Client *c, Max_way max_way);
 void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h);
 bool is_win_state_max(Client *c);
 void fix_win_rect_by_state(WM *wm, Client *c);
-void iconify(WM *wm, Client *c);
-void create_icon(Client *c);
-void deiconify(WM *wm, Client *c);
-void del_icon(WM *wm, Client *c);
+void iconify_client(WM *wm, Client *c);
+void deiconify_client(WM *wm, Client *c);
 void iconify_all_clients(WM *wm);
 void deiconify_all_clients(WM *wm);
 void change_net_wm_state_for_vmax(WM *wm, Client *c, long act);

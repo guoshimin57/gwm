@@ -230,6 +230,7 @@ typedef struct delta_rect_tag Delta_rect;
 #include "minimax.h"
 #include "misc.h"
 #include "mvresize.h"
+#include "place.h"
 #include "taskbar.h"
 
 extern sig_atomic_t run_flag; // 程序運行標志

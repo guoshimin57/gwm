@@ -11,18 +11,43 @@
 
 #include "gwm.h"
 
+static void create_icon(Client *c);
+static void del_icon(WM *wm, Client *c);
+static void maximize_client(WM *wm, Client *c, Max_way way);
+static void set_max_rect(WM *wm, Client *c, Max_way max_way);
 static Client *get_icon_client_head(WM *wm);
 static void set_fullscreen(WM *wm, Client *c);
 
-void max_restore_client(WM *wm, Client *c)
+void minimize(WM *wm, XEvent *e, Func_arg arg)
 {
+    UNUSED(e), UNUSED(arg);
+    iconify_client(wm, CUR_FOC_CLI(wm)); 
+}
+
+void deiconify(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    deiconify_client(wm, CUR_FOC_CLI(wm)); 
+}
+
+void max_restore(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    Client *c=CUR_FOC_CLI(wm);
+
     if(is_win_state_max(c))
         restore_client(wm, c);
     else
         maximize_client(wm, c, FULL_MAX);
 }
 
-void maximize_client(WM *wm, Client *c, Max_way max_way)
+void maximize(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e);
+    maximize_client(wm, CUR_FOC_CLI(wm), arg.max_way);
+}
+
+static void maximize_client(WM *wm, Client *c, Max_way max_way)
 {
     if(!is_win_state_max(c))
         save_place_info_of_client(c);
@@ -42,7 +67,7 @@ void maximize_client(WM *wm, Client *c, Max_way max_way)
     update_net_wm_state(c->win, c->win_state);
 }
 
-void set_max_rect(WM *wm, Client *c, Max_way max_way)
+static void set_max_rect(WM *wm, Client *c, Max_way max_way)
 {
     int left_x, top_y, max_w, max_h, mid_x, mid_y, half_w, half_h;
     get_max_rect(wm, c, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
@@ -117,7 +142,7 @@ void fix_win_rect_by_state(WM *wm, Client *c)
         c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
 }
 
-void iconify(WM *wm, Client *c)
+void iconify_client(WM *wm, Client *c)
 {
     if(c->win_state.skip_taskbar)
         return;
@@ -160,7 +185,7 @@ void create_icon(Client *c)
     XSelectInput(xinfo.display, c->icon->win, ICON_WIN_EVENT_MASK);
 }
 
-void deiconify(WM *wm, Client *c)
+void deiconify_client(WM *wm, Client *c)
 {
     if(!c)
         return;
@@ -181,7 +206,7 @@ void deiconify(WM *wm, Client *c)
     request_layout_update();
 }
 
-void del_icon(WM *wm, Client *c)
+static void del_icon(WM *wm, Client *c)
 {
     if(c->icon)
     {
@@ -196,14 +221,14 @@ void iconify_all_clients(WM *wm)
 {
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
         if(is_on_cur_desktop(wm, c) && !c->icon)
-            iconify(wm, c);
+            iconify_client(wm, c);
 }
 
 void deiconify_all_clients(WM *wm)
 {
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
         if(is_on_cur_desktop(wm, c) && c->icon)
-            deiconify(wm, c);
+            deiconify_client(wm, c);
 }
 
 void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
@@ -257,9 +282,9 @@ void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
 void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, hidden))
-        iconify(wm, c);
+        iconify_client(wm, c);
     else
-        deiconify(wm, c->icon ? c : NULL);
+        deiconify_client(wm, c->icon ? c : NULL);
 }
 
 void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)

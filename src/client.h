@@ -59,10 +59,7 @@ Client *win_to_iconic_state_client(WM *wm, Window win);
 void raise_client(WM *wm, Client *c);
 Client *get_next_client(WM *wm, Client *c);
 Client *get_prev_client(WM *wm, Client *c);
-void move_client(WM *wm, Client *from, Client *to, Place_type type);
-bool move_client_node(WM *wm, Client *from, Client *to, Place_type type);
 bool is_normal_layer(Place_type t);
-void swap_clients(WM *wm, Client *a, Client *b);
 bool is_last_typed_client(WM *wm, Client *c, Place_type type);
 Client *get_head_client(WM *wm, Place_type type);
 int get_subgroup_n(Client *c);
@@ -88,7 +85,8 @@ void restack_win(WM *wm, Window win);
 void update_clients_bg(WM *wm);
 void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);
 void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c);
-Pointer_act get_resize_act(Client *c, const Move_info *m);
 void create_clients(WM *wm);
+void add_subgroup(Client *head, Client *subgroup_leader);
+void del_subgroup(Client *subgroup_leader);
 
 #endif

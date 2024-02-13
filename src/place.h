@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     mvresize.h：與mvresize.c相應的頭文件。
+ *     place.h：與place.c相應的頭文件。
  *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,14 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef MVRESIZE_H 
-#define MVRESIZE_H 
+#ifndef PLACE_H
+#define PLACE_H
 
-void move_resize(WM *wm, XEvent *e, Func_arg arg);
-void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
-void update_win_state_for_move_resize(WM *wm, Client *c);
-Pointer_act get_resize_act(Client *c, const Move_info *m);
-void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg);
-void toggle_shade_client_mode(Client *c, bool shade);
+void move_client(WM *wm, Client *from, Client *to, Place_type type);
+bool move_client_node(WM *wm, Client *from, Client *to, Place_type type);
+void change_place(WM *wm, XEvent *e, Func_arg arg);
+void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg);
+void pointer_change_place(WM *wm, XEvent *e, Func_arg arg);
 
 #endif

@@ -264,14 +264,15 @@ bool is_layout_adjust_area(WM *wm, Window win, int x)
         && (is_main_sec_gap(wm, x) || is_main_fix_gap(wm, x)));
 }
 
-void change_to_spec_layout(WM *wm, Layout layout)
+void change_layout(WM *wm, XEvent *e, Func_arg arg)
 {
+    UNUSED(e);
     Layout *cl=&DESKTOP(wm)->cur_layout, *pl=&DESKTOP(wm)->prev_layout;
 
-    if(layout == *cl)
+    if(arg.layout == *cl)
         return;
 
-    if(layout == PREVIEW)
+    if(arg.layout == PREVIEW)
         save_place_info_of_clients(wm);
     if(*cl == PREVIEW)
         restore_place_info_of_clients(wm);
@@ -281,30 +282,31 @@ void change_to_spec_layout(WM *wm, Layout layout)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
             if(is_on_cur_desktop(wm, c) && c->icon)
                 XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
-    if(layout == PREVIEW)
+    if(arg.layout == PREVIEW)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
             if(is_on_cur_desktop(wm, c) && c->icon)
                 XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
 
-    if(*cl==TILE && layout==STACK)
+    if(*cl==TILE && arg.layout==STACK)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
             if(is_on_cur_desktop(wm, c) && is_normal_layer(c->place_type))
                 c->place_type=FLOAT_LAYER;
 
-    if(*cl==STACK && layout==TILE)
+    if(*cl==STACK && arg.layout==TILE)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
             if(is_on_cur_desktop(wm, c) && c->place_type==FLOAT_LAYER)
                 c->place_type=TILE_LAYER_MAIN;
 
-    *pl=*cl, *cl=layout;
+    *pl=*cl, *cl=arg.layout;
     request_layout_update();
     update_titlebar_layout(wm);
     update_taskbar_buttons_bg();
     set_gwm_current_layout(*cl);
 }
 
-void pointer_adjust_layout_ratio(WM *wm, XEvent *e)
+void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
+    UNUSED(arg);
     if( DESKTOP(wm)->cur_layout!=TILE
         || !is_layout_adjust_area(wm, e->xbutton.window, e->xbutton.x_root)
         || !grab_pointer(xinfo.root_win, ADJUST_LAYOUT_RATIO))
@@ -342,13 +344,14 @@ static bool change_layout_ratio(WM *wm, int ox, int nx)
 }
 
 /* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
-void key_adjust_main_area_ratio(WM *wm, double change_ratio)
+void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
 {
+    UNUSED(e);
     if( DESKTOP(wm)->cur_layout==TILE
         && get_clients_n(wm, TILE_LAYER_SECOND, false, false, false))
     {
         Desktop *d=DESKTOP(wm);
-        double mr=d->main_area_ratio+change_ratio, fr=d->fixed_area_ratio;
+        double mr=d->main_area_ratio+arg.change_ratio, fr=d->fixed_area_ratio;
         long mw=mr*wm->workarea.w, sw=wm->workarea.w*(1-fr)-mw;
         if(sw>=cfg->resize_inc && mw>=cfg->resize_inc)
         {
@@ -359,17 +362,18 @@ void key_adjust_main_area_ratio(WM *wm, double change_ratio)
 }
 
 /* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
-void key_adjust_fixed_area_ratio(WM *wm, double change_ratio)
-{ 
+void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e);
     if( DESKTOP(wm)->cur_layout==TILE
         && get_clients_n(wm, TILE_LAYER_FIXED, false, false, false))
     {
         Desktop *d=DESKTOP(wm);
-        double fr=d->fixed_area_ratio+change_ratio, mr=d->main_area_ratio;
-        long mw=wm->workarea.w*(mr-change_ratio), fw=wm->workarea.w*fr;
+        double fr=d->fixed_area_ratio+arg.change_ratio, mr=d->main_area_ratio;
+        long mw=wm->workarea.w*(mr-arg.change_ratio), fw=wm->workarea.w*fr;
         if(mw>=cfg->resize_inc && fw>=cfg->resize_inc)
         {
-            d->main_area_ratio-=change_ratio, d->fixed_area_ratio=fr;
+            d->main_area_ratio-=arg.change_ratio, d->fixed_area_ratio=fr;
             request_layout_update();
         }
     }

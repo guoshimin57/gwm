@@ -53,20 +53,12 @@ static bool is_valid_click(XEvent *oe, XEvent *ne)
         && is_pointer_on_win(ne->xbutton.window);
 }
 
-void move_resize(WM *wm, XEvent *e, Func_arg arg)
-{
-    if(e->type == KeyPress)
-        key_move_resize_client(wm, e, arg.direction);
-    else
-        pointer_move_resize_client(wm, e, arg.resize);
-}
-
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=CUR_FOC_CLI(wm);
 
     if(c->icon)
-        deiconify(wm, c);
+        deiconify_client(wm, c);
 
     if(DESKTOP(wm)->cur_layout == PREVIEW)
         arg.layout=DESKTOP(wm)->prev_layout, change_layout(wm, e, arg);
@@ -159,143 +151,6 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
         *m = *m+arg.desktop_n>=1 ? *m+arg.desktop_n : 1;
         request_layout_update();
     }
-}
-
-void change_place(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e);
-    Client *c=CUR_FOC_CLI(wm);
-
-    move_client(wm, c, NULL, arg.place_type);
-    update_win_state_for_move_resize(wm, c);
-}
-
-void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(arg);
-    XEvent ev;
-    Layout layout=DESKTOP(wm)->cur_layout;
-    Client *from=CUR_FOC_CLI(wm), *to=NULL, *head=wm->clients;
-    if(layout!=TILE || from==head || !get_valid_click(wm, SWAP, e, &ev))
-        return;
-
-    /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
-     * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
-    if((to=win_to_client(wm, ev.xbutton.subwindow)))
-        swap_clients(wm, from, to);
-}
-
-void minimize(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    iconify(wm, CUR_FOC_CLI(wm)); 
-}
-
-void deiconify_client(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    deiconify(wm, CUR_FOC_CLI(wm)); 
-}
-
-void max_restore(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    max_restore_client(wm, CUR_FOC_CLI(wm));
-}
-
-void maximize(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e);
-    maximize_client(wm, CUR_FOC_CLI(wm), arg.max_way);
-}
-
-void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    static bool shade=false;
-
-    toggle_shade_client_mode(CUR_FOC_CLI(wm), shade=!shade);
-}
-
-void toggle_shade_client_mode(Client *c, bool shade)
-{
-    if(shade && c->titlebar_h)
-        XResizeWindow(xinfo.display, c->frame, c->w, c->titlebar_h);
-    else if(!shade)
-        XResizeWindow(xinfo.display, c->frame, c->w, c->titlebar_h+c->h);
-    c->win_state.shaded=shade;
-}
-
-void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
-{
-    XEvent ev;
-    Client *from=CUR_FOC_CLI(wm), *to;
-
-    UNUSED(arg);
-    if( DESKTOP(wm)->cur_layout!=TILE || from==wm->clients
-        || !get_valid_click(wm, CHANGE, e, &ev))
-        return;
-
-    /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
-     * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
-    Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
-    to=win_to_client(wm, subw);
-    if(ev.xbutton.x == 0)
-        move_client(wm, from, NULL, TILE_LAYER_SECOND);
-    else if(ev.xbutton.x == (long)xinfo.screen_width-1)
-        move_client(wm, from, NULL, TILE_LAYER_FIXED);
-    else if(win==xinfo.root_win && subw==None)
-        move_client(wm, from, NULL, TILE_LAYER_MAIN);
-    else if(to)
-        move_client(wm, from, to, ANY_PLACE);
-    update_win_state_for_move_resize(wm, from);
-}
-
-void change_layout(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e);
-    change_to_spec_layout(wm, arg.layout);
-}
-
-void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(arg);
-    pointer_adjust_layout_ratio(wm, e);
-}
-
-void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e);
-    key_adjust_main_area_ratio(wm, arg.change_ratio);
-}
-
-void adjust_fixed_area_ratio(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e);
-    key_adjust_fixed_area_ratio(wm, arg.change_ratio);
-}
-
-void show_desktop(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    static bool show=false;
-
-    toggle_showing_desktop_mode(wm, show=!show);
-}
-
-void toggle_showing_desktop_mode(WM *wm, bool show)
-{
-    if(show)
-        iconify_all_clients(wm);
-    else
-        deiconify_all_clients(wm);
-    set_net_showing_desktop(show);
-}
-
-void change_default_place_type(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e);
-    DESKTOP(wm)->default_place_type=arg.place_type;
 }
 
 void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)

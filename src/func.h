@@ -14,7 +14,6 @@
 
 bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg));
 bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne);
-void move_resize(WM *wm, XEvent *e, Func_arg arg);
 void choose_client(WM *wm, XEvent *e, Func_arg arg);
 void exec(WM *wm, XEvent *e, Func_arg arg);
 void quit_wm(WM *wm, XEvent *e, Func_arg arg);
@@ -24,15 +23,6 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg);
 void next_client(WM *wm, XEvent *e, Func_arg arg);
 void prev_client(WM *wm, XEvent *e, Func_arg arg);
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg);
-void change_place(WM *wm, XEvent *e, Func_arg arg);
-void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg);
-void minimize(WM *wm, XEvent *e, Func_arg arg);
-void deiconify_client(WM *wm, XEvent *e, Func_arg arg);
-void max_restore(WM *wm, XEvent *e, Func_arg arg);
-void maximize(WM *wm, XEvent *e, Func_arg arg);
-void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg);
-void toggle_shade_client_mode(Client *c, bool shade);
-void pointer_change_place(WM *wm, XEvent *e, Func_arg arg);
 void change_layout(WM *wm, XEvent *e, Func_arg arg);
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg);
 void adjust_main_area_ratio(WM *wm, XEvent *e, Func_arg arg);

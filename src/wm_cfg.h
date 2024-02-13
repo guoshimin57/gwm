@@ -90,6 +90,6 @@
     {TITLE_AREA,                0, Button3,  pointer_swap_clients,       {0}},                              \
     {CLIENT_WIN,                0, Button1,  choose_client,              {0}},                              \
     {CLIENT_FRAME,              0, Button1,  move_resize,                {.resize=true}},                   \
-    {CLIENT_ICON,               0, Button1,  deiconify_client,           {0}}
+    {CLIENT_ICON,               0, Button1,  deiconify,                  {0}}
 
 #endif
