@@ -49,7 +49,7 @@ typedef struct
     double default_fixed_area_ratio; // 默認的固定區域比例
     float global_opacity; // 全局構件背景色不透明度
     float widget_opacity[COLOR_THEME_N][WIDGET_COLOR_N]; // 各種構件背景色的不透明度
-    const char *font_name; // 本窗口管理器所使用的字庫名稱。
+    const char **font_names; // 本窗口管理器所偏好的字體名稱列表。
     const char *autostart; // 在gwm剛啓動時執行的腳本
     const char *cur_icon_theme; // 當前圖標主題
     const char *screenshot_path; // 屏幕截圖的文件保存路徑，請自行確保路徑存在

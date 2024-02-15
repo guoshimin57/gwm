@@ -98,7 +98,7 @@ void clear_wm(WM *wm)
     XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
     if(xinfo.xim)
         XCloseIM(xinfo.xim);
-    close_font(wm);
+    close_fonts();
     XClearWindow(xinfo.display, xinfo.root_win);
     XFlush(xinfo.display);
     XCloseDisplay(xinfo.display);

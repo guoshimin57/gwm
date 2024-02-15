@@ -45,7 +45,7 @@ void init_wm(WM *wm)
         init_wallpaper_files(wm);
     init_desktop(wm);
     reg_event_handlers(wm);
-    load_font();
+    load_fonts();
     alloc_color();
     init_root_win_background();
     create_cursors();

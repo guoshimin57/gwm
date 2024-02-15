@@ -28,11 +28,11 @@ typedef struct // 字符串格式
     XftColor fg; // 字符串的前景色
 } Str_fmt;
 
-void load_font(void);
+void load_fonts(void);
+void close_fonts(void);
 void draw_wcs(Drawable d, const wchar_t *wcs, const Str_fmt *f);
 void draw_string(Drawable d, const char *str, const Str_fmt *f);
 void get_string_size(const char *str, int *w, int *h);
-void close_font();
 int get_min_font_size(void);
 int get_scale_font_size(double scale);
 int get_font_pad(void);

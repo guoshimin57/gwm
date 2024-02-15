@@ -9,30 +9,110 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <fontconfig/fontconfig.h>
 #include "gwm.h"
 
+struct _font_tag
+{
+    XftFont *xfont;
+    struct _font_tag *next;
+};
+typedef struct _font_tag WMFont;
+
+static WMFont *load_font(const char *fontname);
+static void close_font(WMFont *font);
+static bool has_exist_font(const XftFont *xfont);
+static WMFont *get_last_font(void);
+static void init_font_set(void);
+static int draw_utf8_char(XftDraw *draw, const XftColor *fg, uint32_t codepoint, int len, const FcChar8 *s, int x, int y);
+static WMFont *get_suitable_font(uint32_t codepoint);
 static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *y, int *w, int *h);
+static int get_utf8_codepoint(const char *str, uint32_t *codepoint);
 
-static XftFont *font=NULL; // 窗口管理器用到的字體，一經顯式初始化便不再修改
+static WMFont *fonts=NULL;
+static FcFontSet *font_set=NULL;
 
-void load_font(void)
+void load_fonts(void)
+{
+    for(int i=0; cfg->font_names[i]; i++)
+        load_font(cfg->font_names[i]);
+    init_font_set();
+}
+
+void close_fonts(void)
+{
+    for(WMFont *p=fonts; p; p=p->next)
+        close_font(p);
+    FcFontSetDestroy(font_set);
+    FcFini();
+}
+
+static WMFont *load_font(const char *fontname)
 {
     char name[BUFSIZ];
+    XftFont *fp=NULL;
 
-    if(cfg->font_name)
+    sprintf(name, "%s:pixelsize=%u", fontname, cfg->font_size);
+    if(!(fp=XftFontOpenName(xinfo.display, xinfo.screen, name)))
+        return NULL;
+
+    if(has_exist_font(fp))
     {
-        sprintf(name, "%s:pixelsize=%u", cfg->font_name, cfg->font_size);
-        font=XftFontOpenName(xinfo.display, xinfo.screen, name);
+        XftFontClose(xinfo.display, fp);
+        return NULL;
     }
 
-    if(font == NULL)
-    {
-        sprintf(name, ":pixelsize=%u", cfg->font_size);
-        font=XftFontOpenName(xinfo.display, xinfo.screen, name);
-    }
+    WMFont *font=malloc(sizeof(WMFont));
+    font->xfont=fp, font->next=NULL;
+    if(fonts)
+        get_last_font()->next=font;
+    else
+        fonts=font;
 
-    if(font == NULL)
-        exit_with_msg(_("錯誤：不能加載必要的字體。"));
+    return font;
+}
+
+static void close_font(WMFont *font)
+{
+    for(WMFont *p=fonts, *prev=fonts; p; prev=p, p=p->next)
+    {
+        if(p == font)
+        {
+            if(p == fonts)
+                fonts=p->next;
+            else
+                prev->next=p->next;
+            XftFontClose(xinfo.display, p->xfont);
+            free(p);
+            break;
+        }
+    }
+} 
+
+static bool has_exist_font(const XftFont *xfont)
+{
+    for(WMFont *p=fonts; p; p=p->next)
+        if(xfont == p->xfont)
+            return true;
+    return false;
+}
+
+static WMFont *get_last_font(void)
+{
+    WMFont *p;
+    for(p=fonts; p && p->next; p=p->next)
+        ;
+    return p;
+}
+
+static void init_font_set(void)
+{
+    FcPattern *pat=FcNameParse((FcChar8 *)":");
+    FcObjectSet *os=FcObjectSetCreate();
+    FcObjectSetAdd(os, "family");
+    font_set=FcFontList(NULL, pat, os);
+    FcObjectSetDestroy(os);
+    FcPatternDestroy(pat);
 }
 
 void draw_wcs(Drawable d, const wchar_t *wcs, const Str_fmt *f)
@@ -48,11 +128,9 @@ void draw_string(Drawable d, const char *str, const Str_fmt *f)
     if(!str)
         return;
 
-    int x=f->x, y=f->y, w=f->w, h=f->h, sx, sy, sw, sh, n;
+    int x=f->x, y=f->y, w=f->w, h=f->h, sx, sy, sw, sh;
 
-    
     get_str_rect_by_fmt(f, str, &sx, &sy, &sw, &sh);
-    n=strlen(str);
     XClearArea(xinfo.display, d, x, y, w, h, False); 
     if(f->change_bg)
     {
@@ -61,20 +139,67 @@ void draw_string(Drawable d, const char *str, const Str_fmt *f)
         XFillRectangle(xinfo.display, d, gc, x, y, w, h);
     }
 
+    int len;
+    uint32_t codepoint;
     XftDraw *draw=XftDrawCreate(xinfo.display, d, xinfo.visual, xinfo.colormap);
-    XftDrawStringUtf8(draw, &f->fg, font, sx, sy, (const FcChar8 *)str, n);
+    while(*str)
+    {
+        len=get_utf8_codepoint(str, &codepoint);
+        sx+=draw_utf8_char(draw, &f->fg, codepoint, len, (const FcChar8 *)str, sx, sy);
+        str+=len;
+    }
     XftDrawDestroy(draw);
 }
 
+/* libXrender文檔沒有解釋XGlyphInfo結構體成員的含義。 猜測xOff指字符串原點到
+ * 字符串限定框最右邊的偏移量。 */
+static int draw_utf8_char(XftDraw *draw, const XftColor *fg, uint32_t codepoint, int len, const FcChar8 *s, int x, int y)
+{
+    WMFont *font=get_suitable_font(codepoint);
+    if(font == NULL)
+        return 0;
+
+    XGlyphInfo info;
+    XftDrawStringUtf8(draw, fg, font->xfont, x, y, s, len);
+    XftTextExtentsUtf8(xinfo.display, font->xfont, s, len, &info);
+    return info.xOff;
+}
+
+static WMFont *get_suitable_font(uint32_t codepoint)
+{
+    WMFont *font;
+    const FcChar8 *fmt=(const FcChar8 *)"%{=fclist}";
+
+    for(font=fonts; font; font=font->next)
+        if(XftCharExists(xinfo.display, font->xfont, codepoint))
+            return font;
+
+    for(int i=0; font_set->nfont; i++)
+    {
+        if((font=load_font((char *)FcPatternFormat(font_set->fonts[i], fmt))))
+        {
+            if(XftCharExists(xinfo.display, font->xfont, codepoint))
+                return font;
+            else
+                close_font(font);
+        }
+    }
+
+    return NULL;
+}
+
+/* Xft文檔沒有解析XftFont的height成员的含義，但ascent+descent的確比height大1，
+ * 且前者看上去似乎才是實際的字體高度 */
 static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *y, int *w, int *h)
 {
     int cx, cy, pad, left, right, top, bottom;
 
     pad = f->pad ? get_font_pad() : 0;
     get_string_size(str, w, h);
-    cx=f->x+f->w/2-*w/2, cy=f->y+(f->h-font->height)/2+font->ascent;
+    cx=f->x+f->w/2-*w/2;
+    cy=f->y+(f->h-fonts->xfont->height)/2+fonts->xfont->ascent;
     left=f->x+pad, right=f->x+f->w-*w-pad;
-    top=f->y+font->ascent, bottom=f->y+f->h-font->descent;
+    top=f->y+fonts->xfont->ascent, bottom=f->y+f->h-fonts->xfont->descent;
 
     switch(f->align)
     {
@@ -94,21 +219,47 @@ static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *
 
 void get_string_size(const char *str, int *w, int *h)
 {
-    /* libXrender文檔沒有解釋XGlyphInfo結構體成員的含義。
-       猜測xOff指字符串原點到字符串限定框最右邊的偏移量。*/
-    XGlyphInfo e;
-    XftTextExtentsUtf8(xinfo.display, font, (const FcChar8 *)str, strlen(str), &e);
+    int width=0, max_asc=0, max_desc=0;
+    uint32_t codepoint;
+    XGlyphInfo info;
+    WMFont *font=NULL;
+
+    for(int len=0; *str; str+=len)
+    {
+        len=get_utf8_codepoint(str, &codepoint);
+        if(len && (font=get_suitable_font(codepoint)))
+        {
+            XftTextExtentsUtf8(xinfo.display, font->xfont, (const FcChar8 *)str, len, &info);
+            width += info.xOff;
+            if(font->xfont->ascent > max_asc)
+               max_asc=font->xfont->ascent;
+            if(font->xfont->descent > max_desc)
+               max_desc=font->xfont->descent;
+        }
+    }
     if(w)
-        *w=e.xOff;
-    /* Xft文檔沒有解析font->height的含義，但font->ascent+font->descent的確比
-     * font->height大1，且前者看上去似乎才是實際的字體高度 */
+        *w=width;
     if(h)
-        *h=font->ascent+font->descent;
+        *h=max_asc+max_desc;
 }
 
-void close_font(void)
+static int get_utf8_codepoint(const char *str, uint32_t *codepoint)
 {
-    XftFontClose(xinfo.display, font);
+    const uint8_t *p=(const uint8_t*)str;
+    int len=0;
+    
+    if(*p < 0x80) // 單字節字符
+        len=1, *codepoint=*p;
+    else if((*p>>5) == 0x06) // 雙字節字符
+        len=2, *codepoint=(*p & 0x1F)<<6 | (*(p+1) & 0x3F);
+    else if((*p>>4) == 0x0E) // 三字節字符
+        len=3, *codepoint=(*p & 0x0F)<<12 | (*(p+1) & 0x3F)<<6 | (*(p+2) & 0x3F);
+    else if((*p>>3) == 0x1E) // 四字節字符
+        len=4, *codepoint=(*p & 0x07)<<18 | (*(p+1) & 0x3F)<<12 | (*(p+2) & 0x3F)<<6 | (*(p+3) & 0x3F);
+    else // 非utf8編碼字符
+        len=0;
+
+    return len;
 }
 
 /*

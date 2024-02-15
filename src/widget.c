@@ -16,7 +16,6 @@ static void alloc_text_color(const char *color_name, XftColor *color);
 static unsigned int get_num_lock_mask(void);
 static unsigned int get_valid_mask(unsigned int mask);
 static unsigned int get_modifier_mask(KeySym key_sym);
-
 static XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
 static XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色
 static Cursor cursors[POINTER_ACT_N]; // 光標

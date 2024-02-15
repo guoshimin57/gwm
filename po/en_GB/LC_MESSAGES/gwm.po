@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.7.19\n"
+"Project-Id-Version: gwm 2.8.0\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-02-13 20:28+0800\n"
+"POT-Creation-Date: 2024-02-15 23:42+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -22,233 +22,233 @@ msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
 #. 操作中心按鈕類型             按鈕文字
-#: config.c:477
+#: config.c:485
 msgid "幫助"
 msgstr "Help"
 
-#: config.c:478
+#: config.c:486
 msgid "文件"
 msgstr "File"
 
-#: config.c:479
+#: config.c:487
 msgid "終端模擬器"
 msgstr "Terminal"
 
-#: config.c:480
+#: config.c:488
 msgid "網絡瀏覽器"
 msgstr "Web browser"
 
-#: config.c:482
+#: config.c:490
 msgid "遊戲"
 msgstr "Game"
 
-#: config.c:483
+#: config.c:491
 msgid "播放影音"
 msgstr "Start Play"
 
-#: config.c:484
+#: config.c:492
 msgid "切換播放狀態"
 msgstr "Toggle Play"
 
-#: config.c:485
+#: config.c:493
 msgid "關閉影音"
 msgstr "Quit Play"
 
-#: config.c:487
+#: config.c:495
 msgid "减小音量"
 msgstr "Volume down"
 
-#: config.c:488
+#: config.c:496
 msgid "增大音量"
 msgstr "Volume up"
 
-#: config.c:489
+#: config.c:497
 msgid "最大音量"
 msgstr "Volume max"
 
-#: config.c:490
+#: config.c:498
 msgid "靜音切換"
 msgstr "Mute toggle"
 
-#: config.c:492
+#: config.c:500
 msgid "暫主區開窗"
 msgstr "Main next"
 
-#: config.c:493
+#: config.c:501
 msgid "暫次區開窗"
 msgstr "Sec next"
 
-#: config.c:494
+#: config.c:502
 msgid "暫固定區開窗"
 msgstr "Fixed next"
 
-#: config.c:495
+#: config.c:503
 msgid "暫懸浮層開窗"
 msgstr "Float next"
 
-#: config.c:497
+#: config.c:505
 msgid "增大主區容量"
 msgstr "Main area n+"
 
-#: config.c:498
+#: config.c:506
 msgid "减小主區容量"
 msgstr "Main area n-"
 
-#: config.c:499
+#: config.c:507
 msgid "開關當前窗口標題欄"
 msgstr "Toggle cur win titlebar"
 
-#: config.c:500
+#: config.c:508
 msgid "開關當前窗口邊框"
 msgstr "Toggle cur win border"
 
-#: config.c:502
+#: config.c:510
 msgid "關閉桌面所有窗口"
 msgstr "Close all win on desktop"
 
-#: config.c:503
+#: config.c:511
 msgid "當前窗口截圖"
 msgstr "Cur win screenshot"
 
-#: config.c:504
+#: config.c:512
 msgid "全屏截圖"
 msgstr "Full screen screenshot"
 
-#: config.c:505
+#: config.c:513
 msgid "切換聚焦模式"
 msgstr "Toggle focus"
 
-#: config.c:507
+#: config.c:515
 msgid "開關合成器"
 msgstr "Toggle compositor"
 
-#: config.c:508
+#: config.c:516
 msgid "切換壁紙"
 msgstr "Switch wallpaper"
 
-#: config.c:509
+#: config.c:517
 msgid "切換顏色主題"
 msgstr "Switch color theme"
 
-#: config.c:510
+#: config.c:518
 msgid "退出gwm"
 msgstr "Quit gwm"
 
-#: config.c:512
+#: config.c:520
 msgid "注銷"
 msgstr "Logout"
 
-#: config.c:513
+#: config.c:521
 msgid "重啓"
 msgstr "Reboot"
 
-#: config.c:514
+#: config.c:522
 msgid "關機"
 msgstr "Shutdown"
 
-#: config.c:515
+#: config.c:523
 msgid "運行"
 msgstr "Run"
 
 #. 客戶窗口菜單項類型       按鈕文字
-#: config.c:524
+#: config.c:532
 msgid "卷起/放下"
 msgstr "Roll up / Put down"
 
-#: config.c:525
+#: config.c:533
 msgid "縱向最大化"
 msgstr "Vertical max"
 
-#: config.c:526
+#: config.c:534
 msgid "橫向最大化"
 msgstr "Horizontal max"
 
-#: config.c:527
+#: config.c:535
 msgid "最大化至上半屏"
 msgstr "Max to top half screen"
 
-#: config.c:528
+#: config.c:536
 msgid "最大化至下半屏"
 msgstr "Max to bottom half screen"
 
-#: config.c:529
+#: config.c:537
 msgid "最大化至左半屏"
 msgstr "Max to left half screen"
 
-#: config.c:530
+#: config.c:538
 msgid "最大化至右半屏"
 msgstr "Max to right half screen"
 
-#: config.c:531
+#: config.c:539
 msgid "完全最大化"
 msgstr "fully max"
 
 #. 構件類型             構件功能提示文字
-#: config.c:543
+#: config.c:551
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: config.c:544
+#: config.c:552
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: config.c:545
+#: config.c:553
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: config.c:546
+#: config.c:554
 msgid "切換到懸浮層"
 msgstr "To float layer"
 
-#: config.c:547
+#: config.c:555
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: config.c:548
+#: config.c:556
 msgid "最大化/還原窗口"
 msgstr "Max/Restore window"
 
-#: config.c:549
+#: config.c:557
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: config.c:550
+#: config.c:558
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: config.c:551
+#: config.c:559
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: config.c:552
+#: config.c:560
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: config.c:553
+#: config.c:561
 msgid "切換到預覽模式"
 msgstr "To preview mode"
 
-#: config.c:554
+#: config.c:562
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: config.c:555
+#: config.c:563
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: config.c:556
+#: config.c:564
 msgid "顯示桌面"
 msgstr "Show desktop"
 
-#: config.c:557
+#: config.c:565
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: config.c:558
+#: config.c:566
 msgid "打開窗口菜單"
 msgstr "Open window menu"
 
-#: config.c:587
+#: config.c:595
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
@@ -304,10 +304,6 @@ msgstr "Command execution error"
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
 
-#: font.c:35
-msgid "錯誤：不能加載必要的字體。"
-msgstr "Error: Unable to load necessary fonts."
-
 #: gwm.c:37
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "SIGCHLD signal handler function cannot be installed"
@@ -346,20 +342,23 @@ msgstr "Error: There is already another window manager running!"
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X error: Resource number=%#lx, Request number=%lu, Error code=%d, Major request code=%d, Minor request code=%d\n"
 
-#: widget.c:124
+#: widget.c:123
 #, c-format
 msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
 msgstr "Error: Window (0x%lx) input method setup failed!"
 
-#: widget.c:240
+#: widget.c:239
 #, c-format
 msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
 msgstr "Error: The corresponding modifier key for the specified key symbol could not be found!\n"
 
-#: widget.c:243
+#: widget.c:242
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "Error: The key symbol specified does not have a corresponding key code!\n"
+
+#~ msgid "錯誤：不能加載必要的字體。"
+#~ msgstr "Error: Unable to load necessary fonts."
 
 #~ msgid "切換到全屏模式"
 #~ msgstr "To full screen mode"

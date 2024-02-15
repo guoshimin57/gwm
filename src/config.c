@@ -184,16 +184,24 @@ static const Rule rule[] =
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 
+/* 本窗口管理器所偏好的字體名稱列表。
+ * 每增加一個字體，會增加0.1M內存，但也會提高效率。 */
+static const char *font_names[]=
+{
+    "monospace",
+    "Symbola",
+    NULL // 哨兵值，表示結束，切勿刪改之
+};
+
 /* 功能：設置字體。
  * 說明：縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
- * 近視之人應按近視程度設置大於1.0的合適值。當font_name等於NULL或""或"*"時，
- * 使用系統默認字體。可通過以下命令查看可用字體：
- *     fc-list -f "%{fullname}\n" :lang=zh | sed 's/,/\n/g' | sort -u
+ * 近視之人應按近視程度設置大於1.0的合適值。可通過fc-list命令查看可用字體，如：
+ *     fc-list :lang=zh family
  */
 static void config_font(void)
 {
     cfg->font_size=get_scale_font_size(2.0);
-    cfg->font_name="monospace";
+    cfg->font_names=font_names;
 }
 
 /* 功能：設置構件尺寸。
@@ -448,8 +456,8 @@ static void config_title_button_text(void)
     SET_TITLE_BUTTON_TEXT(FIXED_BUTTON,  "▷");
     SET_TITLE_BUTTON_TEXT(FLOAT_BUTTON,  "△");
     SET_TITLE_BUTTON_TEXT(ICON_BUTTON,   "—");
-    SET_TITLE_BUTTON_TEXT(MAX_BUTTON,    "□");
-    SET_TITLE_BUTTON_TEXT(CLOSE_BUTTON,  "×");
+    SET_TITLE_BUTTON_TEXT(MAX_BUTTON,    "◲");
+    SET_TITLE_BUTTON_TEXT(CLOSE_BUTTON,  "🗙");
 }
 
 /* 功能：設置任務欄按鈕的文字。

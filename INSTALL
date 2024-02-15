@@ -16,11 +16,13 @@
        konsole5、xterm、xdg-open、mplayer、light、wesnoth、qq。應按自身需求來
        確定是否要安裝它們。
     3. 此程序使用picom作爲合成器來實現特效。應按自身需求來確定是否要安裝它們。
-    4. 此程序依賴C標準庫、libX11、libXft和Imlib2開發庫。必須安裝它們才能編譯
-       此程序。
-    5. 此程序需要必要的字體，默認爲需要中文等寬字體，如wqy-zenhei-fonts，可用
-       如下命令檢測是否已經安裝了該種字體：fc-match :lang=zh:monospace。可修
-       改config.h的FONT_NAME定義來改變字體。
+    4. 此程序依賴C標準庫、libX11、libXft、fontconfig和Imlib2開發庫。必須安裝
+       它們才能編譯此程序。
+    5. 此程序需要必要的字體，默認爲需要中文等寬字體和符號字體，如：
+       wqy-zenhei-fonts和gdouros-symbola-fonts，可用如下命令檢測是否已經安裝了
+       該種字體：fc-match :lang=zh:monospace和fc-match Symbola。可修改config.c
+       的font_names定義來改變字體。如果找不到指定的字體，會嘗試其他字體。若想
+       檢測哪些字體包含指定的字符，可編譯運行tools/checkfont.c。
     6. 國際化與本地化功能依賴於gettext。強烈建議安裝它。
 
 二、安裝此程序的步驟為：

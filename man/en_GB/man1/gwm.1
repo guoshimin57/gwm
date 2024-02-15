@@ -12,7 +12,7 @@
 ./" program. Otherwise, see <http://www.gnu.org/licenses/>.
 ./" ************************************************* ***************************/
 
-.TH gwm 1 February 2024 "gwm 2.7.19" gwm
+.TH gwm 1 February 2024 "gwm 2.8.0" gwm
 .
 .SH NAME
 .B
@@ -37,7 +37,7 @@ Stacking mode is a layout mode in which windows can be stacked, and all normal w
 .PP
 Preview mode is a layout mode in which all windows equally distribute workarea space. If a window is selected in this mode, it will switch to the previous layout mode, the selected window will become the current window, and other windows will remain in the previous layout mode. If the previous layout mode is tiling mode, the selected window will be moved to the top of the main area.
 .PP
-gwm resets the parent window for all windows, the parent window also includes the border, the title bar, both of which are collectively called the window frame. The original window range before reparenting is called the non-frame area. Among them, the title bar sets the title area and buttons sequentially from left to right. The title area is used to display the title of the window and provide the function of moving the window. Buttons are used to implement specific functions, and the number of buttons varies with the basic window layout mode. In tiling mode, the text of each button from left to right is: ◁, ▼, ▷, △, —, □, ×. In stacking mode, ◁, ▼, ▷, △ buttons are not displayed. In preview mode, only the × button is displayed.
+gwm resets the parent window for all windows, the parent window also includes the border, the title bar, both of which are collectively called the window frame. The original window range before reparenting is called the non-frame area. Among them, the title bar sets the title area and buttons sequentially from left to right. The title area is used to display the title of the window and provide the function of moving the window. Buttons are used to implement specific functions, and the number of buttons varies with the basic window layout mode. In tiling mode, the text of each button from left to right is: ◁, ▼, ▷, △, —, ◲, 🗙. In stacking mode, ◁, ▼, ▷, △ buttons are not displayed. In preview mode, only the 🗙 button is displayed.
 .
 .SH OPTIONS
 none.
