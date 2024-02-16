@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.8.0\n"
+"Project-Id-Version: gwm 2.8.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-02-15 23:42+0800\n"
+"POT-Creation-Date: 2024-02-16 17:44+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -22,233 +22,233 @@ msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
 #. 操作中心按鈕類型             按鈕文字
-#: config.c:485
-msgid "幫助"
-msgstr "Help"
-
-#: config.c:486
-msgid "文件"
-msgstr "File"
-
 #: config.c:487
-msgid "終端模擬器"
-msgstr "Terminal"
+msgid "🛟 幫助"
+msgstr "🛟 Help"
 
 #: config.c:488
-msgid "網絡瀏覽器"
-msgstr "Web browser"
+msgid "📁 文件"
+msgstr "📁 Doc"
+
+#: config.c:489
+msgid "🖥️ 終端模擬器"
+msgstr "🖥️ Terminal"
 
 #: config.c:490
-msgid "遊戲"
-msgstr "Game"
-
-#: config.c:491
-msgid "播放影音"
-msgstr "Start Play"
+msgid "🌐 網絡瀏覽器"
+msgstr "🌐 Web browser"
 
 #: config.c:492
-msgid "切換播放狀態"
-msgstr "Toggle Play"
+msgid "🎮️ 遊戲"
+msgstr "🎮️ Game"
 
 #: config.c:493
-msgid "關閉影音"
-msgstr "Quit Play"
+msgid "🎬 播放影音"
+msgstr "🎬 Player"
+
+#: config.c:494
+msgid "⏯️ 切換播放狀態"
+msgstr "Toggle play status"
 
 #: config.c:495
-msgid "减小音量"
-msgstr "Volume down"
-
-#: config.c:496
-msgid "增大音量"
-msgstr "Volume up"
+msgid "⏹️ 關閉影音"
+msgstr "Quit player"
 
 #: config.c:497
-msgid "最大音量"
-msgstr "Volume max"
+msgid "🔈️ 减小音量"
+msgstr "🔈️ Volume down"
 
 #: config.c:498
-msgid "靜音切換"
-msgstr "Mute toggle"
+msgid "🔉 增大音量"
+msgstr "🔉 Volume up"
+
+#: config.c:499
+msgid "🔊 最大音量"
+msgstr "🔊 Volume max"
 
 #: config.c:500
-msgid "暫主區開窗"
-msgstr "Main next"
-
-#: config.c:501
-msgid "暫次區開窗"
-msgstr "Sec next"
+msgid "🔇 靜音切換"
+msgstr "🔇 Mute toggle"
 
 #: config.c:502
-msgid "暫固定區開窗"
-msgstr "Fixed next"
+msgid "▼ 暫主區開窗"
+msgstr "▼ Main next"
 
 #: config.c:503
-msgid "暫懸浮層開窗"
-msgstr "Float next"
+msgid "◁ 暫次區開窗"
+msgstr "◁ Sec next"
+
+#: config.c:504
+msgid "▷ 暫固定區開窗"
+msgstr "▷ Fixed next"
 
 #: config.c:505
-msgid "增大主區容量"
-msgstr "Main area n+"
-
-#: config.c:506
-msgid "减小主區容量"
-msgstr "Main area n-"
+msgid "△ 暫懸浮層開窗"
+msgstr "△ Float next"
 
 #: config.c:507
-msgid "開關當前窗口標題欄"
-msgstr "Toggle cur win titlebar"
+msgid "⬆️ 增大主區容量"
+msgstr "⬆️ Main area n+"
 
 #: config.c:508
-msgid "開關當前窗口邊框"
-msgstr "Toggle cur win border"
+msgid "⬇️ 减小主區容量"
+msgstr "⬇️ Main area n-"
+
+#: config.c:509
+msgid "🗔 開關當前窗口標題欄"
+msgstr "🗔 Toggle cur win titlebar"
 
 #: config.c:510
-msgid "關閉桌面所有窗口"
-msgstr "Close all win on desktop"
-
-#: config.c:511
-msgid "當前窗口截圖"
-msgstr "Cur win screenshot"
+msgid "⬚ 開關當前窗口邊框"
+msgstr "⬚ Toggle cur win border"
 
 #: config.c:512
-msgid "全屏截圖"
-msgstr "Full screen screenshot"
+msgid "❎ 關閉桌面所有窗口"
+msgstr "❎ Close all win on desktop"
 
 #: config.c:513
-msgid "切換聚焦模式"
-msgstr "Toggle focus"
+msgid "✀ 當前窗口截圖"
+msgstr "✀ Cur win screenshot"
+
+#: config.c:514
+msgid "🖵 全屏截圖"
+msgstr "🖵 Full screen screenshot"
 
 #: config.c:515
-msgid "開關合成器"
-msgstr "Toggle compositor"
-
-#: config.c:516
-msgid "切換壁紙"
-msgstr "Switch wallpaper"
+msgid "👁️ 切換聚焦模式"
+msgstr "👁️ Toggle focus mode"
 
 #: config.c:517
-msgid "切換顏色主題"
-msgstr "Switch color theme"
+msgid "🪡 開關合成器"
+msgstr "🪡 Toggle compositor"
 
 #: config.c:518
-msgid "退出gwm"
-msgstr "Quit gwm"
+msgid "🌌 切換壁紙"
+msgstr "🌌 Switch wallpaper"
+
+#: config.c:519
+msgid "🎨 切換顏色主題"
+msgstr "🎨 Switch color theme"
 
 #: config.c:520
-msgid "注銷"
-msgstr "Logout"
-
-#: config.c:521
-msgid "重啓"
-msgstr "Reboot"
+msgid "❌ 退出gwm"
+msgstr "❌ Quit gwm"
 
 #: config.c:522
-msgid "關機"
-msgstr "Shutdown"
+msgid "🚶 注銷"
+msgstr "🚶 Log out"
 
 #: config.c:523
-msgid "運行"
-msgstr "Run"
+msgid "↻ 重啓"
+msgstr "↻ Reboot"
+
+#: config.c:524
+msgid "⏻ 關機"
+msgstr "⏻ Shut down"
+
+#: config.c:525
+msgid "🔍️ 運行"
+msgstr "🔍️ Run command"
 
 #. 客戶窗口菜單項類型       按鈕文字
-#: config.c:532
+#: config.c:534
 msgid "卷起/放下"
 msgstr "Roll up / Put down"
 
-#: config.c:533
+#: config.c:535
 msgid "縱向最大化"
 msgstr "Vertical max"
 
-#: config.c:534
+#: config.c:536
 msgid "橫向最大化"
 msgstr "Horizontal max"
 
-#: config.c:535
+#: config.c:537
 msgid "最大化至上半屏"
 msgstr "Max to top half screen"
 
-#: config.c:536
+#: config.c:538
 msgid "最大化至下半屏"
 msgstr "Max to bottom half screen"
 
-#: config.c:537
+#: config.c:539
 msgid "最大化至左半屏"
 msgstr "Max to left half screen"
 
-#: config.c:538
+#: config.c:540
 msgid "最大化至右半屏"
 msgstr "Max to right half screen"
 
-#: config.c:539
+#: config.c:541
 msgid "完全最大化"
 msgstr "fully max"
 
 #. 構件類型             構件功能提示文字
-#: config.c:551
+#: config.c:553
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: config.c:552
+#: config.c:554
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: config.c:553
+#: config.c:555
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: config.c:554
+#: config.c:556
 msgid "切換到懸浮層"
 msgstr "To float layer"
 
-#: config.c:555
+#: config.c:557
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: config.c:556
+#: config.c:558
 msgid "最大化/還原窗口"
 msgstr "Max/Restore window"
 
-#: config.c:557
+#: config.c:559
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: config.c:558
+#: config.c:560
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: config.c:559
+#: config.c:561
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: config.c:560
+#: config.c:562
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: config.c:561
+#: config.c:563
 msgid "切換到預覽模式"
 msgstr "To preview mode"
 
-#: config.c:562
+#: config.c:564
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: config.c:563
+#: config.c:565
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: config.c:564
+#: config.c:566
 msgid "顯示桌面"
 msgstr "Show desktop"
 
-#: config.c:565
+#: config.c:567
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: config.c:566
+#: config.c:568
 msgid "打開窗口菜單"
 msgstr "Open window menu"
 
-#: config.c:595
+#: config.c:597
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
@@ -288,9 +288,8 @@ msgid "以下是%lx窗口的位置信息：\n"
 msgstr "The following are place info of the %lx window:\n"
 
 #: debug.c:109
-#, fuzzy, c-format
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
-msgstr "The following is a list of client windows and layer reference windows arranged from bottom to top:\n"
+msgstr "The following is a list of client windows arranged from bottom to top:\n"
 
 #: file.c:121
 msgid "未能成功地爲命令創建新會話"
@@ -356,15 +355,3 @@ msgstr "Error: The corresponding modifier key for the specified key symbol could
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "Error: The key symbol specified does not have a corresponding key code!\n"
-
-#~ msgid "錯誤：不能加載必要的字體。"
-#~ msgstr "Error: Unable to load necessary fonts."
-
-#~ msgid "切換到全屏模式"
-#~ msgstr "To full screen mode"
-
-#~ msgid "切換到懸浮層並最大化窗口"
-#~ msgstr "Float and max"
-
-#~ msgid "暫懸浮區開窗"
-#~ msgstr "Floating next"

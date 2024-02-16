@@ -189,7 +189,9 @@ static const Rule rule[] =
 static const char *font_names[]=
 {
     "monospace",
-    "Symbola",
+    "Noto Color Emoji",
+//    "Noto Sans Symbols 2",
+//    "Symbola",
     NULL // 哨兵值，表示結束，切勿刪改之
 };
 
@@ -482,45 +484,45 @@ static void config_taskbar_button_text(void)
 static void config_act_center_item_text(void)
 {
     /*                       操作中心按鈕類型             按鈕文字 */
-    SET_ACT_CENTER_ITEM_TEXT(HELP_BUTTON,              _("幫助"));
-    SET_ACT_CENTER_ITEM_TEXT(FILE_BUTTON,              _("文件"));
-    SET_ACT_CENTER_ITEM_TEXT(TERM_BUTTON,              _("終端模擬器"));
-    SET_ACT_CENTER_ITEM_TEXT(BROWSER_BUTTON,           _("網絡瀏覽器"));
+    SET_ACT_CENTER_ITEM_TEXT(HELP_BUTTON,              _("🛟 幫助"));
+    SET_ACT_CENTER_ITEM_TEXT(FILE_BUTTON,              _("📁 文件"));
+    SET_ACT_CENTER_ITEM_TEXT(TERM_BUTTON,              _("🖥️ 終端模擬器"));
+    SET_ACT_CENTER_ITEM_TEXT(BROWSER_BUTTON,           _("🌐 網絡瀏覽器"));
 
-    SET_ACT_CENTER_ITEM_TEXT(GAME_BUTTON,              _("遊戲"));
-    SET_ACT_CENTER_ITEM_TEXT(PLAY_START_BUTTON,        _("播放影音"));
-    SET_ACT_CENTER_ITEM_TEXT(PLAY_TOGGLE_BUTTON,       _("切換播放狀態"));
-    SET_ACT_CENTER_ITEM_TEXT(PLAY_QUIT_BUTTON,         _("關閉影音"));
+    SET_ACT_CENTER_ITEM_TEXT(GAME_BUTTON,              _("🎮️ 遊戲"));
+    SET_ACT_CENTER_ITEM_TEXT(PLAY_START_BUTTON,        _("🎬 播放影音"));
+    SET_ACT_CENTER_ITEM_TEXT(PLAY_TOGGLE_BUTTON,       _("⏯️ 切換播放狀態"));
+    SET_ACT_CENTER_ITEM_TEXT(PLAY_QUIT_BUTTON,         _("⏹️ 關閉影音"));
 
-    SET_ACT_CENTER_ITEM_TEXT(VOLUME_DOWN_BUTTON,       _("减小音量"));
-    SET_ACT_CENTER_ITEM_TEXT(VOLUME_UP_BUTTON,         _("增大音量"));
-    SET_ACT_CENTER_ITEM_TEXT(VOLUME_MAX_BUTTON,        _("最大音量"));
-    SET_ACT_CENTER_ITEM_TEXT(VOLUME_TOGGLE_BUTTON,     _("靜音切換"));
+    SET_ACT_CENTER_ITEM_TEXT(VOLUME_DOWN_BUTTON,       _("🔈️ 减小音量"));
+    SET_ACT_CENTER_ITEM_TEXT(VOLUME_UP_BUTTON,         _("🔉 增大音量"));
+    SET_ACT_CENTER_ITEM_TEXT(VOLUME_MAX_BUTTON,        _("🔊 最大音量"));
+    SET_ACT_CENTER_ITEM_TEXT(VOLUME_TOGGLE_BUTTON,     _("🔇 靜音切換"));
 
-    SET_ACT_CENTER_ITEM_TEXT(MAIN_NEW_BUTTON,          _("暫主區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(SEC_NEW_BUTTON,           _("暫次區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(FIX_NEW_BUTTON,           _("暫固定區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(FLOAT_NEW_BUTTON,         _("暫懸浮層開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(MAIN_NEW_BUTTON,          _("▼ 暫主區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(SEC_NEW_BUTTON,           _("◁ 暫次區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(FIX_NEW_BUTTON,           _("▷ 暫固定區開窗"));
+    SET_ACT_CENTER_ITEM_TEXT(FLOAT_NEW_BUTTON,         _("△ 暫懸浮層開窗"));
 
-    SET_ACT_CENTER_ITEM_TEXT(N_MAIN_UP_BUTTON,         _("增大主區容量"));
-    SET_ACT_CENTER_ITEM_TEXT(N_MAIN_DOWN_BUTTON,       _("减小主區容量"));
-    SET_ACT_CENTER_ITEM_TEXT(TITLEBAR_TOGGLE_BUTTON,   _("開關當前窗口標題欄"));
-    SET_ACT_CENTER_ITEM_TEXT(CLI_BORDER_TOGGLE_BUTTON, _("開關當前窗口邊框"));
+    SET_ACT_CENTER_ITEM_TEXT(N_MAIN_UP_BUTTON,         _("⬆️ 增大主區容量"));
+    SET_ACT_CENTER_ITEM_TEXT(N_MAIN_DOWN_BUTTON,       _("⬇️ 减小主區容量"));
+    SET_ACT_CENTER_ITEM_TEXT(TITLEBAR_TOGGLE_BUTTON,   _("🗔 開關當前窗口標題欄"));
+    SET_ACT_CENTER_ITEM_TEXT(CLI_BORDER_TOGGLE_BUTTON, _("⬚ 開關當前窗口邊框"));
 
-    SET_ACT_CENTER_ITEM_TEXT(CLOSE_ALL_CLIENTS_BUTTON, _("關閉桌面所有窗口"));
-    SET_ACT_CENTER_ITEM_TEXT(PRINT_WIN_BUTTON,         _("當前窗口截圖"));
-    SET_ACT_CENTER_ITEM_TEXT(PRINT_SCREEN_BUTTON,      _("全屏截圖"));
-    SET_ACT_CENTER_ITEM_TEXT(FOCUS_MODE_BUTTON,        _("切換聚焦模式"));
+    SET_ACT_CENTER_ITEM_TEXT(CLOSE_ALL_CLIENTS_BUTTON, _("❎ 關閉桌面所有窗口"));
+    SET_ACT_CENTER_ITEM_TEXT(PRINT_WIN_BUTTON,         _("✀ 當前窗口截圖"));
+    SET_ACT_CENTER_ITEM_TEXT(PRINT_SCREEN_BUTTON,      _("🖵 全屏截圖"));
+    SET_ACT_CENTER_ITEM_TEXT(FOCUS_MODE_BUTTON,        _("👁️ 切換聚焦模式"));
 
-    SET_ACT_CENTER_ITEM_TEXT(COMPOSITOR_BUTTON,        _("開關合成器"));
-    SET_ACT_CENTER_ITEM_TEXT(WALLPAPER_BUTTON,         _("切換壁紙"));
-    SET_ACT_CENTER_ITEM_TEXT(COLOR_THEME_BUTTON,       _("切換顏色主題"));
-    SET_ACT_CENTER_ITEM_TEXT(QUIT_WM_BUTTON,           _("退出gwm"));
+    SET_ACT_CENTER_ITEM_TEXT(COMPOSITOR_BUTTON,        _("🪡 開關合成器"));
+    SET_ACT_CENTER_ITEM_TEXT(WALLPAPER_BUTTON,         _("🌌 切換壁紙"));
+    SET_ACT_CENTER_ITEM_TEXT(COLOR_THEME_BUTTON,       _("🎨 切換顏色主題"));
+    SET_ACT_CENTER_ITEM_TEXT(QUIT_WM_BUTTON,           _("❌ 退出gwm"));
 
-    SET_ACT_CENTER_ITEM_TEXT(LOGOUT_BUTTON,            _("注銷"));
-    SET_ACT_CENTER_ITEM_TEXT(REBOOT_BUTTON,            _("重啓"));
-    SET_ACT_CENTER_ITEM_TEXT(POWEROFF_BUTTON,          _("關機"));
-    SET_ACT_CENTER_ITEM_TEXT(RUN_BUTTON,               _("運行"));
+    SET_ACT_CENTER_ITEM_TEXT(LOGOUT_BUTTON,            _("🚶 注銷"));
+    SET_ACT_CENTER_ITEM_TEXT(REBOOT_BUTTON,            _("↻ 重啓"));
+    SET_ACT_CENTER_ITEM_TEXT(POWEROFF_BUTTON,          _("⏻ 關機"));
+    SET_ACT_CENTER_ITEM_TEXT(RUN_BUTTON,               _("🔍️ 運行"));
 }
 
 /* 功能：設置客戶窗口菜單的文字。

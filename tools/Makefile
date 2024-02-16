@@ -26,6 +26,7 @@ $(exec) : $(objs)
 install :
 	install -D -m 644 gwm.desktop $(prefix)/share/xsessions/gwm.desktop
 	install -D -m 755 startgwm $(prefix)/bin/startgwm
+	install -D -m 755 checkfont $(prefix)/bin/checkfont
 install-strip :
 	install -d $(prefix)/bin ;
 	install -m 755 -s $(exec) $(prefix)/bin

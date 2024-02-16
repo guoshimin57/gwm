@@ -11,26 +11,75 @@
 # <http://www.gnu.org/licenses/>。
 # *************************************************************************
 
-[ -f ~/.Xresources ] && xrdb -merge ~/.Xresources &
+get_network()
+{
+    interface=$(ip route get 1.1.1.1 2> /dev/null | head -n1 | cut -d' ' -f5)
+    if [ -z "$interface" ]
+    then
+        echo 🚫
+    elif echo $interface | grep wlan > /dev/null
+    then
+        echo 🛜
+    else
+        echo 🖧 
+    fi
+}
 
-while true
-do
-    VOL=$(amixer get Master | tail -1 | sed 's/.*\[\([0-9]*%\)\].*/🕪\1/')
-    LOCALTIME=$(date "+%m/%d %a %p%H:%M")
+get_vol()
+{
+    vol=$(amixer get Master | tail -1 | sed 's/.*\[\([0-9]*\)%\].*/\1/')
+    if amixer get Master | grep off > /dev/null
+    then
+        echo 🔇
+    elif [ $vol -lt 25 ]
+    then
+        echo "🔈$vol%"
+    elif [ $vol -lt 75 ]
+    then
+        echo "🔉$vol%"
+    else
+        echo "🔊$vol%"
+    fi
+}
+
+get_time()
+{
+    date "+%m/%d %a %p%H:%M"
+}
+
+get_power()
+{
     if acpi -a 2> /dev/null | grep line
     then
         if acpi -a 2> /dev/null | grep on-line
         then
-            BAT=" 🔌$(acpi -b 2> /dev/null | awk '{ print $4 "+" $5 }' | tr -d ',')"
+            power="🔌$(acpi -b 2> /dev/null | awk '{ print $4 "+" $5 }' | tr -d ',')"
         else
-            BAT=" 🔋$(acpi -b 2> /dev/null | awk '{ print $4 "-" $5 }' | tr -d ',')"
+            power="🔋$(acpi -b 2> /dev/null | awk '{ print $4 "-" $5 }' | tr -d ',')"
         fi
+        echo $power
     fi
-    xsetroot -name "$BAT $VOL $LOCALTIME"
-    sleep 10s
-done &
+}
 
-while true
-do
-    gwm
-done
+get_root_name()
+{
+    echo "$(get_power) $(get_network) $(get_vol) $(get_time)"
+}
+
+main()
+{
+    [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources &
+
+    while true
+    do
+        xsetroot -name "$(get_root_name)"
+        sleep 10s
+    done &
+
+    while true
+    do
+        gwm
+    done
+}
+
+main
