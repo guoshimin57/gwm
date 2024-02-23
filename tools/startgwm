@@ -11,6 +11,8 @@
 # <http://www.gnu.org/licenses/>。
 # *************************************************************************
 
+#set -x
+
 get_network()
 {
     interface=$(ip route get 1.1.1.1 2> /dev/null | head -n1 | cut -d' ' -f5)
@@ -61,9 +63,25 @@ get_power()
     fi
 }
 
+get_weather()
+{
+    # 中國天氣網(www.weather.com.cn)中城市id，在該網站中輸入城市名可在url看到id，
+    weather_city_id=101280801
+
+    if [ -n "$weather_city_id" ]
+    then
+        weather_url="http://forecast.weather.com.cn/town/weather1dn/$weather_city_id.shtml"
+        rm -f /tmp/weather
+        wget "$weather_url" -O /tmp/weather > /dev/null 2>&1 \
+            && grep time.*minTemp /tmp/weather \
+            | sed 's/.*temp":\([0-9\.]*\).*maxTemp":\([0-9\.]*\).*minTemp":\([0-9\.]*\).*.*weather":"\(.*\)".*/\1°C[\2-\3]\4/g'
+    fi
+}
+
 get_root_name()
 {
-    echo "$(get_power) $(get_network) $(get_vol) $(get_time)"
+    echo "$(get_power) $(get_network) $(get_vol) $(get_time)" \
+        | tr -s ' ' | sed 's/^ //' | sed 's/ $//'
 }
 
 main()
@@ -73,7 +91,7 @@ main()
     while true
     do
         xsetroot -name "$(get_root_name)"
-        sleep 10s
+        sleep "10s" 
     done &
 
     while true

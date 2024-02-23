@@ -30,7 +30,7 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
-    to=win_to_client(wm, subw);
+    to=win_to_client(wm->clients, subw);
     if(ev.xbutton.x == 0)
         move_client(wm, from, NULL, TILE_LAYER_SECOND);
     else if(ev.xbutton.x == (long)xinfo.screen_width-1)
@@ -61,7 +61,7 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
-    if((to=win_to_client(wm, ev.xbutton.subwindow)))
+    if((to=win_to_client(wm->clients, ev.xbutton.subwindow)))
         swap_clients(wm, from, to);
 }
 
@@ -94,9 +94,8 @@ void move_client(WM *wm, Client *from, Client *to, Place_type type)
     {
         set_place_type_for_subgroup(from->subgroup_leader,
             to ? to->place_type : type);
-        fix_place_type_for_tile(wm);
-        raise_client(wm, from);
         request_layout_update();
+        raise_client(wm, from);
     }
 }
 
@@ -111,7 +110,7 @@ bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
         head = cmp_client_store_order(wm, from, to) < 0 ? to : to->prev;
     else
     {
-        head=get_head_client(wm, type);
+        head=get_head_client(wm->clients, type);
         if(from->place_type==TILE_LAYER_MAIN && type==TILE_LAYER_SECOND)
             head=head->next;
     }
@@ -133,7 +132,7 @@ static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
 static bool is_valid_to_normal_layer_sec(WM *wm, Client *c)
 {
     return c->place_type!=TILE_LAYER_MAIN
-        || get_clients_n(wm, TILE_LAYER_SECOND, false, false, false);
+        || get_clients_n(wm->clients, TILE_LAYER_SECOND, false, false, false);
 }
 
 static int cmp_client_store_order(WM *wm, Client *c1, Client *c2)

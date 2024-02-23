@@ -16,7 +16,7 @@ static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize);
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
 static int get_width_inc(const XSizeHints *h);
 static int get_height_inc(const XSizeHints *h);
-static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act);
+static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act);
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
 static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move);
 static bool is_prefer_move(Client *c, Delta_rect *d);
@@ -47,7 +47,7 @@ void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
         move_client(wm, c, NULL, type);
     if(get_move_resize_delta_rect(c, &d, is_move))
     {
-        move_resize_client(wm, c, &d);
+        move_resize_client(c, &d);
         update_hint_win_for_move_resize(c);
         while(1)
         {
@@ -64,6 +64,12 @@ void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
         }
     }
     update_win_state_for_move_resize(wm, c);
+}
+
+Place_type get_dest_place_type_for_move(WM *wm, Client *c)
+{
+    return DESKTOP(wm)->cur_layout==TILE && is_tile_client(c) ?
+        FLOAT_LAYER : c->place_type;
 }
 
 static Delta_rect get_key_delta_rect(Client *c, Direction dir)
@@ -89,11 +95,11 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
     return dr[dir];
 }
 
-void move_resize_client(WM *wm, Client *c, const Delta_rect *d)
+void move_resize_client(Client *c, const Delta_rect *d)
 {
     if(d)
         c->x+=d->dx, c->y+=d->dy, c->w+=d->dw, c->h+=d->dh;
-    Rect fr=get_frame_rect(c), tr=get_title_area_rect(wm, c);
+    Rect fr=get_frame_rect(c), tr=get_title_area_rect(c);
     if(c->titlebar_h)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
@@ -133,7 +139,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
                     move_client(wm, c, NULL, type), first=false;
                 /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
                 m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
-                do_valid_pointer_move_resize(wm, c, &m, act);
+                do_valid_pointer_move_resize(c, &m, act);
             }
             else
                 wm->event_handlers[ev.type](wm, &ev);
@@ -144,7 +150,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
     update_win_state_for_move_resize(wm, c);
 }
 
-static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointer_act act)
+static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act)
 {
     int dx=m->nx-m->ox, dy=m->ny-m->oy;
     XSizeHints hint=get_size_hint(c->win);
@@ -155,7 +161,7 @@ static void do_valid_pointer_move_resize(WM *wm, Client *c, Move_info *m, Pointe
     if(!get_move_resize_delta_rect(c, &d, act==MOVE))
         return;
 
-    move_resize_client(wm, c, &d);
+    move_resize_client(c, &d);
     update_hint_win_for_move_resize(c);
     if(act != MOVE)
     {

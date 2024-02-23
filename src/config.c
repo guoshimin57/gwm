@@ -177,7 +177,7 @@ static const Rule rule[] =
     {"QQ",                 "qq",                 "QQ",         "QQ",       TILE_LAYER_FIXED, false,         false,        0},
     {"explorer.exe",       "explorer.exe",       "*",          NULL,       FLOAT_LAYER,      false,         false,        0},
     {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       FLOAT_LAYER,      true,          true,         0},
-    {"sketchup.exe",       "sketchup.exe",       "SketchUp",   NULL,       ABOVE_LAYER,      false,         false,        0},
+//    {"sketchup.exe",       "sketchup.exe",       "SketchUp",   NULL,       ABOVE_LAYER,      false,         false,        0},
     {"firefox",            "Toolkit",            "*",          NULL,       TILE_LAYER_MAIN,  true,          true,         0},
     {"Google-chrome",      "google-chrome",      "*",          "chrome",   ANY_PLACE,        true,          true,         0},
     {"Org.gnome.Nautilus", "org.gnome.Nautilus", "*",          "Nautilus", ANY_PLACE,        true,          true,         0},
@@ -190,8 +190,8 @@ static const char *font_names[]=
 {
     "monospace",
     "Noto Color Emoji",
-//    "Noto Sans Symbols 2",
-//    "Symbola",
+    "Noto Sans Symbols 2",
+    "Symbola",
     NULL // 哨兵值，表示結束，切勿刪改之
 };
 

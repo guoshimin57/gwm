@@ -48,7 +48,7 @@ void focus_desktop_n(WM *wm, unsigned int n)
 
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        if(is_on_cur_desktop(wm, c))
+        if(is_on_cur_desktop(c))
         {
             if(c->icon)
                 XMapWindow(xinfo.display, c->icon->win);
@@ -66,9 +66,9 @@ void focus_desktop_n(WM *wm, unsigned int n)
 
     focus_client(wm, wm->cur_desktop, CUR_FOC_CLI(wm));
     request_layout_update();
-    update_icon_area(wm);
+    update_icon_area(wm->clients);
     update_taskbar_buttons_bg();
-    set_all_net_client_list(wm);
+    set_all_net_client_list(wm->clients);
 }
 
 void move_to_desktop_n(WM *wm, Client *c, unsigned int n)
@@ -126,7 +126,7 @@ void attach_to_desktop_n(WM *wm, Client *c, unsigned int n)
         return;
 
     ready_to_desktop_n(wm, c, n, ATTACH_TO_N);
-    set_all_net_client_list(wm);
+    set_all_net_client_list(wm->clients);
 }
 
 void attach_to_desktop_all(WM *wm, Client *c)
@@ -137,7 +137,7 @@ void attach_to_desktop_all(WM *wm, Client *c)
     for(unsigned int i=1; i<=DESKTOP_N; i++)
         if(i != wm->cur_desktop)
             ready_to_desktop_n(wm, c, i, ATTACH_TO_ALL);
-    set_all_net_client_list(wm);
+    set_all_net_client_list(wm->clients);
 }
 
 void all_attach_to_desktop_n(WM *wm, unsigned int n)
@@ -151,5 +151,5 @@ void all_attach_to_desktop_n(WM *wm, unsigned int n)
         focus_desktop_n(wm, wm->cur_desktop);
     else
         focus_client(wm, n, wm->desktop[n-1]->cur_focus_client);
-    set_all_net_client_list(wm);
+    set_all_net_client_list(wm->clients);
 }

@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.8.1\n"
+"Project-Id-Version: gwm 2.8.2\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-02-16 17:44+0800\n"
+"POT-Creation-Date: 2024-02-23 19:31+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: client.c:832
+#: client.c:801
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
@@ -288,6 +288,7 @@ msgid "以下是%lx窗口的位置信息：\n"
 msgstr "The following are place info of the %lx window:\n"
 
 #: debug.c:109
+#, c-format
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "The following is a list of client windows arranged from bottom to top:\n"
 

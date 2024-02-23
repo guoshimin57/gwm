@@ -13,7 +13,8 @@
 #define MVRESIZE_H 
 
 void move_resize(WM *wm, XEvent *e, Func_arg arg);
-void move_resize_client(WM *wm, Client *c, const Delta_rect *d);
+void move_resize_client(Client *c, const Delta_rect *d);
+Place_type get_dest_place_type_for_move(WM *wm, Client *c);
 void update_win_state_for_move_resize(WM *wm, Client *c);
 Pointer_act get_resize_act(Client *c, const Move_info *m);
 void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg);

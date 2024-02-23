@@ -122,7 +122,7 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(wm, c))
+        if(is_on_cur_desktop(c))
             close_win(c->win);
 }
 
@@ -131,7 +131,7 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 void next_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    focus_client(wm, wm->cur_desktop, get_prev_client(wm, CUR_FOC_CLI(wm)));
+    focus_client(wm, wm->cur_desktop, get_prev_client(wm->clients, CUR_FOC_CLI(wm)));
 }
 
 /* 取得存儲次序上在當前客戶（或其亞組長）之後的客戶。因使用頭插法存儲客戶，
@@ -139,7 +139,7 @@ void next_client(WM *wm, XEvent *e, Func_arg arg)
 void prev_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    focus_client(wm, wm->cur_desktop, get_next_client(wm, CUR_FOC_CLI(wm)));
+    focus_client(wm, wm->cur_desktop, get_next_client(wm->clients, CUR_FOC_CLI(wm)));
 }
 
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
@@ -187,7 +187,7 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
     c->titlebar_h = c->titlebar_h ? 0 : get_font_height_by_pad();
     if(c->titlebar_h)
     {
-        create_titlebar(wm, c);
+        create_titlebar(c);
         XMapSubwindows(xinfo.display, c->frame);
     }
     else

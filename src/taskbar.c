@@ -159,7 +159,7 @@ void update_icon_status_area(void)
 
 void update_client_icon_fg(WM *wm, Window win)
 {
-    Client *c=win_to_iconic_state_client(wm, win);
+    Client *c=win_to_iconic_state_client(wm->clients, win);
     if(!c)
         return;
 

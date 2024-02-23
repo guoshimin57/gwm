@@ -53,7 +53,7 @@ static void maximize_client(WM *wm, Client *c, Max_way max_way)
         save_place_info_of_client(c);
     set_max_rect(wm, c, max_way);
     move_client(wm, c, NULL, get_dest_place_type_for_move(wm, c));
-    move_resize_client(wm, c, NULL);
+    move_resize_client(c, NULL);
     switch(max_way)
     {
         case VERT_MAX:   c->win_state.vmax=1; break;
@@ -153,7 +153,7 @@ void iconify_client(WM *wm, Client *c)
         create_icon(p);
         p->icon->title_text=get_icon_title_text(p->win, p->title_text);
         update_win_bg(p->icon->win, get_widget_color(TASKBAR_COLOR), None);
-        update_icon_area(wm);
+        update_icon_area(wm->clients);
         XMapWindow(xinfo.display, p->icon->win);
         XUnmapWindow(xinfo.display, p->frame);
         if(p == DESKTOP(wm)->cur_focus_client)
@@ -170,7 +170,7 @@ void iconify_client(WM *wm, Client *c)
 static Client *get_icon_client_head(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(wm, c) && c->icon)
+        if(is_on_cur_desktop(c) && c->icon)
             return c->prev;
     return wm->clients->prev;
 }
@@ -197,7 +197,7 @@ void deiconify_client(WM *wm, Client *c)
         {
             del_icon(wm, p);
             XMapWindow(xinfo.display, p->frame);
-            update_icon_area(wm);
+            update_icon_area(wm->clients);
             focus_client(wm, wm->cur_desktop, p);
             p->win_state.hidden=0;
             update_net_wm_state(p->win, p->win_state);
@@ -213,21 +213,21 @@ static void del_icon(WM *wm, Client *c)
         XDestroyWindow(xinfo.display, c->icon->win);
         vfree(c->icon->title_text, c->icon, NULL);
         c->icon=NULL;
-        update_icon_area(wm);
+        update_icon_area(wm->clients);
     }
 }
 
 void iconify_all_clients(WM *wm)
 {
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(wm, c) && !c->icon)
+        if(is_on_cur_desktop(c) && !c->icon)
             iconify_client(wm, c);
 }
 
 void deiconify_all_clients(WM *wm)
 {
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(wm, c) && c->icon)
+        if(is_on_cur_desktop(c) && c->icon)
             deiconify_client(wm, c);
 }
 

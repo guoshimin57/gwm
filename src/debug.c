@@ -22,7 +22,7 @@ void print_client_and_top_win(WM *wm)
         printf(_("以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"));
         for(unsigned int i=0; i<n; i++)
         {
-            if((c=win_to_client(wm, child[i])))
+            if((c=win_to_client(wm->clients, child[i])))
                 printf("client frame: %lx\n", c->frame);
             else
                 for(unsigned int j=0; j<TOP_WIN_TYPE_N; j++)

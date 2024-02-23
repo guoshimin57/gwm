@@ -90,7 +90,7 @@ static void ignore_event(WM *wm, XEvent *e)
 static void handle_button_press(WM *wm, XEvent *e)
 {
     Window win=e->xbutton.window;
-    Client *c=win_to_client(wm, win),
+    Client *c=win_to_client(wm->clients, win),
            *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
     Widget_type type=get_widget_type(win);
 
@@ -131,9 +131,9 @@ static bool is_func_click(Widget_type type, const Buttonbind *b, XEvent *e)
 
 static void focus_clicked_client(WM *wm, Window win)
 {
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
     if(c == NULL)
-        c=win_to_iconic_state_client(wm, win);
+        c=win_to_iconic_state_client(wm->clients, win);
     if(c && c!=CUR_FOC_CLI(wm))
         focus_client(wm, wm->cur_desktop, c);
 }
@@ -142,7 +142,7 @@ static void handle_client_message(WM *wm, XEvent *e)
 {
     Window win=e->xclient.window;
     Atom type=e->xclient.message_type;
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
 
     if(is_spec_ewmh_atom(type, NET_CURRENT_DESKTOP))
         focus_desktop_n(wm, e->xclient.data.l[0]+1);
@@ -279,24 +279,24 @@ static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
 
 static void activate_win(WM *wm, Window win, unsigned long src)
 {
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
     if(!c)
         return;
 
     if(src == 2) // 源自分頁器
     {
-        if(is_on_cur_desktop(wm, c))
+        if(is_on_cur_desktop(c))
             focus_client(wm, wm->cur_desktop, c);
         else
-            set_urgency(wm, c, true);
+            set_urgency(c, true);
     }
     else // 源自應用程序
-        set_attention(wm, c, true);
+        set_attention(c, true);
 }
 
 static void change_desktop(WM *wm, Window win, unsigned int desktop)
 { 
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
 
     if(!c || c==wm->clients)
         return;
@@ -310,7 +310,7 @@ static void change_desktop(WM *wm, Window win, unsigned int desktop)
 static void handle_config_request(WM *wm, XEvent *e)
 {
     XConfigureRequestEvent cr=e->xconfigurerequest;
-    Client *c=win_to_client(wm, cr.window);
+    Client *c=win_to_client(wm->clients, cr.window);
 
     if(c)
         config_managed_client(c);
@@ -344,14 +344,14 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     int x=e->xcrossing.x_root, y=e->xcrossing.y_root;
     Window win=e->xcrossing.window;
     Widget_type type=get_widget_type(win);
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
     Pointer_act act=NO_OP;
     Move_info m={x, y, 0, 0};
 
     if(cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, wm->cur_desktop, c);
     if( is_layout_adjust_area(wm, win, x)
-        && get_clients_n(wm, TILE_LAYER_MAIN, false, false, false))
+        && get_clients_n(wm->clients, TILE_LAYER_MAIN, false, false, false))
         act=ADJUST_LAYOUT_RATIO;
     else if(IS_BUTTON(type))
         update_win_bg(win, get_widget_color(type==CLOSE_BUTTON ?
@@ -410,8 +410,8 @@ static const char *get_tooltip(WM *wm, Window win, Widget_type type)
 {
     switch(type)
     {
-        case CLIENT_ICON: return win_to_iconic_state_client(wm, win)->icon->title_text;
-        case TITLE_AREA: return win_to_client(wm, win)->title_text;
+        case CLIENT_ICON: return win_to_iconic_state_client(wm->clients, win)->icon->title_text;
+        case TITLE_AREA: return win_to_client(wm->clients, win)->title_text;
         default: return cfg->tooltip[type];
     }
 }
@@ -423,7 +423,7 @@ static void handle_expose(WM *wm, XEvent *e)
 
     Window win=e->xexpose.window;
     Widget_type type=get_widget_type(win);
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
 
     if(type == CLIENT_ICON)
         update_client_icon_fg(wm, win);
@@ -450,7 +450,7 @@ static void update_title_area_fg(WM *wm, Client *c)
     if(c->titlebar_h <= 0)
         return;
 
-    Rect r=get_title_area_rect(wm, c);
+    Rect r=get_title_area_rect(c);
     Text_color id = (c==CUR_FOC_CLI(wm)) ?
         CURRENT_TITLEBAR_TEXT_COLOR : NORMAL_TITLEBAR_TEXT_COLOR;
     Str_fmt f={0, 0, r.w, r.h, CENTER, true, false, 0,
@@ -473,7 +473,7 @@ static void update_title_button_fg(WM *wm, Client *c, size_t index)
 
 static void handle_focus_in(WM *wm, XEvent *e)
 {
-    Client *c=win_to_client(wm, e->xfocus.window);
+    Client *c=win_to_client(wm->clients, e->xfocus.window);
     if(c && c->win_state.fullscreen && c->place_type!=FULLSCREEN_LAYER)
     {
         c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
@@ -483,7 +483,7 @@ static void handle_focus_in(WM *wm, XEvent *e)
 
 static void handle_focus_out(WM *wm, XEvent *e)
 {
-    Client *c=win_to_client(wm, e->xfocus.window);
+    Client *c=win_to_client(wm->clients, e->xfocus.window);
     if(c && c->win_state.fullscreen && c->place_type==FULLSCREEN_LAYER)
         move_client(wm, c, NULL, c->old_place_type);
 }
@@ -520,7 +520,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 {
     Window win=e->xcrossing.window;
     Widget_type type=get_widget_type(win);
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
 
     if(IS_WIDGET_CLASS(type, TASKBAR_BUTTON))
         update_taskbar_button_bg(type);
@@ -542,7 +542,7 @@ static void handle_map_request(WM *wm, XEvent *e)
 {
     Window win=e->xmaprequest.window;
 
-    if(is_wm_win(wm, win, false))
+    if(is_wm_win(wm->clients, win, false))
     {
         add_client(wm, win);
         DESKTOP(wm)->default_place_type=TILE_LAYER_MAIN;
@@ -567,7 +567,7 @@ static void handle_map_request(WM *wm, XEvent *e)
 static void handle_unmap_notify(WM *wm, XEvent *e)
 {
     XUnmapEvent *ue=&e->xunmap;
-    Client *c=win_to_client(wm, ue->window);
+    Client *c=win_to_client(wm->clients, ue->window);
 
     if( c && ue->window==c->win
         && (ue->send_event|| ue->event==c->frame || ue->event==c->win))
@@ -577,7 +577,7 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
 static void handle_property_notify(WM *wm, XEvent *e)
 {
     Window win=e->xproperty.window;
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
     Atom atom=e->xproperty.atom;
 
     if(c && cfg->set_frame_prop)
@@ -604,13 +604,13 @@ static void handle_property_notify(WM *wm, XEvent *e)
 
 static void handle_wm_hints_notify(WM *wm, Window win)
 {
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
     if(!c)
         return;
 
     XWMHints *oh=c->wm_hint, *nh=XGetWMHints(xinfo.display, win);
     if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
-        set_attention(wm, c, true);
+        set_attention(c, true);
     update_taskbar_buttons_bg();
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
@@ -619,20 +619,20 @@ static void handle_wm_hints_notify(WM *wm, Window win)
 static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
 {
     char *s=NULL;
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
 
     if(!c || !c->icon || !(s=get_text_prop(c->win, atom)))
         return;
 
     free(c->icon->title_text);
     c->icon->title_text=s;
-    update_icon_area(wm);
+    update_icon_area(wm->clients);
 }
 
 static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
 {
     char *s=get_text_prop(win, atom);
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
 
     if((win!=xinfo.root_win && !c) || !s)
         return;
@@ -653,9 +653,9 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
 
 static void handle_wm_transient_for_notify(WM *wm, Window win)
 {
-    Client *c=win_to_client(wm, win);
+    Client *c=win_to_client(wm->clients, win);
     if(c)
-        c->owner=win_to_client(wm, get_transient_for(win));
+        c->owner=win_to_client(wm->clients, get_transient_for(win));
 }
 
 static void handle_selection_notify(WM *wm, XEvent *e)
