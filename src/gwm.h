@@ -145,7 +145,6 @@ typedef struct rule_tag Rule;
 struct wm_tag // 窗口管理器相關信息
 {
     unsigned int cur_desktop; // 當前虛擬桌面編號，從1開始編號
-    long map_count; // 所有客戶窗口的累計映射次數
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
     Rect workarea; // 工作區坐標和尺寸
     Window wm_check_win; // WM檢測窗口

@@ -32,6 +32,8 @@ static Client *get_next_map_client(Client *list, unsigned int desktop_n, Client 
 static bool have_same_class_icon_client(Client *list, Client *c);
 static int cmp_map_order(const void *pclient1, const void *pclient2);
 
+static long map_count=0; // 所有客戶窗口的累計映射次數
+
 void add_client(WM *wm, Window win)
 {
     Client *c=new_client(wm, win);
@@ -70,7 +72,7 @@ static Client *new_client(WM *wm, Window win)
     Client *c=malloc_s(sizeof(Client));
     memset(c, 0, sizeof(Client));
     c->win=win;
-    c->map_n=++wm->map_count;
+    c->map_n=++map_count;
     c->title_text=get_title_text(win, "");
     c->wm_hint=XGetWMHints(xinfo.display, win);
     c->win_type=get_net_wm_win_type(win);
@@ -630,10 +632,10 @@ bool is_tile_client(Client *c)
         && is_normal_layer(c->place_type);
 }
 
-/* 獲取按從早到遲的映射順序排列的客戶窗口列表 */
+/* 獲取當前桌面按從早到遲的映射順序排列的客戶窗口列表 */
 Window *get_client_win_list(Client *list, int *n)
 {
-    int i=0, count=get_clients_n(list, ANY_PLACE, true, true, true);
+    int i=0, count=get_clients_n(list, ANY_PLACE, true, true, false);
 
     if(count == 0)
         return NULL;
@@ -645,7 +647,8 @@ Window *get_client_win_list(Client *list, int *n)
     Client **clist=malloc_s(count*sizeof(Client *));
 
     for(Client *c=list->prev; c!=list; c=c->prev)
-        clist[i++]=c;
+        if(is_on_cur_desktop(c))
+            clist[i++]=c;
     qsort(clist, *n, sizeof(Client *), cmp_map_order);
 
     for(i=0; i<count; i++)
@@ -660,10 +663,10 @@ static int cmp_map_order(const void *pclient1, const void *pclient2)
     return (*(Client **)pclient1)->map_n - (*(Client **)pclient2)->map_n;
 }
 
-/* 獲取按從下到上的疊次序排列的客戶窗口列表 */
+/* 獲取當前桌面按從下到上的疊次序排列的客戶窗口列表 */
 Window *get_client_win_list_stacking(Client *list, int *n)
 {
-    int count=get_clients_n(list, ANY_PLACE, true, true, true);
+    int count=get_clients_n(list, ANY_PLACE, true, true, false);
     if(count == 0)
         return NULL;
 
@@ -672,7 +675,8 @@ Window *get_client_win_list_stacking(Client *list, int *n)
 
     Window *wlist=malloc_s(count*sizeof(Window)), *w=wlist;
     for(Client *c=list->prev; c!=list; c=c->prev, w++)
-        *w=c->win;
+        if(is_on_cur_desktop(c))
+            *w=c->win;
 
     return wlist;
 }

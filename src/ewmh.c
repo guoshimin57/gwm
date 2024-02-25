@@ -70,16 +70,23 @@ void set_net_supported(void)
     replace_atom_prop(xinfo.root_win, prop, ewmh_atoms, EWMH_ATOM_N);
 }
 
+/* 設置當前桌面按從早到遲的映射順序排列的客戶窗口列表。需要注意的是，EWMH沒說
+ * 針對當前桌面，而說所有X窗口。這是不太合理的，絕大部分任務欄也是把EWMH所說的
+ * 所有X窗口視爲前桌面的。因此，gwm也這麼做以兼容這些任務欄。詳見：
+ * https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html#idm46485863998912
+ * */
 void set_net_client_list(const Window *wins, int n)
 {
     set_net_client_list_by_order(wins, n, false);
 }
 
+/* 設置當前桌面按從下到上的疊次序排列的客戶窗口列表。僅針對當前桌面的理由同上。 */
 void set_net_client_list_stacking(const Window *wins, int n)
 {
     set_net_client_list_by_order(wins, n, true);
 }
 
+/* 設置當前桌面按指定疊次序排列的客戶窗口列表。僅針對當前桌面的理由同上。 */
 void set_net_client_list_by_order(const Window *wins, int n, bool stack)
 {
     Atom prop=ewmh_atoms[stack ? NET_CLIENT_LIST_STACKING : NET_CLIENT_LIST];
