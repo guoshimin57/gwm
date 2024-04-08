@@ -174,7 +174,7 @@ static WMFont *get_suitable_font(uint32_t codepoint)
         if(XftCharExists(xinfo.display, font->xfont, codepoint))
             return font;
 
-    for(int i=0; font_set->nfont; i++)
+    for(int i=0; i<font_set->nfont; i++)
     {
         if((font=load_font((char *)FcPatternFormat(font_set->fonts[i], fmt))))
         {
@@ -220,21 +220,25 @@ static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *
 void get_string_size(const char *str, int *w, int *h)
 {
     int width=0, max_asc=0, max_desc=0;
-    uint32_t codepoint;
-    XGlyphInfo info;
-    WMFont *font=NULL;
 
-    for(int len=0; *str; str+=len)
+    if(str)
     {
-        len=get_utf8_codepoint(str, &codepoint);
-        if(len && (font=get_suitable_font(codepoint)))
+        uint32_t codepoint;
+        XGlyphInfo info;
+        WMFont *font=NULL;
+
+        for(int len=0; *str; str+=len)
         {
-            XftTextExtentsUtf8(xinfo.display, font->xfont, (const FcChar8 *)str, len, &info);
-            width += info.xOff;
-            if(font->xfont->ascent > max_asc)
-               max_asc=font->xfont->ascent;
-            if(font->xfont->descent > max_desc)
-               max_desc=font->xfont->descent;
+            len=get_utf8_codepoint(str, &codepoint);
+            if(len && (font=get_suitable_font(codepoint)))
+            {
+                XftTextExtentsUtf8(xinfo.display, font->xfont, (const FcChar8 *)str, len, &info);
+                width += info.xOff;
+                if(font->xfont->ascent > max_asc)
+                   max_asc=font->xfont->ascent;
+                if(font->xfont->descent > max_desc)
+                   max_desc=font->xfont->descent;
+            }
         }
     }
     if(w)

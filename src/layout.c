@@ -42,20 +42,20 @@ void update_layout(WM *wm)
         case TILE: set_tile_layout(wm); break;
     }
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(c))
+        if(is_on_cur_desktop(c->desktop_mask))
             move_resize_client(c, NULL);
 }
 
 static void fix_win_rect(WM *wm, Client *c)
 {
-    XSizeHints hint=get_size_hint(c->win);
+    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
     fix_win_size(wm, c, &hint);
     fix_win_pos(wm, c, &hint);
 }
 
 static void fix_win_size(WM *wm, Client *c, const XSizeHints *hint)
 {
-    fix_win_size_by_hint(hint, &c->w, &c->h);
+    fix_win_size_by_hint(hint, &WIDGET_W(c), &WIDGET_H(c));
     fix_win_size_by_workarea(wm, c);
 }
 
@@ -65,10 +65,10 @@ static void fix_win_size_by_workarea(WM *wm, Client *c)
         return;
 
     long ww=wm->workarea.w, wh=wm->workarea.h, bh=c->titlebar_h, bw=c->border_w;
-    if(c->w+2*bw > ww)
-        c->w=ww-2*bw;
-    if(c->h+bh+2*bw > wh)
-        c->h=wh-bh-2*bw;
+    if(WIDGET_W(c)+2*bw > ww)
+        WIDGET_W(c)=ww-2*bw;
+    if(WIDGET_H(c)+bh+2*bw > wh)
+        WIDGET_H(c)=wh-bh-2*bw;
 }
 
 static void fix_win_pos(WM *wm, Client *c, const XSizeHints *hint)
@@ -81,7 +81,7 @@ static bool fix_win_pos_by_hint(Client *c, const XSizeHints *hint)
 {
     if(!c->owner && ((hint->flags & USPosition) || (hint->flags & PPosition)))
     {
-        c->x=hint->x+c->border_w, c->y=hint->y+c->border_w+c->titlebar_h;
+        WIDGET_X(c)=hint->x+c->border_w, WIDGET_Y(c)=hint->y+c->border_w+c->titlebar_h;
         return true;
     }
     return false;
@@ -92,14 +92,14 @@ static void fix_win_pos_by_prop(WM *wm, Client *c)
     if(c->owner)
         set_transient_win_pos(c);
     else if(c->win_type.dialog)
-        c->x=wm->workarea.x+(wm->workarea.w-c->w)/2,
-        c->y=wm->workarea.y+(wm->workarea.h-c->h)/2;
+        WIDGET_X(c)=wm->workarea.x+(wm->workarea.w-WIDGET_W(c))/2,
+        WIDGET_Y(c)=wm->workarea.y+(wm->workarea.h-WIDGET_H(c))/2;
 }
 
 static void set_transient_win_pos(Client *c)
 {
-    c->x=c->owner->x+(c->owner->w-c->w)/2;
-    c->y=c->owner->y+(c->owner->h-c->h)/2;
+    WIDGET_X(c)=WIDGET_X(c->owner)+(WIDGET_W(c->owner)-WIDGET_W(c))/2;
+    WIDGET_Y(c)=WIDGET_Y(c->owner)+(WIDGET_H(c->owner)-WIDGET_H(c))/2;
 }
 
 static void fix_win_pos_by_workarea(WM *wm, Client *c)
@@ -107,16 +107,16 @@ static void fix_win_pos_by_workarea(WM *wm, Client *c)
     if(!c->win_type.normal)
         return;
 
-    int w=c->w, h=c->h, bw=c->border_w, bh=c->titlebar_h, wx=wm->workarea.x,
+    int w=WIDGET_W(c), h=WIDGET_H(c), bw=c->border_w, bh=c->titlebar_h, wx=wm->workarea.x,
          wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
-    if(c->x >= wx+ww-w-bw) // 窗口在工作區右邊出界
-        c->x=wx+ww-w-bw;
-    if(c->x < wx+bw) // 窗口在工作區左邊出界
-        c->x=wx+bw;
-    if(c->y >= wy+wh-bw-h) // 窗口在工作區下邊出界
-        c->y=wy+wh-bw-h;
-    if(c->y < wy+bw+bh) // 窗口在工作區上邊出界
-        c->y=wy+bw+bh;
+    if(WIDGET_X(c) >= wx+ww-w-bw) // 窗口在工作區右邊出界
+        WIDGET_X(c)=wx+ww-w-bw;
+    if(WIDGET_X(c) < wx+bw) // 窗口在工作區左邊出界
+        WIDGET_X(c)=wx+bw;
+    if(WIDGET_Y(c) >= wy+wh-bw-h) // 窗口在工作區下邊出界
+        WIDGET_Y(c)=wy+wh-bw-h;
+    if(WIDGET_Y(c) < wy+bw+bh) // 窗口在工作區上邊出界
+        WIDGET_Y(c)=wy+bw+bh;
 }
 
 static void set_preview_layout(WM *wm)
@@ -143,7 +143,7 @@ static void set_rect_of_main_win_for_preview(WM *wm)
 
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
     {
-        if(is_on_cur_desktop(c) && !c->owner)
+        if(is_on_cur_desktop(c->desktop_mask) && !c->owner)
         {
             n--;
             frame=(Rect){wx+(n%cols)*w+g, wy+(n/cols)*h+g, w-2*g, h-2*g};
@@ -156,7 +156,7 @@ static void set_stack_layout(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        if(is_on_cur_desktop(c) && !c->icon)
+        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
         {
             if(is_win_state_max(c) || c->win_state.fullscreen)
                 fix_win_rect_by_state(wm, c);
@@ -179,7 +179,7 @@ static void fix_place_type_for_tile(WM *wm)
     int n=0, m=DESKTOP(wm)->n_main_max;
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        if(is_on_cur_desktop(c) && !c->icon && !c->owner)
+        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c) && !c->owner)
         {
             if(c->place_type==TILE_LAYER_MAIN && ++n>m)
                 c->place_type=TILE_LAYER_SECOND;
@@ -224,14 +224,14 @@ static void set_rect_of_transient_win_for_tiling(WM *wm)
 {
     XSizeHints hint;
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(c) && c->owner)
-            hint=get_size_hint(c->win), fix_win_pos(wm, c, &hint);
+        if(is_on_cur_desktop(c->desktop_mask) && c->owner)
+            hint=get_size_hint(WIDGET_WIN(c)), fix_win_pos(wm, c, &hint);
 }
 
 static void set_rect_of_float_win_for_tiling(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(c) && c->place_type==FLOAT_LAYER)
+        if(is_on_cur_desktop(c->desktop_mask) && c->place_type==FLOAT_LAYER)
             fix_win_rect(wm, c);
 }
 
@@ -255,10 +255,10 @@ void update_titlebar_layout(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        if(c->titlebar_h && is_on_cur_desktop(c))
+        if(c->titlebar_h && is_on_cur_desktop(c->desktop_mask))
         {
             Rect r=get_title_area_rect(c);
-            XResizeWindow(xinfo.display, c->title_area, r.w, r.h);
+            move_resize_widget(c->frame->title_area, r.x, r.y, r.w, r.h);
         }
     }
 }
@@ -299,24 +299,31 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
     if(*cl == PREVIEW)
         restore_place_info_of_clients(wm->clients);
 
-    Display *d=xinfo.display;
     if(*cl == PREVIEW)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(c) && c->icon)
-                XMapWindow(d, c->icon->win), XUnmapWindow(d, c->frame);
+            if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
+            {
+                update_net_wm_state(WIDGET_WIN(c), c->win_state);
+                hide_widget(WIDGET(c->frame));
+            }
     if(arg.layout == PREVIEW)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(c) && c->icon)
-                XMapWindow(d, c->frame), XUnmapWindow(d, c->icon->win);
+            if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
+            {
+                c->win_state.hidden=0;
+                update_net_wm_state(WIDGET_WIN(c), c->win_state);
+                c->win_state.hidden=1;
+                show_widget(WIDGET(c->frame));
+            }
 
     if(*cl==TILE && arg.layout==STACK)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(c) && is_normal_layer(c->place_type))
+            if(is_on_cur_desktop(c->desktop_mask) && is_normal_layer(c->place_type))
                 c->place_type=FLOAT_LAYER;
 
     if(*cl==STACK && arg.layout==TILE)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            if(is_on_cur_desktop(c) && c->place_type==FLOAT_LAYER)
+            if(is_on_cur_desktop(c->desktop_mask) && c->place_type==FLOAT_LAYER)
                 c->place_type=TILE_LAYER_MAIN;
 
     *pl=*cl, *cl=arg.layout;

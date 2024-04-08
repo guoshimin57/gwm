@@ -34,7 +34,6 @@ void init_wm(WM *wm)
     xinfo.mod_map=XGetModifierMapping(xinfo.display);
     xinfo.root_win=RootWindow(xinfo.display, xinfo.screen);
     set_atoms();
-    set_gwm_widget_type(xinfo.root_win, ROOT_WIN);
     XSelectInput(xinfo.display, xinfo.root_win, ROOT_EVENT_MASK);
     set_visual_info();
     create_refer_wins(wm);
@@ -54,6 +53,8 @@ void init_wm(WM *wm)
     set_ewmh(wm);
     set_gwm_current_layout(DESKTOP(wm)->cur_layout);
     taskbar=create_taskbar();
+    if(cfg->show_taskbar)
+        show_widget(WIDGET(taskbar));
     cmd_entry=create_cmd_entry(RUN_CMD_ENTRY);
     create_hint_win();
     create_client_menu();
@@ -66,8 +67,8 @@ static void create_refer_wins(WM *wm)
 {
     Window w=xinfo.root_win;
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
-        wm->top_wins[i]=create_widget_win(NON_WIDGET, w, -1, -1, 1, 1, 0, 0, 0);
-    wm->wm_check_win=create_widget_win(NON_WIDGET, w, -1, -1, 1, 1, 0, 0, 0);
+        wm->top_wins[i]=create_widget_win(w, -1, -1, 1, 1, 0, 0, 0);
+    wm->wm_check_win=create_widget_win(w, -1, -1, 1, 1, 0, 0, 0);
 }
 
 static void set_visual_info(void)
@@ -99,7 +100,7 @@ static void set_ewmh(WM *wm)
     set_net_desktop_geometry(xinfo.screen_width, xinfo.screen_height);
     set_net_desktop_viewport(0, 0);
     set_net_current_desktop(wm->cur_desktop-1);
-    set_net_desktop_names(&cfg->taskbar_button_text[DESKTOP_BUTTON_BEGIN], DESKTOP_N);
+    set_net_desktop_names(cfg->taskbar_button_text, DESKTOP_N);
     set_net_workarea(wm->workarea.x, wm->workarea.y, wm->workarea.w, wm->workarea.h, DESKTOP_N);
     set_net_supporting_wm_check(wm->wm_check_win, "gwm");
     set_net_showing_desktop(false);

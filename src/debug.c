@@ -23,7 +23,7 @@ void print_client_and_top_win(WM *wm)
         for(unsigned int i=0; i<n; i++)
         {
             if((c=win_to_client(wm->clients, child[i])))
-                printf("client frame: %lx\n", c->frame);
+                printf("client frame: %lx\n", WIDGET_WIN(c->frame));
             else
                 for(unsigned int j=0; j<TOP_WIN_TYPE_N; j++)
                     if(wm->top_wins[j] == child[i])
@@ -99,9 +99,9 @@ void print_net_wm_state(Window win)
 
 void print_place_info(Client *c)
 {
-    printf(_("以下是%lx窗口的位置信息：\n"), c->win);
+    printf(_("以下是%lx窗口的位置信息：\n"), WIDGET_WIN(c));
     printf("ox=%d, oy=%d, ow=%d, oh=%d, old_place_type=%d\n", c->ox, c->oy, c->ow, c->oh, c->old_place_type);
-    printf("x=%d, y=%d, w=%d, h=%d, place_type=%d\n", c->x, c->y, c->w, c->h, c->place_type);
+    printf("x=%d, y=%d, w=%d, h=%d, place_type=%d\n", WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c), c->place_type);
 }
 
 void print_all_client_win(WM *wm)
@@ -113,7 +113,7 @@ void print_all_client_win(WM *wm)
 
 void print_client_win(Client *c)
 {
-    printf("win=%lx (frame=%lx)\n", c->win, c->frame);
+    printf("win=%lx (frame=%lx)\n", WIDGET_WIN(c), WIDGET_WIN(c->frame));
 }
 
 void show_top_win(WM *wm)
@@ -122,11 +122,11 @@ void show_top_win(WM *wm)
     char *s[]={"DESKTOP_TOP", "BELOW_TOP", "NORMAL_TOP", "FLOAT_TOP",
         "DOCK_TOP", "ABOVE_TOP", "FULLSCREEN_TOP"};
     Str_fmt f={0, 0, w, h, CENTER_LEFT, false, false, 0xff0000,
-        get_text_color(CLASS_TEXT_COLOR)};
+        get_widget_fg(CLASS_TEXT_COLOR)};
 
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
     {
-        XMoveResizeWindow(xinfo.display, wm->top_wins[i], i*w/2, taskbar->y-h, w, h);
+        XMoveResizeWindow(xinfo.display, wm->top_wins[i], i*w/2, WIDGET_Y(taskbar)-h, w, h);
         XMapWindow(xinfo.display, wm->top_wins[i]);
         draw_string(wm->top_wins[i], s[i], &f);
     }

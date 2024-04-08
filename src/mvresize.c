@@ -74,7 +74,7 @@ Place_type get_dest_place_type_for_move(WM *wm, Client *c)
 
 static Delta_rect get_key_delta_rect(Client *c, Direction dir)
 {
-    XSizeHints hint=get_size_hint(c->win);
+    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
     int wi=hint.width_inc, hi=hint.height_inc;
 
     Delta_rect dr[] =
@@ -98,19 +98,19 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
 void move_resize_client(Client *c, const Delta_rect *d)
 {
     if(d)
-        c->x+=d->dx, c->y+=d->dy, c->w+=d->dw, c->h+=d->dh;
+        WIDGET_X(c)+=d->dx, WIDGET_Y(c)+=d->dy, WIDGET_W(c)+=d->dw, WIDGET_H(c)+=d->dh;
     Rect fr=get_frame_rect(c), tr=get_title_area_rect(c);
     if(c->titlebar_h)
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
         {
             Rect br=get_button_rect(c, i);
-            XMoveWindow(xinfo.display, c->buttons[i], br.x, br.y);
+            move_resize_widget(WIDGET(c->frame->buttons[i]), br.x, br.y, br.w, br.h);
         }
-        XResizeWindow(xinfo.display, c->title_area, tr.w, tr.h);
+        move_resize_widget(c->frame->title_area, tr.x, tr.y, tr.w, tr.h);
     }
-    XMoveResizeWindow(xinfo.display, c->frame, fr.x, fr.y, fr.w, fr.h);
-    XMoveResizeWindow(xinfo.display, c->win, 0, c->titlebar_h, c->w, c->h);
+    move_resize_widget(WIDGET(c->frame), fr.x, fr.y, fr.w, fr.h);
+    XMoveResizeWindow(xinfo.display, WIDGET_WIN(c), 0, c->titlebar_h, WIDGET_W(c), WIDGET_H(c));
 }
 
 void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
@@ -123,7 +123,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
     if(layout==PREVIEW || !grab_pointer(xinfo.root_win, act))
         return;
 
-    XSizeHints hint=get_size_hint(c->win);
+    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
 
     XEvent ev;
     bool first=true;
@@ -153,7 +153,7 @@ void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
 static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act)
 {
     int dx=m->nx-m->ox, dy=m->ny-m->oy;
-    XSizeHints hint=get_size_hint(c->win);
+    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
     if(dx/get_width_inc(&hint)==0 && dy/get_height_inc(&hint)==0)
         return;
 
@@ -211,18 +211,18 @@ static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move)
 
 static bool is_prefer_move(Client *c, Delta_rect *d)
 {
-    return is_on_screen(c->x+d->dx, c->y+d->dy, c->w, c->h);
+    return is_on_screen(WIDGET_X(c)+d->dx, WIDGET_Y(c)+d->dy, WIDGET_W(c), WIDGET_H(c));
 }
 
 static bool fix_delta_rect(Client *c, Delta_rect *d)
 {
     int dw=d->dw, dh=d->dh;
-    XSizeHints hint=get_size_hint(c->win);
+    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
 
-    fix_dw_by_width_hint(c->w, &hint, &dw);
-    fix_dh_by_height_hint(c->w, &hint, &dh);
+    fix_dw_by_width_hint(WIDGET_W(c), &hint, &dw);
+    fix_dh_by_height_hint(WIDGET_W(c), &hint, &dh);
 
-    if((!dw && !dh) || !is_prefer_size(c->w+dw, c->h+dh, &hint))
+    if((!dw && !dh) || !is_prefer_size(WIDGET_W(c)+dw, WIDGET_H(c)+dh, &hint))
         return false;
 
     d->dw=dw, d->dh=dh;
@@ -262,17 +262,17 @@ static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh)
 static void update_hint_win_for_move_resize(Client *c)
 {
     char str[BUFSIZ];
-    XSizeHints hint=get_size_hint(c->win);
-    long col=get_win_col(c->w, &hint),
-         row=get_win_row(c->h, &hint);
+    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
+    long col=get_win_col(WIDGET_W(c), &hint),
+         row=get_win_row(WIDGET_H(c), &hint);
 
-    sprintf(str, "(%d, %d) %ldx%ld", c->x, c->y, col, row);
+    sprintf(str, "(%d, %d) %ldx%ld", WIDGET_X(c), WIDGET_Y(c), col, row);
     update_hint_win_for_info(None, str);
 }
 
 void update_win_state_for_move_resize(WM *wm, Client *c)
 {
-    int x=c->x, y=c->y, w=c->w, h=c->h, left_x, top_y, max_w, max_h,
+    int x=WIDGET_X(c), y=WIDGET_Y(c), w=WIDGET_W(c), h=WIDGET_H(c), left_x, top_y, max_w, max_h,
         mid_x, mid_y, half_w, half_h;
     bool update=false;
     Net_wm_state *s=&c->win_state;
@@ -297,14 +297,14 @@ void update_win_state_for_move_resize(WM *wm, Client *c)
         s->rmax=0, update=true;
 
     if(update)
-        update_net_wm_state(c->win, c->win_state);
+        update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
 Pointer_act get_resize_act(Client *c, const Move_info *m)
 {   // 窗口邊框寬度、標題欄調試、可調整尺寸區域的寬度、高度
     // 以及窗口框架左、右橫坐標和上、下縱坐標
-    int bw=c->border_w, bh=c->titlebar_h, rw=c->w/4, rh=c->h/4,
-        lx=c->x-bw, rx=c->x+c->w+bw, ty=c->y-bh-bw, by=c->y+c->h+bw;
+    int bw=c->border_w, bh=c->titlebar_h, rw=WIDGET_W(c)/4, rh=WIDGET_H(c)/4,
+        lx=WIDGET_X(c)-bw, rx=WIDGET_X(c)+WIDGET_W(c)+bw, ty=WIDGET_Y(c)-bh-bw, by=WIDGET_Y(c)+WIDGET_H(c)+bw;
 
     if(m->ox>=lx && m->ox<lx+bw+rw && m->oy>=ty && m->oy<ty+bw+rh)
         return TOP_LEFT_RESIZE;
@@ -337,8 +337,8 @@ void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg)
 void toggle_shade_client_mode(Client *c, bool shade)
 {
     if(shade && c->titlebar_h)
-        XResizeWindow(xinfo.display, c->frame, c->w, c->titlebar_h);
+        XResizeWindow(xinfo.display, WIDGET_WIN(c->frame), WIDGET_W(c), c->titlebar_h);
     else if(!shade)
-        XResizeWindow(xinfo.display, c->frame, c->w, c->titlebar_h+c->h);
+        XResizeWindow(xinfo.display, WIDGET_WIN(c->frame), WIDGET_W(c), c->titlebar_h+WIDGET_H(c));
     c->win_state.shaded=shade;
 }

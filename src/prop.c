@@ -13,7 +13,7 @@
 
 static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 {
-    "GWM_CURRENT_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE",
+    "GWM_CURRENT_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE", "GWM_DESKTOP_MASK",
 };
 
 static Atom gwm_atoms[GWM_ATOM_N];
@@ -38,8 +38,8 @@ Window get_transient_for(Window win)
 unsigned char *get_prop(Window win, Atom prop, unsigned long *n)
 {
     int fmt;
-    unsigned long i, nitems=0, *m=(n ? n : &nitems), rest;
-    unsigned char *p=NULL, *result=NULL;;
+    unsigned long nitems=0, *m=(n ? n : &nitems), rest;
+    unsigned char *p=NULL;
     Atom type;
 
     /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
@@ -49,24 +49,7 @@ unsigned char *get_prop(Window win, Atom prop, unsigned long *n)
         || !type || !fmt || !*m || !p)
         return NULL;
 
-    result=malloc_s(*m*fmt/8+1);
-    /* 當fmt等於16時，p以short int類型存儲特性，當short int大於16位時，
-     * 高位是沒用的填充數據；當fmt等於32時，p以long類型存儲特性，當long
-     * 大於32位時，高位是沒用的填充數據。因此，要考慮跳過填充數據。 */
-    for(i=0; i<*m; i++)
-    {
-        switch(fmt)
-        {
-            case  8: result[i]=p[i]; break;
-            case 16: ((CARD16 *)result)[i]=((short int *)p)[i]; break;
-            case 32: ((CARD32 *)result)[i]=((long *)p)[i]; break;
-            default: free(result); return NULL;
-        }
-    }
-    result[*m*fmt/8]='\0';
-    XFree(p);
-
-    return result;
+    return p;
 }
 
 char *get_text_prop(Window win, Atom atom)
@@ -90,6 +73,16 @@ char *get_text_prop(Window win, Atom atom)
 bool get_cardinal_prop(Window win, Atom prop, CARD32 *result)
 {
     CARD32 *p=(CARD32 *)get_prop(win, prop, NULL);
+    if(!p)
+        return false;
+    *result=*p;
+    XFree(p);
+    return true;
+}
+
+bool get_atom_prop(Window win, Atom prop, Atom *result)
+{
+    Atom *p=(Atom *)get_prop(win, prop, NULL);
     if(!p)
         return false;
     *result=*p;
@@ -153,14 +146,14 @@ bool get_gwm_current_layout(int *cur_layout)
     return flag;
 }
 
-void set_gwm_widget_type(Window win, long type)
+void set_gwm_desktop_mask(Window win, long mask)
 {
-    replace_cardinal_prop(win, gwm_atoms[GWM_WIDGET_TYPE], &type, 1);
+    replace_cardinal_prop(win, gwm_atoms[GWM_DESKTOP_MASK], &mask, 1);
 }
 
-bool get_gwm_widget_type(Window win, CARD32 *type)
+bool get_gwm_desktop_mask(Window win, CARD32 *mask)
 {
-    return get_cardinal_prop(win, gwm_atoms[GWM_WIDGET_TYPE], type);
+    return get_cardinal_prop(win, gwm_atoms[GWM_DESKTOP_MASK], mask);
 }
 
 void request_layout_update(void)

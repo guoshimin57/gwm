@@ -12,20 +12,13 @@
 #ifndef MENU_H
 #define MENU_H
 
-typedef struct // 一級多行多列菜單 
-{
-    Window win, *items; // 菜單窗口和菜單項
-    int n, col, row, w, h, pad; // 菜單項數量、列數、行數、寬度、高度、四周空白
-    int x, y; // 菜單窗口的坐標
-    unsigned long bg; // 菜單的背景色
-} Menu;
+typedef struct _menu_tag Menu;
 
 extern Menu *act_center, *client_menu;
 
-Menu *create_menu(Widget_type menu_type, Widget_type item_type[], const char *item_text[], int n, int col);
+Menu *create_menu(Widget_id id, Window parent, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col);
 void show_menu(XEvent *e, Menu *menu, Window bind);
-void update_menu_bg(Menu *menu, int n);
-void update_menu_item_fg(Menu *menu, int i);
+void update_menu_bg(const Menu *menu);
 void destroy_menu(Menu *menu);
 
 #endif

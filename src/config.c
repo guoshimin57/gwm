@@ -114,7 +114,7 @@ static const Keybind keybind[] =
     {WM_KEY,        XK_Page_Up,   prev_desktop,                {0}},
     {0,             XK_Print,     print_screen,                {0}},
     {WM_KEY,        XK_Print,     print_win,                   {0}},
-    {WM_KEY,        XK_r,         enter_and_run_cmd,           {0}},
+    {WM_KEY,        XK_r,         show_run_cmd_entry,          {0}},
     {WM_KEY,        XK_Delete,    quit_wm,                     {0}},
     DESKTOP_KEYBIND(XK_0, 0),
     DESKTOP_KEYBIND(XK_1, 1), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */
@@ -147,7 +147,7 @@ static const Buttonbind buttonbind[] =
     DESKTOP_BUTTONBIND(2), 
     DESKTOP_BUTTONBIND(3), 
 
-    /* 構件類型        功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數 */
+    /* 構件標識        功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數 */
     {DESKTOP_BUTTON,       WM_KEY, Button2,  close_all_clients,          {0}},
     {CLIENT_WIN,           WM_KEY, Button1,  move_resize,                {.resize=false}},
     {CLIENT_WIN,          WM_SKEY, Button1,  move_resize,                {.resize=true}},
@@ -177,7 +177,6 @@ static const Rule rule[] =
     {"QQ",                 "qq",                 "QQ",         "QQ",       TILE_LAYER_FIXED, false,         false,        0},
     {"explorer.exe",       "explorer.exe",       "*",          NULL,       FLOAT_LAYER,      false,         false,        0},
     {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       FLOAT_LAYER,      true,          true,         0},
-//    {"sketchup.exe",       "sketchup.exe",       "SketchUp",   NULL,       ABOVE_LAYER,      false,         false,        0},
     {"firefox",            "Toolkit",            "*",          NULL,       TILE_LAYER_MAIN,  true,          true,         0},
     {"Google-chrome",      "google-chrome",      "*",          "chrome",   ANY_PLACE,        true,          true,         0},
     {"Org.gnome.Nautilus", "org.gnome.Nautilus", "*",          "Nautilus", ANY_PLACE,        true,          true,         0},
@@ -248,7 +247,7 @@ static void config_cursor_shape(void)
 }
 
 /* 功能：爲深色主題設置構件背景色。
- * 說明：構件顏色號的定義詳見gwm.h:Widget_color。顏色名詳見rgb.txt（此文件的位
+ * 說明：構件顏色號的定義詳見gwm.h:Widget_color_id。顏色名詳見rgb.txt（此文件的位
  * 置因系統而異，可用locate rgb.txt搜索），也可以用十六進制顏色說明，格式爲以下
  * 之一（下同）：
  *     #RGB、#RRGGBB、#RRRGGGBBB、#RRRRGGGGBBBB。
@@ -262,6 +261,17 @@ static void config_widget_color_for_dark(void)
     color_name[CURRENT_BORDER_COLOR]        = "grey31";
     color_name[NORMAL_TITLEBAR_COLOR]       = "grey11";
     color_name[CURRENT_TITLEBAR_COLOR]      = "grey31";
+
+    color_name[DISABLE_WIDGET_COLOR]        = "grey91";
+    color_name[WARN_WIDGET_COLOR]           = "red";
+    color_name[ACTIVE_WIDGET_COLOR]         = "DarkOrange";
+    color_name[HOT_WIDGET_COLOR]            = "DarkOrange";
+    color_name[URGENT_WIDGET_COLOR]         = "red";
+    color_name[ATTENT_WIDGET_COLOR]         = "Yellow4";
+    color_name[CHOSEN_WIDGET_COLOR]         = "DeepSkyBlue4";
+    color_name[FOCUS_WIDGET_COLOR]          = "grey31";
+    color_name[NORMAL_WIDGET_COLOR]         = "grey11";
+
     color_name[ENTERED_NORMAL_BUTTON_COLOR] = "DarkOrange";
     color_name[ENTERED_CLOSE_BUTTON_COLOR]  = "red";
     color_name[CHOSEN_BUTTON_COLOR]         = "DeepSkyBlue4";
@@ -286,6 +296,17 @@ static void config_widget_color_for_normal(void)
     color_name[CURRENT_BORDER_COLOR]        = "DodgerBlue";
     color_name[NORMAL_TITLEBAR_COLOR]       = "grey31";
     color_name[CURRENT_TITLEBAR_COLOR]      = "DodgerBlue";
+
+    color_name[DISABLE_WIDGET_COLOR]        = "grey91";
+    color_name[WARN_WIDGET_COLOR]           = "red";
+    color_name[ACTIVE_WIDGET_COLOR]         = "DarkOrange";
+    color_name[HOT_WIDGET_COLOR]            = "DarkOrange";
+    color_name[URGENT_WIDGET_COLOR]         = "red";
+    color_name[ATTENT_WIDGET_COLOR]         = "Yellow4";
+    color_name[CHOSEN_WIDGET_COLOR]         = "DeepSkyBlue4";
+    color_name[FOCUS_WIDGET_COLOR]        = "DodgerBlue";
+    color_name[NORMAL_WIDGET_COLOR]         = "grey11";
+
     color_name[ENTERED_NORMAL_BUTTON_COLOR] = "DarkOrange";
     color_name[ENTERED_CLOSE_BUTTON_COLOR]  = "red";
     color_name[CHOSEN_BUTTON_COLOR]         = "DeepSkyBlue4";
@@ -310,6 +331,17 @@ static void config_widget_color_for_light(void)
     color_name[CURRENT_BORDER_COLOR]        = "grey91";
     color_name[NORMAL_TITLEBAR_COLOR]       = "grey61";
     color_name[CURRENT_TITLEBAR_COLOR]      = "grey91";
+
+    color_name[DISABLE_WIDGET_COLOR]        = "grey91";
+    color_name[WARN_WIDGET_COLOR]           = "red";
+    color_name[ACTIVE_WIDGET_COLOR]         = "DarkOrange";
+    color_name[HOT_WIDGET_COLOR]            = "DarkOrange";
+    color_name[URGENT_WIDGET_COLOR]         = "red";
+    color_name[ATTENT_WIDGET_COLOR]         = "Yellow4";
+    color_name[CHOSEN_WIDGET_COLOR]         = "DeepSkyBlue4";
+    color_name[FOCUS_WIDGET_COLOR]        = "grey91";
+    color_name[NORMAL_WIDGET_COLOR]         = "grey11";
+
     color_name[ENTERED_NORMAL_BUTTON_COLOR] = "white";
     color_name[ENTERED_CLOSE_BUTTON_COLOR]  = "red";
     color_name[CHOSEN_BUTTON_COLOR]         = "LightSkyBlue";
@@ -323,7 +355,7 @@ static void config_widget_color_for_light(void)
 }
 
 /* 功能：爲深色主題設置構件背景色的不透明度。
- * 說明：構件顏色號的定義詳見gwm.h:Widget_color；不透明度取值範圍爲0~1.0（下同）。
+ * 說明：構件顏色號的定義詳見gwm.h:Widget_color_id；不透明度取值範圍爲0~1.0（下同）。
  */
 static void config_widget_opacity_for_dark(void)
 {
@@ -389,13 +421,23 @@ static void config_widget_color_and_opacity(void)
 }
 
 /* 功能：爲深色主題設置文字顏色。
- * 說明：文字顏色號的定義詳見gwm.h:Text_color。顏色名說明同前。
+ * 說明：文字顏色號的定義詳見gwm.h:Text_color_id。顏色名說明同前。
  */
 static void config_text_color_for_dark(void)
 {
     const char **color_name=cfg->text_color_name[DARK_THEME];
 
     /*         文字顏色號                     顏色名 */
+    color_name[DISABLE_WIDGET_TEXT_COLOR]  = "grey91";
+    color_name[WARN_WIDGET_TEXT_COLOR]     = "grey71";
+    color_name[ACTIVE_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[HOT_WIDGET_TEXT_COLOR]      = "grey71";
+    color_name[URGENT_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[ATTENT_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[CHOSEN_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[FOCUS_WIDGET_TEXT_COLOR]  = "LightGreen";
+    color_name[NORMAL_WIDGET_TEXT_COLOR]   = "grey71";
+
     color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey71";
     color_name[CURRENT_TITLEBAR_TEXT_COLOR] = "LightGreen";
     color_name[TASKBAR_TEXT_COLOR]          = "white";
@@ -413,6 +455,16 @@ static void config_text_color_for_normal(void)
     const char **color_name=cfg->text_color_name[NORMAL_THEME];
 
     /*         文字顏色號                     顏色名 */
+    color_name[DISABLE_WIDGET_TEXT_COLOR]  = "grey91";
+    color_name[WARN_WIDGET_TEXT_COLOR]     = "grey71";
+    color_name[ACTIVE_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[HOT_WIDGET_TEXT_COLOR]      = "grey71";
+    color_name[URGENT_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[ATTENT_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[CHOSEN_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[FOCUS_WIDGET_TEXT_COLOR]  = "white";
+    color_name[NORMAL_WIDGET_TEXT_COLOR]   = "grey71";
+
     color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey71";
     color_name[CURRENT_TITLEBAR_TEXT_COLOR] = "white";
     color_name[TASKBAR_TEXT_COLOR]          = "white";
@@ -430,6 +482,16 @@ static void config_text_color_for_light(void)
     const char **color_name=cfg->text_color_name[LIGHT_THEME];
 
     /*         文字顏色號                     顏色名 */
+    color_name[DISABLE_WIDGET_TEXT_COLOR]  = "grey91";
+    color_name[WARN_WIDGET_TEXT_COLOR]     = "grey71";
+    color_name[ACTIVE_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[HOT_WIDGET_TEXT_COLOR]      = "grey71";
+    color_name[URGENT_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[ATTENT_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[CHOSEN_WIDGET_TEXT_COLOR]   = "grey71";
+    color_name[FOCUS_WIDGET_TEXT_COLOR]  = "black";
+    color_name[NORMAL_WIDGET_TEXT_COLOR]   = "grey71";
+
     color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey31";
     color_name[CURRENT_TITLEBAR_TEXT_COLOR] = "black";
     color_name[TASKBAR_TEXT_COLOR]          = "black";
@@ -448,7 +510,7 @@ static void config_text_color(void)
 }
 
 /* 功能：設置標題按鈕的文字。
- * 說明：標題欄按鈕類型的定義詳見gwm.h:Widget_type。
+ * 說明：標題欄按鈕類型的定義詳見widget.h:Widget_id。
  */
 static void config_title_button_text(void)
 {
@@ -463,7 +525,7 @@ static void config_title_button_text(void)
 }
 
 /* 功能：設置任務欄按鈕的文字。
- * 說明：任務欄按鈕類型的定義詳見gwm.h:Widget_type。
+ * 說明：任務欄按鈕類型的定義詳見widget.h:Widget_id。
  */
 static void config_taskbar_button_text(void)
 {
@@ -478,78 +540,78 @@ static void config_taskbar_button_text(void)
     SET_TASKBAR_BUTTON_TEXT(ACT_CENTER_ITEM, "^");
 }
 
-/* 功能：設置操作中心的文字。
- * 說明：操作中心按鈕類型的定義詳見gwm.h:Widget_type。
+/* 功能：設置操作中心菜單項。
+ * 說明：操作中心按鈕類型的定義詳見widget.h:Widget_id。
  */
-static void config_act_center_item_text(void)
+static void config_act_center_item(void)
 {
-    /*                       操作中心按鈕類型             按鈕文字 */
-    SET_ACT_CENTER_ITEM_TEXT(HELP_BUTTON,              _("🛟 幫助"));
-    SET_ACT_CENTER_ITEM_TEXT(FILE_BUTTON,              _("📁 文件"));
-    SET_ACT_CENTER_ITEM_TEXT(TERM_BUTTON,              _("🖥️ 終端模擬器"));
-    SET_ACT_CENTER_ITEM_TEXT(BROWSER_BUTTON,           _("🌐 網絡瀏覽器"));
+    /*                       操作中心按鈕類型         圖標名   符號      標籤 */
+    SET_ACT_CENTER_MENU_ITEM(HELP_BUTTON,              NULL, _("🛟"), _("幫助"));
+    SET_ACT_CENTER_MENU_ITEM(FILE_BUTTON,              NULL, _("📁"), _("文件"));
+    SET_ACT_CENTER_MENU_ITEM(TERM_BUTTON,              NULL, _("🖥️"), _("終端模擬器"));
+    SET_ACT_CENTER_MENU_ITEM(BROWSER_BUTTON,           NULL, _("🌐"), _("網絡瀏覽器"));
 
-    SET_ACT_CENTER_ITEM_TEXT(GAME_BUTTON,              _("🎮️ 遊戲"));
-    SET_ACT_CENTER_ITEM_TEXT(PLAY_START_BUTTON,        _("🎬 播放影音"));
-    SET_ACT_CENTER_ITEM_TEXT(PLAY_TOGGLE_BUTTON,       _("⏯️ 切換播放狀態"));
-    SET_ACT_CENTER_ITEM_TEXT(PLAY_QUIT_BUTTON,         _("⏹️ 關閉影音"));
+    SET_ACT_CENTER_MENU_ITEM(GAME_BUTTON,              NULL, _("🎮️"), _("遊戲"));
+    SET_ACT_CENTER_MENU_ITEM(PLAY_START_BUTTON,        NULL, _("🎬"), _("播放影音"));
+    SET_ACT_CENTER_MENU_ITEM(PLAY_TOGGLE_BUTTON,       NULL, _("⏯️"), _("切換播放狀態"));
+    SET_ACT_CENTER_MENU_ITEM(PLAY_QUIT_BUTTON,         NULL, _("⏹️"), _("關閉影音"));
 
-    SET_ACT_CENTER_ITEM_TEXT(VOLUME_DOWN_BUTTON,       _("🔈️ 减小音量"));
-    SET_ACT_CENTER_ITEM_TEXT(VOLUME_UP_BUTTON,         _("🔉 增大音量"));
-    SET_ACT_CENTER_ITEM_TEXT(VOLUME_MAX_BUTTON,        _("🔊 最大音量"));
-    SET_ACT_CENTER_ITEM_TEXT(VOLUME_TOGGLE_BUTTON,     _("🔇 靜音切換"));
+    SET_ACT_CENTER_MENU_ITEM(VOLUME_DOWN_BUTTON,       NULL, _("🔈️"), _("减小音量"));
+    SET_ACT_CENTER_MENU_ITEM(VOLUME_UP_BUTTON,         NULL, _("🔉"), _("增大音量"));
+    SET_ACT_CENTER_MENU_ITEM(VOLUME_MAX_BUTTON,        NULL, _("🔊"), _("最大音量"));
+    SET_ACT_CENTER_MENU_ITEM(VOLUME_TOGGLE_BUTTON,     NULL, _("🔇"), _("靜音切換"));
 
-    SET_ACT_CENTER_ITEM_TEXT(MAIN_NEW_BUTTON,          _("▼ 暫主區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(SEC_NEW_BUTTON,           _("◁ 暫次區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(FIX_NEW_BUTTON,           _("▷ 暫固定區開窗"));
-    SET_ACT_CENTER_ITEM_TEXT(FLOAT_NEW_BUTTON,         _("△ 暫懸浮層開窗"));
+    SET_ACT_CENTER_MENU_ITEM(MAIN_NEW_BUTTON,          NULL, _("▼"), _("暫主區開窗"));
+    SET_ACT_CENTER_MENU_ITEM(SEC_NEW_BUTTON,           NULL, _("◁"), _("暫次區開窗"));
+    SET_ACT_CENTER_MENU_ITEM(FIX_NEW_BUTTON,           NULL, _("▷"), _("暫固定區開窗"));
+    SET_ACT_CENTER_MENU_ITEM(FLOAT_NEW_BUTTON,         NULL, _("△"), _("暫懸浮層開窗"));
 
-    SET_ACT_CENTER_ITEM_TEXT(N_MAIN_UP_BUTTON,         _("⬆️ 增大主區容量"));
-    SET_ACT_CENTER_ITEM_TEXT(N_MAIN_DOWN_BUTTON,       _("⬇️ 减小主區容量"));
-    SET_ACT_CENTER_ITEM_TEXT(TITLEBAR_TOGGLE_BUTTON,   _("🗔 開關當前窗口標題欄"));
-    SET_ACT_CENTER_ITEM_TEXT(CLI_BORDER_TOGGLE_BUTTON, _("⬚ 開關當前窗口邊框"));
+    SET_ACT_CENTER_MENU_ITEM(N_MAIN_UP_BUTTON,         NULL, _("⬆️"), _("增大主區容量"));
+    SET_ACT_CENTER_MENU_ITEM(N_MAIN_DOWN_BUTTON,       NULL, _("⬇️"), _("减小主區容量"));
+    SET_ACT_CENTER_MENU_ITEM(TITLEBAR_TOGGLE_BUTTON,   NULL, _("🗔"), _("開關當前窗口標題欄"));
+    SET_ACT_CENTER_MENU_ITEM(CLI_BORDER_TOGGLE_BUTTON, NULL, _("⬚"), _("開關當前窗口邊框"));
+    
+    SET_ACT_CENTER_MENU_ITEM(CLOSE_ALL_CLIENTS_BUTTON, NULL, _("❎"), _("關閉桌面所有窗口"));
+    SET_ACT_CENTER_MENU_ITEM(PRINT_WIN_BUTTON,         NULL, _("✀"),  _("當前窗口截圖"));
+    SET_ACT_CENTER_MENU_ITEM(PRINT_SCREEN_BUTTON,      NULL, _("🖵"),  _("全屏截圖"));
+    SET_ACT_CENTER_MENU_ITEM(FOCUS_MODE_BUTTON,        NULL, _("👁️"), _("切換聚焦模式"));
 
-    SET_ACT_CENTER_ITEM_TEXT(CLOSE_ALL_CLIENTS_BUTTON, _("❎ 關閉桌面所有窗口"));
-    SET_ACT_CENTER_ITEM_TEXT(PRINT_WIN_BUTTON,         _("✀ 當前窗口截圖"));
-    SET_ACT_CENTER_ITEM_TEXT(PRINT_SCREEN_BUTTON,      _("🖵 全屏截圖"));
-    SET_ACT_CENTER_ITEM_TEXT(FOCUS_MODE_BUTTON,        _("👁️ 切換聚焦模式"));
+    SET_ACT_CENTER_MENU_ITEM(COMPOSITOR_BUTTON,        NULL, _("🪡"), _("開關合成器"));
+    SET_ACT_CENTER_MENU_ITEM(WALLPAPER_BUTTON,         NULL, _("🌌"), _("切換壁紙"));
+    SET_ACT_CENTER_MENU_ITEM(COLOR_THEME_BUTTON,       NULL, _("🎨"), _("切換顏色主題"));
+    SET_ACT_CENTER_MENU_ITEM(QUIT_WM_BUTTON,           NULL, _("❌"), _("退出gwm"));
 
-    SET_ACT_CENTER_ITEM_TEXT(COMPOSITOR_BUTTON,        _("🪡 開關合成器"));
-    SET_ACT_CENTER_ITEM_TEXT(WALLPAPER_BUTTON,         _("🌌 切換壁紙"));
-    SET_ACT_CENTER_ITEM_TEXT(COLOR_THEME_BUTTON,       _("🎨 切換顏色主題"));
-    SET_ACT_CENTER_ITEM_TEXT(QUIT_WM_BUTTON,           _("❌ 退出gwm"));
-
-    SET_ACT_CENTER_ITEM_TEXT(LOGOUT_BUTTON,            _("🚶 注銷"));
-    SET_ACT_CENTER_ITEM_TEXT(REBOOT_BUTTON,            _("↻ 重啓"));
-    SET_ACT_CENTER_ITEM_TEXT(POWEROFF_BUTTON,          _("⏻ 關機"));
-    SET_ACT_CENTER_ITEM_TEXT(RUN_BUTTON,               _("🔍️ 運行"));
+    SET_ACT_CENTER_MENU_ITEM(LOGOUT_BUTTON,            NULL, _("🚶"), _("注銷"));
+    SET_ACT_CENTER_MENU_ITEM(REBOOT_BUTTON,            NULL, _("↻"),  _("重啓"));
+    SET_ACT_CENTER_MENU_ITEM(POWEROFF_BUTTON,          NULL, _("⏻"),  _("關機"));
+    SET_ACT_CENTER_MENU_ITEM(RUN_BUTTON,               NULL, _("🔍️"), _("運行"));
 }
 
-/* 功能：設置客戶窗口菜單的文字。
- * 說明：客戶窗口菜單項類型的定義詳見gwm.h:Widget_type。
+/* 功能：設置客戶窗口菜單項。
+ * 說明：客戶窗口菜單項類型的定義詳見widget.h:Widget_id。
  */
-static void config_client_menu_item_text(void)
+static void config_client_menu_item(void)
 {
-    /*                        客戶窗口菜單項類型       按鈕文字 */
-    SET_CLIENT_MENU_ITEM_TEXT(SHADE_BUTTON,         _("卷起/放下"));
-    SET_CLIENT_MENU_ITEM_TEXT(VERT_MAX_BUTTON,      _("縱向最大化"));
-    SET_CLIENT_MENU_ITEM_TEXT(HORZ_MAX_BUTTON,      _("橫向最大化"));
-    SET_CLIENT_MENU_ITEM_TEXT(TOP_MAX_BUTTON,       _("最大化至上半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(BOTTOM_MAX_BUTTON,    _("最大化至下半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(LEFT_MAX_BUTTON,      _("最大化至左半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(RIGHT_MAX_BUTTON,     _("最大化至右半屏"));
-    SET_CLIENT_MENU_ITEM_TEXT(FULL_MAX_BUTTON,      _("完全最大化"));
+    /*                   客戶窗口菜單項類型   圖標名 符號     標籤 */
+    SET_CLIENT_MENU_ITEM(SHADE_BUTTON,         NULL, NULL, _("卷起/放下"));
+    SET_CLIENT_MENU_ITEM(VERT_MAX_BUTTON,      NULL, NULL, _("縱向最大化"));
+    SET_CLIENT_MENU_ITEM(HORZ_MAX_BUTTON,      NULL, NULL, _("橫向最大化"));
+    SET_CLIENT_MENU_ITEM(TOP_MAX_BUTTON,       NULL, NULL, _("最大化至上半屏"));
+    SET_CLIENT_MENU_ITEM(BOTTOM_MAX_BUTTON,    NULL, NULL, _("最大化至下半屏"));
+    SET_CLIENT_MENU_ITEM(LEFT_MAX_BUTTON,      NULL, NULL, _("最大化至左半屏"));
+    SET_CLIENT_MENU_ITEM(RIGHT_MAX_BUTTON,     NULL, NULL, _("最大化至右半屏"));
+    SET_CLIENT_MENU_ITEM(FULL_MAX_BUTTON,      NULL, NULL, _("完全最大化"));
 }
 
 /* 功能：設置構件功能提示。
- * 說明：構件類型的定義詳見gwm.h:Widget_type。以下未列出的構件要麼不必顯示提示，
+ * 說明：構件標識的定義詳見widget.h:Widget_id。以下未列出的構件要麼不必顯示提示，
  * 要麼動態變化而不可在此設置。
  */
 static void config_tooltip(void)
 {
     const char **tooltip=cfg->tooltip;
 
-    /*      構件類型             構件功能提示文字 */
+    /*      構件標識             構件功能提示文字 */
     tooltip[SECOND_BUTTON]   = _("切換到次要區域");
     tooltip[MAIN_BUTTON]     = _("切換到主要區域");
     tooltip[FIXED_BUTTON]    = _("切換到固定區域");
@@ -616,7 +678,7 @@ void config(void)
     config_text_color();
     config_title_button_text();
     config_taskbar_button_text();
-    config_act_center_item_text();
-    config_client_menu_item_text();
+    config_act_center_item();
+    config_client_menu_item();
     config_tooltip();
 }

@@ -56,7 +56,7 @@ void clear_zombies(int signum)
 
 char *copy_string(const char *s)
 {
-    return strcpy(malloc_s(strlen(s)+1), s);
+    return s ? strcpy(malloc_s(strlen(s)+1), s) : NULL;
 }
 
 char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
@@ -132,4 +132,21 @@ char *get_icon_title_text(Window win, const char *fallback)
 bool is_match_button_release(XEvent *oe, XEvent *ne)
 {
     return (ne->type==ButtonRelease && ne->xbutton.button==oe->xbutton.button);
+}
+
+bool is_on_desktop_n(unsigned int n, unsigned int mask)
+{
+    return (mask & get_desktop_mask(n));
+}
+
+bool is_on_cur_desktop(unsigned int mask)
+{
+    unsigned int desktop;
+    return get_net_current_desktop(&desktop)
+        && (mask & get_desktop_mask(desktop+1));
+}
+
+unsigned int get_desktop_mask(unsigned int desktop_n)
+{
+    return 1<<(desktop_n-1);
 }

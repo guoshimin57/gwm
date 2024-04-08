@@ -11,73 +11,82 @@
 
 #include "gwm.h"
 
+struct _menu_tag // 一級多行多列菜單 
+{
+    Widget base;
+    Button **items; // 菜單項
+    int n, col, row; // 菜單項數量、列數、行數
+};
+
+static bool is_null_strings(const char *strings[], int n);
+
 Menu *act_center=NULL, *client_menu=NULL; // 操作中心, 客戶窗口菜單
 
-Menu *create_menu(Widget_type menu_type, Widget_type item_type[], const char *item_text[], int n, int col)
+Menu *create_menu(Widget_id id, Window parent, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col)
 {
     Menu *menu=malloc_s(sizeof(Menu));
-    int w=0, maxw=0, sw=xinfo.screen_width, pad=get_font_pad();
 
-    for(int i=0; i<n; i++, maxw = w>maxw ? w : maxw)
-        get_string_size(item_text[i], &w, NULL);
-    w = ((maxw+2*pad)*col > sw) ? sw/col : maxw+2*pad;
+    int w, wi=0, wl=0, h=get_font_height_by_pad(), maxw=0, sw=xinfo.screen_width,
+        pad=get_font_pad(), row=(n+col-1)/col;
 
-    menu->n=n, menu->col=col, menu->row=(n+col-1)/col;
-    menu->x=menu->y=0, menu->w=w, menu->h=get_font_height_by_pad(), menu->pad=pad;
-    menu->bg=get_widget_color(MENU_COLOR);
-    menu->win=create_widget_win(menu_type, xinfo.root_win, 0, 0, w*col,
-        menu->h*menu->row, 0, 0, menu->bg);
-    menu->items=malloc_s(n*sizeof(Window));
+    if(!is_null_strings(icon_names, n) || !is_null_strings(symbols, n))
+        wi=h;
+
+    for(int i=0; i<n; i++, maxw = wl>maxw ? wl : maxw)
+        get_string_size(labels[i], &wl, NULL);
+    wl=maxw;
+    
+    w = wi+wl+(wl ? 2*pad : 0);
+    if(w > sw)
+        w=sw/col;
+
+    init_widget(WIDGET(menu), id, UNUSED_TYPE, WIDGET_NORMAL_STATE,
+        parent, 0, 0, w*col, h*row);
+
+    menu->items=malloc_s(sizeof(Button *)*n);
     for(int i=0; i<n; i++)
     {
-         menu->items[i]=create_widget_win(item_type[i], menu->win, w*(i%col),
-             menu->h*(i/col), w, menu->h, 0, 0, menu->bg);
-        XSelectInput(xinfo.display, menu->items[i], BUTTON_EVENT_MASK);
+         menu->items[i]=create_button(id+i+1, WIDGET_NORMAL_STATE, WIDGET_WIN(menu), w*(i%col),
+             h*(i/col), w, h, labels[i]);
+         set_button_icon(menu->items[i], NULL, icon_names[i], symbols[i]);
+         set_button_align(menu->items[i], CENTER_LEFT);
     }
 
-    XMapSubwindows(xinfo.display, menu->win);
+    menu->n=n, menu->col=col, menu->row=row;
+
     return menu;
+}
+
+static bool is_null_strings(const char *strings[], int n)
+{
+    for(int i=0; i<n; i++)
+        if(strings[i])
+            return false;
+    return true;
 }
 
 void show_menu(XEvent *e, Menu *menu, Window bind)
 {
     if(e->type == ButtonPress)
-    {
-        XButtonEvent *b=&e->xbutton;
-        set_pos_for_click(bind, b->x_root-b->x, &menu->x, &menu->y,
-            menu->w*menu->col, menu->h*menu->row);
-    }
-    XMoveWindow(xinfo.display, menu->win, menu->x, menu->y);
-    XMapRaised(xinfo.display, menu->win);
-    XMapWindow(xinfo.display, menu->win);
+        set_pos_for_click(bind, e->xbutton.x_root-e->xbutton.x,
+            &WIDGET_X(menu), &WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
+    move_resize_widget(WIDGET(menu), WIDGET_X(menu), WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
+    XRaiseWindow(xinfo.display, WIDGET_WIN(menu));
+    show_widget(WIDGET(menu));
 }
 
-void update_menu_bg(Menu *menu, int n)
+void update_menu_bg(const Menu *menu)
 {
-    unsigned long bg=get_widget_color(MENU_COLOR);
-    update_win_bg(menu->win, bg, None);
-    for(int i=0; i<n; i++)
-        update_win_bg(menu->items[i], bg, None);
-}
-
-void update_menu_item_fg(Menu *menu, int i)
-{
-    const char *text=NULL;
-
-    if(menu == act_center)
-        text=cfg->act_center_item_text[i];
-    else if(menu == client_menu)
-        text=cfg->client_menu_item_text[i];
-    else
-        return;
-
-    Str_fmt fmt={0, 0, menu->w, menu->h, CENTER_LEFT, true, false, 0,
-        get_text_color(MENU_TEXT_COLOR)};
-    draw_string(menu->items[i], text, &fmt);
+    update_widget_bg(WIDGET(menu));
+    for(int i=0; i<menu->n; i++)
+        update_widget_bg(WIDGET(menu->items[i]));
 }
 
 void destroy_menu(Menu *menu)
 {
-    XDestroyWindow(xinfo.display, menu->win);
-    vfree(menu->items, menu, NULL);
+    for(int i=0; i<menu->n; i++)
+        destroy_button(menu->items[i]);
+    free(menu->items);
+    XDestroyWindow(xinfo.display, WIDGET_WIN(menu));
+    free(menu);
 }

@@ -13,6 +13,6 @@
 #define IMAGE_H
 
 void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h);
-Imlib_Image get_icon_image(Window win, const XWMHints *hint, const char *name, int size, const char *theme);
+Imlib_Image get_icon_image(Window win, const char *name, int size, const char *theme);
 
 #endif

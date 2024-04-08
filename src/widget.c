@@ -11,6 +11,15 @@
 
 #include "gwm.h"
 
+typedef struct widget_node_tag
+{
+    Widget *widget;
+    struct widget_node_tag *next;
+} Widget_node;
+
+static void reg_widget(Widget *widget);
+static void unreg_widget(Widget *widget);
+static Widget_color_id get_widget_color_id(const Widget *widget);
 static void alloc_widget_color(const char *color_name, XColor *color);
 static void alloc_text_color(const char *color_name, XftColor *color);
 static unsigned int get_num_lock_mask(void);
@@ -19,6 +28,141 @@ static unsigned int get_modifier_mask(KeySym key_sym);
 static XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
 static XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色
 static Cursor cursors[POINTER_ACT_N]; // 光標
+
+static Widget_node *widget_list=NULL;
+
+static void reg_widget(Widget *widget)
+{
+    Widget_node *p=malloc_s(sizeof(Widget_node));
+    p->widget=widget;
+    p->next=widget_list;
+    widget_list=p;
+}
+
+static void unreg_widget(Widget *widget)
+{
+    for(Widget_node *prev=NULL, *p=widget_list; p; prev=p, p=p->next)
+    {
+        if(p->widget == widget)
+        {
+            if(prev == NULL)
+                widget_list=p->next;
+            else
+                prev->next=p->next;
+            free(p);
+            break;
+        }
+    }
+}
+
+Widget *win_to_widget(Window win)
+{
+    for(Widget_node *p=widget_list; p; p=p->next)
+        if(p->widget->win == win)
+            return p->widget;
+    return NULL;
+}
+
+Widget *create_widget(Widget_id id, Widget_type type, Widget_state state, Window parent, int x, int y, int w, int h)
+{
+    Widget *widget=malloc_s(sizeof(Widget));
+
+    init_widget(widget, id, type, state, parent, x, y, w, h);
+
+    return widget;
+}
+
+void init_widget(Widget *widget, Widget_id id, Widget_type type, Widget_state state, Window parent, int x, int y, int w, int h)
+{
+    unsigned long bg;
+    widget->id=id;
+    widget->type=type;
+    widget->state=state;
+    widget->parent=parent;
+    bg=get_widget_color(get_widget_color_id(widget));
+    if(widget->id != CLIENT_WIN)
+        widget->win=create_widget_win(parent, x, y, w, h, 0, 0, bg);
+    widget->x=x, widget->y=y, widget->w=w, widget->h=h;
+    widget->tooltip=NULL;
+
+    XSelectInput(xinfo.display, widget->win, WIDGET_EVENT_MASK);
+    reg_widget(widget);
+}
+
+void set_widget_tooltip(Widget *widget, const char *tooltip)
+{
+    widget->tooltip=copy_string(tooltip);
+}
+
+void set_widget_border_width(const Widget *widget, int width)
+{
+    XSetWindowBorderWidth(xinfo.display, widget->win, width);
+}
+
+void set_widget_border_color(const Widget *widget, unsigned long pixel)
+{
+    XSetWindowBorder(xinfo.display, widget->win, pixel);
+}
+
+void destroy_widget(Widget *widget)
+{
+    unreg_widget(widget);
+    XDestroyWindow(xinfo.display, widget->win);
+    vfree(widget->tooltip, widget, NULL);
+}
+
+void show_widget(const Widget *widget)
+{
+    XMapWindow(xinfo.display, widget->win);
+    XMapSubwindows(xinfo.display, widget->win);
+}
+
+void hide_widget(const Widget *widget)
+{
+    XUnmapWindow(xinfo.display, widget->win);
+}
+
+void move_resize_widget(Widget *widget, int x, int y, int w, int h)
+{
+    widget->x=x, widget->y=y, widget->w=w, widget->h=h;;
+    XMoveResizeWindow(xinfo.display, widget->win, x, y, w, h);
+}
+
+void update_widget_bg(const Widget *widget)
+{
+    update_win_bg(widget->win, get_widget_color(get_widget_color_id(widget)), None);
+}
+
+static Widget_color_id get_widget_color_id(const Widget *widget)
+{
+    if(widget->state.disable) return DISABLE_WIDGET_COLOR;
+    if(widget->state.warn)    return WARN_WIDGET_COLOR;
+    if(widget->state.active)  return ACTIVE_WIDGET_COLOR;
+    if(widget->state.hot)     return HOT_WIDGET_COLOR;
+    if(widget->state.urgent)  return URGENT_WIDGET_COLOR;
+    if(widget->state.attent)  return ATTENT_WIDGET_COLOR;
+    if(widget->state.chosen)  return CHOSEN_WIDGET_COLOR;
+    if(widget->state.focus)   return FOCUS_WIDGET_COLOR; 
+    return NORMAL_WIDGET_COLOR;
+}
+
+Widget_color_id get_widget_border_color_id(const Widget *widget)
+{
+    return widget->state.focus ? CURRENT_BORDER_COLOR : NORMAL_BORDER_COLOR;
+}
+
+Text_color_id get_widget_fg_id(const Widget *widget)
+{
+    if(widget->state.disable) return DISABLE_WIDGET_TEXT_COLOR;
+    if(widget->state.warn)    return WARN_WIDGET_TEXT_COLOR;
+    if(widget->state.active)  return ACTIVE_WIDGET_TEXT_COLOR;
+    if(widget->state.hot)     return HOT_WIDGET_TEXT_COLOR;
+    if(widget->state.urgent)  return URGENT_WIDGET_TEXT_COLOR;
+    if(widget->state.attent)  return ATTENT_WIDGET_TEXT_COLOR;
+    if(widget->state.chosen)  return CHOSEN_WIDGET_TEXT_COLOR;
+    if(widget->state.focus)   return FOCUS_WIDGET_TEXT_COLOR; 
+    return NORMAL_WIDGET_TEXT_COLOR;
+}
 
 static void alloc_widget_color(const char *color_name, XColor *color)
 {
@@ -34,27 +178,27 @@ static void alloc_text_color(const char *color_name, XftColor *color)
 void alloc_color(void)
 {
     for(Color_theme i=0; i<COLOR_THEME_N; i++)
-        for(Widget_color j=0; j<WIDGET_COLOR_N; j++)
+        for(Widget_color_id j=0; j<WIDGET_COLOR_N; j++)
             alloc_widget_color(cfg->widget_color_name[i][j], &widget_color[i][j]);
     for(Color_theme i=0; i<COLOR_THEME_N; i++)
-        for(Text_color j=0; j<TEXT_COLOR_N; j++)
+        for(Text_color_id j=0; j<TEXT_COLOR_N; j++)
             alloc_text_color(cfg->text_color_name[i][j], &text_color[i][j]);
 }
 
-unsigned long get_widget_color(Widget_color wc)
+unsigned long get_widget_color(Widget_color_id id)
 {
-    float wo=cfg->widget_opacity[cfg->color_theme][wc];
-    unsigned long rgb=widget_color[cfg->color_theme][wc].pixel;
+    float wo=cfg->widget_opacity[cfg->color_theme][id];
+    unsigned long rgb=widget_color[cfg->color_theme][id].pixel;
 
     return ((rgb & 0x00ffffff) | ((unsigned long)(0xff*wo))<<24);
 }
 
-XftColor get_text_color(Text_color color_id)
+XftColor get_widget_fg(Text_color_id id)
 {
-    return text_color[cfg->color_theme][color_id];
+    return text_color[cfg->color_theme][id];
 }
 
-Window create_widget_win(Widget_type type, Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
+Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
 {
     XSetWindowAttributes attr;
     attr.colormap=xinfo.colormap;
@@ -66,52 +210,30 @@ Window create_widget_win(Widget_type type, Window parent, int x, int y, int w, i
         InputOutput, xinfo.visual,
         CWColormap | CWBorderPixel | CWBackPixel | CWOverrideRedirect, &attr);
 
-    set_gwm_widget_type(win, type);
-
     return win;
 }
 
-Widget_type get_widget_type(Window win)
-{
-    CARD32 type;
-    return get_gwm_widget_type(win, &type) ? type : NON_WIDGET;
-}
-
-void update_hint_win_for_info(Window hover, const char *info)
+void update_hint_win_for_info(const Widget *widget, const char *info)
 {
     int x, y, rx, ry, pad=get_font_pad(),
         w=0, h=get_font_height_by_pad();
 
     get_string_size(info, &w, NULL);
     w+=pad*2;
-    if(hover)
+    if(widget)
     {
         Window r, c;
         unsigned int m;
-        if(!XQueryPointer(xinfo.display, hover, &r, &c, &rx, &ry, &x, &y, &m))
+        if(!XQueryPointer(xinfo.display, widget->win, &r, &c, &rx, &ry, &x, &y, &m))
             return;
-        set_pos_for_click(hover, rx, &x, &y, w, h);
+        set_pos_for_click(widget->win, rx, &x, &y, w, h);
     }
     else
         x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
     XMoveResizeWindow(xinfo.display, xinfo.hint_win, x, y, w, h);
     XMapRaised(xinfo.display, xinfo.hint_win);
-    Str_fmt f={0, 0, w, h, CENTER, true, false, 0,
-        get_text_color(HINT_TEXT_COLOR)};
+    Str_fmt f={0, 0, w, h, CENTER, true, false, 0, get_widget_fg(HINT_TEXT_COLOR)};
     draw_string(xinfo.hint_win, info, &f);
-}
-
-void draw_icon(Drawable d, Imlib_Image image, const char *name, int size)
-{
-    if(image)
-        draw_image(image, d, 0, 0, size, size);
-    else
-    {
-        char s[2]={name[0], '\0'};
-        XftColor color=get_text_color(CLASS_TEXT_COLOR);
-        Str_fmt fmt={0, 0, size, size, CENTER, false, false, 0, color};
-        draw_string(d, s, &fmt);
-    }
 }
 
 void set_xic(Window win, XIC *ic)
@@ -141,18 +263,16 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
 
 void create_hint_win(void)
 {
-    xinfo.hint_win=create_widget_win(HINT_WIN, xinfo.root_win, 0, 0, 1, 1, 0, 0,
+    xinfo.hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
         get_widget_color(HINT_WIN_COLOR));
     XSelectInput(xinfo.display, xinfo.hint_win, ExposureMask);
 }
 
 void create_client_menu(void)
 {
-    Widget_type types[CLIENT_MENU_ITEM_N];
-    for(int i=0; i<CLIENT_MENU_ITEM_N; i++)
-        types[i]=CLIENT_MENU_ITEM_BEGIN+i;
-    client_menu=create_menu(CLIENT_MENU, types, cfg->client_menu_item_text,
-        CLIENT_MENU_ITEM_N, 1);
+    client_menu=create_menu(CLIENT_MENU, xinfo.root_win,
+        cfg->client_menu_item_icon, cfg->client_menu_item_symbol,
+        cfg->client_menu_item_label, CLIENT_MENU_ITEM_N, 1);
 }
 
 void create_cursors(void)
@@ -206,7 +326,7 @@ void grab_buttons(Window win)
     XUngrabButton(xinfo.display, AnyButton, AnyModifier, win);
     for(const Buttonbind *b=cfg->buttonbind; b->func; b++)
     {
-        if(b->widget_type == CLIENT_WIN)
+        if(b->widget_id == CLIENT_WIN)
         {
             int m=is_equal_modifier_mask(0, b->modifier) ?
                 GrabModeSync : GrabModeAsync;

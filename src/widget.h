@@ -9,26 +9,48 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef WIDGET_H
-#define WIDGET_H
+#ifndef __WIDGET_H
+#define __WIDGET_H
 
-typedef enum // 構件顏色類型
+#include "gwm.h"
+
+typedef enum // 構件顏色標識
 {
     NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR, NORMAL_TITLEBAR_COLOR,
-    CURRENT_TITLEBAR_COLOR, ENTERED_NORMAL_BUTTON_COLOR,
-    ENTERED_CLOSE_BUTTON_COLOR, CHOSEN_BUTTON_COLOR, MENU_COLOR, TASKBAR_COLOR,
-    ENTRY_COLOR, HINT_WIN_COLOR, URGENCY_WIDGET_COLOR, ATTENTION_WIDGET_COLOR,
-    ROOT_WIN_COLOR, WIDGET_COLOR_N 
-} Widget_color;
+    CURRENT_TITLEBAR_COLOR, DISABLE_WIDGET_COLOR, WARN_WIDGET_COLOR,
+    ACTIVE_WIDGET_COLOR, HOT_WIDGET_COLOR, URGENT_WIDGET_COLOR,
+    ATTENT_WIDGET_COLOR, CHOSEN_WIDGET_COLOR, FOCUS_WIDGET_COLOR,
+    NORMAL_WIDGET_COLOR, MENU_COLOR,
+    TASKBAR_COLOR, ENTRY_COLOR, HINT_WIN_COLOR, ROOT_WIN_COLOR, 
 
-typedef enum // 文本顏色類型
+//    NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR, NORMAL_TITLEBAR_COLOR,
+//    CURRENT_TITLEBAR_COLOR,
+    ENTERED_NORMAL_BUTTON_COLOR,
+    ENTERED_CLOSE_BUTTON_COLOR,
+    CHOSEN_BUTTON_COLOR, //MENU_COLOR, TASKBAR_COLOR,
+    //ENTRY_COLOR, HINT_WIN_COLOR,
+    URGENCY_WIDGET_COLOR, ATTENTION_WIDGET_COLOR,
+    //ROOT_WIN_COLOR,
+    WIDGET_COLOR_N 
+} Widget_color_id;
+
+typedef enum // 文本顏色標識
 {
-    NORMAL_TITLEBAR_TEXT_COLOR, CURRENT_TITLEBAR_TEXT_COLOR,
-    TASKBAR_TEXT_COLOR, CLASS_TEXT_COLOR, MENU_TEXT_COLOR,
-    ENTRY_TEXT_COLOR, HINT_TEXT_COLOR, TEXT_COLOR_N 
-} Text_color;
+    DISABLE_WIDGET_TEXT_COLOR, WARN_WIDGET_TEXT_COLOR,
+    ACTIVE_WIDGET_TEXT_COLOR, HOT_WIDGET_TEXT_COLOR,
+    URGENT_WIDGET_TEXT_COLOR, ATTENT_WIDGET_TEXT_COLOR,
+    CHOSEN_WIDGET_TEXT_COLOR, FOCUS_WIDGET_TEXT_COLOR,
+    NORMAL_WIDGET_TEXT_COLOR, NORMAL_TITLEBAR_TEXT_COLOR,
+    CURRENT_TITLEBAR_TEXT_COLOR, TASKBAR_TEXT_COLOR, CLASS_TEXT_COLOR,
+    MENU_TEXT_COLOR, ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
 
-typedef enum // 構件類型
+    //NORMAL_TITLEBAR_TEXT_COLOR, CURRENT_TITLEBAR_TEXT_COLOR,
+    //TASKBAR_TEXT_COLOR, CLASS_TEXT_COLOR, MENU_TEXT_COLOR,
+    //ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
+    TEXT_COLOR_N 
+} Text_color_id;
+
+typedef enum // 構件標識
 {
     ROOT_WIN, HINT_WIN, RUN_CMD_ENTRY,
 
@@ -41,7 +63,7 @@ typedef enum // 構件類型
     SHADE_BUTTON, VERT_MAX_BUTTON, HORZ_MAX_BUTTON, TOP_MAX_BUTTON,
     BOTTOM_MAX_BUTTON, LEFT_MAX_BUTTON, RIGHT_MAX_BUTTON, FULL_MAX_BUTTON,
 
-    TASKBAR, ICON_AREA, CLIENT_ICON, STATUS_AREA,
+    TASKBAR, ICONBAR, CLIENT_ICON, STATUSBAR,
     DESKTOP1_BUTTON, DESKTOP2_BUTTON, DESKTOP3_BUTTON, 
     PREVIEW_BUTTON, STACK_BUTTON, TILE_BUTTON, DESKTOP_BUTTON,
     ACT_CENTER_ITEM,
@@ -65,8 +87,13 @@ typedef enum // 構件類型
     DESKTOP_BUTTON_BEGIN=DESKTOP1_BUTTON, DESKTOP_BUTTON_END=DESKTOP3_BUTTON,
     ACT_CENTER_ITEM_BEGIN=HELP_BUTTON, ACT_CENTER_ITEM_END=RUN_BUTTON,
     CLIENT_MENU_ITEM_BEGIN=SHADE_BUTTON, CLIENT_MENU_ITEM_END=FULL_MAX_BUTTON, 
-} Widget_type;
+} Widget_id;
 
+typedef enum // 構件類型
+{
+    BUTTON_TYPE, ENTRY_TYPE, UNUSED_TYPE
+} Widget_type;
+    
 typedef enum // 定位器操作類型
 {
     NO_OP, CHOOSE, MOVE, SWAP, CHANGE, TOP_RESIZE, BOTTOM_RESIZE, LEFT_RESIZE,
@@ -74,34 +101,71 @@ typedef enum // 定位器操作類型
     BOTTOM_RIGHT_RESIZE, ADJUST_LAYOUT_RATIO, POINTER_ACT_N
 } Pointer_act;
 
+typedef struct // 構件狀態
+{
+    unsigned int disable : 1;   // 禁用狀態，即此時按鈕不可用
+    unsigned int warn : 1;      // 警告狀態，即鼠標懸浮於重要按鈕之上
+    unsigned int active : 1;    // 激活狀態，即鼠標按下
+    unsigned int hot : 1;       // 可用狀態，即鼠標懸浮於按鈕之上
+    unsigned int urgent : 1;    // 緊急狀態，即有緊急消息
+    unsigned int attent : 1;    // 關注狀態，即有需要關注的消息
+    unsigned int chosen : 1;    // 選中狀態，即選中了此構件所表示的功能
+    unsigned int focus : 1;     // 聚焦狀態，即構件具有鍵盤輸入的焦點
+} Widget_state;
+
+#define WIDGET_NORMAL_STATE ((Widget_state){0})
+
+typedef struct
+{
+    Widget_id id;
+    Widget_type type;
+    Widget_state state;
+    int x, y, w, h;
+    Window parent, win;
+    char *tooltip;
+} Widget;
+
+
+#define WIDGET_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
+
 #define TITLE_BUTTON_N (TITLE_BUTTON_END-TITLE_BUTTON_BEGIN+1)
 #define TASKBAR_BUTTON_N (TASKBAR_BUTTON_END-TASKBAR_BUTTON_BEGIN+1)
 #define ACT_CENTER_ITEM_N (ACT_CENTER_ITEM_END-ACT_CENTER_ITEM_BEGIN+1)
 #define CLIENT_MENU_ITEM_N (CLIENT_MENU_ITEM_END-CLIENT_MENU_ITEM_BEGIN+1)
 #define DESKTOP_N (DESKTOP_BUTTON_END-DESKTOP_BUTTON_BEGIN+1)
 
+#define WIDGET(p) ((Widget *)(p))
+#define WIDGET_ID(p) (WIDGET(p)->id)
+#define WIDGET_TYPE(p) (WIDGET(p)->type)
+#define WIDGET_STATE(p) (WIDGET(p)->state)
+#define WIDGET_X(p) (WIDGET(p)->x)
+#define WIDGET_Y(p) (WIDGET(p)->y)
+#define WIDGET_W(p) (WIDGET(p)->w)
+#define WIDGET_H(p) (WIDGET(p)->h)
+#define WIDGET_WIN(p) (WIDGET(p)->win)
+#define WIDGET_TOOLTIP(p) (WIDGET(p)->tooltip)
+
 #define WIDGET_INDEX(type_name, type_class) ((type_name) - type_class ## _BEGIN)
 #define DESKTOP_BUTTON_N(n) (DESKTOP_BUTTON_BEGIN+n-1)
-#define IS_WIDGET_CLASS(type_name, type_class) \
-    (type_class ## _BEGIN <= (type_name) && (type_name) <= type_class ## _END)
-#define IS_BUTTON(type) \
-    (  type==CLIENT_ICON || type==TITLE_LOGO \
-    || IS_WIDGET_CLASS(type, TITLE_BUTTON) \
-    || IS_WIDGET_CLASS(type, CLIENT_MENU_ITEM) \
-    || IS_WIDGET_CLASS(type, TASKBAR_BUTTON) \
-    || IS_WIDGET_CLASS(type, ACT_CENTER_ITEM))
-#define IS_MENU_ITEM(type) \
-    (  IS_WIDGET_CLASS(type, CLIENT_MENU_ITEM) \
-    || IS_WIDGET_CLASS(type, ACT_CENTER_ITEM))
 
-
+Widget *win_to_widget(Window win);
+Widget *create_widget(Widget_id id, Widget_type type, Widget_state state, Window parent, int x, int y, int w, int h);
+void init_widget(Widget *widget, Widget_id id, Widget_type type, Widget_state state, Window parent, int x, int y, int w, int h);
+void set_widget_tooltip(Widget *widget, const char *tooltip);
+void set_widget_border_width(const Widget *widget, int width);
+void set_widget_border_color(const Widget *widget, unsigned long pixel);
+void destroy_widget(Widget *widget);
+void show_widget(const Widget *widget);
+void hide_widget(const Widget *widget);
+void move_resize_widget(Widget *widget, int x, int y, int w, int h);
+void update_widget_bg(const Widget *widget);
+Widget_color_id get_widget_border_color_id(const Widget *widget);
+Text_color_id get_widget_fg_id(const Widget *widget);
 void alloc_color(void);
-unsigned long get_widget_color(Widget_color wc);
-XftColor get_text_color(Text_color color_id);
-Window create_widget_win(Widget_type type, Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
-Widget_type get_widget_type(Window win);
-void update_hint_win_for_info(Window hover, const char *info);
-void draw_icon(Drawable d, Imlib_Image image, const char *name, int size);
+unsigned long get_widget_color(Widget_color_id id);
+XftColor get_widget_fg(Text_color_id id);
+Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
+void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 void create_hint_win(void);

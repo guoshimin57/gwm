@@ -12,6 +12,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+typedef enum // 窗口聚焦模式
+{
+    ENTER_FOCUS, CLICK_FOCUS,
+} Focus_mode;
+
 // 說明：尺寸單位均爲像素
 typedef struct
 {
@@ -61,8 +66,12 @@ typedef struct
     const char *text_color_name[COLOR_THEME_N][TEXT_COLOR_N]; // 構件顏色名
     const char *title_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
     const char *taskbar_button_text[TASKBAR_BUTTON_N]; // 任務欄按鈕的標籤
-    const char *act_center_item_text[ACT_CENTER_ITEM_N]; // 操作中心菜單項的標籤
-    const char *client_menu_item_text[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的標籤
+    const char *act_center_item_icon[ACT_CENTER_ITEM_N]; // 操作中心菜單項的圖標名
+    const char *act_center_item_symbol[ACT_CENTER_ITEM_N]; // 操作中心菜單項的符號
+    const char *act_center_item_label[ACT_CENTER_ITEM_N]; // 操作中心菜單項的標籤
+    const char *client_menu_item_icon[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的圖標名
+    const char *client_menu_item_symbol[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的符號
+    const char *client_menu_item_label[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的標籤
     const char *cmd_entry_hint; // 運行輸入框的提示文字
     const char *compositor; // 合成管理器命令
     const Keybind *keybind; // 按鍵功能綁定。有的鍵盤同時按多個鍵會衝突，故組合鍵宜盡量少

@@ -11,8 +11,6 @@
 
 #include "gwm.h"
 
-static void create_icon(Client *c);
-static void del_icon(WM *wm, Client *c);
 static void maximize_client(WM *wm, Client *c, Max_way way);
 static void set_max_rect(WM *wm, Client *c, Max_way max_way);
 static Client *get_icon_client_head(WM *wm);
@@ -64,7 +62,7 @@ static void maximize_client(WM *wm, Client *c, Max_way max_way)
         case RIGHT_MAX:  c->win_state.rmax=1; break;
         case FULL_MAX:   c->win_state.vmax=c->win_state.hmax=1; break;
     }
-    update_net_wm_state(c->win, c->win_state);
+    update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
 static void set_max_rect(WM *wm, Client *c, Max_way max_way)
@@ -72,20 +70,20 @@ static void set_max_rect(WM *wm, Client *c, Max_way max_way)
     int left_x, top_y, max_w, max_h, mid_x, mid_y, half_w, half_h;
     get_max_rect(wm, c, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
 
-    bool vmax=(c->h == max_h), hmax=(c->w == max_w), fmax=false;
+    bool vmax=(WIDGET_H(c) == max_h), hmax=(WIDGET_W(c) == max_w), fmax=false;
     switch(max_way)
     {
-        case VERT_MAX:  if(hmax) fmax=true; else c->y=top_y, c->h=max_h;  break;
-        case HORZ_MAX:  if(vmax) fmax=true; else c->x=left_x, c->w=max_w; break;
-        case TOP_MAX:   c->x=left_x, c->y=top_y, c->w=max_w, c->h=half_h; break;
-        case BOTTOM_MAX:c->x=left_x, c->y=mid_y, c->w=max_w, c->h=half_h; break;
-        case LEFT_MAX:  c->x=left_x, c->y=top_y, c->w=half_w, c->h=max_h; break;
-        case RIGHT_MAX: c->x=mid_x, c->y=top_y, c->w=half_w, c->h=max_h;  break;
+        case VERT_MAX:  if(hmax) fmax=true; else WIDGET_Y(c)=top_y, WIDGET_H(c)=max_h;  break;
+        case HORZ_MAX:  if(vmax) fmax=true; else WIDGET_X(c)=left_x, WIDGET_W(c)=max_w; break;
+        case TOP_MAX:   WIDGET_X(c)=left_x, WIDGET_Y(c)=top_y, WIDGET_W(c)=max_w, WIDGET_H(c)=half_h; break;
+        case BOTTOM_MAX:WIDGET_X(c)=left_x, WIDGET_Y(c)=mid_y, WIDGET_W(c)=max_w, WIDGET_H(c)=half_h; break;
+        case LEFT_MAX:  WIDGET_X(c)=left_x, WIDGET_Y(c)=top_y, WIDGET_W(c)=half_w, WIDGET_H(c)=max_h; break;
+        case RIGHT_MAX: WIDGET_X(c)=mid_x, WIDGET_Y(c)=top_y, WIDGET_W(c)=half_w, WIDGET_H(c)=max_h;  break;
         case FULL_MAX:  fmax=true; break;
         default:        return;
     }
     if(fmax)
-        c->x=left_x, c->y=top_y, c->w=max_w, c->h=max_h;
+        WIDGET_X(c)=left_x, WIDGET_Y(c)=top_y, WIDGET_W(c)=max_w, WIDGET_H(c)=max_h;
 }
 
 void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h)
@@ -114,7 +112,7 @@ void restore_client(WM *wm, Client *c)
         c->win_state.rmax=0;
     if(c->win_state.fullscreen)
         c->win_state.fullscreen=0;
-    update_net_wm_state(c->win, c->win_state);
+    update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
 bool is_win_state_max(Client *c)
@@ -139,7 +137,7 @@ void fix_win_rect_by_state(WM *wm, Client *c)
         set_max_rect(wm, c, way);
     }
     else if(c->win_state.fullscreen)
-        c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
+        WIDGET_X(c)=WIDGET_Y(c)=0, WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
 }
 
 void iconify_client(WM *wm, Client *c)
@@ -150,19 +148,14 @@ void iconify_client(WM *wm, Client *c)
     move_client_node(wm, c, get_icon_client_head(wm), ANY_PLACE);
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
-        create_icon(p);
-        p->icon->title_text=get_icon_title_text(p->win, p->title_text);
-        update_win_bg(p->icon->win, get_widget_color(TASKBAR_COLOR), None);
-        update_icon_area(wm->clients);
-        XMapWindow(xinfo.display, p->icon->win);
-        XUnmapWindow(xinfo.display, p->frame);
-        if(p == DESKTOP(wm)->cur_focus_client)
+        p->win_state.hidden=1;
+        update_net_wm_state(WIDGET_WIN(p), p->win_state);
+        hide_widget(WIDGET(c->frame));
+        if(c == CUR_FOC_CLI(wm))
         {
             focus_client(wm, wm->cur_desktop, NULL);
-            update_frame_bg(wm, wm->cur_desktop, p);
+            update_frame_bg(wm, wm->cur_desktop, c);
         }
-        p->win_state.hidden=1;
-        update_net_wm_state(p->win, p->win_state);
     }
     request_layout_update();
 }
@@ -170,19 +163,9 @@ void iconify_client(WM *wm, Client *c)
 static Client *get_icon_client_head(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(c) && c->icon)
+        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             return c->prev;
     return wm->clients->prev;
-}
-
-void create_icon(Client *c)
-{
-    Icon *i=c->icon=malloc_s(sizeof(Icon));
-    i->x=i->y=0, i->w=i->h=taskbar->h;
-    i->title_text=NULL; // 有的窗口映射時未設置圖標標題，故應延後至縮微窗口時再設置title_text
-    i->win=create_widget_win(CLIENT_ICON, taskbar->icon_area, 0, 0, i->w, i->h,
-        0, 0, get_widget_color(TASKBAR_COLOR));
-    XSelectInput(xinfo.display, c->icon->win, ICON_WIN_EVENT_MASK);
 }
 
 void deiconify_client(WM *wm, Client *c)
@@ -193,41 +176,28 @@ void deiconify_client(WM *wm, Client *c)
     move_client_node(wm, c, NULL, c->place_type);
     for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
     {
-        if(p->icon)
+        if(is_iconic_client(p))
         {
-            del_icon(wm, p);
-            XMapWindow(xinfo.display, p->frame);
-            update_icon_area(wm->clients);
-            focus_client(wm, wm->cur_desktop, p);
             p->win_state.hidden=0;
-            update_net_wm_state(p->win, p->win_state);
+            update_net_wm_state(WIDGET_WIN(p), p->win_state);
+            show_widget(WIDGET(c->frame));
+            focus_client(wm, wm->cur_desktop, c);
         }
     }
     request_layout_update();
 }
 
-static void del_icon(WM *wm, Client *c)
-{
-    if(c->icon)
-    {
-        XDestroyWindow(xinfo.display, c->icon->win);
-        vfree(c->icon->title_text, c->icon, NULL);
-        c->icon=NULL;
-        update_icon_area(wm->clients);
-    }
-}
-
 void iconify_all_clients(WM *wm)
 {
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(c) && !c->icon)
+        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
             iconify_client(wm, c);
 }
 
 void deiconify_all_clients(WM *wm)
 {
     for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
-        if(is_on_cur_desktop(c) && c->icon)
+        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             deiconify_client(wm, c);
 }
 
@@ -284,7 +254,7 @@ void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
     if(SHOULD_ADD_STATE(c, act, hidden))
         iconify_client(wm, c);
     else
-        deiconify_client(wm, c->icon ? c : NULL);
+        deiconify_client(wm, is_iconic_client(c) ? c : NULL);
 }
 
 void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
@@ -298,7 +268,7 @@ void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
 static void set_fullscreen(WM *wm, Client *c)
 {
     save_place_info_of_client(c);
-    c->x=c->y=0, c->w=xinfo.screen_width, c->h=xinfo.screen_height;
+    WIDGET_X(c)=WIDGET_Y(c)=0, WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
     move_client(wm, c, NULL, FULLSCREEN_LAYER);
-    update_net_wm_state(c->win, c->win_state);
+    update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }

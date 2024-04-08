@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "mvresize.h"
+#include "menu.h"
 
 static bool is_valid_click(XEvent *oe, XEvent *ne);
 
@@ -29,7 +30,7 @@ static bool is_grab_root_act(Pointer_act act)
 
 bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
 {
-    if(act==CHOOSE && get_widget_type(oe->xbutton.window)==CLIENT_WIN)
+    if(act==CHOOSE && win_to_widget(oe->xbutton.window)->id==CLIENT_WIN)
         return true;
 
     Window win = is_grab_root_act(act) ? xinfo.root_win : oe->xbutton.window;
@@ -57,7 +58,7 @@ void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
     Client *c=CUR_FOC_CLI(wm);
 
-    if(c->icon)
+    if(is_iconic_client(c))
         deiconify_client(wm, c);
 
     if(DESKTOP(wm)->cur_layout == PREVIEW)
@@ -81,7 +82,7 @@ void clear_wm(WM *wm)
 {
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
     {
-        XReparentWindow(xinfo.display, c->win, xinfo.root_win, c->x, c->y);
+        XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
         del_client(wm, c, true);
     }
     XDestroyWindow(xinfo.display, xinfo.hint_win);
@@ -115,15 +116,15 @@ void close_client(WM *wm, XEvent *e, Func_arg arg)
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
     Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
-        close_win(c->win);
+        close_win(WIDGET_WIN(c));
 }
 
 void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        if(is_on_cur_desktop(c))
-            close_win(c->win);
+        if(is_on_cur_desktop(c->desktop_mask))
+            close_win(WIDGET_WIN(c));
 }
 
 /* 取得存儲次序上在當前客戶之前的客戶（或其亞組長）。因使用頭插法存儲客戶，
@@ -176,7 +177,7 @@ void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
     c->border_w = c->border_w ? 0 : cfg->border_width;
-    XSetWindowBorderWidth(xinfo.display, c->frame, c->border_w);
+    set_widget_border_width(WIDGET(c->frame), c->border_w);
     request_layout_update();
 }
 
@@ -188,14 +189,14 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
     if(c->titlebar_h)
     {
         create_titlebar(c);
-        XMapSubwindows(xinfo.display, c->frame);
+        show_widget(WIDGET(c->frame));
     }
     else
     {
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            XDestroyWindow(xinfo.display, c->buttons[i]);
-        XDestroyWindow(xinfo.display, c->title_area);
-        XDestroyWindow(xinfo.display, c->logo);
+            destroy_button(c->frame->buttons[i]);
+        destroy_widget(c->frame->title_area);
+        destroy_button(c->frame->logo);
     }
     request_layout_update();
 }
@@ -253,9 +254,10 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
     all_attach_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void enter_and_run_cmd(WM *wm, XEvent *e, Func_arg arg)
+void show_run_cmd_entry(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
+    XRaiseWindow(xinfo.display, WIDGET_WIN(cmd_entry));
     show_entry(cmd_entry);
 }
 
@@ -290,7 +292,7 @@ void print_win(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
     if(c != wm->clients)
-        print_area(c->frame, 0, 0, c->w, c->h);
+        print_area(WIDGET_WIN(c->frame), 0, 0, WIDGET_W(c), WIDGET_H(c));
 }
 
 void switch_color_theme(WM *wm, XEvent *e, Func_arg arg)
@@ -303,8 +305,8 @@ void switch_color_theme(WM *wm, XEvent *e, Func_arg arg)
     // 以下函數會產生Expose事件，而處理Expose事件時會更新窗口的文字
     // 內容及其顏色，故此處不必更新構件文字顏色。
     update_taskbar_bg();
-    update_menu_bg(act_center, ACT_CENTER_ITEM_N);
-    update_menu_bg(client_menu, CLIENT_MENU_ITEM_N);
+    update_menu_bg(act_center);
+    update_menu_bg(client_menu);
     update_entry_bg(cmd_entry);
     update_win_bg(xinfo.hint_win, get_widget_color(HINT_WIN_COLOR), None);
     update_clients_bg(wm);

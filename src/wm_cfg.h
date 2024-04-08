@@ -21,10 +21,16 @@
     cfg->title_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
 #define SET_TASKBAR_BUTTON_TEXT(type, text) /* 設置任務欄按鈕文字 */ \
     cfg->taskbar_button_text[WIDGET_INDEX(type, TASKBAR_BUTTON)]=text
-#define SET_ACT_CENTER_ITEM_TEXT(type, text) /* 設置操作中心菜單項文字 */ \
-    cfg->act_center_item_text[WIDGET_INDEX(type, ACT_CENTER_ITEM)]=text
-#define SET_CLIENT_MENU_ITEM_TEXT(type, text) /* 設置客戶窗口菜單項文字 */ \
-    cfg->client_menu_item_text[WIDGET_INDEX(type, CLIENT_MENU_ITEM)]=text
+
+#define SET_ACT_CENTER_MENU_ITEM(id, icon, symbol, label) /* 設置操作中心菜單項圖標和標籤 */ \
+    cfg->act_center_item_icon[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=icon, \
+    cfg->act_center_item_symbol[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=symbol, \
+    cfg->act_center_item_label[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=label
+
+#define SET_CLIENT_MENU_ITEM(id, icon, symbol, label) /* 設置客戶窗口菜單項圖標和標籤 */ \
+    cfg->client_menu_item_icon[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=icon, \
+    cfg->client_menu_item_symbol[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=symbol, \
+    cfg->client_menu_item_label[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=label
 
 /* 功能：設置應由窗口管理器去設定的定位器相關功能綁定。
  * 說明：通常把單擊的相關功能綁定放在這裏。
@@ -67,7 +73,7 @@
     {LOGOUT_BUTTON,             0, Button1,  exec,                       SH_CMD(LOGOUT)},                   \
     {REBOOT_BUTTON,             0, Button1,  exec,                       SH_CMD("reboot")},                 \
     {POWEROFF_BUTTON,           0, Button1,  exec,                       SH_CMD("poweroff")},               \
-    {RUN_BUTTON,                0, Button1,  enter_and_run_cmd,          {0}},                              \
+    {RUN_BUTTON,                0, Button1,  show_run_cmd_entry,         {0}},                              \
     {TITLE_LOGO,                0, Button1,  open_client_menu,           {0}},                              \
     {VERT_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=VERT_MAX}},              \
     {HORZ_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=HORZ_MAX}},              \

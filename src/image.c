@@ -11,15 +11,25 @@
 
 #include "gwm.h"
 
+typedef struct image_node_tag
+{
+    char *name;
+    Imlib_Image image;
+    struct image_node_tag *next;
+} Image_node;
+
 typedef struct // 存儲圖標主題規範所說的Per-Directory Keys的結構
 {
     int size, scale, max_size, min_size, threshold;
     char type[10]; // char context[32]; 目前用不上
 } Icon_dir_info;
 
-static Imlib_Image get_icon_image_from_hint(const XWMHints *hint);
-static Imlib_Image get_icon_image_from_prop(Window win);
-static Imlib_Image get_icon_image_from_file(const char *name, int size, const char *theme);
+static Imlib_Image search_icon_image(const char *name);
+static Imlib_Image create_icon_image(Window win, const char *name, int size, const char *theme);
+static void reg_image(const char *name, Imlib_Image image);
+static Imlib_Image create_icon_image_from_hint(Window win);
+static Imlib_Image create_icon_image_from_prop(Window win);
+static Imlib_Image create_icon_image_from_file(const char *name, int size, const char *theme);
 static char *find_icon(const char *name, int size, int scale, const char *theme, const char *context_dir);
 static char *find_icon_helper(const char *name, int size, int scale, char *const *base_dirs, const char *theme, const char *context_dir);
 static char *lookup_icon(const char *name, int size, int scale, char *const *base_dirs, const char *theme, const char *context_dir);
@@ -38,6 +48,8 @@ static FILE *open_index_theme(const char *base_dir, const char *theme);
 static size_t get_spec_char_num(const char *str, int ch);
 static char **get_parent_themes(const char *base_dir, const char *theme);
 
+static Image_node *image_list=NULL;
+
 void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
     XClearArea(xinfo.display, d, x, y, w, h, False); 
@@ -47,32 +59,59 @@ void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
     imlib_render_image_on_drawable_at_size(x, y, w, h);
 }
 
-Imlib_Image get_icon_image(Window win, const XWMHints *hint, const char *name, int size, const char *theme)
+Imlib_Image get_icon_image(Window win, const char *name, int size, const char *theme)
 {
-    /* 根據加載效率依次嘗試 */
-    Imlib_Image image=NULL;
-    if( (image=get_icon_image_from_hint(hint))
-        || (image=get_icon_image_from_prop(win))
-        || (image=get_icon_image_from_file(name, size, theme)))
-        return image;
+    Imlib_Image image=search_icon_image(name);
+
+    return image ? image : create_icon_image(win, name, size, theme);
+}
+
+static Imlib_Image search_icon_image(const char *name)
+{
+    for(Image_node *p=image_list; p; p=p->next)
+        if(strcmp(p->name, name) == 0)
+            return p->image;
     return NULL;
 }
 
-static Imlib_Image get_icon_image_from_hint(const XWMHints *hint)
+static Imlib_Image create_icon_image(Window win, const char *name, int size, const char *theme)
 {
+    Imlib_Image image=NULL;
+
+    /* 根據加載效率依次嘗試 */
+    if( (image=create_icon_image_from_hint(win))
+        || (image=create_icon_image_from_prop(win))
+        || (image=create_icon_image_from_file(name, size, theme)))
+    {
+        reg_image(name, image);
+        return image;
+    }
+
+    return NULL;
+}
+
+static void reg_image(const char *name, Imlib_Image image)
+{
+    Image_node *p=malloc_s(sizeof(Image_node));
+    p->name=copy_string(name), p->image=image, p->next=image_list, image_list=p;
+}
+
+static Imlib_Image create_icon_image_from_hint(Window win)
+{
+    XWMHints *hint=XGetWMHints(xinfo.display, win);
     if(!hint || !(hint->flags & IconPixmapHint))
         return NULL;
 
     int w, h;
     Pixmap pixmap=hint->icon_pixmap, mask=hint->icon_mask;
-
+    XFree(hint);
     if(!get_geometry(pixmap, NULL, NULL, &w, &h, NULL, NULL))
         return NULL;
     imlib_context_set_drawable(pixmap);   
     return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
 }
 
-static Imlib_Image get_icon_image_from_prop(Window win)
+static Imlib_Image create_icon_image_from_prop(Window win)
 {
     CARD32 *data=get_net_wm_icon(win);
     if(!data)
@@ -91,8 +130,11 @@ static Imlib_Image get_icon_image_from_prop(Window win)
     return image;
 }
 
-static Imlib_Image get_icon_image_from_file(const char *name, int size, const char *theme)
+static Imlib_Image create_icon_image_from_file(const char *name, int size, const char *theme)
 {
+    if(!name || size<=0 || !theme)
+        return NULL;
+
     char *fn=find_icon(name, size, 1, theme, "apps");
     return fn ? imlib_load_image(fn) : NULL;
 }

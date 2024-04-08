@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     entry.h：與entry.c相應的頭文件。
+ *     button.h：與button.c相應的頭文件。
  *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,21 +9,23 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef ENTRY_H
-#define ENTRY_H
+#ifndef BUTTON_H
+#define BUTTON_H
 
-#define ENTRY(widget) ((Entry *)(widget))
+#include "gwm.h"
+#include "font.h"
 
-typedef struct _entry_tag Entry;
+typedef struct _button_tag Button;
 
-Entry *create_entry(Widget_id id, Window parent, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *));
-wchar_t *get_entry_text(Entry *entry);
-void show_entry(Entry *entry);
-void update_entry_bg(Entry *entry);
-void update_entry_fg(Entry *entry);
-bool input_for_entry(Entry *entry, XKeyEvent *ke);
-void destroy_entry(Entry *entry);
-void paste_for_entry(Entry *entry);
-Entry *create_cmd_entry(Widget_id id);
+#define BUTTON(widget) ((Button *)(widget))
+
+Button *create_button(Widget_id id, Widget_state state, Window parent, int x, int y, int w, int h, const char *label);
+void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol);
+char *get_button_label(Button *button);
+void set_button_label(Button *button, const char *label);
+void set_button_align(Button *button, Align_type align);
+void destroy_button(Button *button);
+void show_button(const Button *button);
+void update_button_fg(const Button *button);
 
 #endif

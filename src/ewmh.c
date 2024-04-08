@@ -341,7 +341,7 @@ Net_wm_state get_net_wm_state_mask(const long *full_act)
 /* 判斷是否存在（遵從EWMH標準的）合成器 */
 bool have_compositor(void)
 {
-    return  get_compositor() != None;
+    return get_compositor() != None;
 }
 
 /* 獲取（遵從EWMH標準的）合成器的ID，它未必是真實的窗口 */

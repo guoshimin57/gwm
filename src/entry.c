@@ -10,9 +10,18 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "misc.h"
 
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
+
+struct _entry_tag // 輸入構件
+{
+    Widget base;
+    wchar_t text[BUFSIZ]; // 構件上的文字
+    const char *hint; // 構件的提示文字
+    size_t cursor_offset; // 光標偏移字符數
+    XIC xic; // 輸入法句柄
+    Strings *(*complete)(Entry *, int *); // 補全函數
+};
 
 static int get_entry_cursor_x(Entry *entry);
 static char *get_part_match_regex(Entry *entry);
@@ -22,49 +31,53 @@ static Strings *get_cmd_completion_for_entry(Entry *entry, int *n);
 
 Entry *cmd_entry=NULL; // 輸入命令並執行的構件
 
-Entry *create_entry(Widget_type type, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
+Entry *create_entry(Widget_id id, Window parent, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
 {
     Entry *entry=malloc_s(sizeof(Entry));
-    entry->x=x, entry->y=y, entry->w=w, entry->h=h;
-    entry->hint=hint, entry->complete=complete;
-    entry->win=create_widget_win(type, xinfo.root_win, x, y, w, h,
-        cfg->border_width, get_widget_color(CURRENT_BORDER_COLOR),
-        get_widget_color(ENTRY_COLOR));
-    XSelectInput(xinfo.display, entry->win, ENTRY_EVENT_MASK);
-    set_xic(entry->win, &entry->xic);
+    Widget_state state={.focus=1};
+    init_widget(WIDGET(entry), id, ENTRY_TYPE, state, parent, x, y, w, h);
+    entry->text[0]=L'\0', entry->hint=hint, entry->cursor_offset=0;
+    entry->complete=complete;
+    XSelectInput(xinfo.display, WIDGET_WIN(entry), ENTRY_EVENT_MASK);
+    set_xic(WIDGET_WIN(entry), &entry->xic);
     return entry;
+}
+
+wchar_t *get_entry_text(Entry *entry)
+{
+    return entry->text;
 }
 
 void show_entry(Entry *entry)
 {
+    show_widget(WIDGET(entry));
     entry->text[0]=L'\0', entry->cursor_offset=0;
-    XMapRaised(xinfo.display, entry->win);
-    update_entry_text(entry);
-    XGrabKeyboard(xinfo.display, entry->win, False,
+    update_entry_fg(entry);
+    XGrabKeyboard(xinfo.display, WIDGET_WIN(entry), False,
         GrabModeAsync, GrabModeAsync, CurrentTime);
 }
 
 void update_entry_bg(Entry *entry)
 {
-    update_win_bg(entry->win, get_widget_color(ENTRY_COLOR), None);
-    XSetWindowBorder(xinfo.display, entry->win,
+    update_widget_bg(WIDGET(entry));
+    XSetWindowBorder(xinfo.display, WIDGET_WIN(entry),
         get_widget_color(CURRENT_BORDER_COLOR));
 }
 
-void update_entry_text(Entry *entry)
+void update_entry_fg(Entry *entry)
 {
     int x=get_entry_cursor_x(entry);
     bool empty = entry->text[0]==L'\0';
-    Str_fmt fmt={0, 0, entry->w, entry->h, CENTER_LEFT, true, false, 0,
-        get_text_color(empty ? HINT_TEXT_COLOR : ENTRY_TEXT_COLOR)};
+    Str_fmt fmt={0, 0, WIDGET_W(entry), WIDGET_H(entry), CENTER_LEFT, true, false, 0,
+        get_widget_fg(empty ? HINT_TEXT_COLOR : get_widget_fg_id(WIDGET(entry)))};
 
     if(empty)
-        draw_string(entry->win, entry->hint, &fmt);
+        draw_string(WIDGET_WIN(entry), entry->hint, &fmt);
     else
-        draw_wcs(entry->win, entry->text, &fmt);
+        draw_wcs(WIDGET_WIN(entry), entry->text, &fmt);
 
-    GC gc=XCreateGC(xinfo.display, entry->win, 0, NULL);
-    XDrawLine(xinfo.display, entry->win, gc, x, 0, x, entry->h);
+    GC gc=XCreateGC(xinfo.display, WIDGET_WIN(entry), 0, NULL);
+    XDrawLine(xinfo.display, WIDGET_WIN(entry), gc, x, 0, x, WIDGET_H(entry));
 }
 
 static int get_entry_cursor_x(Entry *entry)
@@ -94,7 +107,7 @@ bool input_for_entry(Entry *entry, XKeyEvent *ke)
             wmemmove(s, s+*i, no+1), *i=0;
         else if(ks == XK_v)
             XConvertSelection(xinfo.display, XA_PRIMARY, get_utf8_string_atom(),
-                None, entry->win, ke->time);
+                None, WIDGET_WIN(entry), ke->time);
     }
     else if(is_equal_modifier_mask(None, ke->state))
     {
@@ -120,7 +133,7 @@ bool input_for_entry(Entry *entry, XKeyEvent *ke)
         wcsncpy(s+n1, keyname, n-n1-1), (*i)+=n2;
 
     complete_for_entry(entry, true);
-    update_entry_text(entry);
+    update_entry_fg(entry);
     return false;
 }
 
@@ -144,10 +157,11 @@ static void complete_for_entry(Entry *entry, bool show)
     if(show)
     {
         Window win=xinfo.hint_win;
-        int i, bw=cfg->border_width, w=entry->w, h=entry->h, x=entry->x+bw,
-            y=entry->y+entry->h+2*bw, max=(xinfo.screen_height-y)/h;
+        int i, bw=cfg->border_width, w=WIDGET_W(entry), h=WIDGET_H(entry),
+            x=WIDGET_X(entry)+bw, y=WIDGET_Y(entry)+h+2*bw,
+            max=(xinfo.screen_height-y)/h;
         Str_fmt fmt={0, 0, w, h, CENTER_LEFT, true, false, 0,
-            get_text_color(HINT_TEXT_COLOR)};
+            get_widget_fg(HINT_TEXT_COLOR)};
 
         XMoveResizeWindow(xinfo.display, win, x, y, w, MIN(n, max)*h);
         XMapWindow(xinfo.display, win);
@@ -166,21 +180,20 @@ static void complete_for_entry(Entry *entry, bool show)
 static void hide_entry(Entry *entry)
 {
     XUngrabKeyboard(xinfo.display, CurrentTime);
-    XUnmapWindow(xinfo.display, entry->win);
+    hide_widget(WIDGET(entry));
     XUnmapWindow(xinfo.display, xinfo.hint_win);
 }
 
 void destroy_entry(Entry *entry)
 {
-    XDestroyWindow(xinfo.display, entry->win);
     if(entry->xic)
         XDestroyIC(entry->xic);
-    free(entry);
+    destroy_widget(WIDGET(entry));
 }
 
 void paste_for_entry(Entry *entry)
 {
-    char *p=(char *)get_prop(entry->win, get_utf8_string_atom(), NULL);
+    char *p=(char *)get_prop(WIDGET_WIN(entry), get_utf8_string_atom(), NULL);
     wchar_t text[BUFSIZ];
     int n=mbstowcs(text, p, BUFSIZ);
     XFree(p);
@@ -191,10 +204,10 @@ void paste_for_entry(Entry *entry)
     wmemmove(dest, src, wcslen(entry->text)-entry->cursor_offset);
     wcsncpy(src, text, n);
     entry->cursor_offset += n;
-    update_entry_text(entry);
+    update_entry_fg(entry);
 }
 
-Entry *create_cmd_entry(Widget_type type)
+Entry *create_cmd_entry(Widget_id id)
 {
     int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
         x, y, w, h=get_font_height_by_pad(), pad=get_font_pad();
@@ -203,7 +216,7 @@ Entry *create_cmd_entry(Widget_type type)
     w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
     x=(sw-w)/2-bw, y=(sh-h)/2-bw;
 
-    return create_entry(type, x, y, w, h, cfg->cmd_entry_hint,
+    return create_entry(id, xinfo.root_win, x, y, w, h, cfg->cmd_entry_hint,
         get_cmd_completion_for_entry);
 }
 

@@ -13,6 +13,8 @@
 
 typedef enum op_type_tag { MOVE_TO_N, CHANGE_TO_N, ATTACH_TO_N, ATTACH_TO_ALL } Op_type;
 
+static void hide_cur_desktop_clients(WM *wm);
+static void show_cur_desktop_clients(WM *wm);
 static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op);
 
 void init_desktop(WM *wm)
@@ -34,41 +36,51 @@ unsigned int get_desktop_n(XEvent *e, Func_arg arg)
     if(e->type == KeyPress)
         return (arg.n>=0 && arg.n<=DESKTOP_N) ? arg.n : 1;
     if(e->type == ButtonPress)
-        return WIDGET_INDEX(get_widget_type(e->xbutton.window), TASKBAR_BUTTON)+1;
+        return win_to_widget(e->xbutton.window)->id-TASKBAR_BUTTON_BEGIN+1;
     return 1;
 }
 
 void focus_desktop_n(WM *wm, unsigned int n)
 {
-    if(n == 0) // n=0表示所有虛擬桌面，僅適用於attach_to_all_desktops
+    /* n=0表示所有虛擬桌面，僅適用於attach_to_all_desktops */
+    if(n==0 || n==wm->cur_desktop)
         return;
 
+    hide_cur_desktop_clients(wm);
     wm->cur_desktop=n;
-    set_net_current_desktop(wm->cur_desktop-1);
-
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-    {
-        if(is_on_cur_desktop(c))
-        {
-            if(c->icon)
-                XMapWindow(xinfo.display, c->icon->win);
-            else
-                XMapWindow(xinfo.display, c->frame);
-        }
-        else
-        {
-            if(c->icon)
-                XUnmapWindow(xinfo.display, c->icon->win);
-            else
-                XUnmapWindow(xinfo.display, c->frame);
-        }
-    }
-
+    set_net_current_desktop(n-1);
+    show_cur_desktop_clients(wm);
     focus_client(wm, wm->cur_desktop, CUR_FOC_CLI(wm));
     request_layout_update();
-    update_icon_area(wm->clients);
-    update_taskbar_buttons_bg();
     set_all_net_client_list(wm->clients);
+}
+
+static void hide_cur_desktop_clients(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        if(is_on_cur_desktop(c->desktop_mask))
+        {
+            if(is_iconic_client(c))
+                taskbar_del_cbutton(WIDGET_WIN(c));
+            else
+                hide_widget(WIDGET(c->frame));
+        }
+    }
+}
+
+static void show_cur_desktop_clients(WM *wm)
+{
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    {
+        if(is_on_cur_desktop(c->desktop_mask))
+        {
+            if(is_iconic_client(c))
+                taskbar_add_cbutton(WIDGET_WIN(c));
+            else
+                show_widget(WIDGET(c->frame));
+        }
+    }
 }
 
 void move_to_desktop_n(WM *wm, Client *c, unsigned int n)

@@ -33,15 +33,19 @@
 #include <X11/Xft/Xft.h>
 #include <X11/Xproto.h>
 
+#include "misc.h"
+#include "font.h"
 #include "widget.h"
+#include "button.h"
 #include "drawable.h"
+#include "entry.h"
 #include "ewmh.h"
 #include "file.h"
-#include "font.h"
 #include "menu.h"
 #include "icccm.h"
 #include "image.h"
 #include "prop.h"
+#include "taskbar.h"
 
 #define _(s) gettext(s)
 
@@ -93,12 +97,6 @@ typedef struct // 與X相關的信息
     Window hint_win; // 提示窗口
 } Xinfo;
 
-enum focus_mode_tag // 窗口聚焦模式
-{
-    ENTER_FOCUS, CLICK_FOCUS,
-};
-typedef enum focus_mode_tag Focus_mode;
-
 enum place_type_tag // 窗口的位置類型
 {
     FULLSCREEN_LAYER, ABOVE_LAYER, DOCK_LAYER, FLOAT_LAYER,
@@ -106,13 +104,6 @@ enum place_type_tag // 窗口的位置類型
     BELOW_LAYER, DESKTOP_LAYER, ANY_PLACE, PLACE_TYPE_N=ANY_PLACE
 };
 typedef enum place_type_tag Place_type;
-
-enum top_win_type_tag // 窗口疊次序分層類型
-{
-    DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, FLOAT_TOP, DOCK_TOP, ABOVE_TOP,
-    FULLSCREEN_TOP, TOP_WIN_TYPE_N
-};
-typedef enum top_win_type_tag Top_win_type;
 
 struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 {
@@ -141,6 +132,12 @@ struct rule_tag // 窗口管理器的規則
     unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼
 };
 typedef struct rule_tag Rule;
+
+typedef enum // 窗口疊次序分層類型
+{
+    DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, FLOAT_TOP, DOCK_TOP, ABOVE_TOP,
+    FULLSCREEN_TOP, TOP_WIN_TYPE_N
+} Top_win_type;
 
 struct wm_tag // 窗口管理器相關信息
 {
@@ -197,7 +194,7 @@ typedef struct keybind_tag Keybind;
 
 struct buttonbind_tag // 定位器按鈕功能綁定
 {
-    Widget_type widget_type; // 要綁定的構件類型
+    Widget_id widget_id; // 要綁定的構件標識
 	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵 
     unsigned int button; // 要綁定的定位器按鈕
 	void (*func)(WM *, XEvent *, Func_arg); // 要綁定的函數
@@ -221,16 +218,13 @@ typedef struct delta_rect_tag Delta_rect;
 #include "config.h"
 #include "debug.h"
 #include "desktop.h"
-#include "entry.h"
 #include "func.h"
 #include "handler.h"
 #include "init.h"
 #include "layout.h"
 #include "minimax.h"
-#include "misc.h"
 #include "mvresize.h"
 #include "place.h"
-#include "taskbar.h"
 
 extern sig_atomic_t run_flag; // 程序運行標志
 extern Xinfo xinfo;
