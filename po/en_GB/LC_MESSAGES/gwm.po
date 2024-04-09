@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.9.0\n"
+"Project-Id-Version: gwm 2.9.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-04-08 13:09+0800\n"
+"POT-Creation-Date: 2024-04-09 22:05+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -21,258 +21,130 @@ msgstr ""
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
-#. 操作中心按鈕類型         圖標名   符號      標籤
-#: config.c:549
-msgid "🛟"
-msgstr "🛟"
-
+#. 操作中心按鈕類型         圖標名 符號     標籤
 #: config.c:549
 msgid "幫助"
 msgstr "Help"
-
-#: config.c:550
-msgid "📁"
-msgstr "📁"
 
 #: config.c:550
 msgid "文件"
 msgstr "Doc"
 
 #: config.c:551
-msgid "🖥️"
-msgstr "🖥️"
-
-#: config.c:551
 msgid "終端模擬器"
 msgstr "Terminal"
-
-#: config.c:552
-msgid "🌐"
-msgstr "🌐"
 
 #: config.c:552
 msgid "網絡瀏覽器"
 msgstr "Web browser"
 
 #: config.c:554
-msgid "🎮️"
-msgstr "🎮️"
-
-#: config.c:554
 msgid "遊戲"
 msgstr "Game"
-
-#: config.c:555
-msgid "🎬"
-msgstr "🎬"
 
 #: config.c:555
 msgid "播放影音"
 msgstr "Player"
 
 #: config.c:556
-msgid "⏯️"
-msgstr "⏯️"
-
-#: config.c:556
 msgid "切換播放狀態"
 msgstr "Toggle play status"
-
-#: config.c:557
-msgid "⏹️"
-msgstr "⏹️"
 
 #: config.c:557
 msgid "關閉影音"
 msgstr "Quit player"
 
 #: config.c:559
-msgid "🔈️"
-msgstr "🔈️"
-
-#: config.c:559
 msgid "减小音量"
 msgstr "Volume down"
-
-#: config.c:560
-msgid "🔉"
-msgstr "🔉"
 
 #: config.c:560
 msgid "增大音量"
 msgstr "Volume up"
 
 #: config.c:561
-msgid "🔊"
-msgstr "🔊"
-
-#: config.c:561
 msgid "最大音量"
 msgstr "Volume max"
-
-#: config.c:562
-msgid "🔇"
-msgstr "🔇"
 
 #: config.c:562
 msgid "靜音切換"
 msgstr "Mute toggle"
 
 #: config.c:564
-msgid "▼"
-msgstr "▼"
-
-#: config.c:564
 msgid "暫主區開窗"
 msgstr "Main next"
-
-#: config.c:565
-msgid "◁"
-msgstr "◁"
 
 #: config.c:565
 msgid "暫次區開窗"
 msgstr "Sec next"
 
 #: config.c:566
-msgid "▷"
-msgstr "▷"
-
-#: config.c:566
 msgid "暫固定區開窗"
 msgstr "Fixed next"
-
-#: config.c:567
-msgid "△"
-msgstr "△"
 
 #: config.c:567
 msgid "暫懸浮層開窗"
 msgstr "Float next"
 
 #: config.c:569
-msgid "⬆️"
-msgstr "⬆️"
-
-#: config.c:569
 msgid "增大主區容量"
 msgstr "Main area n+"
-
-#: config.c:570
-msgid "⬇️"
-msgstr "⬇️"
 
 #: config.c:570
 msgid "减小主區容量"
 msgstr "Main area n-"
 
 #: config.c:571
-msgid "🗔"
-msgstr "🗔"
-
-#: config.c:571
 msgid "開關當前窗口標題欄"
 msgstr "Toggle cur win titlebar"
-
-#: config.c:572
-msgid "⬚"
-msgstr "⬚"
 
 #: config.c:572
 msgid "開關當前窗口邊框"
 msgstr "Toggle cur win border"
 
 #: config.c:574
-msgid "❎"
-msgstr "❎"
-
-#: config.c:574
 msgid "關閉桌面所有窗口"
 msgstr "Close all win on desktop"
-
-#: config.c:575
-msgid "✀"
-msgstr "✀"
 
 #: config.c:575
 msgid "當前窗口截圖"
 msgstr "Cur win screenshot"
 
 #: config.c:576
-msgid "🖵"
-msgstr "🖵"
-
-#: config.c:576
 msgid "全屏截圖"
 msgstr "Full screen screenshot"
-
-#: config.c:577
-msgid "👁️"
-msgstr "👁️"
 
 #: config.c:577
 msgid "切換聚焦模式"
 msgstr "Toggle focus mode"
 
 #: config.c:579
-msgid "🪡"
-msgstr "🪡"
-
-#: config.c:579
 msgid "開關合成器"
 msgstr "Toggle compositor"
-
-#: config.c:580
-msgid "🌌"
-msgstr "🌌"
 
 #: config.c:580
 msgid "切換壁紙"
 msgstr "Switch wallpaper"
 
 #: config.c:581
-msgid "🎨"
-msgstr "🎨"
-
-#: config.c:581
 msgid "切換顏色主題"
 msgstr "Switch color theme"
-
-#: config.c:582
-msgid "❌"
-msgstr "❌"
 
 #: config.c:582
 msgid "退出gwm"
 msgstr "Quit gwm"
 
 #: config.c:584
-msgid "🚶"
-msgstr "🚶"
-
-#: config.c:584
 msgid "注銷"
 msgstr "Log out"
-
-#: config.c:585
-msgid "↻"
-msgstr "↻"
 
 #: config.c:585
 msgid "重啓"
 msgstr "Reboot"
 
 #: config.c:586
-msgid "⏻"
-msgstr "⏻"
-
-#: config.c:586
 msgid "關機"
 msgstr "Shut down"
-
-#: config.c:587
-msgid "🔍️"
-msgstr "Run command"
 
 #: config.c:587
 msgid "運行"

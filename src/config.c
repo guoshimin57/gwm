@@ -545,46 +545,46 @@ static void config_taskbar_button_text(void)
  */
 static void config_act_center_item(void)
 {
-    /*                       操作中心按鈕類型         圖標名   符號      標籤 */
-    SET_ACT_CENTER_MENU_ITEM(HELP_BUTTON,              NULL, _("🛟"), _("幫助"));
-    SET_ACT_CENTER_MENU_ITEM(FILE_BUTTON,              NULL, _("📁"), _("文件"));
-    SET_ACT_CENTER_MENU_ITEM(TERM_BUTTON,              NULL, _("🖥️"), _("終端模擬器"));
-    SET_ACT_CENTER_MENU_ITEM(BROWSER_BUTTON,           NULL, _("🌐"), _("網絡瀏覽器"));
+    /*                       操作中心按鈕類型         圖標名 符號     標籤 */
+    SET_ACT_CENTER_MENU_ITEM(HELP_BUTTON,              NULL, "🛟", _("幫助"));
+    SET_ACT_CENTER_MENU_ITEM(FILE_BUTTON,              NULL, "📁", _("文件"));
+    SET_ACT_CENTER_MENU_ITEM(TERM_BUTTON,              NULL, "🖥️", _("終端模擬器"));
+    SET_ACT_CENTER_MENU_ITEM(BROWSER_BUTTON,           NULL, "🌐", _("網絡瀏覽器"));
 
-    SET_ACT_CENTER_MENU_ITEM(GAME_BUTTON,              NULL, _("🎮️"), _("遊戲"));
-    SET_ACT_CENTER_MENU_ITEM(PLAY_START_BUTTON,        NULL, _("🎬"), _("播放影音"));
-    SET_ACT_CENTER_MENU_ITEM(PLAY_TOGGLE_BUTTON,       NULL, _("⏯️"), _("切換播放狀態"));
-    SET_ACT_CENTER_MENU_ITEM(PLAY_QUIT_BUTTON,         NULL, _("⏹️"), _("關閉影音"));
+    SET_ACT_CENTER_MENU_ITEM(GAME_BUTTON,              NULL, "🎮️", _("遊戲"));
+    SET_ACT_CENTER_MENU_ITEM(PLAY_START_BUTTON,        NULL, "🎬", _("播放影音"));
+    SET_ACT_CENTER_MENU_ITEM(PLAY_TOGGLE_BUTTON,       NULL, "⏯️", _("切換播放狀態"));
+    SET_ACT_CENTER_MENU_ITEM(PLAY_QUIT_BUTTON,         NULL, "⏹️", _("關閉影音"));
 
-    SET_ACT_CENTER_MENU_ITEM(VOLUME_DOWN_BUTTON,       NULL, _("🔈️"), _("减小音量"));
-    SET_ACT_CENTER_MENU_ITEM(VOLUME_UP_BUTTON,         NULL, _("🔉"), _("增大音量"));
-    SET_ACT_CENTER_MENU_ITEM(VOLUME_MAX_BUTTON,        NULL, _("🔊"), _("最大音量"));
-    SET_ACT_CENTER_MENU_ITEM(VOLUME_TOGGLE_BUTTON,     NULL, _("🔇"), _("靜音切換"));
+    SET_ACT_CENTER_MENU_ITEM(VOLUME_DOWN_BUTTON,       NULL, "🔈️", _("减小音量"));
+    SET_ACT_CENTER_MENU_ITEM(VOLUME_UP_BUTTON,         NULL, "🔉", _("增大音量"));
+    SET_ACT_CENTER_MENU_ITEM(VOLUME_MAX_BUTTON,        NULL, "🔊", _("最大音量"));
+    SET_ACT_CENTER_MENU_ITEM(VOLUME_TOGGLE_BUTTON,     NULL, "🔇", _("靜音切換"));
 
-    SET_ACT_CENTER_MENU_ITEM(MAIN_NEW_BUTTON,          NULL, _("▼"), _("暫主區開窗"));
-    SET_ACT_CENTER_MENU_ITEM(SEC_NEW_BUTTON,           NULL, _("◁"), _("暫次區開窗"));
-    SET_ACT_CENTER_MENU_ITEM(FIX_NEW_BUTTON,           NULL, _("▷"), _("暫固定區開窗"));
-    SET_ACT_CENTER_MENU_ITEM(FLOAT_NEW_BUTTON,         NULL, _("△"), _("暫懸浮層開窗"));
+    SET_ACT_CENTER_MENU_ITEM(MAIN_NEW_BUTTON,          NULL, "▼", _("暫主區開窗"));
+    SET_ACT_CENTER_MENU_ITEM(SEC_NEW_BUTTON,           NULL, "◁", _("暫次區開窗"));
+    SET_ACT_CENTER_MENU_ITEM(FIX_NEW_BUTTON,           NULL, "▷", _("暫固定區開窗"));
+    SET_ACT_CENTER_MENU_ITEM(FLOAT_NEW_BUTTON,         NULL, "△", _("暫懸浮層開窗"));
 
-    SET_ACT_CENTER_MENU_ITEM(N_MAIN_UP_BUTTON,         NULL, _("⬆️"), _("增大主區容量"));
-    SET_ACT_CENTER_MENU_ITEM(N_MAIN_DOWN_BUTTON,       NULL, _("⬇️"), _("减小主區容量"));
-    SET_ACT_CENTER_MENU_ITEM(TITLEBAR_TOGGLE_BUTTON,   NULL, _("🗔"), _("開關當前窗口標題欄"));
-    SET_ACT_CENTER_MENU_ITEM(CLI_BORDER_TOGGLE_BUTTON, NULL, _("⬚"), _("開關當前窗口邊框"));
+    SET_ACT_CENTER_MENU_ITEM(N_MAIN_UP_BUTTON,         NULL, "⬆️", _("增大主區容量"));
+    SET_ACT_CENTER_MENU_ITEM(N_MAIN_DOWN_BUTTON,       NULL, "⬇️", _("减小主區容量"));
+    SET_ACT_CENTER_MENU_ITEM(TITLEBAR_TOGGLE_BUTTON,   NULL, "🗔", _("開關當前窗口標題欄"));
+    SET_ACT_CENTER_MENU_ITEM(CLI_BORDER_TOGGLE_BUTTON, NULL, "⬚", _("開關當前窗口邊框"));
     
-    SET_ACT_CENTER_MENU_ITEM(CLOSE_ALL_CLIENTS_BUTTON, NULL, _("❎"), _("關閉桌面所有窗口"));
-    SET_ACT_CENTER_MENU_ITEM(PRINT_WIN_BUTTON,         NULL, _("✀"),  _("當前窗口截圖"));
-    SET_ACT_CENTER_MENU_ITEM(PRINT_SCREEN_BUTTON,      NULL, _("🖵"),  _("全屏截圖"));
-    SET_ACT_CENTER_MENU_ITEM(FOCUS_MODE_BUTTON,        NULL, _("👁️"), _("切換聚焦模式"));
+    SET_ACT_CENTER_MENU_ITEM(CLOSE_ALL_CLIENTS_BUTTON, NULL, "❎", _("關閉桌面所有窗口"));
+    SET_ACT_CENTER_MENU_ITEM(PRINT_WIN_BUTTON,         NULL, "✀",  _("當前窗口截圖"));
+    SET_ACT_CENTER_MENU_ITEM(PRINT_SCREEN_BUTTON,      NULL, "🖵",  _("全屏截圖"));
+    SET_ACT_CENTER_MENU_ITEM(FOCUS_MODE_BUTTON,        NULL, "👁️", _("切換聚焦模式"));
 
-    SET_ACT_CENTER_MENU_ITEM(COMPOSITOR_BUTTON,        NULL, _("🪡"), _("開關合成器"));
-    SET_ACT_CENTER_MENU_ITEM(WALLPAPER_BUTTON,         NULL, _("🌌"), _("切換壁紙"));
-    SET_ACT_CENTER_MENU_ITEM(COLOR_THEME_BUTTON,       NULL, _("🎨"), _("切換顏色主題"));
-    SET_ACT_CENTER_MENU_ITEM(QUIT_WM_BUTTON,           NULL, _("❌"), _("退出gwm"));
+    SET_ACT_CENTER_MENU_ITEM(COMPOSITOR_BUTTON,        NULL, "🪡", _("開關合成器"));
+    SET_ACT_CENTER_MENU_ITEM(WALLPAPER_BUTTON,         NULL, "🌌", _("切換壁紙"));
+    SET_ACT_CENTER_MENU_ITEM(COLOR_THEME_BUTTON,       NULL, "🎨", _("切換顏色主題"));
+    SET_ACT_CENTER_MENU_ITEM(QUIT_WM_BUTTON,           NULL, "❌", _("退出gwm"));
 
-    SET_ACT_CENTER_MENU_ITEM(LOGOUT_BUTTON,            NULL, _("🚶"), _("注銷"));
-    SET_ACT_CENTER_MENU_ITEM(REBOOT_BUTTON,            NULL, _("↻"),  _("重啓"));
-    SET_ACT_CENTER_MENU_ITEM(POWEROFF_BUTTON,          NULL, _("⏻"),  _("關機"));
-    SET_ACT_CENTER_MENU_ITEM(RUN_BUTTON,               NULL, _("🔍️"), _("運行"));
+    SET_ACT_CENTER_MENU_ITEM(LOGOUT_BUTTON,            NULL, "🚶", _("注銷"));
+    SET_ACT_CENTER_MENU_ITEM(REBOOT_BUTTON,            NULL, "↻",  _("重啓"));
+    SET_ACT_CENTER_MENU_ITEM(POWEROFF_BUTTON,          NULL, "⏻",  _("關機"));
+    SET_ACT_CENTER_MENU_ITEM(RUN_BUTTON,               NULL, "🔍️", _("運行"));
 }
 
 /* 功能：設置客戶窗口菜單項。

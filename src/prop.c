@@ -44,9 +44,10 @@ unsigned char *get_prop(Window win, Atom prop, unsigned long *n)
 
     /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
      * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
+
     if( XGetWindowProperty(xinfo.display, win, prop, 0, ~0L, False,
         AnyPropertyType, &type, &fmt, m, &rest, &p) != Success
-        || !type || !fmt || !*m || !p)
+        || !type || !fmt || !*m || !p) // 可能設置了特性，但設置得不正確
         return NULL;
 
     return p;

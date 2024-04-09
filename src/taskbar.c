@@ -17,11 +17,11 @@ typedef struct // 狀態欄
     char *label;
 } Statusbar;
 
-typedef struct _cbutton_tag
+typedef struct cbutton_tag
 {
     Button *button;
     Window cwin; // 縮微客戶窗口
-    struct _cbutton_tag *next;
+    struct cbutton_tag *next;
 } Cbutton;
 
 typedef struct // 縮微窗口欄
@@ -114,6 +114,7 @@ static void create_statusbar(void)
     if(!p)
         p=copy_string("gwm");
     get_string_size(p, &w, NULL);
+    w += 2*get_font_pad();
     if(w > cfg->status_area_width_max)
         w=cfg->status_area_width_max;
     else if(w == 0)

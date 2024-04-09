@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.9.0\n"
+"Project-Id-Version: gwm 2.9.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-04-08 13:03+0800\n"
+"POT-Creation-Date: 2024-04-09 22:05+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -21,258 +21,130 @@ msgstr ""
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 
-#. 操作中心按鈕類型         圖標名   符號      標籤
-#: config.c:549
-msgid "🛟"
-msgstr "🛟"
-
+#. 操作中心按鈕類型         圖標名 符號     標籤
 #: config.c:549
 msgid "幫助"
 msgstr "帮助"
-
-#: config.c:550
-msgid "📁"
-msgstr "📁"
 
 #: config.c:550
 msgid "文件"
 msgstr "文件"
 
 #: config.c:551
-msgid "🖥️"
-msgstr "🖥️"
-
-#: config.c:551
 msgid "終端模擬器"
 msgstr "终端模拟器"
-
-#: config.c:552
-msgid "🌐"
-msgstr "🌐"
 
 #: config.c:552
 msgid "網絡瀏覽器"
 msgstr "网络浏览器"
 
 #: config.c:554
-msgid "🎮️"
-msgstr "🎮️"
-
-#: config.c:554
 msgid "遊戲"
 msgstr "游戏"
-
-#: config.c:555
-msgid "🎬"
-msgstr "🎬"
 
 #: config.c:555
 msgid "播放影音"
 msgstr "播放影音"
 
 #: config.c:556
-msgid "⏯️"
-msgstr "⏯️"
-
-#: config.c:556
 msgid "切換播放狀態"
 msgstr "切换播放状态"
-
-#: config.c:557
-msgid "⏹️"
-msgstr "⏹️"
 
 #: config.c:557
 msgid "關閉影音"
 msgstr "关闭影音"
 
 #: config.c:559
-msgid "🔈️"
-msgstr "🔈️"
-
-#: config.c:559
 msgid "减小音量"
 msgstr "减小音量"
-
-#: config.c:560
-msgid "🔉"
-msgstr "🔉"
 
 #: config.c:560
 msgid "增大音量"
 msgstr "增大音量"
 
 #: config.c:561
-msgid "🔊"
-msgstr "🔊"
-
-#: config.c:561
 msgid "最大音量"
 msgstr "最大音量"
-
-#: config.c:562
-msgid "🔇"
-msgstr "🔇"
 
 #: config.c:562
 msgid "靜音切換"
 msgstr "静音切换"
 
 #: config.c:564
-msgid "▼"
-msgstr "▼"
-
-#: config.c:564
 msgid "暫主區開窗"
 msgstr "暂主区开窗"
-
-#: config.c:565
-msgid "◁"
-msgstr "◁"
 
 #: config.c:565
 msgid "暫次區開窗"
 msgstr "暂次区开窗"
 
 #: config.c:566
-msgid "▷"
-msgstr "▷"
-
-#: config.c:566
 msgid "暫固定區開窗"
 msgstr "暂固定区开窗"
-
-#: config.c:567
-msgid "△"
-msgstr "△"
 
 #: config.c:567
 msgid "暫懸浮層開窗"
 msgstr "暂悬浮层开窗"
 
 #: config.c:569
-msgid "⬆️"
-msgstr "⬆️"
-
-#: config.c:569
 msgid "增大主區容量"
 msgstr "增大主区容量"
-
-#: config.c:570
-msgid "⬇️"
-msgstr "⬇️"
 
 #: config.c:570
 msgid "减小主區容量"
 msgstr "减小主区容量"
 
 #: config.c:571
-msgid "🗔"
-msgstr "🗔"
-
-#: config.c:571
 msgid "開關當前窗口標題欄"
 msgstr "开关当前窗口标题栏"
-
-#: config.c:572
-msgid "⬚"
-msgstr "⬚"
 
 #: config.c:572
 msgid "開關當前窗口邊框"
 msgstr "开关当前窗口边框"
 
 #: config.c:574
-msgid "❎"
-msgstr "❎"
-
-#: config.c:574
 msgid "關閉桌面所有窗口"
 msgstr "关闭桌面所有窗口"
-
-#: config.c:575
-msgid "✀"
-msgstr "✀"
 
 #: config.c:575
 msgid "當前窗口截圖"
 msgstr "当前窗口截图"
 
 #: config.c:576
-msgid "🖵"
-msgstr "🖵"
-
-#: config.c:576
 msgid "全屏截圖"
 msgstr "全屏截图"
-
-#: config.c:577
-msgid "👁️"
-msgstr "👁️"
 
 #: config.c:577
 msgid "切換聚焦模式"
 msgstr "切换聚焦模式"
 
 #: config.c:579
-msgid "🪡"
-msgstr "🪡"
-
-#: config.c:579
 msgid "開關合成器"
 msgstr "开关合成器"
-
-#: config.c:580
-msgid "🌌"
-msgstr "🌌"
 
 #: config.c:580
 msgid "切換壁紙"
 msgstr "切换壁纸"
 
 #: config.c:581
-msgid "🎨"
-msgstr "🎨"
-
-#: config.c:581
 msgid "切換顏色主題"
 msgstr "切换颜色主题"
-
-#: config.c:582
-msgid "❌"
-msgstr "❌"
 
 #: config.c:582
 msgid "退出gwm"
 msgstr "退出gwm"
 
 #: config.c:584
-msgid "🚶"
-msgstr "🚶"
-
-#: config.c:584
 msgid "注銷"
 msgstr "注销"
-
-#: config.c:585
-msgid "↻"
-msgstr "↻"
 
 #: config.c:585
 msgid "重啓"
 msgstr "重启"
 
 #: config.c:586
-msgid "⏻"
-msgstr "⏻"
-
-#: config.c:586
 msgid "關機"
 msgstr "关机"
-
-#: config.c:587
-msgid "🔍️"
-msgstr "🔍️"
 
 #: config.c:587
 msgid "運行"
