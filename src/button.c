@@ -59,7 +59,7 @@ char *get_button_label(Button *button)
 void set_button_label(Button *button, const char *label)
 {
     if(button->label)
-        free(button->label);
+        free_s(button->label);
     button->label=copy_string(label);
 }
 

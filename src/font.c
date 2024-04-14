@@ -83,7 +83,7 @@ static void close_font(WMFont *font)
             else
                 prev->next=p->next;
             XftFontClose(xinfo.display, p->xfont);
-            free(p);
+            free_s(p);
             break;
         }
     }

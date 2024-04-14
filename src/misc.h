@@ -27,6 +27,7 @@ void exit_with_msg(const char *msg);
 void clear_zombies(int signum);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
+void free_s(void *ptr);
 void vfree(void *ptr, ...);
 void free_strings(Strings *head);
 int base_n_floor(int x, int n);

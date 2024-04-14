@@ -125,7 +125,7 @@ static Imlib_Image create_icon_image_from_prop(Window win)
     DATA32 *image_data=imlib_image_get_data();
     for(i=0; i<size; i++)
         image_data[i]=data[i+2];
-    free(data);
+    free_s(data);
     imlib_image_put_back_data(image_data);
     return image;
 }
@@ -165,8 +165,8 @@ static char *find_icon(const char *name, int size, int scale, const char *theme,
         || (filename=lookup_fallback_icon(name, base_dirs)))
     {
         for(char **b=base_dirs; b&&*b; b++)
-            free(*b);
-        free(base_dirs);
+            free_s(*b);
+        free_s(base_dirs);
     }
     return filename;
 }
@@ -180,10 +180,10 @@ static char *find_icon_helper(const char *name, int size, int scale, char *const
 
     // 規範建議在給定主題中找不到匹配的圖標時，遞歸搜索其父主題列表
     char *const *b=NULL, **p=NULL, **parent=NULL;
-    for(b=base_dirs; b&&*b; b++, free(parent))
-        for(parent=p=get_parent_themes(*b, theme); p&&*p; free(*p++))
+    for(b=base_dirs; b&&*b; b++, free_s(parent))
+        for(parent=p=get_parent_themes(*b, theme); p&&*p; free_s(*p++))
             if((filename=find_icon_helper(name, size, scale, b, *p, context_dir)))
-                { free(*p), free(parent); return filename; }
+                { free_s(*p), free_s(parent); return filename; }
     return NULL;
 }
 
@@ -193,10 +193,10 @@ static char *lookup_icon(const char *name, int size, int scale, char *const *bas
     char *closest=NULL;
     char *const *b=NULL, **s=NULL, **sub_dirs=NULL;
 
-    for(b=base_dirs; b&&*b; b++, free(sub_dirs))
-        for(sub_dirs=s=get_sub_dirs(*b, theme, context_dir); s&&*s; free(*s++))
+    for(b=base_dirs; b&&*b; b++, free_s(sub_dirs))
+        for(sub_dirs=s=get_sub_dirs(*b, theme, context_dir); s&&*s; free_s(*s++))
             if(get_closest_icon(name, size, scale, *b, *s, theme, &closest, &min))
-                { free(sub_dirs); free(*s); return closest; }
+                { free_s(sub_dirs); free_s(*s); return closest; }
     return closest;
 }
 
@@ -217,7 +217,7 @@ static bool get_closest_icon(const char *name, int size, int scale, const char *
             if(d < *min_distance)
                 *closest=f, *min_distance=d;
         }
-        free(f);
+        free_s(f);
     }
 
     return false;
@@ -233,7 +233,7 @@ static char *lookup_fallback_icon(const char *name, char *const *base_dirs)
             char *filename=copy_strings(*b, "/", name, ICON_EXT[i], NULL);
             if(is_accessible(filename))
                 return filename;
-            free(filename);
+            free_s(filename);
         }
     }
 
@@ -411,7 +411,7 @@ static FILE *open_index_theme(const char *base_dir, const char *theme)
         return NULL;
 
     FILE *fp=fopen(filename, "r");
-    free(filename);
+    free_s(filename);
     return fp;
 }
 

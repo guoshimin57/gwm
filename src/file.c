@@ -28,7 +28,7 @@ Strings *get_files_in_paths(const char *paths, const char *regex, Order order, b
     head->next=NULL, head->str=NULL;
     for(p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
         sum+=get_files_in_path(p, regex, head, order, is_fullname);
-    free(ps);
+    free_s(ps);
     if(n)
         *n=sum;
     return head;
@@ -55,7 +55,7 @@ static char *dedup_paths(const char *paths)
         if(j==i)
             strcpy(list[i++], pp), strcat(result, pp), strcat(result, i<n ? ":" : "");
     }
-    free(ps);
+    free_s(ps);
     return result;
 }
 

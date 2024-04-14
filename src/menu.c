@@ -86,7 +86,7 @@ void destroy_menu(Menu *menu)
 {
     for(int i=0; i<menu->n; i++)
         destroy_button(menu->items[i]);
-    free(menu->items);
+    free_s(menu->items);
     XDestroyWindow(xinfo.display, WIDGET_WIN(menu));
-    free(menu);
+    free_s(menu);
 }

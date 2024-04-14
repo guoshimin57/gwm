@@ -106,8 +106,8 @@ void clear_wm(WM *wm)
     clear_zombies(0);
     free_strings(wm->wallpapers);
     for(size_t i=0; i<DESKTOP_N; i++)
-        free(wm->desktop[i]);
-    free(cfg);
+        free_s(wm->desktop[i]);
+    free_s(cfg);
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)

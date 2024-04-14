@@ -157,7 +157,7 @@ static Cbutton *create_cbutton(Window parent, int x, int y, int w, int h, Window
 
     set_cbutton_icon(cbutton);
     set_widget_tooltip(WIDGET(cbutton), icon_title);
-    free(icon_title);
+    free_s(icon_title);
 
     return cbutton;
 }
@@ -212,7 +212,7 @@ static void del_cbutton(Cbutton *node)
 static void destroy_cbutton(Cbutton *cbutton)
 {
     destroy_button(cbutton->button);
-    free(cbutton);
+    free_s(cbutton);
 }
 
 Window get_iconic_win(Window button_win)
@@ -312,9 +312,10 @@ void set_statusbar_label(const char *label)
 {
     int w=0, h=WIDGET_H(taskbar->statusbar);
 
-    free(taskbar->statusbar->label);
+    free_s(taskbar->statusbar->label);
     taskbar->statusbar->label=copy_string(label);
     get_string_size(label, &w, NULL);
+    w += 2*get_font_pad();
     if(w > cfg->status_area_width_max)
         w=cfg->status_area_width_max;
     if(w != taskbar->statusbar->base.w)
@@ -338,7 +339,7 @@ void destroy_taskbar(Taskbar *taskbar)
     for(int i=0; i<TASKBAR_BUTTON_N; i++)
         destroy_button(taskbar->buttons[i]);
     destroy_widget(WIDGET(taskbar->iconbar));
-    free(taskbar->statusbar->label);
+    free_s(taskbar->statusbar->label);
     destroy_widget(WIDGET(taskbar->statusbar));
     destroy_widget(WIDGET(taskbar));
 }

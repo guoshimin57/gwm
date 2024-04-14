@@ -58,11 +58,11 @@ void set_all_net_client_list(Client *list)
     Window *wlist=get_client_win_list(list, &n);
 
     set_net_client_list(wlist, n);
-    free(wlist);
+    free_s(wlist);
 
     wlist=get_client_win_list_stacking(list, &n);
     set_net_client_list_stacking(wlist, n);
-    free(wlist);
+    free_s(wlist);
 }
 
 static Client *new_client(WM *wm, Window win)
@@ -637,7 +637,7 @@ Window *get_client_win_list(Client *list, int *n)
 
     for(i=0; i<count; i++)
         wlist[i]=WIDGET_WIN(clist[i]);
-    free(clist);
+    free_s(clist);
 
     return wlist;
 }

@@ -225,6 +225,6 @@ static Strings *get_cmd_completion_for_entry(Entry *entry, int *n)
     char *regex=get_part_match_regex(entry);
     char *paths=getenv("PATH");
     Strings *cmds=get_files_in_paths(paths, regex, RISE, false, n);
-    free(regex);
+    free_s(regex);
     return cmds;
 }

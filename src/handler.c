@@ -599,8 +599,8 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
     if(!c || !is_iconic_client(c) || !(s=get_text_prop(win, atom)))
         return;
 
-    set_button_label(BUTTON(win_to_widget(win)), s);
-    free(s);
+    set_button_label(BUTTON(win_to_widget(get_iconic_win(win))), s);
+    free_s(s);
     update_iconbar();
 }
 
@@ -616,11 +616,11 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
         set_statusbar_label(s);
     else
     {
-        free(c->title_text);
+        free_s(c->title_text);
         c->title_text=copy_string(s);
         update_title_area_fg(wm, c);
     }
-    free(s);
+    free_s(s);
 }
 
 static void handle_wm_transient_for_notify(WM *wm, Window win)

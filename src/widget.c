@@ -49,7 +49,7 @@ static void unreg_widget(Widget *widget)
                 widget_list=p->next;
             else
                 prev->next=p->next;
-            free(p);
+            free_s(p);
             break;
         }
     }

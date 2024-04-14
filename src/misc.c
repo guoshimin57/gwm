@@ -82,19 +82,25 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
     return result;
 }
 
+void free_s(void *ptr)
+{
+    free(ptr);
+    ptr=NULL;
+}
+
 void vfree(void *ptr, ...) // 調用時須以NULL結尾
 {
     va_list ap;
     va_start(ap, ptr);
     for(void *p=ptr; p; p=va_arg(ap, void *))
-        free(p);
+        free_s(p);
     va_end(ap);
 }
 
 void free_strings(Strings *head)
 {
     for(Strings *f=head; f; f=head)
-        head=f->next, free(f->str), free(f);
+        head=f->next, free_s(f->str), free_s(f);
 }
 
 int base_n_floor(int x, int n)

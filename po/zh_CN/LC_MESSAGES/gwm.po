@@ -6,7 +6,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.9.1\n"
+"Project-Id-Version: gwm 2.9.2\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
 "POT-Creation-Date: 2024-04-09 22:05+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
