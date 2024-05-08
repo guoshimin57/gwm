@@ -34,8 +34,7 @@ Entry *cmd_entry=NULL; // 輸入命令並執行的構件
 Entry *create_entry(Widget_id id, Window parent, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
 {
     Entry *entry=malloc_s(sizeof(Entry));
-    Widget_state state={.focus=1};
-    init_widget(WIDGET(entry), id, ENTRY_TYPE, state, parent, x, y, w, h);
+    init_widget(WIDGET(entry), id, ENTRY_TYPE, WIDGET_STATE_1(current), parent, x, y, w, h);
     entry->text[0]=L'\0', entry->hint=hint, entry->cursor_offset=0;
     entry->complete=complete;
     XSelectInput(xinfo.display, WIDGET_WIN(entry), ENTRY_EVENT_MASK);
@@ -61,7 +60,7 @@ void update_entry_bg(Entry *entry)
 {
     update_widget_bg(WIDGET(entry));
     XSetWindowBorder(xinfo.display, WIDGET_WIN(entry),
-        get_widget_color(CURRENT_BORDER_COLOR));
+        get_widget_color(WIDGET_STATE(entry)));
 }
 
 void update_entry_fg(Entry *entry)
@@ -69,7 +68,7 @@ void update_entry_fg(Entry *entry)
     int x=get_entry_cursor_x(entry);
     bool empty = entry->text[0]==L'\0';
     Str_fmt fmt={0, 0, WIDGET_W(entry), WIDGET_H(entry), CENTER_LEFT, true, false, 0,
-        get_widget_fg(empty ? HINT_TEXT_COLOR : get_widget_fg_id(WIDGET(entry)))};
+        get_widget_fg(WIDGET_STATE(entry))};
 
     if(empty)
         draw_string(WIDGET_WIN(entry), entry->hint, &fmt);
@@ -161,7 +160,7 @@ static void complete_for_entry(Entry *entry, bool show)
             x=WIDGET_X(entry)+bw, y=WIDGET_Y(entry)+h+2*bw,
             max=(xinfo.screen_height-y)/h;
         Str_fmt fmt={0, 0, w, h, CENTER_LEFT, true, false, 0,
-            get_widget_fg(HINT_TEXT_COLOR)};
+            get_widget_fg(WIDGET_STATE(entry))};
 
         XMoveResizeWindow(xinfo.display, win, x, y, w, MIN(n, max)*h);
         XMapWindow(xinfo.display, win);

@@ -69,7 +69,7 @@ static Client *new_client(WM *wm, Window win)
 {
     Client *c=malloc_s(sizeof(Client));
     memset(c, 0, sizeof(Client));
-    Widget_state state={.focus=(c==CUR_FOC_CLI(wm))};
+    Widget_state state={.current=1};
     init_widget(WIDGET(c), CLIENT_WIN, UNUSED_TYPE, state, xinfo.root_win, 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
     c->map_n=++map_count;
@@ -209,7 +209,7 @@ static void frame_client(Client *c)
         xinfo.root_win, fr.x, fr.y, fr.w, fr.h);
     set_widget_border_width(WIDGET(c->frame), cfg->border_width);
     set_widget_border_color(WIDGET(c->frame),
-        get_widget_color(get_widget_border_color_id(WIDGET(c->frame))));
+        get_widget_color(WIDGET_STATE(c->frame)));
     XSelectInput(xinfo.display, c->frame->base.win, FRAME_EVENT_MASK);
     if(cfg->set_frame_prop)
         copy_prop(c->frame->base.win, WIDGET_WIN(c));
@@ -250,7 +250,6 @@ void create_titlebar(Client *c)
         c->frame->buttons[i]=create_button(TITLE_BUTTON_BEGIN+i, WIDGET_STATE(c),
             WIDGET_WIN(c->frame), br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
         set_widget_tooltip(WIDGET(c->frame->buttons[i]), cfg->tooltip[TITLE_BUTTON_BEGIN+i]);
-    
     }
 
     c->frame->title_area=create_widget(TITLE_AREA, UNUSED_TYPE, WIDGET_STATE(c),
@@ -495,15 +494,15 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
 
     if(pc!=wm->clients && pc->titlebar_h)
     {
-        WIDGET_STATE(pc).focus=WIDGET_STATE(pc->frame->logo).focus=WIDGET_STATE(pc->frame->title_area).focus=1;
+        WIDGET_STATE(pc).current=WIDGET_STATE(pc->frame->logo).current=WIDGET_STATE(pc->frame->title_area).current=1;
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            WIDGET_STATE(pc->frame->buttons[i]).focus=1;
+            WIDGET_STATE(pc->frame->buttons[i]).current=1;
     }
     if(pp!=wm->clients && pp!=pc && pp->titlebar_h)
     {
-        WIDGET_STATE(pp).focus=WIDGET_STATE(pp->frame->logo).focus=WIDGET_STATE(pp->frame->title_area).focus=0;
+        WIDGET_STATE(pp).current=WIDGET_STATE(pp->frame->logo).current=WIDGET_STATE(pp->frame->title_area).current=0;
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            WIDGET_STATE(pp->frame->buttons[i]).focus=0;
+            WIDGET_STATE(pp->frame->buttons[i]).current=0;
     }
     if(desktop_n == wm->cur_desktop)
     {
@@ -512,8 +511,15 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
         else if(!is_iconic_client(pc))
             set_input_focus(WIDGET_WIN(pc), pc->wm_hint);
     }
+
+    if(pc != wm->clients)
+        WIDGET_STATE(pc).current=WIDGET_STATE(pc->frame).current=1;
     update_client_bg(wm, desktop_n, pc);
+
+    if(pp != wm->clients)
+        WIDGET_STATE(pp).current=WIDGET_STATE(pp->frame).current=0;
     update_client_bg(wm, desktop_n, pp);
+
     raise_client(wm, pc);
     set_net_active_window(WIDGET_WIN(pc));
 }
@@ -728,19 +734,16 @@ void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
     if(is_iconic_client(c) && d->cur_layout!=PREVIEW)
         c->win_state.focused=1, update_net_wm_state(WIDGET_WIN(c), c->win_state);
     else
-        update_frame_bg(wm, desktop_n, c);
+        update_frame_bg(c);
 }
 
-void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c)
+void update_frame_bg(Client *c)
 {
-    bool cur=(c==wm->desktop[desktop_n-1]->cur_focus_client);
-    unsigned long color=get_widget_color(cur ? CURRENT_BORDER_COLOR : NORMAL_BORDER_COLOR);
-
     if(c->border_w)
-        XSetWindowBorder(xinfo.display, WIDGET_WIN(c->frame), color);
+        set_widget_border_color(WIDGET(c->frame),
+            get_widget_color(WIDGET_STATE(c->frame)));
     if(c->titlebar_h)
     {
-        color=get_widget_color(cur ? CURRENT_TITLEBAR_COLOR : NORMAL_TITLEBAR_COLOR);
         update_widget_bg(WIDGET(c->frame->logo));
         update_widget_bg(WIDGET(c->frame->title_area));
         for(size_t i=0; i<TITLE_BUTTON_N; i++)

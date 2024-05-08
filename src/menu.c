@@ -40,13 +40,12 @@ Menu *create_menu(Widget_id id, Window parent, const char *icon_names[], const c
     if(w > sw)
         w=sw/col;
 
-    init_widget(WIDGET(menu), id, UNUSED_TYPE, WIDGET_NORMAL_STATE,
-        parent, 0, 0, w*col, h*row);
+    init_widget(WIDGET(menu), id, UNUSED_TYPE, WIDGET_STATE_1(current), parent, 0, 0, w*col, h*row);
 
     menu->items=malloc_s(sizeof(Button *)*n);
     for(int i=0; i<n; i++)
     {
-         menu->items[i]=create_button(id+i+1, WIDGET_NORMAL_STATE, WIDGET_WIN(menu), w*(i%col),
+         menu->items[i]=create_button(id+i+1, WIDGET_STATE_1(current), WIDGET_WIN(menu), w*(i%col),
              h*(i/col), w, h, labels[i]);
          set_button_icon(menu->items[i], NULL, icon_names[i], symbols[i]);
          set_button_align(menu->items[i], CENTER_LEFT);

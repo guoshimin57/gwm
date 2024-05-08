@@ -14,6 +14,7 @@
 static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 {
     "GWM_CURRENT_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE", "GWM_DESKTOP_MASK",
+    "GWM_MAIN_COLOR_NAME"
 };
 
 static Atom gwm_atoms[GWM_ATOM_N];
@@ -161,4 +162,9 @@ void request_layout_update(void)
 {
     long f=true;
     replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_UPDATE_LAYOUT], &f, 1);
+}
+
+char *get_main_color_name(void)
+{
+    return get_text_prop(xinfo.root_win, gwm_atoms[GWM_MAIN_COLOR_NAME]);
 }

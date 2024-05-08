@@ -19,14 +19,9 @@ typedef struct widget_node_tag
 
 static void reg_widget(Widget *widget);
 static void unreg_widget(Widget *widget);
-static Widget_color_id get_widget_color_id(const Widget *widget);
-static void alloc_widget_color(const char *color_name, XColor *color);
-static void alloc_text_color(const char *color_name, XftColor *color);
 static unsigned int get_num_lock_mask(void);
 static unsigned int get_valid_mask(unsigned int mask);
 static unsigned int get_modifier_mask(KeySym key_sym);
-static XColor widget_color[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色
-static XftColor text_color[COLOR_THEME_N][TEXT_COLOR_N]; // 文本顏色
 static Cursor cursors[POINTER_ACT_N]; // 光標
 
 static Widget_node *widget_list=NULL;
@@ -79,7 +74,7 @@ void init_widget(Widget *widget, Widget_id id, Widget_type type, Widget_state st
     widget->type=type;
     widget->state=state;
     widget->parent=parent;
-    bg=get_widget_color(get_widget_color_id(widget));
+    bg=get_widget_color(WIDGET_STATE(widget));
     if(widget->id != CLIENT_WIN)
         widget->win=create_widget_win(parent, x, y, w, h, 0, 0, bg);
     widget->x=x, widget->y=y, widget->w=w, widget->h=h;
@@ -130,72 +125,7 @@ void move_resize_widget(Widget *widget, int x, int y, int w, int h)
 
 void update_widget_bg(const Widget *widget)
 {
-    update_win_bg(widget->win, get_widget_color(get_widget_color_id(widget)), None);
-}
-
-static Widget_color_id get_widget_color_id(const Widget *widget)
-{
-    if(widget->state.disable) return DISABLE_WIDGET_COLOR;
-    if(widget->state.warn)    return WARN_WIDGET_COLOR;
-    if(widget->state.active)  return ACTIVE_WIDGET_COLOR;
-    if(widget->state.hot)     return HOT_WIDGET_COLOR;
-    if(widget->state.urgent)  return URGENT_WIDGET_COLOR;
-    if(widget->state.attent)  return ATTENT_WIDGET_COLOR;
-    if(widget->state.chosen)  return CHOSEN_WIDGET_COLOR;
-    if(widget->state.focus)   return FOCUS_WIDGET_COLOR; 
-    return NORMAL_WIDGET_COLOR;
-}
-
-Widget_color_id get_widget_border_color_id(const Widget *widget)
-{
-    return widget->state.focus ? CURRENT_BORDER_COLOR : NORMAL_BORDER_COLOR;
-}
-
-Text_color_id get_widget_fg_id(const Widget *widget)
-{
-    if(widget->state.disable) return DISABLE_WIDGET_TEXT_COLOR;
-    if(widget->state.warn)    return WARN_WIDGET_TEXT_COLOR;
-    if(widget->state.active)  return ACTIVE_WIDGET_TEXT_COLOR;
-    if(widget->state.hot)     return HOT_WIDGET_TEXT_COLOR;
-    if(widget->state.urgent)  return URGENT_WIDGET_TEXT_COLOR;
-    if(widget->state.attent)  return ATTENT_WIDGET_TEXT_COLOR;
-    if(widget->state.chosen)  return CHOSEN_WIDGET_TEXT_COLOR;
-    if(widget->state.focus)   return FOCUS_WIDGET_TEXT_COLOR; 
-    return NORMAL_WIDGET_TEXT_COLOR;
-}
-
-static void alloc_widget_color(const char *color_name, XColor *color)
-{
-    XParseColor(xinfo.display, xinfo.colormap, color_name, color); 
-    XAllocColor(xinfo.display, xinfo.colormap, color);
-}
-
-static void alloc_text_color(const char *color_name, XftColor *color)
-{
-    XftColorAllocName(xinfo.display, xinfo.visual, xinfo.colormap, color_name, color);
-}
-
-void alloc_color(void)
-{
-    for(Color_theme i=0; i<COLOR_THEME_N; i++)
-        for(Widget_color_id j=0; j<WIDGET_COLOR_N; j++)
-            alloc_widget_color(cfg->widget_color_name[i][j], &widget_color[i][j]);
-    for(Color_theme i=0; i<COLOR_THEME_N; i++)
-        for(Text_color_id j=0; j<TEXT_COLOR_N; j++)
-            alloc_text_color(cfg->text_color_name[i][j], &text_color[i][j]);
-}
-
-unsigned long get_widget_color(Widget_color_id id)
-{
-    float wo=cfg->widget_opacity[cfg->color_theme][id];
-    unsigned long rgb=widget_color[cfg->color_theme][id].pixel;
-
-    return ((rgb & 0x00ffffff) | ((unsigned long)(0xff*wo))<<24);
-}
-
-XftColor get_widget_fg(Text_color_id id)
-{
-    return text_color[cfg->color_theme][id];
+    update_win_bg(widget->win, get_widget_color(widget->state), None);
 }
 
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
@@ -232,7 +162,8 @@ void update_hint_win_for_info(const Widget *widget, const char *info)
         x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
     XMoveResizeWindow(xinfo.display, xinfo.hint_win, x, y, w, h);
     XMapRaised(xinfo.display, xinfo.hint_win);
-    Str_fmt f={0, 0, w, h, CENTER, true, false, 0, get_widget_fg(HINT_TEXT_COLOR)};
+    Str_fmt f={0, 0, w, h, CENTER, true, false, 0,
+        get_widget_fg(WIDGET_STATE_NORMAL)};
     draw_string(xinfo.hint_win, info, &f);
 }
 
@@ -264,7 +195,7 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
 void create_hint_win(void)
 {
     xinfo.hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
-        get_widget_color(HINT_WIN_COLOR));
+        get_widget_color(WIDGET_STATE_NORMAL));
     XSelectInput(xinfo.display, xinfo.hint_win, ExposureMask);
 }
 

@@ -122,7 +122,7 @@ void show_top_win(WM *wm)
     char *s[]={"DESKTOP_TOP", "BELOW_TOP", "NORMAL_TOP", "FLOAT_TOP",
         "DOCK_TOP", "ABOVE_TOP", "FULLSCREEN_TOP"};
     Str_fmt f={0, 0, w, h, CENTER_LEFT, false, false, 0xff0000,
-        get_widget_fg(CLASS_TEXT_COLOR)};
+        get_widget_fg(WIDGET_STATE_NORMAL)};
 
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
     {

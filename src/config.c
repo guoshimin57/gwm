@@ -246,269 +246,6 @@ static void config_cursor_shape(void)
     cursor_shape[ADJUST_LAYOUT_RATIO] = XC_sb_h_double_arrow;
 }
 
-/* 功能：爲深色主題設置構件背景色。
- * 說明：構件顏色號的定義詳見gwm.h:Widget_color_id。顏色名詳見rgb.txt（此文件的位
- * 置因系統而異，可用locate rgb.txt搜索），也可以用十六進制顏色說明，格式爲以下
- * 之一（下同）：
- *     #RGB、#RRGGBB、#RRRGGGBBB、#RRRRGGGGBBBB。
- */
-static void config_widget_color_for_dark(void)
-{
-    const char **color_name=cfg->widget_color_name[DARK_THEME];
-
-    /*         構件顏色號                     顏色名 */
-    color_name[NORMAL_BORDER_COLOR]         = "grey11";
-    color_name[CURRENT_BORDER_COLOR]        = "grey31";
-    color_name[NORMAL_TITLEBAR_COLOR]       = "grey11";
-    color_name[CURRENT_TITLEBAR_COLOR]      = "grey31";
-
-    color_name[DISABLE_WIDGET_COLOR]        = "grey91";
-    color_name[WARN_WIDGET_COLOR]           = "red";
-    color_name[ACTIVE_WIDGET_COLOR]         = "DarkOrange";
-    color_name[HOT_WIDGET_COLOR]            = "DarkOrange";
-    color_name[URGENT_WIDGET_COLOR]         = "red";
-    color_name[ATTENT_WIDGET_COLOR]         = "Yellow4";
-    color_name[CHOSEN_WIDGET_COLOR]         = "DeepSkyBlue4";
-    color_name[FOCUS_WIDGET_COLOR]          = "grey31";
-    color_name[NORMAL_WIDGET_COLOR]         = "grey11";
-
-    color_name[ENTERED_NORMAL_BUTTON_COLOR] = "DarkOrange";
-    color_name[ENTERED_CLOSE_BUTTON_COLOR]  = "red";
-    color_name[CHOSEN_BUTTON_COLOR]         = "DeepSkyBlue4";
-    color_name[MENU_COLOR]                  = "grey31";
-    color_name[TASKBAR_COLOR]               = "grey21";
-    color_name[ENTRY_COLOR]                 = "white";
-    color_name[HINT_WIN_COLOR]              = "grey81";
-    color_name[URGENCY_WIDGET_COLOR]        = "red";
-    color_name[ATTENTION_WIDGET_COLOR]      = "Yellow4";
-    color_name[ROOT_WIN_COLOR]              = "black";
-}
-
-/* 功能：爲中性顏色主題設置構件背景色。
- * 說明：同前。
- */
-static void config_widget_color_for_normal(void)
-{
-    const char **color_name=cfg->widget_color_name[NORMAL_THEME];
-
-    /*         構件顏色號                     顏色名 */
-    color_name[NORMAL_BORDER_COLOR]         = "grey31";
-    color_name[CURRENT_BORDER_COLOR]        = "DodgerBlue";
-    color_name[NORMAL_TITLEBAR_COLOR]       = "grey31";
-    color_name[CURRENT_TITLEBAR_COLOR]      = "DodgerBlue";
-
-    color_name[DISABLE_WIDGET_COLOR]        = "grey91";
-    color_name[WARN_WIDGET_COLOR]           = "red";
-    color_name[ACTIVE_WIDGET_COLOR]         = "DarkOrange";
-    color_name[HOT_WIDGET_COLOR]            = "DarkOrange";
-    color_name[URGENT_WIDGET_COLOR]         = "red";
-    color_name[ATTENT_WIDGET_COLOR]         = "Yellow4";
-    color_name[CHOSEN_WIDGET_COLOR]         = "DeepSkyBlue4";
-    color_name[FOCUS_WIDGET_COLOR]        = "DodgerBlue";
-    color_name[NORMAL_WIDGET_COLOR]         = "grey11";
-
-    color_name[ENTERED_NORMAL_BUTTON_COLOR] = "DarkOrange";
-    color_name[ENTERED_CLOSE_BUTTON_COLOR]  = "red";
-    color_name[CHOSEN_BUTTON_COLOR]         = "DeepSkyBlue4";
-    color_name[MENU_COLOR]                  = "grey31";
-    color_name[TASKBAR_COLOR]               = "grey21";
-    color_name[ENTRY_COLOR]                 = "white";
-    color_name[HINT_WIN_COLOR]              = "grey31";
-    color_name[URGENCY_WIDGET_COLOR]        = "red";
-    color_name[ATTENTION_WIDGET_COLOR]      = "Yellow4";
-    color_name[ROOT_WIN_COLOR]              = "black";
-}
-
-/* 功能：爲淺色主題設置構件背景色。
- * 說明：同前。
- */
-static void config_widget_color_for_light(void)
-{
-    const char **color_name=cfg->widget_color_name[LIGHT_THEME];
-
-    /*         構件顏色號                     顏色名 */
-    color_name[NORMAL_BORDER_COLOR]         = "grey61";
-    color_name[CURRENT_BORDER_COLOR]        = "grey91";
-    color_name[NORMAL_TITLEBAR_COLOR]       = "grey61";
-    color_name[CURRENT_TITLEBAR_COLOR]      = "grey91";
-
-    color_name[DISABLE_WIDGET_COLOR]        = "grey91";
-    color_name[WARN_WIDGET_COLOR]           = "red";
-    color_name[ACTIVE_WIDGET_COLOR]         = "DarkOrange";
-    color_name[HOT_WIDGET_COLOR]            = "DarkOrange";
-    color_name[URGENT_WIDGET_COLOR]         = "red";
-    color_name[ATTENT_WIDGET_COLOR]         = "Yellow4";
-    color_name[CHOSEN_WIDGET_COLOR]         = "DeepSkyBlue4";
-    color_name[FOCUS_WIDGET_COLOR]        = "grey91";
-    color_name[NORMAL_WIDGET_COLOR]         = "grey11";
-
-    color_name[ENTERED_NORMAL_BUTTON_COLOR] = "white";
-    color_name[ENTERED_CLOSE_BUTTON_COLOR]  = "red";
-    color_name[CHOSEN_BUTTON_COLOR]         = "LightSkyBlue";
-    color_name[MENU_COLOR]                  = "grey61";
-    color_name[TASKBAR_COLOR]               = "grey81";
-    color_name[ENTRY_COLOR]                 = "black";
-    color_name[HINT_WIN_COLOR]              = "grey31";
-    color_name[URGENCY_WIDGET_COLOR]        = "red";
-    color_name[ATTENTION_WIDGET_COLOR]      = "yellow2";
-    color_name[ROOT_WIN_COLOR]              = "black";
-}
-
-/* 功能：爲深色主題設置構件背景色的不透明度。
- * 說明：構件顏色號的定義詳見gwm.h:Widget_color_id；不透明度取值範圍爲0~1.0（下同）。
- */
-static void config_widget_opacity_for_dark(void)
-{
-    float *opacity=cfg->widget_opacity[DARK_THEME];
-
-    cfg->global_opacity=0.8; // 全局不透明度
-    for(size_t i=0; i<WIDGET_COLOR_N; i++)
-        opacity[i]=cfg->global_opacity;
-
-    /* 不使用全局透明度的構件分別設置自己的不透明度：
-     *      構件顏色號        不透明度               */
-    opacity[TASKBAR_COLOR]  = 0.5;
-    opacity[HINT_WIN_COLOR] = 0.9;
-    opacity[ROOT_WIN_COLOR] = 1.0;
-}
-
-/* 功能：爲中性顏色主題設置構件背景不透明度。
- * 說明：同前。
- */
-static void config_widget_opacity_for_normal(void)
-{
-    float *opacity=cfg->widget_opacity[NORMAL_THEME];
-
-    cfg->global_opacity = 0.8; // 全局不透明度;
-    for(size_t i=0; i<WIDGET_COLOR_N; i++)
-        opacity[i]=cfg->global_opacity;
-
-    /* 不使用全局透明度的構件分別設置自己的不透明度：
-     *      構件顏色號        不透明度               */
-    opacity[TASKBAR_COLOR]  = 0.5;
-    opacity[HINT_WIN_COLOR] = 0.9;
-    opacity[ROOT_WIN_COLOR] = 1.0;
-}
-
-/* 功能：爲淺色主題設置構件背景不透明度。
- * 說明：同前。
- */
-static void config_widget_opacity_for_light(void)
-{
-    float *opacity=cfg->widget_opacity[LIGHT_THEME];
-
-    cfg->global_opacity = 0.8; // 全局不透明度
-    for(size_t i=0; i<WIDGET_COLOR_N; i++)
-        opacity[i]=cfg->global_opacity;
-
-    /* 不使用全局透明度的構件分別設置自己的不透明度：
-     *      構件顏色號        不透明度               */
-    opacity[TASKBAR_COLOR]  = 0.5;
-    opacity[HINT_WIN_COLOR] = 0.9;
-    opacity[ROOT_WIN_COLOR] = 1.0;
-}
-
-/* 功能：爲各種主題設置構件背景顏色及不透明度。*/
-static void config_widget_color_and_opacity(void)
-{
-    config_widget_color_for_dark();
-    config_widget_color_for_normal();
-    config_widget_color_for_light();
-
-    config_widget_opacity_for_dark();
-    config_widget_opacity_for_normal();
-    config_widget_opacity_for_light();
-}
-
-/* 功能：爲深色主題設置文字顏色。
- * 說明：文字顏色號的定義詳見gwm.h:Text_color_id。顏色名說明同前。
- */
-static void config_text_color_for_dark(void)
-{
-    const char **color_name=cfg->text_color_name[DARK_THEME];
-
-    /*         文字顏色號                     顏色名 */
-    color_name[DISABLE_WIDGET_TEXT_COLOR]  = "grey91";
-    color_name[WARN_WIDGET_TEXT_COLOR]     = "grey71";
-    color_name[ACTIVE_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[HOT_WIDGET_TEXT_COLOR]      = "grey71";
-    color_name[URGENT_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[ATTENT_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[CHOSEN_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[FOCUS_WIDGET_TEXT_COLOR]  = "LightGreen";
-    color_name[NORMAL_WIDGET_TEXT_COLOR]   = "grey71";
-
-    color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey71";
-    color_name[CURRENT_TITLEBAR_TEXT_COLOR] = "LightGreen";
-    color_name[TASKBAR_TEXT_COLOR]          = "white";
-    color_name[CLASS_TEXT_COLOR]            = "RosyBrown";
-    color_name[MENU_TEXT_COLOR]             = "white";
-    color_name[ENTRY_TEXT_COLOR]            = "black";
-    color_name[HINT_TEXT_COLOR]             = "SkyBlue4";
-}
-
-/* 功能：爲默認顏色主題設置文字顏色。
- * 說明：同前。
- */
-static void config_text_color_for_normal(void)
-{
-    const char **color_name=cfg->text_color_name[NORMAL_THEME];
-
-    /*         文字顏色號                     顏色名 */
-    color_name[DISABLE_WIDGET_TEXT_COLOR]  = "grey91";
-    color_name[WARN_WIDGET_TEXT_COLOR]     = "grey71";
-    color_name[ACTIVE_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[HOT_WIDGET_TEXT_COLOR]      = "grey71";
-    color_name[URGENT_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[ATTENT_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[CHOSEN_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[FOCUS_WIDGET_TEXT_COLOR]  = "white";
-    color_name[NORMAL_WIDGET_TEXT_COLOR]   = "grey71";
-
-    color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey71";
-    color_name[CURRENT_TITLEBAR_TEXT_COLOR] = "white";
-    color_name[TASKBAR_TEXT_COLOR]          = "white";
-    color_name[CLASS_TEXT_COLOR]            = "RosyBrown";
-    color_name[MENU_TEXT_COLOR]             = "white";
-    color_name[ENTRY_TEXT_COLOR]            = "black";
-    color_name[HINT_TEXT_COLOR]             = "grey61";
-}
-
-/* 功能：爲淺色主題設置文字顏色。
- * 說明：同前。
- */
-static void config_text_color_for_light(void)
-{
-    const char **color_name=cfg->text_color_name[LIGHT_THEME];
-
-    /*         文字顏色號                     顏色名 */
-    color_name[DISABLE_WIDGET_TEXT_COLOR]  = "grey91";
-    color_name[WARN_WIDGET_TEXT_COLOR]     = "grey71";
-    color_name[ACTIVE_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[HOT_WIDGET_TEXT_COLOR]      = "grey71";
-    color_name[URGENT_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[ATTENT_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[CHOSEN_WIDGET_TEXT_COLOR]   = "grey71";
-    color_name[FOCUS_WIDGET_TEXT_COLOR]  = "black";
-    color_name[NORMAL_WIDGET_TEXT_COLOR]   = "grey71";
-
-    color_name[NORMAL_TITLEBAR_TEXT_COLOR]  = "grey31";
-    color_name[CURRENT_TITLEBAR_TEXT_COLOR] = "black";
-    color_name[TASKBAR_TEXT_COLOR]          = "black";
-    color_name[CLASS_TEXT_COLOR]            = "RosyBrown";
-    color_name[MENU_TEXT_COLOR]             = "black";
-    color_name[ENTRY_TEXT_COLOR]            = "white";
-    color_name[HINT_TEXT_COLOR]             = "grey61";
-}
-
-/* 功能：爲各種主題設置文字顏色。*/
-static void config_text_color(void)
-{
-    config_text_color_for_dark();
-    config_text_color_for_normal();
-    config_text_color_for_light();
-}
-
 /* 功能：設置標題按鈕的文字。
  * 說明：標題欄按鈕類型的定義詳見widget.h:Widget_id。
  */
@@ -578,7 +315,6 @@ static void config_act_center_item(void)
 
     SET_ACT_CENTER_MENU_ITEM(COMPOSITOR_BUTTON,        NULL, "🪡", _("開關合成器"));
     SET_ACT_CENTER_MENU_ITEM(WALLPAPER_BUTTON,         NULL, "🌌", _("切換壁紙"));
-    SET_ACT_CENTER_MENU_ITEM(COLOR_THEME_BUTTON,       NULL, "🎨", _("切換顏色主題"));
     SET_ACT_CENTER_MENU_ITEM(QUIT_WM_BUTTON,           NULL, "❌", _("退出gwm"));
 
     SET_ACT_CENTER_MENU_ITEM(LOGOUT_BUTTON,            NULL, "🚶", _("注銷"));
@@ -640,7 +376,6 @@ static void config_misc(void)
     cfg->taskbar_on_top=false;
     cfg->focus_mode=CLICK_FOCUS;
     cfg->default_layout=TILE;
-    cfg->color_theme=DARK_THEME;
     cfg->screen_saver_time_out=600;
     cfg->screen_saver_interval=600;
     cfg->hover_time=300;
@@ -674,8 +409,8 @@ void config(void)
     config_font();
     config_widget_size();
     config_cursor_shape();
-    config_widget_color_and_opacity();
-    config_text_color();
+    cfg->main_color_name="black";
+    cfg->widget_opacity=0.8; // 全局不透明度
     config_title_button_text();
     config_taskbar_button_text();
     config_act_center_item();

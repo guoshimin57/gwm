@@ -76,7 +76,7 @@ bool is_wm_win(Client *list, Window win, bool before_wm);
 void restack_win(WM *wm, Window win);
 void update_clients_bg(WM *wm);
 void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);
-void update_frame_bg(WM *wm, unsigned int desktop_n, Client *c);
+void update_frame_bg(Client *c);
 void create_clients(WM *wm);
 void add_subgroup(Client *head, Client *subgroup_leader);
 void del_subgroup(Client *subgroup_leader);

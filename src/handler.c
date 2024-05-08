@@ -35,7 +35,7 @@ static void config_unmanaged_win(XConfigureRequestEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
 static void handle_pointer_hover(WM *wm, const Widget *widget);
 static void handle_expose(WM *wm, XEvent *e);
-static void update_title_area_fg(WM *wm, Client *c);
+static void update_title_area_fg(Client *c);
 static void handle_focus_in(WM *wm, XEvent *e);
 static void handle_focus_out(WM *wm, XEvent *e);
 static void handle_key_press(WM *wm, XEvent *e);
@@ -46,6 +46,7 @@ static void handle_unmap_notify(WM *wm, XEvent *e);
 static void handle_property_notify(WM *wm, XEvent *e);
 static void handle_wm_hints_notify(WM *wm, Window win);
 static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom);
+static void update_ui(WM *wm);
 static void handle_wm_name_notify(WM *wm, Window win, Atom atom);
 static void handle_wm_transient_for_notify(WM *wm, Window win);
 static void handle_selection_notify(WM *wm, XEvent *e);
@@ -414,7 +415,7 @@ static void handle_expose(WM *wm, XEvent *e)
         return;
 
     if(widget->id==TITLE_AREA && (c=win_to_client(wm->clients, win)))
-        update_title_area_fg(wm, c);
+        update_title_area_fg(c);
     else if(widget->type == BUTTON_TYPE)
         update_button_fg(BUTTON(widget));
     else if(widget->type == ENTRY_TYPE)
@@ -423,16 +424,14 @@ static void handle_expose(WM *wm, XEvent *e)
         update_statusbar_fg();
 }
 
-static void update_title_area_fg(WM *wm, Client *c)
+static void update_title_area_fg(Client *c)
 {
     if(c->titlebar_h <= 0)
         return;
 
     Rect r=get_title_area_rect(c);
-    Text_color_id id = (c==CUR_FOC_CLI(wm)) ?
-        CURRENT_TITLEBAR_TEXT_COLOR : NORMAL_TITLEBAR_TEXT_COLOR;
     Str_fmt f={0, 0, r.w, r.h, CENTER, true, false, 0,
-        get_widget_fg(id)};
+        get_widget_fg(WIDGET_STATE(c))};
     draw_string(c->frame->title_area->win, c->title_text, &f);
 }
 
@@ -501,7 +500,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
         update_widget_bg(widget);
     }
     else if(widget->id == CLIENT_ICON)
-        update_win_bg(win, get_widget_color(TASKBAR_COLOR), None);
+        update_win_bg(win, get_widget_color(WIDGET_STATE(widget)), None);
     if(widget->id != NON_WIDGET)
         set_cursor(win, NO_OP);
 }
@@ -573,6 +572,8 @@ static void handle_property_notify(WM *wm, XEvent *e)
         update_taskbar_buttons_bg_by_chosen();
     else if(is_spec_gwm_atom(atom, GWM_UPDATE_LAYOUT))
         update_layout(wm);
+    else if(is_spec_gwm_atom(atom, GWM_MAIN_COLOR_NAME))
+        update_ui(wm);
 }
 
 static void handle_wm_hints_notify(WM *wm, Window win)
@@ -604,6 +605,22 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
     update_iconbar();
 }
 
+static void update_ui(WM *wm)
+{
+    // 以下函數會產生Expose事件，而處理Expose事件時會更新窗口的文字
+    // 內容及其顏色，故此處不必更新構件文字顏色。
+    char *name=get_main_color_name();
+    alloc_color(name);
+    free(name);
+    update_taskbar_bg();
+    update_menu_bg(act_center);
+    update_menu_bg(client_menu);
+    update_entry_bg(cmd_entry);
+    update_win_bg(xinfo.hint_win, get_widget_color(WIDGET_STATE_NORMAL), None);
+    update_win_bg(xinfo.root_win, get_root_bg_color(), None);
+    update_clients_bg(wm);
+}
+
 static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
 {
     char *s=get_text_prop(win, atom);
@@ -618,7 +635,7 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
     {
         free_s(c->title_text);
         c->title_text=copy_string(s);
-        update_title_area_fg(wm, c);
+        update_title_area_fg(c);
     }
     free_s(s);
 }

@@ -60,7 +60,7 @@ Taskbar *create_taskbar(void)
         y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-h);
 
     taskbar=malloc_s(sizeof(Taskbar));
-    init_widget(WIDGET(taskbar), TASKBAR, UNUSED_TYPE, WIDGET_NORMAL_STATE,
+    init_widget(WIDGET(taskbar), TASKBAR, UNUSED_TYPE, WIDGET_STATE_1(current),
         xinfo.root_win, 0, y, w, h);
     XSelectInput(xinfo.display, WIDGET_WIN(taskbar), CROSSING_MASK);
 
@@ -74,12 +74,12 @@ Taskbar *create_taskbar(void)
 
 static void create_taskbar_buttons(void)
 {
-    int w=cfg->taskbar_button_width, h=taskbar->base.h;
+    int w=cfg->taskbar_button_width, h=WIDGET_H(taskbar);
 
     for(int i=0; i<TASKBAR_BUTTON_N; i++)
     {
         Widget_id id=TASKBAR_BUTTON_BEGIN+i;
-        Widget_state state={.chosen=is_chosen_taskbar_button(id)};
+        Widget_state state={.chosen=is_chosen_taskbar_button(id), .current=1};
         taskbar->buttons[i]=create_button(id, state, taskbar->base.win,
             w*i, 0, w, h, cfg->taskbar_button_text[i]);
         set_widget_tooltip(WIDGET(taskbar->buttons[i]), cfg->tooltip[id]);
@@ -148,7 +148,7 @@ static Cbutton *create_cbutton(Window parent, int x, int y, int w, int h, Window
     Cbutton *cbutton=malloc_s(sizeof(Cbutton));
     char *icon_title=get_icon_title_text(cwin, "");
 
-    cbutton->button=create_button(CLIENT_ICON, WIDGET_NORMAL_STATE,
+    cbutton->button=create_button(CLIENT_ICON, WIDGET_STATE_1(current),
         parent, x, y, w, h, icon_title);
     set_button_align(cbutton->button, CENTER_LEFT);
 
@@ -276,7 +276,7 @@ void update_iconbar_by_state(Window cwin)
         if(!state.hidden)
             taskbar_del_cbutton(cwin);
         if(state.focused)
-            WIDGET_STATE(WIDGET(cbutton->button)).focus=1,
+            WIDGET_STATE(WIDGET(cbutton->button)).current=1,
             update_widget_bg(WIDGET(cbutton->button));
     }
     else if(state.hidden)
@@ -300,7 +300,7 @@ void update_taskbar_buttons_bg(void)
 void update_statusbar_fg(void)
 {
     Statusbar *b=taskbar->statusbar;
-    XftColor fg=get_widget_fg(TASKBAR_TEXT_COLOR);
+    XftColor fg=get_widget_fg(WIDGET_STATE(b));
     if(b->label)
     {
         Str_fmt fmt={0, 0, WIDGET_W(b), WIDGET_H(b), CENTER, true, false, 0, fg};

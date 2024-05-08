@@ -84,7 +84,7 @@ void show_button(const Button *button)
 
 void update_button_fg(const Button *button)
 {
-    XftColor fg=get_widget_fg(get_widget_fg_id(WIDGET(button)));
+    XftColor fg=get_widget_fg(WIDGET_STATE(button));
     int xi=0, y=0, h=WIDGET_H(button), wi=h, xl=wi, wl=WIDGET_H(button)-wi;
 
     if(button->image)

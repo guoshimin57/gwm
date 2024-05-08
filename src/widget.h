@@ -14,42 +14,6 @@
 
 #include "gwm.h"
 
-typedef enum // 構件顏色標識
-{
-    NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR, NORMAL_TITLEBAR_COLOR,
-    CURRENT_TITLEBAR_COLOR, DISABLE_WIDGET_COLOR, WARN_WIDGET_COLOR,
-    ACTIVE_WIDGET_COLOR, HOT_WIDGET_COLOR, URGENT_WIDGET_COLOR,
-    ATTENT_WIDGET_COLOR, CHOSEN_WIDGET_COLOR, FOCUS_WIDGET_COLOR,
-    NORMAL_WIDGET_COLOR, MENU_COLOR,
-    TASKBAR_COLOR, ENTRY_COLOR, HINT_WIN_COLOR, ROOT_WIN_COLOR, 
-
-//    NORMAL_BORDER_COLOR, CURRENT_BORDER_COLOR, NORMAL_TITLEBAR_COLOR,
-//    CURRENT_TITLEBAR_COLOR,
-    ENTERED_NORMAL_BUTTON_COLOR,
-    ENTERED_CLOSE_BUTTON_COLOR,
-    CHOSEN_BUTTON_COLOR, //MENU_COLOR, TASKBAR_COLOR,
-    //ENTRY_COLOR, HINT_WIN_COLOR,
-    URGENCY_WIDGET_COLOR, ATTENTION_WIDGET_COLOR,
-    //ROOT_WIN_COLOR,
-    WIDGET_COLOR_N 
-} Widget_color_id;
-
-typedef enum // 文本顏色標識
-{
-    DISABLE_WIDGET_TEXT_COLOR, WARN_WIDGET_TEXT_COLOR,
-    ACTIVE_WIDGET_TEXT_COLOR, HOT_WIDGET_TEXT_COLOR,
-    URGENT_WIDGET_TEXT_COLOR, ATTENT_WIDGET_TEXT_COLOR,
-    CHOSEN_WIDGET_TEXT_COLOR, FOCUS_WIDGET_TEXT_COLOR,
-    NORMAL_WIDGET_TEXT_COLOR, NORMAL_TITLEBAR_TEXT_COLOR,
-    CURRENT_TITLEBAR_TEXT_COLOR, TASKBAR_TEXT_COLOR, CLASS_TEXT_COLOR,
-    MENU_TEXT_COLOR, ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
-
-    //NORMAL_TITLEBAR_TEXT_COLOR, CURRENT_TITLEBAR_TEXT_COLOR,
-    //TASKBAR_TEXT_COLOR, CLASS_TEXT_COLOR, MENU_TEXT_COLOR,
-    //ENTRY_TEXT_COLOR, HINT_TEXT_COLOR,
-    TEXT_COLOR_N 
-} Text_color_id;
-
 typedef enum // 構件標識
 {
     ROOT_WIN, HINT_WIN, RUN_CMD_ENTRY,
@@ -75,8 +39,8 @@ typedef enum // 構件標識
     MAIN_NEW_BUTTON, SEC_NEW_BUTTON, FIX_NEW_BUTTON, FLOAT_NEW_BUTTON,
     N_MAIN_UP_BUTTON, N_MAIN_DOWN_BUTTON, TITLEBAR_TOGGLE_BUTTON, CLI_BORDER_TOGGLE_BUTTON,
     CLOSE_ALL_CLIENTS_BUTTON, PRINT_WIN_BUTTON, PRINT_SCREEN_BUTTON, FOCUS_MODE_BUTTON,
-    COMPOSITOR_BUTTON, WALLPAPER_BUTTON, COLOR_THEME_BUTTON, QUIT_WM_BUTTON,
-    LOGOUT_BUTTON, REBOOT_BUTTON, POWEROFF_BUTTON, RUN_BUTTON,
+    COMPOSITOR_BUTTON, WALLPAPER_BUTTON, QUIT_WM_BUTTON, LOGOUT_BUTTON,
+    REBOOT_BUTTON, POWEROFF_BUTTON, RUN_BUTTON,
 
     NON_WIDGET,
 
@@ -100,20 +64,6 @@ typedef enum // 定位器操作類型
     RIGHT_RESIZE, TOP_LEFT_RESIZE, TOP_RIGHT_RESIZE, BOTTOM_LEFT_RESIZE,
     BOTTOM_RIGHT_RESIZE, ADJUST_LAYOUT_RATIO, POINTER_ACT_N
 } Pointer_act;
-
-typedef struct // 構件狀態
-{
-    unsigned int disable : 1;   // 禁用狀態，即此時按鈕不可用
-    unsigned int warn : 1;      // 警告狀態，即鼠標懸浮於重要按鈕之上
-    unsigned int active : 1;    // 激活狀態，即鼠標按下
-    unsigned int hot : 1;       // 可用狀態，即鼠標懸浮於按鈕之上
-    unsigned int urgent : 1;    // 緊急狀態，即有緊急消息
-    unsigned int attent : 1;    // 關注狀態，即有需要關注的消息
-    unsigned int chosen : 1;    // 選中狀態，即選中了此構件所表示的功能
-    unsigned int focus : 1;     // 聚焦狀態，即構件具有鍵盤輸入的焦點
-} Widget_state;
-
-#define WIDGET_NORMAL_STATE ((Widget_state){0})
 
 typedef struct
 {
@@ -159,11 +109,6 @@ void show_widget(const Widget *widget);
 void hide_widget(const Widget *widget);
 void move_resize_widget(Widget *widget, int x, int y, int w, int h);
 void update_widget_bg(const Widget *widget);
-Widget_color_id get_widget_border_color_id(const Widget *widget);
-Text_color_id get_widget_fg_id(const Widget *widget);
-void alloc_color(void);
-unsigned long get_widget_color(Widget_color_id id);
-XftColor get_widget_fg(Text_color_id id);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);

@@ -295,23 +295,6 @@ void print_win(WM *wm, XEvent *e, Func_arg arg)
         print_area(WIDGET_WIN(c->frame), 0, 0, WIDGET_W(c), WIDGET_H(c));
 }
 
-void switch_color_theme(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    if(cfg->color_theme < COLOR_THEME_N-1)
-        cfg->color_theme++;
-    else
-        cfg->color_theme=0;
-    // 以下函數會產生Expose事件，而處理Expose事件時會更新窗口的文字
-    // 內容及其顏色，故此處不必更新構件文字顏色。
-    update_taskbar_bg();
-    update_menu_bg(act_center);
-    update_menu_bg(client_menu);
-    update_entry_bg(cmd_entry);
-    update_win_bg(xinfo.hint_win, get_widget_color(HINT_WIN_COLOR), None);
-    update_clients_bg(wm);
-}
-
 void toggle_compositor(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);

@@ -20,6 +20,7 @@ static void set_atoms(void);
 static void init_imlib(void);
 static void init_wallpaper_files(WM *wm);
 
+Window gwin;
 void init_wm(WM *wm)
 {
     memset(wm, 0, sizeof(WM));
@@ -45,7 +46,7 @@ void init_wm(WM *wm)
     init_desktop(wm);
     reg_event_handlers(wm);
     load_fonts();
-    alloc_color();
+    alloc_color(cfg->main_color_name);
     init_root_win_background();
     create_cursors();
     set_cursor(xinfo.root_win, NO_OP);

@@ -154,7 +154,7 @@ void iconify_client(WM *wm, Client *c)
         if(c == CUR_FOC_CLI(wm))
         {
             focus_client(wm, wm->cur_desktop, NULL);
-            update_frame_bg(wm, wm->cur_desktop, c);
+            update_frame_bg(c);
         }
     }
     request_layout_update();

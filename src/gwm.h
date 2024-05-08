@@ -35,6 +35,7 @@
 
 #include "misc.h"
 #include "font.h"
+#include "color.h"
 #include "widget.h"
 #include "button.h"
 #include "drawable.h"
@@ -117,11 +118,6 @@ enum layout_tag // 窗口管理器的布局模式
     PREVIEW, STACK, TILE,
 };
 typedef enum layout_tag Layout;
-
-typedef enum // 顏色主題
-{
-    DARK_THEME, NORMAL_THEME, LIGHT_THEME, COLOR_THEME_N
-} Color_theme;
 
 struct rule_tag // 窗口管理器的規則
 {// 分別爲客戶窗口的程序類型和程序名稱、標題，NULL或*表示匹配任何字符串

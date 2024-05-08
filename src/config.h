@@ -24,7 +24,6 @@ typedef struct
     bool show_taskbar, taskbar_on_top; // 是否顯示任務欄、是否在屏幕頂部顯示
     Focus_mode focus_mode; // 聚焦模式
     Layout default_layout; // 默認的窗口布局模式
-    Color_theme color_theme; // 顏色主題
 
     /* 屏幕保護程序的行爲取決於X服務器，可能顯示移動的圖像，可能只是黑屏。*/
     int screen_saver_time_out; // 激活內置屏幕之前的空閒時間，單位爲秒。當值爲0時表示禁用屏保，爲-1時恢復缺省值。
@@ -52,8 +51,7 @@ typedef struct
     double font_pad_ratio; // 文字與構件邊緣的間距與字體高度的比值
     double default_main_area_ratio; // 默認的主區域比例
     double default_fixed_area_ratio; // 默認的固定區域比例
-    float global_opacity; // 全局構件背景色不透明度
-    float widget_opacity[COLOR_THEME_N][WIDGET_COLOR_N]; // 各種構件背景色的不透明度
+    float widget_opacity; // 構件背景色不透明度
     const char **font_names; // 本窗口管理器所偏好的字體名稱列表。
     const char *autostart; // 在gwm剛啓動時執行的腳本
     const char *cur_icon_theme; // 當前圖標主題
@@ -61,9 +59,8 @@ typedef struct
     const char *screenshot_format; // 屏幕截圖的文件保存格式
     const char *wallpaper_paths; // 壁紙目錄列表，如取消此宏定义或目录为空或不能访问，则切换绝壁时使用纯色
     const char *wallpaper_filename; // 壁紙文件名。若刪除本行或文件不能訪問，則使用純色背景
+    const char *main_color_name; // 界面主色調
     const char *tooltip[WIDGET_N]; // 构件提示
-    const char *widget_color_name[COLOR_THEME_N][WIDGET_COLOR_N]; // 構件顏色名
-    const char *text_color_name[COLOR_THEME_N][TEXT_COLOR_N]; // 構件顏色名
     const char *title_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
     const char *taskbar_button_text[TASKBAR_BUTTON_N]; // 任務欄按鈕的標籤
     const char *act_center_item_icon[ACT_CENTER_ITEM_N]; // 操作中心菜單項的圖標名

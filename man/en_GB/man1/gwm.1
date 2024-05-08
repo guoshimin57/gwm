@@ -12,7 +12,7 @@
 ./" program. Otherwise, see <http://www.gnu.org/licenses/>.
 ./" ************************************************* ***************************/
 
-.TH gwm 1 April 2024 "gwm 2.9.2" gwm
+.TH gwm 1 May 2024 "gwm 2.10.0" gwm
 .
 .SH NAME
 .B
@@ -367,7 +367,16 @@ Some "pointer button1 click" commands, which can be understood directly accordin
 .B Operate action center(unless otherwise specified, the corresponding pointer command is: pointer button 1 - click)
     Run button: Open the command entry and have grab keyboard. After typing part or all of a command, press Enter to run the first matching command and exit. Press the Esc key or use the pointer to click outside the entry to close the command entry. Support simple editing functions, you can use the Backspace key to delete a character before the cursor, use the Del key to delete a character after the cursor, use the left key to move the cursor to the position of the previous character, and use the right key to move the cursor to the position of next character, use the Home key to move the cursor before the first character, use End to move the cursor behind the last character, use Control+u to clear all characters before the cursor, use Control+v to paste the content at the cursor position, use Tab key completes commands.
 .
-.SS Configuration
+.SH Property
+.
+.TP
+Property is a mechanism for communicating with gwm. Property can be modified using xprop(1). In addition to X standard property, ICCCM property, and EWMH property, gwm also supports the following property:
+.
+.TP
+.B GWM_MAIN_COLOR_NAME
+The main color name of the gwm interface. String format. Supports English color name and hexadecimal string(eg: #abcdef). Modifying this property changes the color theme. eg: xprop -root -f GWM_MAIN_COLOR_NAME 8s -set GWM_MAIN_COLOR_NAME "black".
+.
+.SH Configuration
 .
 .TP
 Currently the configuration can only be modified by modifying the source code. Specifically, modify config.c, which already contains detailed configuration notes.

@@ -68,7 +68,6 @@
     {FOCUS_MODE_BUTTON,         0, Button1,  toggle_focus_mode,          {0}},                              \
     {COMPOSITOR_BUTTON,         0, Button1,  toggle_compositor,          {0}},                              \
     {WALLPAPER_BUTTON,          0, Button1,  switch_wallpaper,           {0}},                              \
-    {COLOR_THEME_BUTTON,        0, Button1,  switch_color_theme,         {0}},                              \
     {QUIT_WM_BUTTON,            0, Button1,  quit_wm,                    {0}},                              \
     {LOGOUT_BUTTON,             0, Button1,  exec,                       SH_CMD(LOGOUT)},                   \
     {REBOOT_BUTTON,             0, Button1,  exec,                       SH_CMD("reboot")},                 \

@@ -49,7 +49,6 @@ void show_run_cmd_entry(WM *wm, XEvent *e, Func_arg arg);
 void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg);
 void print_screen(WM *wm, XEvent *e, Func_arg arg);
 void print_win(WM *wm, XEvent *e, Func_arg arg);
-void switch_color_theme(WM *wm, XEvent *e, Func_arg arg);
 void toggle_compositor(WM *wm, XEvent *e, Func_arg arg);
 
 #endif
