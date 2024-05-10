@@ -132,7 +132,7 @@ char *get_icon_title_text(Window win, const char *fallback)
         return s;
     if((s=get_wm_icon_name(win)) && strlen(s))
         return s;
-    return copy_string(fallback);
+    return copy_string(get_title_text(win, fallback));
 }
 
 bool is_match_button_release(XEvent *oe, XEvent *ne)

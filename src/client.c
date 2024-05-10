@@ -255,7 +255,6 @@ void create_titlebar(Client *c)
     c->frame->title_area=create_widget(TITLE_AREA, UNUSED_TYPE, WIDGET_STATE(c),
         WIDGET_WIN(c->frame), tr.x, tr.y, tr.w, tr.w);
     set_widget_tooltip(WIDGET(c->frame->title_area), c->title_text);
-
     c->frame->logo=create_button(TITLE_LOGO, WIDGET_STATE(c), WIDGET_WIN(c->frame),
         0, 0, c->titlebar_h, c->titlebar_h, NULL);
     set_widget_tooltip(WIDGET(c->frame->logo), cfg->tooltip[TITLE_LOGO]);

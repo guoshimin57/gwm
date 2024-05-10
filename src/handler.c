@@ -365,7 +365,6 @@ static void handle_enter_notify(WM *wm, XEvent *e)
 
 static void handle_pointer_hover(WM *wm, const Widget *widget)
 {
-
     if(!widget->tooltip)
         return;
 
@@ -635,6 +634,7 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
     {
         free_s(c->title_text);
         c->title_text=copy_string(s);
+        set_widget_tooltip(WIDGET(c->frame->title_area), s);
         update_title_area_fg(c);
     }
     free_s(s);

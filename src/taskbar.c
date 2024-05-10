@@ -156,7 +156,7 @@ static Cbutton *create_cbutton(Window parent, int x, int y, int w, int h, Window
     cbutton->next=NULL;
 
     set_cbutton_icon(cbutton);
-    set_widget_tooltip(WIDGET(cbutton), icon_title);
+    set_widget_tooltip(WIDGET(cbutton->button), icon_title);
     free_s(icon_title);
 
     return cbutton;
