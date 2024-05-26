@@ -20,51 +20,77 @@ struct _entry_tag // 輸入構件
     const char *hint; // 構件的提示文字
     size_t cursor_offset; // 光標偏移字符數
     XIC xic; // 輸入法句柄
-    Strings *(*complete)(Entry *, int *); // 補全函數
+    Strings *(*complete)(Entry *entry, int *n); // 補全函數
 };
 
+static void set_entry_method(Widget *widget);
 static int get_entry_cursor_x(Entry *entry);
 static char *get_part_match_regex(Entry *entry);
 static void complete_for_entry(Entry *entry, bool show);
-static void hide_entry(Entry *entry);
 static Strings *get_cmd_completion_for_entry(Entry *entry, int *n);
 
 Entry *cmd_entry=NULL; // 輸入命令並執行的構件
 
-Entry *create_entry(Widget_id id, Window parent, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
+Entry *create_entry(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
 {
     Entry *entry=malloc_s(sizeof(Entry));
-    init_widget(WIDGET(entry), id, ENTRY_TYPE, WIDGET_STATE_1(current), parent, x, y, w, h);
-    entry->text[0]=L'\0', entry->hint=hint, entry->cursor_offset=0;
+
+    init_widget(WIDGET(entry), parent, id, WIDGET_STATE_1(current), x, y, w, h);
+    set_entry_method(WIDGET(entry));
+
+    entry->text[0]=L'\0';
+    entry->hint=hint;
+    entry->cursor_offset=0;
     entry->complete=complete;
     XSelectInput(xinfo.display, WIDGET_WIN(entry), ENTRY_EVENT_MASK);
     set_xic(WIDGET_WIN(entry), &entry->xic);
+
     return entry;
 }
 
-wchar_t *get_entry_text(Entry *entry)
+static void set_entry_method(Widget *widget)
 {
-    return entry->text;
+    widget->show=show_entry;
+    widget->hide=hide_entry;
+    widget->update_bg=update_entry_bg;
+    widget->update_fg=update_entry_fg;
 }
 
-void show_entry(Entry *entry)
+void destroy_entry(Entry *entry)
 {
-    show_widget(WIDGET(entry));
-    entry->text[0]=L'\0', entry->cursor_offset=0;
-    update_entry_fg(entry);
+    if(entry->xic)
+        XDestroyIC(entry->xic);
+    destroy_widget(WIDGET(entry));
+}
+
+void show_entry(Widget *widget)
+{
+    Entry *entry=ENTRY(widget);
+
+    cmd_entry->text[0]=L'\0';
+    cmd_entry->cursor_offset=0;
+    XRaiseWindow(xinfo.display, WIDGET_WIN(cmd_entry));
+    show_widget(widget);
     XGrabKeyboard(xinfo.display, WIDGET_WIN(entry), False,
         GrabModeAsync, GrabModeAsync, CurrentTime);
 }
 
-void update_entry_bg(Entry *entry)
+void hide_entry(const Widget *widget)
 {
-    update_widget_bg(WIDGET(entry));
-    XSetWindowBorder(xinfo.display, WIDGET_WIN(entry),
-        get_widget_color(WIDGET_STATE(entry)));
+    XUngrabKeyboard(xinfo.display, CurrentTime);
+    hide_widget(widget);
+    XUnmapWindow(xinfo.display, xinfo.hint_win);
 }
 
-void update_entry_fg(Entry *entry)
+void update_entry_bg(const Widget *widget)
 {
+    update_widget_bg(widget);
+    set_widget_border_color(widget, get_widget_color(WIDGET_STATE(widget)));
+}
+
+void update_entry_fg(const Widget *widget)
+{
+    Entry *entry=ENTRY(widget);
     int x=get_entry_cursor_x(entry);
     bool empty = entry->text[0]==L'\0';
     Str_fmt fmt={0, 0, WIDGET_W(entry), WIDGET_H(entry), CENTER_LEFT, true, false, 0,
@@ -77,6 +103,11 @@ void update_entry_fg(Entry *entry)
 
     GC gc=XCreateGC(xinfo.display, WIDGET_WIN(entry), 0, NULL);
     XDrawLine(xinfo.display, WIDGET_WIN(entry), gc, x, 0, x, WIDGET_H(entry));
+}
+
+wchar_t *get_entry_text(Entry *entry)
+{
+    return entry->text;
 }
 
 static int get_entry_cursor_x(Entry *entry)
@@ -112,9 +143,9 @@ bool input_for_entry(Entry *entry, XKeyEvent *ke)
     {
         switch(ks)
         {
-            case XK_Escape:    hide_entry(entry); return false;
+            case XK_Escape:    hide_entry(WIDGET(entry)); return false;
             case XK_Return:
-            case XK_KP_Enter:  complete_for_entry(entry, false); hide_entry(entry); return true;
+            case XK_KP_Enter:  complete_for_entry(entry, false); hide_entry(WIDGET(entry)); return true;
             case XK_BackSpace: if(n1) wmemmove(s+*i-1, s+*i, no+1), --*i; break;
             case XK_Delete:
             case XK_KP_Delete: if(n1 < n) wmemmove(s+*i, s+*i+1, no+1); break;
@@ -132,7 +163,7 @@ bool input_for_entry(Entry *entry, XKeyEvent *ke)
         wcsncpy(s+n1, keyname, n-n1-1), (*i)+=n2;
 
     complete_for_entry(entry, true);
-    update_entry_fg(entry);
+    update_entry_fg(WIDGET(entry));
     return false;
 }
 
@@ -176,20 +207,6 @@ static void complete_for_entry(Entry *entry, bool show)
     free_strings(strs);
 }
 
-static void hide_entry(Entry *entry)
-{
-    XUngrabKeyboard(xinfo.display, CurrentTime);
-    hide_widget(WIDGET(entry));
-    XUnmapWindow(xinfo.display, xinfo.hint_win);
-}
-
-void destroy_entry(Entry *entry)
-{
-    if(entry->xic)
-        XDestroyIC(entry->xic);
-    destroy_widget(WIDGET(entry));
-}
-
 void paste_for_entry(Entry *entry)
 {
     char *p=(char *)get_prop(WIDGET_WIN(entry), get_utf8_string_atom(), NULL);
@@ -203,7 +220,7 @@ void paste_for_entry(Entry *entry)
     wmemmove(dest, src, wcslen(entry->text)-entry->cursor_offset);
     wcsncpy(src, text, n);
     entry->cursor_offset += n;
-    update_entry_fg(entry);
+    update_entry_fg(WIDGET(entry));
 }
 
 Entry *create_cmd_entry(Widget_id id)
@@ -215,7 +232,7 @@ Entry *create_cmd_entry(Widget_id id)
     w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
     x=(sw-w)/2-bw, y=(sh-h)/2-bw;
 
-    return create_entry(id, xinfo.root_win, x, y, w, h, cfg->cmd_entry_hint,
+    return create_entry(NULL, id, x, y, w, h, cfg->cmd_entry_hint,
         get_cmd_completion_for_entry);
 }
 

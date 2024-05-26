@@ -42,9 +42,9 @@ typedef enum // 構件標識
     COMPOSITOR_BUTTON, WALLPAPER_BUTTON, QUIT_WM_BUTTON, LOGOUT_BUTTON,
     REBOOT_BUTTON, POWEROFF_BUTTON, RUN_BUTTON,
 
-    NON_WIDGET,
+    UNUSED_WIDGET_ID,
 
-    WIDGET_N=NON_WIDGET,
+    WIDGET_N=UNUSED_WIDGET_ID,
     TITLE_BUTTON_BEGIN=SECOND_BUTTON, TITLE_BUTTON_END=CLOSE_BUTTON,
     TASKBAR_BUTTON_BEGIN=DESKTOP1_BUTTON, TASKBAR_BUTTON_END=ACT_CENTER_ITEM,
     LAYOUT_BUTTON_BEGIN=PREVIEW_BUTTON, LAYOUT_BUTTON_END=TILE_BUTTON, 
@@ -53,11 +53,6 @@ typedef enum // 構件標識
     CLIENT_MENU_ITEM_BEGIN=SHADE_BUTTON, CLIENT_MENU_ITEM_END=FULL_MAX_BUTTON, 
 } Widget_id;
 
-typedef enum // 構件類型
-{
-    BUTTON_TYPE, ENTRY_TYPE, UNUSED_TYPE
-} Widget_type;
-    
 typedef enum // 定位器操作類型
 {
     NO_OP, CHOOSE, MOVE, SWAP, CHANGE, TOP_RESIZE, BOTTOM_RESIZE, LEFT_RESIZE,
@@ -65,19 +60,24 @@ typedef enum // 定位器操作類型
     BOTTOM_RIGHT_RESIZE, ADJUST_LAYOUT_RATIO, POINTER_ACT_N
 } Pointer_act;
 
-typedef struct
+typedef struct _widget_tag Widget;
+
+struct _widget_tag
 {
     Widget_id id;
-    Widget_type type;
     Widget_state state;
     int x, y, w, h;
-    Window parent, win;
-    char *tooltip;
-} Widget;
+    Window win;
+    Widget *parent, *tooltip;
 
+    /* 以下爲虛函數 */
+    void (*show)(Widget *widget);
+    void (*hide)(const Widget *widget);
+    void (*update_bg)(const Widget *widget);
+    void (*update_fg)(const Widget *widget);
+};
 
-#define WIDGET_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
-
+#define WIDGET_EVENT_MASK (ExposureMask)
 #define TITLE_BUTTON_N (TITLE_BUTTON_END-TITLE_BUTTON_BEGIN+1)
 #define TASKBAR_BUTTON_N (TASKBAR_BUTTON_END-TASKBAR_BUTTON_BEGIN+1)
 #define ACT_CENTER_ITEM_N (ACT_CENTER_ITEM_END-ACT_CENTER_ITEM_BEGIN+1)
@@ -99,22 +99,21 @@ typedef struct
 #define DESKTOP_BUTTON_N(n) (DESKTOP_BUTTON_BEGIN+n-1)
 
 Widget *win_to_widget(Window win);
-Widget *create_widget(Widget_id id, Widget_type type, Widget_state state, Window parent, int x, int y, int w, int h);
-void init_widget(Widget *widget, Widget_id id, Widget_type type, Widget_state state, Window parent, int x, int y, int w, int h);
-void set_widget_tooltip(Widget *widget, const char *tooltip);
+Widget *create_widget(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
+void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
+void destroy_widget(Widget *widget);
 void set_widget_border_width(const Widget *widget, int width);
 void set_widget_border_color(const Widget *widget, unsigned long pixel);
-void destroy_widget(Widget *widget);
-void show_widget(const Widget *widget);
+void show_widget(Widget *widget);
 void hide_widget(const Widget *widget);
 void move_resize_widget(Widget *widget, int x, int y, int w, int h);
 void update_widget_bg(const Widget *widget);
+void update_widget_fg(const Widget *widget);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 void create_hint_win(void);
-void create_client_menu(void);
 void create_cursors(void);
 void set_cursor(Window win, Pointer_act act);
 void free_cursors(void);

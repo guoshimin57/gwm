@@ -14,18 +14,19 @@
 struct _menu_tag // 一級多行多列菜單 
 {
     Widget base;
+    Widget *owner;
     Button **items; // 菜單項
     int n, col, row; // 菜單項數量、列數、行數
 };
 
 static bool is_null_strings(const char *strings[], int n);
+static void set_menu_method(Widget *widget);
 
-Menu *act_center=NULL, *client_menu=NULL; // 操作中心, 客戶窗口菜單
+Menu *act_center=NULL; // 操作中心
 
-Menu *create_menu(Widget_id id, Window parent, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col)
+Menu *create_menu(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col)
 {
     Menu *menu=malloc_s(sizeof(Menu));
-
     int w, wi=0, wl=0, h=get_font_height_by_pad(), maxw=0, sw=xinfo.screen_width,
         pad=get_font_pad(), row=(n+col-1)/col;
 
@@ -40,17 +41,18 @@ Menu *create_menu(Widget_id id, Window parent, const char *icon_names[], const c
     if(w > sw)
         w=sw/col;
 
-    init_widget(WIDGET(menu), id, UNUSED_TYPE, WIDGET_STATE_1(current), parent, 0, 0, w*col, h*row);
+    init_widget(WIDGET(menu), NULL, id, WIDGET_STATE_1(current), 0, 0, w*col, h*row);
+    set_menu_method(WIDGET(menu));
 
+    menu->owner=owner;
     menu->items=malloc_s(sizeof(Button *)*n);
     for(int i=0; i<n; i++)
     {
-         menu->items[i]=create_button(id+i+1, WIDGET_STATE_1(current), WIDGET_WIN(menu), w*(i%col),
+         menu->items[i]=create_button(WIDGET(menu), id+i+1, WIDGET_STATE_1(current), w*(i%col),
              h*(i/col), w, h, labels[i]);
          set_button_icon(menu->items[i], NULL, icon_names[i], symbols[i]);
          set_button_align(menu->items[i], CENTER_LEFT);
     }
-
     menu->n=n, menu->col=col, menu->row=row;
 
     return menu;
@@ -64,21 +66,10 @@ static bool is_null_strings(const char *strings[], int n)
     return true;
 }
 
-void show_menu(XEvent *e, Menu *menu, Window bind)
+static void set_menu_method(Widget *widget)
 {
-    if(e->type == ButtonPress)
-        set_pos_for_click(bind, e->xbutton.x_root-e->xbutton.x,
-            &WIDGET_X(menu), &WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
-    move_resize_widget(WIDGET(menu), WIDGET_X(menu), WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
-    XRaiseWindow(xinfo.display, WIDGET_WIN(menu));
-    show_widget(WIDGET(menu));
-}
-
-void update_menu_bg(const Menu *menu)
-{
-    update_widget_bg(WIDGET(menu));
-    for(int i=0; i<menu->n; i++)
-        update_widget_bg(WIDGET(menu->items[i]));
+    widget->show=show_menu;
+    widget->update_bg=update_menu_bg;
 }
 
 void destroy_menu(Menu *menu)
@@ -88,4 +79,24 @@ void destroy_menu(Menu *menu)
     free_s(menu->items);
     XDestroyWindow(xinfo.display, WIDGET_WIN(menu));
     free_s(menu);
+}
+
+void show_menu(Widget *widget)
+{
+    Menu *menu=MENU(widget);
+
+    set_pos_for_click(WIDGET_WIN(menu->owner),
+        &WIDGET_X(menu), &WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
+    move_resize_widget(WIDGET(menu), WIDGET_X(menu), WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
+    XRaiseWindow(xinfo.display, WIDGET_WIN(menu));
+    show_widget(widget);
+}
+
+void update_menu_bg(const Widget *widget)
+{
+    Menu *menu=MENU(widget);
+
+    update_widget_bg(widget);
+    for(int i=0; i<menu->n; i++)
+        update_widget_bg(WIDGET(menu->items[i]));
 }

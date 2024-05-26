@@ -39,12 +39,13 @@ struct _taskbar_tag // 任務欄
     Statusbar *statusbar;
 };
 
+static void set_taskbar_method(Widget *widget);
 static void create_taskbar_buttons(void);
 static bool is_chosen_taskbar_button(Widget_id id);
 static void create_iconbar(void);
 static void create_statusbar(void);
 static void create_act_center(void);
-static Cbutton *create_cbutton(Window parent, int x, int y, int w, int h, Window cwin);
+static Cbutton *create_cbutton(Widget *parent, int x, int y, int w, int h, Window cwin);
 static void set_cbutton_icon(Cbutton *cbutton);
 static void add_cbutton(Cbutton *node);
 static void del_cbutton(Cbutton *node);
@@ -54,22 +55,26 @@ static Cbutton *win_to_cbutton(Window cwin);
 
 Taskbar *taskbar=NULL;
 
-Taskbar *create_taskbar(void)
+void create_taskbar(void)
 {
     int w=xinfo.screen_width, h=get_font_height_by_pad(),
         y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-h);
 
     taskbar=malloc_s(sizeof(Taskbar));
-    init_widget(WIDGET(taskbar), TASKBAR, UNUSED_TYPE, WIDGET_STATE_1(current),
-        xinfo.root_win, 0, y, w, h);
+    init_widget(WIDGET(taskbar), NULL, TASKBAR, WIDGET_STATE_1(current),
+        0, y, w, h);
+    set_taskbar_method(WIDGET(taskbar));
     XSelectInput(xinfo.display, WIDGET_WIN(taskbar), CROSSING_MASK);
 
     create_taskbar_buttons();
     create_iconbar();
     create_statusbar();
     create_act_center();
+}
 
-    return taskbar;
+static void set_taskbar_method(Widget *widget)
+{
+    widget->update_bg=update_taskbar_bg;
 }
 
 static void create_taskbar_buttons(void)
@@ -80,9 +85,9 @@ static void create_taskbar_buttons(void)
     {
         Widget_id id=TASKBAR_BUTTON_BEGIN+i;
         Widget_state state={.chosen=is_chosen_taskbar_button(id), .current=1};
-        taskbar->buttons[i]=create_button(id, state, taskbar->base.win,
+        taskbar->buttons[i]=create_button(WIDGET(taskbar), id, state,
             w*i, 0, w, h, cfg->taskbar_button_text[i]);
-        set_widget_tooltip(WIDGET(taskbar->buttons[i]), cfg->tooltip[id]);
+        create_tooltip(WIDGET(taskbar->buttons[i]), cfg->tooltip[id]);
     }
 }
 
@@ -100,8 +105,8 @@ static void create_iconbar(void)
         w=WIDGET_W(taskbar)-bw, h=WIDGET_H(taskbar);
 
     taskbar->iconbar=malloc_s(sizeof(Iconbar));
-    init_widget(WIDGET(taskbar->iconbar), ICONBAR, UNUSED_TYPE,
-        WIDGET_STATE(taskbar), WIDGET_WIN(taskbar), x, 0, w, h);
+    init_widget(WIDGET(taskbar->iconbar), WIDGET(taskbar),
+        ICONBAR, WIDGET_STATE(taskbar), x, 0, w, h);
     taskbar->iconbar->cbuttons=NULL;
 }
 
@@ -119,44 +124,44 @@ static void create_statusbar(void)
         w=cfg->status_area_width_max;
     else if(w == 0)
         w=1;
-    init_widget(WIDGET(taskbar->statusbar), STATUSBAR, UNUSED_TYPE,
-        WIDGET_STATE(taskbar), WIDGET_WIN(taskbar), WIDGET_W(taskbar)-w,
-        0, w, WIDGET_H(taskbar));
+    init_widget(WIDGET(taskbar->statusbar), WIDGET(taskbar), STATUSBAR,
+        WIDGET_STATE(taskbar), WIDGET_W(taskbar)-w, 0, w, WIDGET_H(taskbar));
     XSelectInput(xinfo.display, WIDGET_WIN(taskbar->statusbar), ExposureMask);
     taskbar->statusbar->label=copy_string(p);
 }
 
 static void create_act_center(void)
 {
-    act_center=create_menu(ACT_CENTER, xinfo.root_win,
-        cfg->act_center_item_icon, cfg->act_center_item_symbol,
+    int i=WIDGET_INDEX(ACT_CENTER_ITEM, TASKBAR_BUTTON);
+    act_center=create_menu(WIDGET(taskbar->buttons[i]),
+        ACT_CENTER, cfg->act_center_item_icon, cfg->act_center_item_symbol,
         cfg->act_center_item_label, ACT_CENTER_ITEM_N, cfg->act_center_col);
 }
 
 void taskbar_add_cbutton(Window cwin)
 {
     int h=WIDGET_H(taskbar->iconbar), w=h;
-    Cbutton *c=create_cbutton(WIDGET_WIN(taskbar->iconbar), 0, 0, w, h, cwin);
+    Cbutton *c=create_cbutton(WIDGET(taskbar->iconbar), 0, 0, w, h, cwin);
 
     add_cbutton(c);
     update_iconbar();
-    show_button(c->button);
+    WIDGET(c->button)->show(WIDGET(c->button));
 }
 
-static Cbutton *create_cbutton(Window parent, int x, int y, int w, int h, Window cwin)
+static Cbutton *create_cbutton(Widget *parent, int x, int y, int w, int h, Window cwin)
 {
     Cbutton *cbutton=malloc_s(sizeof(Cbutton));
     char *icon_title=get_icon_title_text(cwin, "");
 
-    cbutton->button=create_button(CLIENT_ICON, WIDGET_STATE_1(current),
-        parent, x, y, w, h, icon_title);
+    cbutton->button=create_button(parent, CLIENT_ICON, WIDGET_STATE_1(current),
+        x, y, w, h, icon_title);
     set_button_align(cbutton->button, CENTER_LEFT);
 
     cbutton->cwin=cwin;
     cbutton->next=NULL;
 
     set_cbutton_icon(cbutton);
-    set_widget_tooltip(WIDGET(cbutton->button), icon_title);
+    create_tooltip(WIDGET(cbutton->button), icon_title);
     free_s(icon_title);
 
     return cbutton;
@@ -189,6 +194,7 @@ void taskbar_del_cbutton(Window cwin)
             del_cbutton(c);
             destroy_cbutton(c);
             update_iconbar();
+            puts("del");
             break;
         }
     }
@@ -233,12 +239,12 @@ void update_iconbar(void)
         Button *b=c->button;
         if(have_similar_cbutton(c))
         {
-            puts(get_button_label(b));
+            puts("have same");
             get_string_size(get_button_label(b), &wl, NULL);
             w=MIN(wi+wl, cfg->icon_win_width_max);
         }
         else
-            w=WIDGET_W(b);
+            w=wi;
         move_resize_widget(WIDGET(b), x, WIDGET_Y(b), w, WIDGET_H(b)); 
         x+=w+cfg->icon_gap;
     }
@@ -323,8 +329,9 @@ void set_statusbar_label(const char *label)
     update_statusbar_fg();
 }
 
-void update_taskbar_bg(void)
+void update_taskbar_bg(const Widget *widget)
 {
+    Taskbar *taskbar=(Taskbar *)widget;
     update_taskbar_buttons_bg();
     update_widget_bg(WIDGET(taskbar->iconbar));
     /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
@@ -334,7 +341,7 @@ void update_taskbar_bg(void)
     update_widget_bg(WIDGET(taskbar->statusbar));
 }
 
-void destroy_taskbar(Taskbar *taskbar)
+void destroy_taskbar(void)
 {
     for(int i=0; i<TASKBAR_BUTTON_N; i++)
         destroy_button(taskbar->buttons[i]);

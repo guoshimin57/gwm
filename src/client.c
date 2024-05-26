@@ -11,6 +11,9 @@
 
 #include "gwm.h"
 
+#define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
+    ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
+#define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
 
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);
@@ -70,7 +73,7 @@ static Client *new_client(WM *wm, Window win)
     Client *c=malloc_s(sizeof(Client));
     memset(c, 0, sizeof(Client));
     Widget_state state={.current=1};
-    init_widget(WIDGET(c), CLIENT_WIN, UNUSED_TYPE, state, xinfo.root_win, 0, 0, 1, 1);
+    init_widget(WIDGET(c), NULL, CLIENT_WIN, state, 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
     c->map_n=++map_count;
     c->title_text=get_title_text(win, "");
@@ -204,9 +207,10 @@ static void set_win_rect_by_attr(Client *c)
 static void frame_client(Client *c)
 {
     Rect fr=get_frame_rect(c);
+
     c->frame=malloc_s(sizeof(Frame));
-    init_widget(WIDGET(c->frame), CLIENT_FRAME, UNUSED_TYPE, WIDGET_STATE(c),
-        xinfo.root_win, fr.x, fr.y, fr.w, fr.h);
+    init_widget(WIDGET(c->frame), NULL, CLIENT_FRAME, WIDGET_STATE(c),
+        fr.x, fr.y, fr.w, fr.h);
     set_widget_border_width(WIDGET(c->frame), cfg->border_width);
     set_widget_border_color(WIDGET(c->frame),
         get_widget_color(WIDGET_STATE(c->frame)));
@@ -215,6 +219,9 @@ static void frame_client(Client *c)
         copy_prop(c->frame->base.win, WIDGET_WIN(c));
     if(c->titlebar_h)
         create_titlebar(c);
+    c->frame->menu=create_menu(WIDGET(c->frame->logo), CLIENT_MENU,
+        cfg->client_menu_item_icon, cfg->client_menu_item_symbol,
+        cfg->client_menu_item_label, CLIENT_MENU_ITEM_N, 1);
     XAddToSaveSet(xinfo.display, WIDGET_WIN(c));
     XReparentWindow(xinfo.display, WIDGET_WIN(c), c->frame->base.win, 0, c->titlebar_h);
     show_widget(WIDGET(c->frame));
@@ -236,6 +243,7 @@ static void unframe_client(Client *c)
         for(int i=0; i<TITLE_BUTTON_N; i++)
             destroy_button(c->frame->buttons[i]);
     }
+    destroy_menu(c->frame->menu);
     destroy_widget(WIDGET(c->frame));
     XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
 }
@@ -247,17 +255,19 @@ void create_titlebar(Client *c)
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=get_button_rect(c, i);
-        c->frame->buttons[i]=create_button(TITLE_BUTTON_BEGIN+i, WIDGET_STATE(c),
-            WIDGET_WIN(c->frame), br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
-        set_widget_tooltip(WIDGET(c->frame->buttons[i]), cfg->tooltip[TITLE_BUTTON_BEGIN+i]);
+        Widget_id id=TITLE_BUTTON_BEGIN+i;
+        c->frame->buttons[i]=create_button(WIDGET(c->frame), id, WIDGET_STATE(c),
+            br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
+        create_tooltip(WIDGET(c->frame->buttons[i]), cfg->tooltip[id]);
     }
 
-    c->frame->title_area=create_widget(TITLE_AREA, UNUSED_TYPE, WIDGET_STATE(c),
-        WIDGET_WIN(c->frame), tr.x, tr.y, tr.w, tr.w);
-    set_widget_tooltip(WIDGET(c->frame->title_area), c->title_text);
-    c->frame->logo=create_button(TITLE_LOGO, WIDGET_STATE(c), WIDGET_WIN(c->frame),
+    c->frame->title_area=create_widget(WIDGET(c->frame), TITLE_AREA, WIDGET_STATE(c),
+        tr.x, tr.y, tr.w, tr.w);
+    XSelectInput(xinfo.display, WIDGET_WIN(c->frame->title_area), TITLE_AREA_EVENT_MASK);
+    create_tooltip(WIDGET(c->frame->title_area), c->title_text);
+    c->frame->logo=create_button(WIDGET(c->frame), TITLE_LOGO, WIDGET_STATE(c),
         0, 0, c->titlebar_h, c->titlebar_h, NULL);
-    set_widget_tooltip(WIDGET(c->frame->logo), cfg->tooltip[TITLE_LOGO]);
+    create_tooltip(WIDGET(c->frame->logo), cfg->tooltip[TITLE_LOGO]);
     Imlib_Image image=get_icon_image(WIDGET_WIN(c), c->class_hint.res_name,
         cfg->icon_image_size, cfg->cur_icon_theme);
     set_button_icon(BUTTON(c->frame->logo), image, c->class_hint.res_name, NULL);

@@ -19,6 +19,7 @@ typedef struct widget_node_tag
 
 static void reg_widget(Widget *widget);
 static void unreg_widget(Widget *widget);
+static void set_widget_method(Widget *widget);
 static unsigned int get_num_lock_mask(void);
 static unsigned int get_valid_mask(unsigned int mask);
 static unsigned int get_modifier_mask(KeySym key_sym);
@@ -58,35 +59,47 @@ Widget *win_to_widget(Window win)
     return NULL;
 }
 
-Widget *create_widget(Widget_id id, Widget_type type, Widget_state state, Window parent, int x, int y, int w, int h)
+Widget *create_widget(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
 {
     Widget *widget=malloc_s(sizeof(Widget));
 
-    init_widget(widget, id, type, state, parent, x, y, w, h);
+    init_widget(widget, parent, id, state, x, y, w, h);
 
     return widget;
 }
 
-void init_widget(Widget *widget, Widget_id id, Widget_type type, Widget_state state, Window parent, int x, int y, int w, int h)
+void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
 {
     unsigned long bg;
+    Window pwin = parent ? parent->win : xinfo.root_win;
+
     widget->id=id;
-    widget->type=type;
     widget->state=state;
-    widget->parent=parent;
-    bg=get_widget_color(WIDGET_STATE(widget));
+    bg=get_widget_color(widget->state);
     if(widget->id != CLIENT_WIN)
-        widget->win=create_widget_win(parent, x, y, w, h, 0, 0, bg);
+        widget->win=create_widget_win(pwin, x, y, w, h, 0, 0, bg);
     widget->x=x, widget->y=y, widget->w=w, widget->h=h;
+    widget->parent=parent;
     widget->tooltip=NULL;
 
+    set_widget_method(widget);
     XSelectInput(xinfo.display, widget->win, WIDGET_EVENT_MASK);
     reg_widget(widget);
 }
 
-void set_widget_tooltip(Widget *widget, const char *tooltip)
+static void set_widget_method(Widget *widget)
 {
-    widget->tooltip=copy_string(tooltip);
+    widget->show=show_widget;
+    widget->hide=hide_widget;
+    widget->update_bg=update_widget_bg;
+    widget->update_fg=update_widget_fg;
+}
+
+void destroy_widget(Widget *widget)
+{
+    unreg_widget(widget);
+    XDestroyWindow(xinfo.display, widget->win);
+    free_s(widget);
 }
 
 void set_widget_border_width(const Widget *widget, int width)
@@ -99,14 +112,7 @@ void set_widget_border_color(const Widget *widget, unsigned long pixel)
     XSetWindowBorder(xinfo.display, widget->win, pixel);
 }
 
-void destroy_widget(Widget *widget)
-{
-    unreg_widget(widget);
-    XDestroyWindow(xinfo.display, widget->win);
-    vfree(widget->tooltip, widget, NULL);
-}
-
-void show_widget(const Widget *widget)
+void show_widget(Widget *widget)
 {
     XMapWindow(xinfo.display, widget->win);
     XMapSubwindows(xinfo.display, widget->win);
@@ -128,6 +134,11 @@ void update_widget_bg(const Widget *widget)
     update_win_bg(widget->win, get_widget_color(widget->state), None);
 }
 
+void update_widget_fg(const Widget *widget)
+{
+    UNUSED(widget);
+}
+
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
 {
     XSetWindowAttributes attr;
@@ -145,19 +156,13 @@ Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w
 
 void update_hint_win_for_info(const Widget *widget, const char *info)
 {
-    int x, y, rx, ry, pad=get_font_pad(),
+    int x, y, pad=get_font_pad(),
         w=0, h=get_font_height_by_pad();
 
     get_string_size(info, &w, NULL);
     w+=pad*2;
     if(widget)
-    {
-        Window r, c;
-        unsigned int m;
-        if(!XQueryPointer(xinfo.display, widget->win, &r, &c, &rx, &ry, &x, &y, &m))
-            return;
-        set_pos_for_click(widget->win, rx, &x, &y, w, h);
-    }
+        set_pos_for_click(widget->win, &x, &y, w, h);
     else
         x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
     XMoveResizeWindow(xinfo.display, xinfo.hint_win, x, y, w, h);
@@ -197,13 +202,6 @@ void create_hint_win(void)
     xinfo.hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
         get_widget_color(WIDGET_STATE_NORMAL));
     XSelectInput(xinfo.display, xinfo.hint_win, ExposureMask);
-}
-
-void create_client_menu(void)
-{
-    client_menu=create_menu(CLIENT_MENU, xinfo.root_win,
-        cfg->client_menu_item_icon, cfg->client_menu_item_symbol,
-        cfg->client_menu_item_label, CLIENT_MENU_ITEM_N, 1);
 }
 
 void create_cursors(void)

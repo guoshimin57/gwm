@@ -37,6 +37,7 @@
 #include "font.h"
 #include "color.h"
 #include "widget.h"
+#include "tooltip.h"
 #include "button.h"
 #include "drawable.h"
 #include "entry.h"
@@ -73,11 +74,6 @@
 #define CROSSING_MASK (EnterWindowMask|LeaveWindowMask)
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     PropertyChangeMask|ButtonPressMask|CROSSING_MASK|ExposureMask|KeyPressMask)
-#define BUTTON_EVENT_MASK (BUTTON_MASK|ExposureMask|CROSSING_MASK)
-#define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
-    ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
-#define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
-#define ICON_WIN_EVENT_MASK (BUTTON_EVENT_MASK|PointerMotionMask)
 
 #define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
 #define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client

@@ -18,7 +18,7 @@ void print_area(Drawable d, int x, int y, int w, int h);
 void update_win_bg(Window win, unsigned long color, Pixmap pixmap);
 void set_override_redirect(Window win);
 bool get_geometry(Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth);
-void set_pos_for_click(Window click, int cx, int *px, int *py, int pw, int ph);
+void set_pos_for_click(Window click, int *px, int *py, int pw, int ph);
 Pixmap create_pixmap_from_file(Window win, const char *filename);
 void set_visual_for_imlib(Drawable d);
 void init_root_win_background(void);

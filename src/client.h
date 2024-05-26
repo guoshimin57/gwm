@@ -21,6 +21,7 @@ typedef struct // 客戶窗口裝飾
     Button *logo;
     Widget *title_area;
     Button *buttons[TITLE_BUTTON_N]; //標題區按鈕
+    Menu *menu;
 } Frame;
     
 struct client_tag // 客戶窗口相關信息

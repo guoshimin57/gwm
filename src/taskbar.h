@@ -16,7 +16,7 @@ typedef struct _taskbar_tag Taskbar; // 任務欄
 
 extern Taskbar *taskbar;
 
-Taskbar *create_taskbar(void);
+void create_taskbar(void);
 void taskbar_add_cbutton(Window cwin);
 void taskbar_del_cbutton(Window cwin);
 Window get_iconic_win(Window button_win);
@@ -25,8 +25,8 @@ void update_iconbar_by_state(Window cwin);
 void update_taskbar_buttons_bg(void);
 void update_statusbar_fg(void);
 void set_statusbar_label(const char *label);
-void update_taskbar_bg(void);
-void destroy_taskbar(Taskbar *taskbar);
+void update_taskbar_bg(const Widget *widget);
+void destroy_taskbar(void);
 void set_taskbar_urgency(unsigned int desktop_mask, bool urg);
 void set_taskbar_attention(unsigned int desktop_mask, bool attent);
 void update_taskbar_buttons_bg_by_chosen(void);

@@ -11,6 +11,8 @@
 
 #include "gwm.h"
 
+#define BUTTON_EVENT_MASK (BUTTON_MASK|ExposureMask|CROSSING_MASK)
+
 struct _button_tag
 {
     Widget base;
@@ -21,19 +23,61 @@ struct _button_tag
     Align_type align; // 標籤的對齊方式
 };
 
-Button *create_button(Widget_id id, Widget_state state, Window parent, int x, int y, int w, int h, const char *label)
+static void set_button_method(Widget *widget);
+
+Button *create_button(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label)
 {
     Button *button=malloc_s(sizeof(Button));
 
-    init_widget(WIDGET(button), id, BUTTON_TYPE, state, parent, x, y, w, h);
+    init_widget(WIDGET(button), parent, id, state, x, y, w, h);
+    set_button_method(WIDGET(button));
 
     button->image=button->icon_name=button->symbol=NULL;
     button->label=copy_string(label);
     button->align=CENTER;
-
     XSelectInput(xinfo.display, WIDGET_WIN(button), BUTTON_EVENT_MASK);
 
     return button;
+}
+
+static void set_button_method(Widget *widget)
+{
+    widget->update_fg=update_button_fg;
+}
+
+void destroy_button(Button *button)
+{
+    vfree(button->icon_name, button->symbol, button->label, NULL);
+    destroy_widget(WIDGET(button));
+}
+
+void update_button_fg(const Widget *widget)
+{
+    Button *button=BUTTON(widget);
+    XftColor fg=get_widget_fg(WIDGET_STATE(button));
+    int xi=0, y=0, h=WIDGET_H(button), wi=h, xl=wi, wl=WIDGET_H(button)-wi;
+
+    if(button->image)
+        draw_image(button->image, WIDGET_WIN(button), xi, y, wi, h);
+    else if(button->symbol)
+    {
+        Str_fmt fmt={xi, y, wi, h, CENTER, false, false, 0, fg};
+        draw_string(WIDGET_WIN(button), button->symbol, &fmt);
+    }
+    else if(button->icon_name)
+    {
+        char s[2]={button->icon_name[0], '\0'};
+        Str_fmt fmt={xi, y, wi, h, CENTER, false, false, 0, fg};
+        draw_string(WIDGET_WIN(button), s, &fmt);
+    }
+    else
+        xl=0, wl=WIDGET_W(button);
+
+    if(button->label)
+    {
+        Str_fmt fmt={xl, y, wl, h, button->align, true, false, 0, fg};
+        draw_string(WIDGET_WIN(button), button->label, &fmt);
+    }
 }
 
 void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
@@ -66,46 +110,4 @@ void set_button_label(Button *button, const char *label)
 void set_button_align(Button *button, Align_type align)
 {
     button->align=align;
-}
-
-void destroy_button(Button *button)
-{
-    vfree(button->icon_name, button->symbol, button->label, NULL);
-    destroy_widget(WIDGET(button));
-}
-
-void show_button(const Button *button)
-{
-    Widget *widget=WIDGET(button);
-    show_widget(widget);
-    if(widget->state.hot || widget->state.warn)
-        update_hint_win_for_info(widget, widget->tooltip);
-}
-
-void update_button_fg(const Button *button)
-{
-    XftColor fg=get_widget_fg(WIDGET_STATE(button));
-    int xi=0, y=0, h=WIDGET_H(button), wi=h, xl=wi, wl=WIDGET_H(button)-wi;
-
-    if(button->image)
-        draw_image(button->image, WIDGET_WIN(button), xi, y, wi, h);
-    else if(button->symbol)
-    {
-        Str_fmt fmt={xi, y, wi, h, CENTER, false, false, 0, fg};
-        draw_string(WIDGET_WIN(button), button->symbol, &fmt);
-    }
-    else if(button->icon_name)
-    {
-        char s[2]={button->icon_name[0], '\0'};
-        Str_fmt fmt={xi, y, wi, h, CENTER, false, false, 0, fg};
-        draw_string(WIDGET_WIN(button), s, &fmt);
-    }
-    else
-        xl=0, wl=WIDGET_W(button);
-
-    if(button->label)
-    {
-        Str_fmt fmt={xl, y, wl, h, button->align, true, false, 0, fg};
-        draw_string(WIDGET_WIN(button), button->label, &fmt);
-    }
 }

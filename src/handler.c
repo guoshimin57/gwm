@@ -14,7 +14,7 @@
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
-static void unmap_for_click(Widget_id id);
+static void unmap_for_click(WM *wm, Widget_id id);
 static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e);
 static void handle_client_message(WM *wm, XEvent *e);
 static void change_net_wm_state(WM *wm, Client *c, long *full_act);
@@ -90,7 +90,7 @@ static void handle_button_press(WM *wm, XEvent *e)
 {
     Window win=e->xbutton.window;
     Widget *widget=win_to_widget(win);
-    Widget_id id = widget ? widget->id : (win==xinfo.root_win ? ROOT_WIN : NON_WIDGET);
+    Widget_id id = widget ? widget->id : (win==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
     Client *c=win_to_client(wm->clients, id==CLIENT_ICON ? get_iconic_win(win) : win);
     Client *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
 
@@ -107,15 +107,17 @@ static void handle_button_press(WM *wm, XEvent *e)
                 b->func(wm, e, b->arg);
         }
     }
-    unmap_for_click(id);
+
+    unmap_for_click(wm, id);
 }
 
-static void unmap_for_click(Widget_id id)
+static void unmap_for_click(WM *wm, Widget_id id)
 {
     if(id != ACT_CENTER_ITEM)
         hide_widget(WIDGET(act_center));
     if(id != TITLE_LOGO)
-        hide_widget(WIDGET(client_menu));
+        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+            hide_widget(WIDGET(c->frame->menu));
     if(id!=RUN_CMD_ENTRY && id!=RUN_BUTTON)
     {
         hide_widget(WIDGET(cmd_entry));
@@ -347,18 +349,22 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         set_cursor(win, ADJUST_LAYOUT_RATIO);
     if(widget == NULL)
         return;
-    if(widget->type == BUTTON_TYPE)
+    /*
+    if(widget->id == ACT_CENTER)
+        XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
+        */
+    if(widget->id == CLIENT_FRAME)
+        act=get_resize_act(c, &m);
+    else if(widget->id == TITLE_AREA)
+        act=MOVE;
+    else
     {
         if(widget->id == CLOSE_BUTTON)
             widget->state.warn=1;
         widget->state.hot=1;
         update_widget_bg(widget);
     }
-    else if(widget->id == CLIENT_FRAME)
-        act=get_resize_act(c, &m);
-    else if(widget->id == TITLE_AREA)
-        act=MOVE;
-    if(widget->id != NON_WIDGET)
+    if(widget->id != UNUSED_WIDGET_ID)
         set_cursor(win, act);
     handle_pointer_hover(wm, widget);
 }
@@ -369,7 +375,7 @@ static void handle_pointer_hover(WM *wm, const Widget *widget)
         return;
 
     XEvent ev;
-    bool done=false;
+    bool show=false;
     struct timeval t={cfg->hover_time/1000, cfg->hover_time%1000*1000}, t0=t;
     int fd=ConnectionNumber(xinfo.display);
     fd_set fds;
@@ -381,7 +387,7 @@ static void handle_pointer_hover(WM *wm, const Widget *widget)
             XNextEvent(xinfo.display, &ev);
                 wm->event_handlers[ev.type](wm, &ev);
             if(ev.type == MotionNotify && ev.xmotion.window==widget->win)
-                XUnmapWindow(xinfo.display, xinfo.hint_win), t=t0, done=false;
+                t=t0, show=false;
             else if(ev.type==LeaveNotify && ev.xcrossing.window==widget->win)
                 break;
         }
@@ -394,33 +400,31 @@ static void handle_pointer_hover(WM *wm, const Widget *widget)
             if(!t.tv_sec && !t.tv_usec)
             {
                 t=t0;
-                if(!done)
-                    update_hint_win_for_info(widget, widget->tooltip), done=true;
+                if(!show)
+                    show=true, widget->tooltip->show(widget->tooltip);
             }
         }
     }
-    XUnmapWindow(xinfo.display, xinfo.hint_win);
+    widget->tooltip->hide(widget->tooltip);
 }
 
 static void handle_expose(WM *wm, XEvent *e)
 {
+    UNUSED(wm);
     if(e->xexpose.count)
         return;
 
     Window win=e->xexpose.window;
     Widget *widget=win_to_widget(win);
-    Client *c=NULL;
     if(widget == NULL)
         return;
 
-    if(widget->id==TITLE_AREA && (c=win_to_client(wm->clients, win)))
-        update_title_area_fg(c);
-    else if(widget->type == BUTTON_TYPE)
-        update_button_fg(BUTTON(widget));
-    else if(widget->type == ENTRY_TYPE)
-        update_entry_fg(ENTRY(widget));
+    if(widget->id == TITLE_AREA)
+        update_title_area_fg(win_to_client(wm->clients, win));
     else if(widget->id == STATUSBAR)
         update_statusbar_fg();
+    else if(widget->id != CLIENT_WIN)
+        widget->update_fg(widget);
 }
 
 static void update_title_area_fg(Client *c)
@@ -493,14 +497,9 @@ static void handle_leave_notify(WM *wm, XEvent *e)
     if(widget == NULL)
         return;
 
-    if(widget->type == BUTTON_TYPE)
-    {
-        widget->state.hot=widget->state.warn=0;
-        update_widget_bg(widget);
-    }
-    else if(widget->id == CLIENT_ICON)
-        update_win_bg(win, get_widget_color(WIDGET_STATE(widget)), None);
-    if(widget->id != NON_WIDGET)
+    widget->state.hot=widget->state.warn=0;
+    widget->update_bg(widget);
+    if(widget->id != UNUSED_WIDGET_ID)
         set_cursor(win, NO_OP);
 }
 
@@ -562,7 +561,7 @@ static void handle_property_notify(WM *wm, XEvent *e)
             cfg->icon_image_size, cfg->cur_icon_theme);
         set_button_icon(c->frame->logo, image, c->class_hint.res_name, NULL);
         if(is_iconic_client(c))
-            update_button_fg(BUTTON(win_to_widget(win)));
+            update_button_fg(win_to_widget(win));
     }
     else if(c && is_spec_ewmh_atom(atom, NET_WM_STATE))
         update_iconbar_by_state(win);
@@ -610,11 +609,12 @@ static void update_ui(WM *wm)
     // 內容及其顏色，故此處不必更新構件文字顏色。
     char *name=get_main_color_name();
     alloc_color(name);
-    free(name);
-    update_taskbar_bg();
-    update_menu_bg(act_center);
-    update_menu_bg(client_menu);
-    update_entry_bg(cmd_entry);
+    free_s(name);
+    update_taskbar_bg(WIDGET(taskbar));
+    update_menu_bg(WIDGET(act_center));
+    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        update_menu_bg(WIDGET(c->frame->menu));
+    update_entry_bg(WIDGET(cmd_entry));
     update_win_bg(xinfo.hint_win, get_widget_color(WIDGET_STATE_NORMAL), None);
     update_win_bg(xinfo.root_win, get_root_bg_color(), None);
     update_clients_bg(wm);
@@ -634,7 +634,7 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
     {
         free_s(c->title_text);
         c->title_text=copy_string(s);
-        set_widget_tooltip(WIDGET(c->frame->title_area), s);
+        change_tooltip_tip(TOOLTIP(WIDGET_TOOLTIP(c->frame->title_area)), s);
         update_title_area_fg(c);
     }
     free_s(s);

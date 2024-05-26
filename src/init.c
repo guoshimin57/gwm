@@ -53,12 +53,11 @@ void init_wm(WM *wm)
     set_workarea(wm);
     set_ewmh(wm);
     set_gwm_current_layout(DESKTOP(wm)->cur_layout);
-    taskbar=create_taskbar();
+    create_taskbar();
     if(cfg->show_taskbar)
         show_widget(WIDGET(taskbar));
     cmd_entry=create_cmd_entry(RUN_CMD_ENTRY);
     create_hint_win();
-    create_client_menu();
     create_clients(wm);
     grab_keys();
     exec_autostart();

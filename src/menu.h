@@ -14,11 +14,13 @@
 
 typedef struct _menu_tag Menu;
 
-extern Menu *act_center, *client_menu;
+#define MENU(widget) ((Menu *)(widget))
 
-Menu *create_menu(Widget_id id, Window parent, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col);
-void show_menu(XEvent *e, Menu *menu, Window bind);
-void update_menu_bg(const Menu *menu);
+extern Menu *act_center;
+
+Menu *create_menu(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col);
 void destroy_menu(Menu *menu);
+void show_menu(Widget *widget);
+void update_menu_bg(const Widget *widget);
 
 #endif

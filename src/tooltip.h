@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     entry.h：與entry.c相應的頭文件。
+ *     tooltip.h：與tooltip.c相應的頭文件。
  *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,22 +9,19 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef ENTRY_H
-#define ENTRY_H
+#ifndef TOOLTIP_H
+#define MTOOLTIP_H
 
-#define ENTRY(widget) ((Entry *)(widget))
+#include "gwm.h"
 
-typedef struct _entry_tag Entry;
+typedef struct _tooltip_tag Tooltip;
 
-Entry *create_entry(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *));
-void destroy_entry(Entry *entry);
-void show_entry(Widget *widget);
-void hide_entry(const Widget *widget);
-void update_entry_bg(const Widget *widget);
-void update_entry_fg(const Widget *widget);
-wchar_t *get_entry_text(Entry *entry);
-bool input_for_entry(Entry *entry, XKeyEvent *ke);
-void paste_for_entry(Entry *entry);
-Entry *create_cmd_entry(Widget_id id);
+#define TOOLTIP(widget) ((Tooltip *)(widget))
+
+Tooltip *create_tooltip(Widget *owner, const char *tip);
+void change_tooltip_tip(Tooltip *tooltip, const char *tip);
+void destroy_tooltip(Tooltip *tooltip);
+void show_tooltip(Widget *widget);
+void update_tooltip_fg(const Widget *widget);
 
 #endif
