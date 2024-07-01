@@ -10,12 +10,13 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "list.h"
 
 typedef struct image_node_tag
 {
     char *name;
     Imlib_Image image;
-    struct image_node_tag *next;
+    List list;
 } Image_node;
 
 typedef struct // 存儲圖標主題規範所說的Per-Directory Keys的結構
@@ -24,9 +25,11 @@ typedef struct // 存儲圖標主題規範所說的Per-Directory Keys的結構
     char type[10]; // char context[32]; 目前用不上
 } Icon_dir_info;
 
+static Image_node *create_image_node(const char *name, Imlib_Image image);
+static void free_image_node(Image_node *node);
+static void reg_image(const char *name, Imlib_Image image);
 static Imlib_Image search_icon_image(const char *name);
 static Imlib_Image create_icon_image(Window win, const char *name, int size, const char *theme);
-static void reg_image(const char *name, Imlib_Image image);
 static Imlib_Image create_icon_image_from_hint(Window win);
 static Imlib_Image create_icon_image_from_prop(Window win);
 static Imlib_Image create_icon_image_from_file(const char *name, int size, const char *theme);
@@ -50,6 +53,54 @@ static char **get_parent_themes(const char *base_dir, const char *theme);
 
 static Image_node *image_list=NULL;
 
+void free_all_images(void)
+{
+    if(!image_list)
+        return;
+
+    list_for_each_entry_safe(Image_node, p, &image_list->list, list)
+        free_image_node(p);
+    free_s(image_list);
+}
+
+void free_image(Imlib_Image image)
+{
+    if(!image_list)
+        return;
+
+    list_for_each_entry_safe(Image_node, p, &image_list->list, list)
+        if(p->image == image)
+            free_image_node(p);
+}
+
+static void free_image_node(Image_node *node)
+{
+    free_s(node->name);
+    imlib_context_set_image(node->image);
+    imlib_free_image();
+    list_del(&node->list);
+    free_s(node);
+}
+
+static void reg_image(const char *name, Imlib_Image image)
+{
+    if(!image_list)
+    {
+        image_list=create_image_node(NULL, NULL);
+        list_init(&image_list->list);
+    }
+    Image_node *p=create_image_node(name, image);
+    list_add(&p->list, &image_list->list);
+}
+
+static Image_node *create_image_node(const char *name, Imlib_Image image)
+{
+    Image_node *p=malloc_s(sizeof(Image_node));
+    p->name=copy_string(name);
+    p->image=image;
+    return p;
+}
+
 void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
 {
     XClearArea(xinfo.display, d, x, y, w, h, False); 
@@ -68,9 +119,13 @@ Imlib_Image get_icon_image(Window win, const char *name, int size, const char *t
 
 static Imlib_Image search_icon_image(const char *name)
 {
-    for(Image_node *p=image_list; p; p=p->next)
+    if(!image_list)
+        return NULL;
+
+    list_for_each_entry(Image_node, p, &image_list->list, list)
         if(strcmp(p->name, name) == 0)
             return p->image;
+
     return NULL;
 }
 
@@ -88,12 +143,6 @@ static Imlib_Image create_icon_image(Window win, const char *name, int size, con
     }
 
     return NULL;
-}
-
-static void reg_image(const char *name, Imlib_Image image)
-{
-    Image_node *p=malloc_s(sizeof(Image_node));
-    p->name=copy_string(name), p->image=image, p->next=image_list, image_list=p;
 }
 
 static Imlib_Image create_icon_image_from_hint(Window win)

@@ -82,9 +82,6 @@ void update_button_fg(const Widget *widget)
 
 void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
 {
-    if(!image && !icon_name && !symbol)
-        return;
-
     if(image)
         button->image=image;
     else if(icon_name)
@@ -93,6 +90,19 @@ void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, c
         button->symbol=copy_string(symbol);
     else
         return;
+}
+
+void change_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
+{
+    if(image && image!=button->image)
+        free_image(&button->image);
+    else if(icon_name && icon_name!=button->icon_name)
+        free_s(button->icon_name);
+    else if(symbol && symbol!=button->symbol)
+        free_s(button->symbol);
+    else
+        return;
+    set_button_icon(button, image, icon_name, symbol);
 }
 
 char *get_button_label(Button *button)

@@ -68,30 +68,33 @@ static void maximize_client(WM *wm, Client *c, Max_way max_way)
 static void set_max_rect(WM *wm, Client *c, Max_way max_way)
 {
     int left_x, top_y, max_w, max_h, mid_x, mid_y, half_w, half_h;
-    get_max_rect(wm, c, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
+    get_max_outline_rect(wm, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
 
-    bool vmax=(WIDGET_H(c) == max_h), hmax=(WIDGET_W(c) == max_w), fmax=false;
+    int x=WIDGET_X(c->frame), y=WIDGET_Y(c->frame), w=WIDGET_W(c->frame),
+        h=WIDGET_H(c->frame), bw=WIDGET_BORDER_W(c->frame);
+    bool vmax=(WIDGET_H(c->frame)+2*bw == max_h),
+         hmax=(WIDGET_W(c->frame)+2*bw == max_w), fmax=false;
     switch(max_way)
     {
-        case VERT_MAX:  if(hmax) fmax=true; else WIDGET_Y(c)=top_y, WIDGET_H(c)=max_h;  break;
-        case HORZ_MAX:  if(vmax) fmax=true; else WIDGET_X(c)=left_x, WIDGET_W(c)=max_w; break;
-        case TOP_MAX:   WIDGET_X(c)=left_x, WIDGET_Y(c)=top_y, WIDGET_W(c)=max_w, WIDGET_H(c)=half_h; break;
-        case BOTTOM_MAX:WIDGET_X(c)=left_x, WIDGET_Y(c)=mid_y, WIDGET_W(c)=max_w, WIDGET_H(c)=half_h; break;
-        case LEFT_MAX:  WIDGET_X(c)=left_x, WIDGET_Y(c)=top_y, WIDGET_W(c)=half_w, WIDGET_H(c)=max_h; break;
-        case RIGHT_MAX: WIDGET_X(c)=mid_x, WIDGET_Y(c)=top_y, WIDGET_W(c)=half_w, WIDGET_H(c)=max_h;  break;
+        case VERT_MAX:  if(hmax) fmax=true; else y=top_y, h=max_h;  break;
+        case HORZ_MAX:  if(vmax) fmax=true; else x=left_x, w=max_w; break;
+        case TOP_MAX:   x=left_x, y=top_y, w=max_w, h=half_h; break;
+        case BOTTOM_MAX:x=left_x, y=mid_y, w=max_w, h=half_h; break;
+        case LEFT_MAX:  x=left_x, y=top_y, w=half_w, h=max_h; break;
+        case RIGHT_MAX: x=mid_x, y=top_y, w=half_w, h=max_h;  break;
         case FULL_MAX:  fmax=true; break;
         default:        return;
     }
     if(fmax)
-        WIDGET_X(c)=left_x, WIDGET_Y(c)=top_y, WIDGET_W(c)=max_w, WIDGET_H(c)=max_h;
+        x=left_x, y=top_y, w=max_w, h=max_h;
+    set_client_rect_by_outline(c, x, y, w, h);
 }
 
-void get_max_rect(WM *wm, Client *c, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h)
+void get_max_outline_rect(WM *wm, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h)
 {
-    int bw=c->border_w, th=c->titlebar_h, wx=wm->workarea.x, wy=wm->workarea.y,
-        ww=wm->workarea.w, wh=wm->workarea.h;
-    *left_x=wx+bw, *top_y=wy+bw+th, *max_w=ww-2*bw, *max_h=wh-th-2*bw,
-    *mid_x=*left_x+ww/2, *mid_y=*top_y+wh/2, *half_w=ww/2-2*bw, *half_h=wh/2-th-2*bw;
+    int wx=wm->workarea.x, wy=wm->workarea.y, ww=wm->workarea.w, wh=wm->workarea.h;
+    *left_x=wx, *top_y=wy, *max_w=ww, *max_h=wh,
+    *mid_x=*left_x+ww/2, *mid_y=*top_y+wh/2, *half_w=ww/2, *half_h=wh/2;
 }
 
 void restore_client(WM *wm, Client *c)
@@ -137,7 +140,7 @@ void fix_win_rect_by_state(WM *wm, Client *c)
         set_max_rect(wm, c, way);
     }
     else if(c->win_state.fullscreen)
-        WIDGET_X(c)=WIDGET_Y(c)=0, WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
+        set_client_rect_by_win(c, 0, 0, xinfo.screen_width, xinfo.screen_height);
 }
 
 void iconify_client(WM *wm, Client *c)
@@ -154,7 +157,7 @@ void iconify_client(WM *wm, Client *c)
         if(c == CUR_FOC_CLI(wm))
         {
             focus_client(wm, wm->cur_desktop, NULL);
-            update_frame_bg(c);
+            update_frame_bg(c->frame);
         }
     }
     request_layout_update();

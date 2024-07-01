@@ -239,7 +239,6 @@ void update_iconbar(void)
         Button *b=c->button;
         if(have_similar_cbutton(c))
         {
-            puts("have same");
             get_string_size(get_button_label(b), &wl, NULL);
             w=MIN(wi+wl, cfg->icon_win_width_max);
         }

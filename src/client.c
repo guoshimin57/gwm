@@ -11,10 +11,6 @@
 
 #include "gwm.h"
 
-#define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
-    ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
-#define TITLE_AREA_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
-
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);
 static void set_default_desktop_mask(Client *c, unsigned int cur_desktop);
@@ -25,8 +21,6 @@ static void add_client_node(Client *list, Client *c);
 static void set_default_place_type(Client *c);
 static void set_default_win_rect(Client *c);
 static void set_win_rect_by_attr(Client *c);
-static void frame_client(Client *c);
-static void unframe_client(Client *c);
 static void del_client_node(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
@@ -39,6 +33,7 @@ static long map_count=0; // 所有客戶窗口的累計映射次數
 
 void add_client(WM *wm, Window win)
 {
+    int border_w=0, titlebar_h=0;
     Client *c=new_client(wm, win);
 
     apply_rules(c);
@@ -48,7 +43,13 @@ void add_client(WM *wm, Window win)
     set_cursor(win, NO_OP);
     set_default_win_rect(c);
     save_place_info_of_client(c);
-    frame_client(c);
+    if(!should_hide_frame(c))
+    {
+        border_w = c->show_border ? cfg->border_width : 0;
+        titlebar_h = c->show_titlebar ? get_font_height_by_pad() : 0;
+    }
+    c->frame=create_frame(WIDGET(c), WIDGET_STATE(c), WIDGET_X(c), WIDGET_Y(c),
+        WIDGET_W(c), WIDGET_H(c), titlebar_h, border_w, c->title_text, c->image);
     request_layout_update();
     show_widget(WIDGET(c->frame));
     focus_client(wm, wm->cur_desktop, c);
@@ -72,9 +73,9 @@ static Client *new_client(WM *wm, Window win)
 {
     Client *c=malloc_s(sizeof(Client));
     memset(c, 0, sizeof(Client));
-    Widget_state state={.current=1};
-    init_widget(WIDGET(c), NULL, CLIENT_WIN, state, 0, 0, 1, 1);
+    init_widget(WIDGET(c), NULL, CLIENT_WIN, WIDGET_STATE_1(current), 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
+    c->show_border=c->show_titlebar=true;
     c->map_n=++map_count;
     c->title_text=get_title_text(win, "");
     c->wm_hint=XGetWMHints(xinfo.display, win);
@@ -83,10 +84,10 @@ static Client *new_client(WM *wm, Window win)
     c->owner=win_to_client(wm->clients, get_transient_for(WIDGET_WIN(c)));
     c->subgroup_leader=get_subgroup_leader(c);
     set_default_place_type(c);
-    if(!should_hide_frame(c))
-        c->border_w=cfg->border_width, c->titlebar_h=get_font_height_by_pad();
     c->class_name="?";
     XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint);
+    c->image=get_icon_image(win, c->class_hint.res_name,
+        cfg->icon_image_size, cfg->cur_icon_theme);
     set_default_desktop_mask(c, wm->cur_desktop);
 
     return c;
@@ -123,10 +124,8 @@ static void apply_rules(Client *c)
         {
             if(r->place_type != ANY_PLACE)
                 c->place_type=r->place_type;
-            if(!r->show_border)
-                c->border_w=0;
-            if(!r->show_titlebar)
-                c->titlebar_h=0;
+            c->show_border=r->show_border;
+            c->show_titlebar=r->show_titlebar;
             if(r->desktop_mask)
                 c->desktop_mask=r->desktop_mask;
             if(r->class_alias)
@@ -179,12 +178,10 @@ static void set_default_place_type(Client *c)
     else                             c->place_type = TILE_LAYER_MAIN;  
 }
 
-void set_win_rect_by_frame(Client *c, const Rect *frame)
+void set_win_rect_by_frame(Client *c)
 {
-    WIDGET_X(c)=frame->x+c->border_w;
-    WIDGET_Y(c)=frame->y+c->titlebar_h+c->border_w;
-    WIDGET_W(c)=frame->w-2*c->border_w;
-    WIDGET_H(c)=frame->h-c->titlebar_h-2*c->border_w;
+    Rect r=get_frame_rect_by_win(c->frame, WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c));
+    WIDGET_X(c)=r.x, WIDGET_Y(c)=r.y, WIDGET_W(c)=r.w, WIDGET_H(c)=r.h;
 }
 
 static void set_default_win_rect(Client *c)
@@ -202,96 +199,6 @@ static void set_win_rect_by_attr(Client *c)
     XWindowAttributes a;
     if(XGetWindowAttributes(xinfo.display, WIDGET_WIN(c), &a))
         WIDGET_X(c)=a.x, WIDGET_Y(c)=a.y, WIDGET_W(c)=a.width, WIDGET_H(c)=a.height;
-}
-
-static void frame_client(Client *c)
-{
-    Rect fr=get_frame_rect(c);
-
-    c->frame=malloc_s(sizeof(Frame));
-    init_widget(WIDGET(c->frame), NULL, CLIENT_FRAME, WIDGET_STATE(c),
-        fr.x, fr.y, fr.w, fr.h);
-    set_widget_border_width(WIDGET(c->frame), cfg->border_width);
-    set_widget_border_color(WIDGET(c->frame),
-        get_widget_color(WIDGET_STATE(c->frame)));
-    XSelectInput(xinfo.display, c->frame->base.win, FRAME_EVENT_MASK);
-    if(cfg->set_frame_prop)
-        copy_prop(c->frame->base.win, WIDGET_WIN(c));
-    if(c->titlebar_h)
-        create_titlebar(c);
-    c->frame->menu=create_menu(WIDGET(c->frame->logo), CLIENT_MENU,
-        cfg->client_menu_item_icon, cfg->client_menu_item_symbol,
-        cfg->client_menu_item_label, CLIENT_MENU_ITEM_N, 1);
-    XAddToSaveSet(xinfo.display, WIDGET_WIN(c));
-    XReparentWindow(xinfo.display, WIDGET_WIN(c), c->frame->base.win, 0, c->titlebar_h);
-    show_widget(WIDGET(c->frame));
-    
-    /* 以下是同時設置窗口前景和背景透明度的非EWMH標準方法：
-    unsigned long opacity = (unsigned long)(0xfffffffful);
-    Atom XA_NET_WM_WINDOW_OPACITY = XInternAtom(xinfo.display, "_NET_WM_WINDOW_OPACITY", False);
-    XChangeProperty(xinfo.display, c->frame, XA_NET_WM_WINDOW_OPACITY, XA_CARDINAL, 32,
-        PropModeReplace, (unsigned char *)&opacity, 1L);
-    */
-}
-
-static void unframe_client(Client *c)
-{
-    if(c->titlebar_h)
-    {
-        destroy_button(c->frame->logo);
-        destroy_widget(c->frame->title_area);
-        for(int i=0; i<TITLE_BUTTON_N; i++)
-            destroy_button(c->frame->buttons[i]);
-    }
-    destroy_menu(c->frame->menu);
-    destroy_widget(WIDGET(c->frame));
-    XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
-}
-
-void create_titlebar(Client *c)
-{
-    Rect tr=get_title_area_rect(c);
-
-    for(size_t i=0; i<TITLE_BUTTON_N; i++)
-    {
-        Rect br=get_button_rect(c, i);
-        Widget_id id=TITLE_BUTTON_BEGIN+i;
-        c->frame->buttons[i]=create_button(WIDGET(c->frame), id, WIDGET_STATE(c),
-            br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
-        create_tooltip(WIDGET(c->frame->buttons[i]), cfg->tooltip[id]);
-    }
-
-    c->frame->title_area=create_widget(WIDGET(c->frame), TITLE_AREA, WIDGET_STATE(c),
-        tr.x, tr.y, tr.w, tr.w);
-    XSelectInput(xinfo.display, WIDGET_WIN(c->frame->title_area), TITLE_AREA_EVENT_MASK);
-    create_tooltip(WIDGET(c->frame->title_area), c->title_text);
-    c->frame->logo=create_button(WIDGET(c->frame), TITLE_LOGO, WIDGET_STATE(c),
-        0, 0, c->titlebar_h, c->titlebar_h, NULL);
-    create_tooltip(WIDGET(c->frame->logo), cfg->tooltip[TITLE_LOGO]);
-    Imlib_Image image=get_icon_image(WIDGET_WIN(c), c->class_hint.res_name,
-        cfg->icon_image_size, cfg->cur_icon_theme);
-    set_button_icon(BUTTON(c->frame->logo), image, c->class_hint.res_name, NULL);
-}
-
-Rect get_frame_rect(Client *c)
-{
-    long bw=c->border_w, bh=c->titlebar_h;
-    return (Rect){WIDGET_X(c)-bw, WIDGET_Y(c)-bh-bw, WIDGET_W(c), WIDGET_H(c)+bh};
-}
-
-Rect get_title_area_rect(Client *c)
-{
-    int layout=cfg->default_layout;
-    get_gwm_current_layout(&layout);
-    int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7},
-        n=buttons_n[layout], size=get_font_height_by_pad();
-    return (Rect){size, 0, WIDGET_W(c)-cfg->title_button_width*n-size, size};
-}
-
-Rect get_button_rect(Client *c, size_t index)
-{
-    int cw=WIDGET_W(c), w=cfg->title_button_width, h=get_font_height_by_pad();
-    return (Rect){cw-w*(TITLE_BUTTON_N-index), 0, w, h};
 }
 
 int get_clients_n(Client *list, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)
@@ -315,19 +222,8 @@ Client *win_to_client(Client *list, Window win)
 {
     // 當隱藏標題欄時，標題區和按鈕的窗口ID爲0。故win爲0時，不應視爲找到
     for(Client *c=list->next; win && c!=list; c=c->next)
-    {
-        if(win==WIDGET_WIN(c) || win==c->frame->base.win)
+        if(win==WIDGET_WIN(c) || is_frame_part(c->frame, win))
             return c;
-        if(c->titlebar_h)
-        {
-            if(win==WIDGET_WIN(c->frame->logo) || win==WIDGET_WIN(c->frame->title_area))
-                return c;
-            for(size_t i=0; i<TITLE_BUTTON_N; i++)
-                if(win == WIDGET_WIN(c->frame->buttons[i]))
-                    return c;
-        }
-    }
-        
     return NULL;
 }
 
@@ -336,9 +232,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     if(!c)
         return;
 
-    unframe_client(c);
-    if(c->image)
-        imlib_context_set_image(c->image), imlib_free_image();
+    destroy_frame(c->frame);
     del_client_node(c);
     if(!is_for_quit)
         for(size_t i=1; i<=DESKTOP_N; i++)
@@ -501,18 +395,10 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     Desktop *d=wm->desktop[desktop_n-1];
     Client *pc=d->cur_focus_client, *pp=d->prev_focus_client;
 
-    if(pc!=wm->clients && pc->titlebar_h)
-    {
-        WIDGET_STATE(pc).current=WIDGET_STATE(pc->frame->logo).current=WIDGET_STATE(pc->frame->title_area).current=1;
-        for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            WIDGET_STATE(pc->frame->buttons[i]).current=1;
-    }
-    if(pp!=wm->clients && pp!=pc && pp->titlebar_h)
-    {
-        WIDGET_STATE(pp).current=WIDGET_STATE(pp->frame->logo).current=WIDGET_STATE(pp->frame->title_area).current=0;
-        for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            WIDGET_STATE(pp->frame->buttons[i]).current=0;
-    }
+    if(pc!=wm->clients)
+        set_frame_state_current(pc->frame, 1), WIDGET_STATE(pc).current=1;
+    if(pp!=wm->clients && pp!=pc)
+        set_frame_state_current(pp->frame, 0), WIDGET_STATE(pp).current=0;
     if(desktop_n == wm->cur_desktop)
     {
         if(WIDGET_WIN(pc) == xinfo.root_win)
@@ -521,12 +407,16 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
             set_input_focus(WIDGET_WIN(pc), pc->wm_hint);
     }
 
+    /*
     if(pc != wm->clients)
         WIDGET_STATE(pc).current=WIDGET_STATE(pc->frame).current=1;
+        */
     update_client_bg(wm, desktop_n, pc);
 
+    /*
     if(pp != wm->clients)
         WIDGET_STATE(pp).current=WIDGET_STATE(pp->frame).current=0;
+        */
     update_client_bg(wm, desktop_n, pp);
 
     raise_client(wm, pc);
@@ -743,21 +633,7 @@ void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
     if(is_iconic_client(c) && d->cur_layout!=PREVIEW)
         c->win_state.focused=1, update_net_wm_state(WIDGET_WIN(c), c->win_state);
     else
-        update_frame_bg(c);
-}
-
-void update_frame_bg(Client *c)
-{
-    if(c->border_w)
-        set_widget_border_color(WIDGET(c->frame),
-            get_widget_color(WIDGET_STATE(c->frame)));
-    if(c->titlebar_h)
-    {
-        update_widget_bg(WIDGET(c->frame->logo));
-        update_widget_bg(WIDGET(c->frame->title_area));
-        for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            update_widget_bg(WIDGET(c->frame->buttons[i]));
-    }
+        update_frame_bg(c->frame);
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */

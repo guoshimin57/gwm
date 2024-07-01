@@ -15,21 +15,12 @@
 #include "drawable.h"
 #include "ewmh.h"
 
-typedef struct // 客戶窗口裝飾
-{
-    Widget base;
-    Button *logo;
-    Widget *title_area;
-    Button *buttons[TITLE_BUTTON_N]; //標題區按鈕
-    Menu *menu;
-} Frame;
-    
 struct client_tag // 客戶窗口相關信息
 {
     Widget base;
     Frame *frame; // 客戶窗口裝飾
+    bool show_border, show_titlebar; // 是否顯示邊框、標題欄
     int ox, oy, ow, oh; // 分别爲win原來的橫、縱坐標和寬、高
-    int titlebar_h, border_w; // win的標題欄高、邊框寬
     unsigned int desktop_mask; // 所屬虚拟桌面的掩碼
     long map_n; // win最後一次映射的序號
     Place_type place_type, old_place_type; // 窗口現在的位置類型及原來的位置類型
@@ -44,12 +35,9 @@ struct client_tag // 客戶窗口相關信息
     struct client_tag *prev, *next, *owner, *subgroup_leader;
 };
 
-Rect get_frame_rect(Client *c);
-Rect get_button_rect(Client *c, size_t index);
 void add_client(WM *wm, Window win);
 void set_all_net_client_list(Client *list);
-void set_win_rect_by_frame(Client *c, const Rect *frame);
-void create_titlebar(Client *c);
+void set_win_rect_by_frame(Client *c);
 Rect get_title_area_rect(Client *c);
 int get_clients_n(Client *list, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop);
 bool is_iconic_client(Client *c);
@@ -77,7 +65,6 @@ bool is_wm_win(Client *list, Window win, bool before_wm);
 void restack_win(WM *wm, Window win);
 void update_clients_bg(WM *wm);
 void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);
-void update_frame_bg(Client *c);
 void create_clients(WM *wm);
 void add_subgroup(Client *head, Client *subgroup_leader);
 void del_subgroup(Client *subgroup_leader);

@@ -14,7 +14,7 @@
 const char *icccm_atom_names[ICCCM_ATOMS_N]= // ICCCM規範標識符名稱
 {
     "WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_STATE", "WM_CHANGE_STATE",
-    "WM_TAKE_FOCUS", "UTF8_STRING",
+    "WM_TAKE_FOCUS", "UTF8_STRING", "WM_CLIENT_LEADER",
 };
 
 static Atom icccm_atoms[ICCCM_ATOMS_N]; // ICCCM規範的標識符
@@ -237,4 +237,9 @@ char *get_wm_name(Window win)
 char *get_wm_icon_name(Window win)
 {
     return get_text_prop(win, XA_WM_ICON_NAME);
+}
+
+void set_client_leader(Window leader, Window cwin)
+{
+    replace_window_prop(leader, WM_CLIENT_LEADER, &cwin, 1);
 }

@@ -87,9 +87,9 @@ static void set_workarea(WM *wm)
     wm->workarea=(Rect){0, 0, sw, sh};
     if(cfg->show_taskbar)
     {
-        wm->workarea.h-=th+cfg->win_gap;
+        wm->workarea.h-=th;
         if(cfg->taskbar_on_top)
-            wm->workarea.y=th+cfg->win_gap;
+            wm->workarea.y=th;
     }
 }
 

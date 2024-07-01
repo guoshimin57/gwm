@@ -10,15 +10,18 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "list.h"
 
 typedef struct widget_node_tag
 {
+    List list;
     Widget *widget;
-    struct widget_node_tag *next;
 } Widget_node;
 
 static void reg_widget(Widget *widget);
+static Widget_node *create_widget_node(Widget *widget);
 static void unreg_widget(Widget *widget);
+static void free_widget_node(Widget_node *node);
 static void set_widget_method(Widget *widget);
 static unsigned int get_num_lock_mask(void);
 static unsigned int get_valid_mask(unsigned int mask);
@@ -29,31 +32,41 @@ static Widget_node *widget_list=NULL;
 
 static void reg_widget(Widget *widget)
 {
+    if(!widget_list)
+    {
+        widget_list=create_widget_node(NULL);
+        list_init(&widget_list->list);
+    }
+    Widget_node *p=create_widget_node(widget);
+    list_add(&p->list, &widget_list->list);
+}
+
+static Widget_node *create_widget_node(Widget *widget)
+{
     Widget_node *p=malloc_s(sizeof(Widget_node));
     p->widget=widget;
-    p->next=widget_list;
-    widget_list=p;
+    return p;
 }
 
 static void unreg_widget(Widget *widget)
 {
-    for(Widget_node *prev=NULL, *p=widget_list; p; prev=p, p=p->next)
-    {
+    if(!widget_list)
+        return;
+
+    list_for_each_entry_safe(Widget_node, p, &widget_list->list, list)
         if(p->widget == widget)
-        {
-            if(prev == NULL)
-                widget_list=p->next;
-            else
-                prev->next=p->next;
-            free_s(p);
-            break;
-        }
-    }
+            { free_widget_node(p); break; }
+}
+
+static void free_widget_node(Widget_node *node)
+{
+    list_del(&node->list);
+    free_s(node);
 }
 
 Widget *win_to_widget(Window win)
 {
-    for(Widget_node *p=widget_list; p; p=p->next)
+    list_for_each_entry(Widget_node, p, &widget_list->list, list)
         if(p->widget->win == win)
             return p->widget;
     return NULL;
@@ -78,7 +91,7 @@ void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state stat
     bg=get_widget_color(widget->state);
     if(widget->id != CLIENT_WIN)
         widget->win=create_widget_win(pwin, x, y, w, h, 0, 0, bg);
-    widget->x=x, widget->y=y, widget->w=w, widget->h=h;
+    widget->x=x, widget->y=y, widget->w=w, widget->h=h, widget->border_w=0;
     widget->parent=parent;
     widget->tooltip=NULL;
 
@@ -102,8 +115,9 @@ void destroy_widget(Widget *widget)
     free_s(widget);
 }
 
-void set_widget_border_width(const Widget *widget, int width)
+void set_widget_border_width(Widget *widget, int width)
 {
+    widget->border_w=width;
     XSetWindowBorderWidth(xinfo.display, widget->win, width);
 }
 
@@ -137,6 +151,11 @@ void update_widget_bg(const Widget *widget)
 void update_widget_fg(const Widget *widget)
 {
     UNUSED(widget);
+}
+
+void set_widget_rect(Widget *widget, int x, int y, int w, int h)
+{
+    widget->x=x, widget->y=y, widget->w=w, widget->h=h;
 }
 
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)

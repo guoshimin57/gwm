@@ -15,7 +15,7 @@
 typedef enum // 與ICCCM規範標識符名稱表(icccm_atiom_names)相應的ID
 {
     WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_CHANGE_STATE, WM_TAKE_FOCUS,
-    UTF8_STRING, ICCCM_ATOMS_N
+    UTF8_STRING, WM_CLIENT_LEADER, ICCCM_ATOMS_N
 } ICCCM_atom_id;
 
 bool is_spec_icccm_atom(Atom spec, ICCCM_atom_id id);
@@ -37,5 +37,6 @@ bool is_iconic_state(Window win);
 void close_win(Window win);
 char *get_wm_name(Window win);
 char *get_wm_icon_name(Window win);
+void set_client_leader(Window leader, Window cwin);
 
 #endif

@@ -47,6 +47,7 @@
 #include "icccm.h"
 #include "image.h"
 #include "prop.h"
+#include "frame.h"
 #include "taskbar.h"
 
 #define _(s) gettext(s)

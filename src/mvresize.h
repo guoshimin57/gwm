@@ -19,5 +19,7 @@ void update_win_state_for_move_resize(WM *wm, Client *c);
 Pointer_act get_resize_act(Client *c, const Move_info *m);
 void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg);
 void toggle_shade_client_mode(Client *c, bool shade);
+void set_client_rect_by_outline(Client *c, int x, int y, int w, int h);
+void set_client_rect_by_win(Client *c, int x, int y, int w, int h);
 
 #endif

@@ -90,9 +90,9 @@
     {MAX_BUTTON,                0, Button1,  max_restore,                {0}},                              \
     {SHADE_BUTTON,              0, Button1,  toggle_shade_client,        {0}},                              \
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},                              \
-    {TITLE_AREA,                0, Button1,  move_resize,                {.resize=false}},                  \
-    {TITLE_AREA,                0, Button2,  pointer_change_place,       {0}},                              \
-    {TITLE_AREA,                0, Button3,  pointer_swap_clients,       {0}},                              \
+    {TITLEBAR,                  0, Button1,  move_resize,                {.resize=false}},                  \
+    {TITLEBAR,                  0, Button2,  pointer_change_place,       {0}},                              \
+    {TITLEBAR,                  0, Button3,  pointer_swap_clients,       {0}},                              \
     {CLIENT_WIN,                0, Button1,  choose_client,              {0}},                              \
     {CLIENT_FRAME,              0, Button1,  move_resize,                {.resize=true}},                   \
     {CLIENT_ICON,               0, Button1,  deiconify,                  {0}}

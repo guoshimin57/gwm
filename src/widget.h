@@ -18,7 +18,7 @@ typedef enum // 構件標識
 {
     ROOT_WIN, HINT_WIN, RUN_CMD_ENTRY,
 
-    CLIENT_FRAME, CLIENT_WIN, TITLE_LOGO, TITLE_AREA,
+    CLIENT_FRAME, CLIENT_WIN, TITLE_LOGO, TITLEBAR,
 
     SECOND_BUTTON, MAIN_BUTTON, FIXED_BUTTON, FLOAT_BUTTON,
     ICON_BUTTON, MAX_BUTTON, CLOSE_BUTTON,
@@ -66,7 +66,7 @@ struct _widget_tag
 {
     Widget_id id;
     Widget_state state;
-    int x, y, w, h;
+    int x, y, w, h, border_w;
     Window win;
     Widget *parent, *tooltip;
 
@@ -92,6 +92,7 @@ struct _widget_tag
 #define WIDGET_Y(p) (WIDGET(p)->y)
 #define WIDGET_W(p) (WIDGET(p)->w)
 #define WIDGET_H(p) (WIDGET(p)->h)
+#define WIDGET_BORDER_W(p) (WIDGET(p)->border_w)
 #define WIDGET_WIN(p) (WIDGET(p)->win)
 #define WIDGET_TOOLTIP(p) (WIDGET(p)->tooltip)
 
@@ -102,13 +103,14 @@ Widget *win_to_widget(Window win);
 Widget *create_widget(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
 void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
 void destroy_widget(Widget *widget);
-void set_widget_border_width(const Widget *widget, int width);
+void set_widget_border_width(Widget *widget, int width);
 void set_widget_border_color(const Widget *widget, unsigned long pixel);
 void show_widget(Widget *widget);
 void hide_widget(const Widget *widget);
 void move_resize_widget(Widget *widget, int x, int y, int w, int h);
 void update_widget_bg(const Widget *widget);
 void update_widget_fg(const Widget *widget);
+void set_widget_rect(Widget *widget, int x, int y, int w, int h);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);

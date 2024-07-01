@@ -35,7 +35,6 @@ static void config_unmanaged_win(XConfigureRequestEvent *e);
 static void handle_enter_notify(WM *wm, XEvent *e);
 static void handle_pointer_hover(WM *wm, const Widget *widget);
 static void handle_expose(WM *wm, XEvent *e);
-static void update_title_area_fg(Client *c);
 static void handle_focus_in(WM *wm, XEvent *e);
 static void handle_focus_out(WM *wm, XEvent *e);
 static void handle_key_press(WM *wm, XEvent *e);
@@ -117,7 +116,8 @@ static void unmap_for_click(WM *wm, Widget_id id)
         hide_widget(WIDGET(act_center));
     if(id != TITLE_LOGO)
         for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-            hide_widget(WIDGET(c->frame->menu));
+            if(c->show_titlebar)
+                hide_widget(WIDGET(get_frame_menu(c->frame)));
     if(id!=RUN_CMD_ENTRY && id!=RUN_BUTTON)
     {
         hide_widget(WIDGET(cmd_entry));
@@ -349,13 +349,9 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         set_cursor(win, ADJUST_LAYOUT_RATIO);
     if(widget == NULL)
         return;
-    /*
-    if(widget->id == ACT_CENTER)
-        XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
-        */
     if(widget->id == CLIENT_FRAME)
         act=get_resize_act(c, &m);
-    else if(widget->id == TITLE_AREA)
+    else if(widget->id == TITLEBAR)
         act=MOVE;
     else
     {
@@ -366,14 +362,12 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     }
     if(widget->id != UNUSED_WIDGET_ID)
         set_cursor(win, act);
-    handle_pointer_hover(wm, widget);
+    if(widget->tooltip)
+        handle_pointer_hover(wm, widget);
 }
 
 static void handle_pointer_hover(WM *wm, const Widget *widget)
 {
-    if(!widget->tooltip)
-        return;
-
     XEvent ev;
     bool show=false;
     struct timeval t={cfg->hover_time/1000, cfg->hover_time%1000*1000}, t0=t;
@@ -419,23 +413,10 @@ static void handle_expose(WM *wm, XEvent *e)
     if(widget == NULL)
         return;
 
-    if(widget->id == TITLE_AREA)
-        update_title_area_fg(win_to_client(wm->clients, win));
-    else if(widget->id == STATUSBAR)
+    if(widget->id == STATUSBAR)
         update_statusbar_fg();
     else if(widget->id != CLIENT_WIN)
         widget->update_fg(widget);
-}
-
-static void update_title_area_fg(Client *c)
-{
-    if(c->titlebar_h <= 0)
-        return;
-
-    Rect r=get_title_area_rect(c);
-    Str_fmt f={0, 0, r.w, r.h, CENTER, true, false, 0,
-        get_widget_fg(WIDGET_STATE(c))};
-    draw_string(c->frame->title_area->win, c->title_text, &f);
 }
 
 static void handle_focus_in(WM *wm, XEvent *e)
@@ -557,11 +538,15 @@ static void handle_property_notify(WM *wm, XEvent *e)
         handle_wm_transient_for_notify(wm, win);
     else if(c && is_spec_ewmh_atom(atom, NET_WM_ICON))
     {
-        Imlib_Image image=get_icon_image(WIDGET_WIN(c), c->class_hint.res_name,
-            cfg->icon_image_size, cfg->cur_icon_theme);
-        set_button_icon(c->frame->logo, image, c->class_hint.res_name, NULL);
+        c->image=get_icon_image(win, NULL, 0, NULL);
+        Button *logo=get_frame_titlebar_logo(c->frame);
+        if(logo)
+        {
+            change_button_icon(logo, c->image, NULL, NULL);
+            update_button_fg(WIDGET(logo));
+        }
         if(is_iconic_client(c))
-            update_button_fg(win_to_widget(win));
+            update_iconbar();
     }
     else if(c && is_spec_ewmh_atom(atom, NET_WM_STATE))
         update_iconbar_by_state(win);
@@ -613,7 +598,8 @@ static void update_ui(WM *wm)
     update_taskbar_bg(WIDGET(taskbar));
     update_menu_bg(WIDGET(act_center));
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
-        update_menu_bg(WIDGET(c->frame->menu));
+        if(c->show_titlebar)
+            update_menu_bg(WIDGET(get_frame_menu(c->frame)));
     update_entry_bg(WIDGET(cmd_entry));
     update_win_bg(xinfo.hint_win, get_widget_color(WIDGET_STATE_NORMAL), None);
     update_win_bg(xinfo.root_win, get_root_bg_color(), None);
@@ -634,8 +620,7 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
     {
         free_s(c->title_text);
         c->title_text=copy_string(s);
-        change_tooltip_tip(TOOLTIP(WIDGET_TOOLTIP(c->frame->title_area)), s);
-        update_title_area_fg(c);
+        change_title(c->frame, s);
     }
     free_s(s);
 }

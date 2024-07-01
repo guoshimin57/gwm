@@ -85,6 +85,7 @@ void clear_wm(WM *wm)
         XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
         del_client(wm, c, true);
     }
+    free_all_images();
     XDestroyWindow(xinfo.display, xinfo.hint_win);
     XDestroyWindow(xinfo.display, wm->wm_check_win);
     destroy_taskbar();
@@ -169,15 +170,16 @@ void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    show_menu(WIDGET(c->frame->menu));
+    if(c->show_titlebar)
+        show_menu(WIDGET(get_frame_menu(c->frame)));
 }
 
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    c->border_w = c->border_w ? 0 : cfg->border_width;
-    set_widget_border_width(WIDGET(c->frame), c->border_w);
+    c->show_border = !c->show_border;
+    set_widget_border_width(WIDGET(c->frame), c->show_border ? cfg->border_width : 0);
     request_layout_update();
 }
 
@@ -185,19 +187,8 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    c->titlebar_h = c->titlebar_h ? 0 : get_font_height_by_pad();
-    if(c->titlebar_h)
-    {
-        create_titlebar(c);
-        show_widget(WIDGET(c->frame));
-    }
-    else
-    {
-        for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            destroy_button(c->frame->buttons[i]);
-        destroy_widget(c->frame->title_area);
-        destroy_button(c->frame->logo);
-    }
+    toggle_titlebar(c->frame, c->title_text, c->image);
+    show_widget(WIDGET(c->frame));
     request_layout_update();
 }
 
