@@ -47,7 +47,7 @@ static void set_button_method(Widget *widget)
 
 void destroy_button(Button *button)
 {
-    vfree(button->icon_name, button->symbol, button->label, NULL);
+    vfree(button->icon_name, button->symbol, button->label);
     destroy_widget(WIDGET(button));
 }
 
@@ -94,12 +94,14 @@ void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, c
 
 void change_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
 {
+    /*
     if(image && image!=button->image)
         free_image(&button->image);
-    else if(icon_name && icon_name!=button->icon_name)
-        free_s(button->icon_name);
+    else */
+    if(icon_name && icon_name!=button->icon_name)
+        vfree(button->icon_name);
     else if(symbol && symbol!=button->symbol)
-        free_s(button->symbol);
+        vfree(button->symbol);
     else
         return;
     set_button_icon(button, image, icon_name, symbol);
@@ -113,7 +115,7 @@ char *get_button_label(Button *button)
 void set_button_label(Button *button, const char *label)
 {
     if(button->label)
-        free_s(button->label);
+        vfree(button->label);
     button->label=copy_string(label);
 }
 

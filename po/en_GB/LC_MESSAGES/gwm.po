@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.3\n"
+"Project-Id-Version: gwm 2.10.4\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-07-01 18:06+0800\n"
+"POT-Creation-Date: 2024-07-10 11:24+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: client.c:653
+#: client.c:652
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
@@ -288,15 +288,15 @@ msgstr "The following are place info of the %lx window:\n"
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "The following is a list of client windows arranged from bottom to top:\n"
 
-#: file.c:121
+#: file.c:95
 msgid "未能成功地爲命令創建新會話"
 msgstr "Failed to successfully create a new session for the command"
 
-#: file.c:123
+#: file.c:97
 msgid "命令執行錯誤"
 msgstr "Command execution error"
 
-#: file.c:126
+#: file.c:100
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
 
@@ -338,17 +338,17 @@ msgstr "Error: There is already another window manager running!"
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X error: Resource number=%#lx, Request number=%lu, Error code=%d, Major request code=%d, Minor request code=%d\n"
 
-#: widget.c:200
+#: widget.c:202
 #, c-format
 msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
 msgstr "Error: Window (0x%lx) input method setup failed!"
 
-#: widget.c:307
+#: widget.c:309
 #, c-format
 msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
 msgstr "Error: The corresponding modifier key for the specified key symbol could not be found!\n"
 
-#: widget.c:310
+#: widget.c:312
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "Error: The key symbol specified does not have a corresponding key code!\n"

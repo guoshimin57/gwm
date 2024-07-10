@@ -134,8 +134,8 @@ bool is_prefer_size(int w, int h, const XSizeHints *hint)
 
 static bool is_prefer_width(int w, const XSizeHints *hint)
 {
-    long f=hint->flags;
-    return !hint || !f ||
+    long f;
+    return !hint || !(f=hint->flags) ||
         (  (!(f & PMinSize) || w>=hint->min_width)
         && (!(f & PMaxSize) || w<=hint->max_width)
         && (!(f & PBaseSize) || !(f & PResizeInc)
@@ -144,8 +144,8 @@ static bool is_prefer_width(int w, const XSizeHints *hint)
 
 static bool is_prefer_height(int h, const XSizeHints *hint)
 {
-    long f=hint->flags;
-    return !hint || !f ||
+    long f;
+    return !hint || !(f=hint->flags) ||
         (  (!(f & PMinSize) || h>=hint->min_height)
         && (!(f & PMaxSize) || h<=hint->max_height)
         && (!(f & PBaseSize) || !(f & PResizeInc)

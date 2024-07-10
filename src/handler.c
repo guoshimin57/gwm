@@ -538,13 +538,10 @@ static void handle_property_notify(WM *wm, XEvent *e)
         handle_wm_transient_for_notify(wm, win);
     else if(c && is_spec_ewmh_atom(atom, NET_WM_ICON))
     {
-        c->image=get_icon_image(win, NULL, 0, NULL);
-        Button *logo=get_frame_titlebar_logo(c->frame);
-        if(logo)
-        {
-            change_button_icon(logo, c->image, NULL, NULL);
-            update_button_fg(WIDGET(logo));
-        }
+        free_image(c->image);
+        c->image=get_icon_image(win, c->class_hint.res_name, 0, NULL);
+        if(c->show_titlebar)
+            change_frame_logo(c->frame, c->image);
         if(is_iconic_client(c))
             update_iconbar();
     }
@@ -584,7 +581,7 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
         return;
 
     set_button_label(BUTTON(win_to_widget(get_iconic_win(win))), s);
-    free_s(s);
+    vfree(s);
     update_iconbar();
 }
 
@@ -594,7 +591,7 @@ static void update_ui(WM *wm)
     // 內容及其顏色，故此處不必更新構件文字顏色。
     char *name=get_main_color_name();
     alloc_color(name);
-    free_s(name);
+    vfree(name);
     update_taskbar_bg(WIDGET(taskbar));
     update_menu_bg(WIDGET(act_center));
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -618,11 +615,11 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
         set_statusbar_label(s);
     else
     {
-        free_s(c->title_text);
+        vfree(c->title_text);
         c->title_text=copy_string(s);
         change_title(c->frame, s);
     }
-    free_s(s);
+    vfree(s);
 }
 
 static void handle_wm_transient_for_notify(WM *wm, Window win)

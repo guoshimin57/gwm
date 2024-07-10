@@ -11,7 +11,6 @@
 
 #include "gwm.h"
 
-static char *dedup_paths(const char *paths);
 static size_t get_files_in_path(const char *path, const char *regex, Strings *head, Order order, bool is_fullname);
 static bool match(const char *s, const char *r, const char *os);
 static bool regcmp(const char *s, const char *regex);
@@ -22,41 +21,16 @@ static void create_file_node(Strings *head, const char *path, char *filename, bo
 Strings *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, int *n)
 {
     int sum=0;
-    char *p=NULL, *ps=dedup_paths(paths);
+    char *p=NULL, *ps=copy_string(paths);
     Strings *head=malloc_s(sizeof(Strings));
 
     head->next=NULL, head->str=NULL;
     for(p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
         sum+=get_files_in_path(p, regex, head, order, is_fullname);
-    free_s(ps);
+    vfree(ps);
     if(n)
         *n=sum;
     return head;
-}
-
-static char *dedup_paths(const char *paths)
-{
-    ssize_t readlink(const char *restrict, char *restrict, size_t);
-    size_t n=1, i=0, j=0, len=strlen(paths);
-    char *p=NULL, *ps=copy_string(paths);
-
-    for(p=ps; *p; p++)
-        if(*p == ':')
-            n++;
-
-    char list[n][len+1], buf[len+1], *result=malloc_s(len+1);
-    for(*result='\0', p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
-    {
-        ssize_t count=readlink(p, buf, len);
-        char *pp = count>0 ? buf : p;
-        for(j=0; j<i; j++)
-            if(strcmp(pp, list[j])==0)
-                break;
-        if(j==i)
-            strcpy(list[i++], pp), strcat(result, pp), strcat(result, i<n ? ":" : "");
-    }
-    free_s(ps);
-    return result;
 }
 
 static size_t get_files_in_path(const char *path, const char *regex, Strings *head, Order order, bool is_fullname)

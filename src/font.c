@@ -62,7 +62,7 @@ static WMFont *load_font(const char *fontname)
         return NULL;
     }
 
-    WMFont *font=malloc(sizeof(WMFont));
+    WMFont *font=malloc_s(sizeof(WMFont));
     font->xfont=fp, font->next=NULL;
     if(fonts)
         get_last_font()->next=font;
@@ -83,7 +83,7 @@ static void close_font(WMFont *font)
             else
                 prev->next=p->next;
             XftFontClose(xinfo.display, p->xfont);
-            free_s(p);
+            vfree(p);
             break;
         }
     }

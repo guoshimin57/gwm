@@ -204,7 +204,7 @@ static void complete_for_entry(Entry *entry, bool show)
         mbstowcs(entry->text, strs->next->str, FILENAME_MAX);
         entry->cursor_offset=wcslen(entry->text);
     }
-    free_strings(strs);
+    vfreetrings(strs);
 }
 
 void paste_for_entry(Entry *entry)
@@ -241,6 +241,6 @@ static Strings *get_cmd_completion_for_entry(Entry *entry, int *n)
     char *regex=get_part_match_regex(entry);
     char *paths=getenv("PATH");
     Strings *cmds=get_files_in_paths(paths, regex, RISE, false, n);
-    free_s(regex);
+    vfree(regex);
     return cmds;
 }

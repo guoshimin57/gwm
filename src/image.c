@@ -60,7 +60,7 @@ void free_all_images(void)
 
     list_for_each_entry_safe(Image_node, p, &image_list->list, list)
         free_image_node(p);
-    free_s(image_list);
+    vfree(image_list);
 }
 
 void free_image(Imlib_Image image)
@@ -75,11 +75,11 @@ void free_image(Imlib_Image image)
 
 static void free_image_node(Image_node *node)
 {
-    free_s(node->name);
+    vfree(node->name);
     imlib_context_set_image(node->image);
     imlib_free_image();
     list_del(&node->list);
-    free_s(node);
+    vfree(node);
 }
 
 static void reg_image(const char *name, Imlib_Image image)
@@ -174,7 +174,7 @@ static Imlib_Image create_icon_image_from_prop(Window win)
     DATA32 *image_data=imlib_image_get_data();
     for(i=0; i<size; i++)
         image_data[i]=data[i+2];
-    free_s(data);
+    vfree(data);
     imlib_image_put_back_data(image_data);
     return image;
 }
@@ -214,8 +214,8 @@ static char *find_icon(const char *name, int size, int scale, const char *theme,
         || (filename=lookup_fallback_icon(name, base_dirs)))
     {
         for(char **b=base_dirs; b&&*b; b++)
-            free_s(*b);
-        free_s(base_dirs);
+            vfree(*b);
+        vfree(base_dirs);
     }
     return filename;
 }
@@ -228,11 +228,15 @@ static char *find_icon_helper(const char *name, int size, int scale, char *const
         return filename;
 
     // 規範建議在給定主題中找不到匹配的圖標時，遞歸搜索其父主題列表
-    char *const *b=NULL, **p=NULL, **parent=NULL;
-    for(b=base_dirs; b&&*b; b++, free_s(parent))
-        for(parent=p=get_parent_themes(*b, theme); p&&*p; free_s(*p++))
+    for(char *const *b=base_dirs; b&&*b; b++)
+    {
+        char **parent=get_parent_themes(*b, theme);
+        for(char **p=parent; p&&*p; p++)
             if((filename=find_icon_helper(name, size, scale, b, *p, context_dir)))
-                { free_s(*p), free_s(parent); return filename; }
+                { vfree(parent); return filename; }
+        vfree(parent);
+    }
+
     return NULL;
 }
 
@@ -240,12 +244,15 @@ static char *lookup_icon(const char *name, int size, int scale, char *const *bas
 {
     int min=INT_MAX;
     char *closest=NULL;
-    char *const *b=NULL, **s=NULL, **sub_dirs=NULL;
 
-    for(b=base_dirs; b&&*b; b++, free_s(sub_dirs))
-        for(sub_dirs=s=get_sub_dirs(*b, theme, context_dir); s&&*s; free_s(*s++))
+    for(char *const *b=base_dirs; b&&*b; b++)
+    {
+        char **sub_dirs=get_sub_dirs(*b, theme, context_dir);
+        for(char **s=sub_dirs; s&&*s; s++)
             if(get_closest_icon(name, size, scale, *b, *s, theme, &closest, &min))
-                { free_s(sub_dirs); free_s(*s); return closest; }
+                { vfree(sub_dirs); return closest; }
+        vfree(sub_dirs);
+    }
     return closest;
 }
 
@@ -266,7 +273,7 @@ static bool get_closest_icon(const char *name, int size, int scale, const char *
             if(d < *min_distance)
                 *closest=f, *min_distance=d;
         }
-        free_s(f);
+        vfree(f);
     }
 
     return false;
@@ -282,7 +289,7 @@ static char *lookup_fallback_icon(const char *name, char *const *base_dirs)
             char *filename=copy_strings(*b, "/", name, ICON_EXT[i], NULL);
             if(is_accessible(filename))
                 return filename;
-            free_s(filename);
+            vfree(filename);
         }
     }
 
@@ -339,7 +346,7 @@ static char **get_base_dirs(void)
 
     // 規範規定依次搜索如下三個基本目錄：
     // $HOME/.icons、$XDG_DATA_DIRS/icons、/usr/share/pixmaps
-    dirs=malloc(n*sizeof(char *));
+    dirs=malloc_s(n*sizeof(char *));
     dirs[0]=copy_strings(home, "/.icons", NULL);
     dirs[n-2]=copy_strings(pix, NULL);
     dirs[n-1]=NULL;
@@ -365,7 +372,7 @@ static char **get_list_val_from_index_theme(const char *base_dir, const char *th
         return NULL;
 
     size_t len, i, n=get_spec_char_num(val, ',')+2;
-    char **result=malloc(n*sizeof(char *));
+    char **result=malloc_s(n*sizeof(char *));
     for(len=0, i=0; i<n-1 && *val; val+=len+1)
     {
         val[len=strcspn(val, ",")]='\0';
@@ -460,7 +467,7 @@ static FILE *open_index_theme(const char *base_dir, const char *theme)
         return NULL;
 
     FILE *fp=fopen(filename, "r");
-    free_s(filename);
+    vfree(filename);
     return fp;
 }
 

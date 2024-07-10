@@ -61,7 +61,7 @@ static void unreg_widget(Widget *widget)
 static void free_widget_node(Widget_node *node)
 {
     list_del(&node->list);
-    free_s(node);
+    vfree(node);
 }
 
 Widget *win_to_widget(Window win)
@@ -112,7 +112,9 @@ void destroy_widget(Widget *widget)
 {
     unreg_widget(widget);
     XDestroyWindow(xinfo.display, widget->win);
-    free_s(widget);
+    if(widget->tooltip)
+        destroy_widget(widget->tooltip);
+    vfree(widget);
 }
 
 void set_widget_border_width(Widget *widget, int width)

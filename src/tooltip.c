@@ -48,7 +48,7 @@ static void set_tooltip_method(Widget *widget)
 
 void change_tooltip_tip(Tooltip *tooltip, const char *tip)
 {
-    free_s(tooltip->tip);
+    vfree(tooltip->tip);
     tooltip->tip=copy_string(tip);
 
     int *pw=&WIDGET_W(tooltip), h=WIDGET_H(tooltip), pad=get_font_pad();
@@ -60,7 +60,7 @@ void change_tooltip_tip(Tooltip *tooltip, const char *tip)
 void destroy_tooltip(Tooltip *tooltip)
 {
     tooltip->owner->tooltip=NULL;
-    free_s(tooltip->tip);
+    vfree(tooltip->tip);
     destroy_widget(WIDGET(tooltip));
 }
 

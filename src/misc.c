@@ -82,25 +82,13 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
     return result;
 }
 
-void free_s(void *ptr)
-{
-    free(ptr);
-    ptr=NULL;
-}
-
-void vfree(void *ptr, ...) // 調用時須以NULL結尾
-{
-    va_list ap;
-    va_start(ap, ptr);
-    for(void *p=ptr; p; p=va_arg(ap, void *))
-        free_s(p);
-    va_end(ap);
-}
-
-void free_strings(Strings *head)
+void vfreetrings(Strings *head)
 {
     for(Strings *f=head; f; f=head)
-        head=f->next, free_s(f->str), free_s(f);
+    {
+        head=f->next;
+        vfree(f->str, f);
+    }
 }
 
 int base_n_floor(int x, int n)
@@ -132,7 +120,7 @@ char *get_icon_title_text(Window win, const char *fallback)
         return s;
     if((s=get_wm_icon_name(win)) && strlen(s))
         return s;
-    return copy_string(get_title_text(win, fallback));
+    return get_title_text(win, fallback);
 }
 
 bool is_match_button_release(XEvent *oe, XEvent *ne)

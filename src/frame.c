@@ -123,7 +123,7 @@ void destroy_frame(Frame *frame)
 
 static void destroy_titlebar(Titlebar *titlebar)
 {
-    free_s(titlebar->title);
+    vfree(titlebar->title);
     destroy_button(titlebar->logo);
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
         destroy_button(titlebar->buttons[i]);
@@ -211,11 +211,6 @@ Titlebar *get_frame_titlebar(const Frame *frame)
     return frame->titlebar;
 }
 
-Button *get_frame_titlebar_logo(const Frame *frame)
-{
-    return frame->titlebar ? frame->titlebar->logo : NULL;
-}
-
 void toggle_titlebar(Frame *frame, const char *title, Imlib_Image image)
 {
     if(frame->titlebar)
@@ -263,8 +258,14 @@ static int get_cur_titlebar_button_n(void)
 
 void change_title(const Frame *frame, const char *title)
 {
-    free_s(frame->titlebar->title);
+    vfree(frame->titlebar->title);
     frame->titlebar->title=copy_string(title);
     change_tooltip_tip(TOOLTIP(WIDGET_TOOLTIP(frame->titlebar)), title);
     update_titlebar_fg(WIDGET(frame->titlebar));
+}
+
+void change_frame_logo(const Frame *frame, Imlib_Image image)
+{
+    change_button_icon(frame->titlebar->logo, image, NULL, NULL);
+    update_button_fg(WIDGET(frame->titlebar->logo));
 }

@@ -9,6 +9,15 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2024年 07月 10日 星期三 11:06:14 HKT	gsm <406643764@qq.com>
+	* 發布第2.10.4版；
+	* 修復在按下關閉按鈕後關閉按鈕相應的tooltip構件未銷毀的缺陷；
+	* 修復find_icon_helper函數和lookup_icon重復釋放內存的缺陷；
+	* 原free_s函數和vfree函數未能將實參設置爲NULL，故刪除，並用vfree宏代替；
+	* 因沒有可移植的方法實現路徑去重，故刪除dedup_paths函數；
+	* 修復gcc -fanalyzer警告所指出的缺陷，即一些內存泄漏、段錯誤缺陷；
+	* 爲src/Makefile的DEBUG設置了默認值。
+
 2024年 07月 01日 星期一 17:55:50 HKT	gsm <406643764@qq.com>
 	* 發布第2.10.3版；
 	* 修復handle_property_notify函數中NET_WM_ICON特性更新時的邏輯缺陷；

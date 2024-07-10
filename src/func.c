@@ -104,10 +104,10 @@ void clear_wm(WM *wm)
     XFlush(xinfo.display);
     XCloseDisplay(xinfo.display);
     clear_zombies(0);
-    free_strings(wm->wallpapers);
+    vfreetrings(wm->wallpapers);
     for(size_t i=0; i<DESKTOP_N; i++)
-        free_s(wm->desktop[i]);
-    free_s(cfg);
+        vfree(wm->desktop[i]);
+    vfree(cfg);
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)
@@ -187,6 +187,7 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
+    c->show_titlebar=!c->show_titlebar;
     toggle_titlebar(c->frame, c->title_text, c->image);
     show_widget(WIDGET(c->frame));
     request_layout_update();

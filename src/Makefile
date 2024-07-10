@@ -10,6 +10,7 @@
 # *************************************************************************
 
 CC ?= gcc
+DEBUG ?= -ggdb3 -fanalyzer -fno-omit-frame-pointer -fsanitize=address
 CFLAGS ?= -std=c17 -Wall -W -pedantic-errors $(DEBUG) `pkg-config --cflags --libs x11 xft imlib2 fontconfig` -lm
 CTAGS ?= ctags
 backup := $(wildcard *~)
@@ -18,7 +19,7 @@ objs := $(srcs:.c=.o)
 deps := $(srcs:.c=.d)
 exec := gwm
 
-.PHONY : all install install-strip uninstall clean
+.PHONY : all install debug install-strip uninstall clean
 all : $(exec)
 $(exec) : $(objs)
 	@$(CTAGS) *.[ch] 2> /dev/null ; \

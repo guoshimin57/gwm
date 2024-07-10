@@ -12,7 +12,16 @@
 #ifndef MISC_H
 #define MISC_H
 
-#include "misc.h"
+/* 釋放指針類型的參數所指向的內存。注意：不能用作表达式 */
+#define vfree(...)                                      \
+    do                                                  \
+    {                                                   \
+        void *end=(int []){0};                          \
+        void **list=(void *[]){__VA_ARGS__, end};       \
+        for(size_t i=0; list[i]!=end; i++)              \
+            if(list[i])                                 \
+                free(list[i]);                          \
+    } while(0)
 
 typedef struct strings_tag // 字符串鏈表
 {
@@ -27,9 +36,7 @@ void exit_with_msg(const char *msg);
 void clear_zombies(int signum);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
-void free_s(void *ptr);
-void vfree(void *ptr, ...);
-void free_strings(Strings *head);
+void vfreetrings(Strings *head);
 int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
 char *get_title_text(Window win, const char *fallback);

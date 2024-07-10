@@ -33,9 +33,10 @@ static long map_count=0; // 所有客戶窗口的累計映射次數
 
 void add_client(WM *wm, Window win)
 {
-    int border_w=0, titlebar_h=0;
     Client *c=new_client(wm, win);
 
+    if(should_hide_frame(c))
+        c->show_border=c->show_titlebar=false;
     apply_rules(c);
     add_client_node(get_head_for_add_client(wm->clients, c), c);
     grab_buttons(WIDGET_WIN(c));
@@ -43,13 +44,11 @@ void add_client(WM *wm, Window win)
     set_cursor(win, NO_OP);
     set_default_win_rect(c);
     save_place_info_of_client(c);
-    if(!should_hide_frame(c))
-    {
-        border_w = c->show_border ? cfg->border_width : 0;
-        titlebar_h = c->show_titlebar ? get_font_height_by_pad() : 0;
-    }
-    c->frame=create_frame(WIDGET(c), WIDGET_STATE(c), WIDGET_X(c), WIDGET_Y(c),
-        WIDGET_W(c), WIDGET_H(c), titlebar_h, border_w, c->title_text, c->image);
+    c->frame=create_frame(WIDGET(c), WIDGET_STATE(c),
+        WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c),
+        c->show_titlebar ? get_font_height_by_pad() : 0,
+        c->show_border ? cfg->border_width : 0,
+        c->title_text, c->image);
     request_layout_update();
     show_widget(WIDGET(c->frame));
     focus_client(wm, wm->cur_desktop, c);
@@ -62,11 +61,11 @@ void set_all_net_client_list(Client *list)
     Window *wlist=get_client_win_list(list, &n);
 
     set_net_client_list(wlist, n);
-    free_s(wlist);
+    vfree(wlist);
 
     wlist=get_client_win_list_stacking(list, &n);
     set_net_client_list_stacking(wlist, n);
-    free_s(wlist);
+    vfree(wlist);
 }
 
 static Client *new_client(WM *wm, Window win)
@@ -242,7 +241,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     XFree(c->class_hint.res_class);
     XFree(c->class_hint.res_name);
     XFree(c->wm_hint);
-    vfree(c->title_text, c, NULL);
+    vfree(c->title_text, c);
 
     if(!is_for_quit)
         request_layout_update();
@@ -542,7 +541,7 @@ Window *get_client_win_list(Client *list, int *n)
 
     for(i=0; i<count; i++)
         wlist[i]=WIDGET_WIN(clist[i]);
-    free_s(clist);
+    vfree(clist);
 
     return wlist;
 }

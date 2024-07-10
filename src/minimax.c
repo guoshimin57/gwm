@@ -128,7 +128,7 @@ void fix_win_rect_by_state(WM *wm, Client *c)
 {
     if(is_win_state_max(c))
     {
-        Max_way way;
+        Max_way way=FULL_MAX;
         if(c->win_state.vmax)   way=VERT_MAX;
         if(c->win_state.hmax)   way=HORZ_MAX;
         if(c->win_state.tmax)   way=TOP_MAX;

@@ -28,10 +28,10 @@ void set_frame_state_current(Frame *frame, int value);
 void update_frame_bg(const Frame *frame);
 Menu *get_frame_menu(const Frame *frame);
 Titlebar *get_frame_titlebar(const Frame *frame);
-Button *get_frame_titlebar_logo(const Frame *frame);
 void toggle_titlebar(Frame *frame, const char *title, Imlib_Image image);
 void update_titlebar_fg(const Widget *widget);
 void update_titlebar_layout(const Frame *frame);
 void change_title(const Frame *frame, const char *title);
+void change_frame_logo(const Frame *frame, Imlib_Image image);
 
 #endif
