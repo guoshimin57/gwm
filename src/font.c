@@ -11,6 +11,7 @@
 
 #include <fontconfig/fontconfig.h>
 #include "gwm.h"
+#include "memory.h"
 
 struct _font_tag
 {
@@ -62,7 +63,7 @@ static WMFont *load_font(const char *fontname)
         return NULL;
     }
 
-    WMFont *font=malloc_s(sizeof(WMFont));
+    WMFont *font=Malloc(sizeof(WMFont));
     font->xfont=fp, font->next=NULL;
     if(fonts)
         get_last_font()->next=font;
@@ -83,7 +84,7 @@ static void close_font(WMFont *font)
             else
                 prev->next=p->next;
             XftFontClose(xinfo.display, p->xfont);
-            vfree(p);
+            free(p);
             break;
         }
     }

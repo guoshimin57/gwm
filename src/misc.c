@@ -10,8 +10,9 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "memory.h"
 
-void *malloc_s(size_t size)
+void *Malloc(size_t size)
 {
     void *p=malloc(size);
     if(p == NULL)
@@ -56,7 +57,7 @@ void clear_zombies(int signum)
 
 char *copy_string(const char *s)
 {
-    return s ? strcpy(malloc_s(strlen(s)+1), s) : NULL;
+    return s ? strcpy(Malloc(strlen(s)+1), s) : NULL;
 }
 
 char *copy_strings(const char *s, ...) // 調用時須以NULL結尾

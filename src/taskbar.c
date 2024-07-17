@@ -10,6 +10,8 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "list.h"
+#include "memory.h"
 
 typedef struct // 狀態欄
 {
@@ -21,7 +23,7 @@ typedef struct cbutton_tag
 {
     Button *button;
     Window cwin; // 縮微客戶窗口
-    struct cbutton_tag *next;
+    List list;
 } Cbutton;
 
 typedef struct // 縮微窗口欄
@@ -47,8 +49,6 @@ static void create_statusbar(void);
 static void create_act_center(void);
 static Cbutton *create_cbutton(Widget *parent, int x, int y, int w, int h, Window cwin);
 static void set_cbutton_icon(Cbutton *cbutton);
-static void add_cbutton(Cbutton *node);
-static void del_cbutton(Cbutton *node);
 static void destroy_cbutton(Cbutton *cbutton);
 static bool have_similar_cbutton(const Cbutton *cbutton);
 static Cbutton *win_to_cbutton(Window cwin);
@@ -60,7 +60,7 @@ void create_taskbar(void)
     int w=xinfo.screen_width, h=get_font_height_by_pad(),
         y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-h);
 
-    taskbar=malloc_s(sizeof(Taskbar));
+    taskbar=Malloc(sizeof(Taskbar));
     init_widget(WIDGET(taskbar), NULL, TASKBAR, WIDGET_STATE_1(current),
         0, y, w, h);
     set_taskbar_method(WIDGET(taskbar));
@@ -104,10 +104,11 @@ static void create_iconbar(void)
     int bw=cfg->taskbar_button_width*TASKBAR_BUTTON_N, x=bw,
         w=WIDGET_W(taskbar)-bw, h=WIDGET_H(taskbar);
 
-    taskbar->iconbar=malloc_s(sizeof(Iconbar));
+    taskbar->iconbar=Malloc(sizeof(Iconbar));
     init_widget(WIDGET(taskbar->iconbar), WIDGET(taskbar),
         ICONBAR, WIDGET_STATE(taskbar), x, 0, w, h);
-    taskbar->iconbar->cbuttons=NULL;
+    taskbar->iconbar->cbuttons=Malloc(sizeof(Cbutton));
+    list_init(&taskbar->iconbar->cbuttons->list);
 }
 
 static void create_statusbar(void)
@@ -115,8 +116,7 @@ static void create_statusbar(void)
     int w=0;
     char *p=get_text_prop(xinfo.root_win, XA_WM_NAME);
 
-    taskbar->statusbar=malloc_s(sizeof(Statusbar));
-    if(!p)
+    taskbar->statusbar=Malloc(sizeof(Statusbar));
         p=copy_string("gwm");
     get_string_size(p, &w, NULL);
     w += 2*get_font_pad();
@@ -142,15 +142,14 @@ void taskbar_add_cbutton(Window cwin)
 {
     int h=WIDGET_H(taskbar->iconbar), w=h;
     Cbutton *c=create_cbutton(WIDGET(taskbar->iconbar), 0, 0, w, h, cwin);
-
-    add_cbutton(c);
+    list_add(&c->list, &taskbar->iconbar->cbuttons->list);
     update_iconbar();
     WIDGET(c->button)->show(WIDGET(c->button));
 }
 
 static Cbutton *create_cbutton(Widget *parent, int x, int y, int w, int h, Window cwin)
 {
-    Cbutton *cbutton=malloc_s(sizeof(Cbutton));
+    Cbutton *cbutton=Malloc(sizeof(Cbutton));
     char *icon_title=get_icon_title_text(cwin, "");
 
     cbutton->button=create_button(parent, CLIENT_ICON, WIDGET_STATE_1(current),
@@ -158,11 +157,10 @@ static Cbutton *create_cbutton(Widget *parent, int x, int y, int w, int h, Windo
     set_button_align(cbutton->button, CENTER_LEFT);
 
     cbutton->cwin=cwin;
-    cbutton->next=NULL;
 
     set_cbutton_icon(cbutton);
     create_tooltip(WIDGET(cbutton->button), icon_title);
-    vfree(icon_title);
+    Free(icon_title);
 
     return cbutton;
 }
@@ -179,19 +177,13 @@ static void set_cbutton_icon(Cbutton *cbutton)
     XFree(class_hint.res_name), XFree(class_hint.res_class);
 }
 
-static void add_cbutton(Cbutton *node)
-{
-    node->next=taskbar->iconbar->cbuttons;
-    taskbar->iconbar->cbuttons=node;
-}
-
 void taskbar_del_cbutton(Window cwin)
 {
-    for(Cbutton *c=taskbar->iconbar->cbuttons; c; c=c->next)
+    list_for_each_entry_safe(Cbutton, c, &taskbar->iconbar->cbuttons->list, list)
     {
         if(c->cwin == cwin)
         {
-            del_cbutton(c);
+            list_del(&c->list);
             destroy_cbutton(c);
             update_iconbar();
             break;
@@ -199,31 +191,16 @@ void taskbar_del_cbutton(Window cwin)
     }
 }
 
-static void del_cbutton(Cbutton *node)
-{
-    for(Cbutton *prev=NULL, *p=taskbar->iconbar->cbuttons; p; prev=p, p=p->next)
-    {
-        if(p == node)
-        {
-            if(prev == NULL)
-                taskbar->iconbar->cbuttons=p->next;
-            else
-                prev->next=p->next;
-            break;
-        }
-    }
-}
-
 static void destroy_cbutton(Cbutton *cbutton)
 {
-    destroy_button(cbutton->button);
-    vfree(cbutton);
+    destroy_button(cbutton->button), cbutton->button=NULL;
+    free(cbutton);
 }
 
 Window get_iconic_win(Window button_win)
 {
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        for(Cbutton *c=taskbar->iconbar->cbuttons; c; c=c->next)
+        list_for_each_entry(Cbutton, c, &taskbar->iconbar->cbuttons->list, list)
             if(WIDGET_WIN(c->button) == button_win)
                 return c->cwin;
     return None;
@@ -233,7 +210,7 @@ void update_iconbar(void)
 {
     int x=0, w=0, h=WIDGET_H(taskbar->iconbar), wi=h, wl=0;
 
-    for(Cbutton *c=taskbar->iconbar->cbuttons; c; c=c->next)
+    list_for_each_entry(Cbutton, c, &taskbar->iconbar->cbuttons->list, list)
     {
         Button *b=c->button;
         if(have_similar_cbutton(c))
@@ -255,13 +232,15 @@ static bool have_similar_cbutton(const Cbutton *cbutton)
         return false;
 
     bool same=false;
-    for(Cbutton *p=taskbar->iconbar->cbuttons; !same && p; p=p->next)
+    list_for_each_entry(Cbutton, p, &taskbar->iconbar->cbuttons->list, list)
     {
         if(p!=cbutton && XGetClassHint(xinfo.display, p->cwin, &ph))
         {
             same = (strcmp(ph.res_class, ch.res_class) == 0
                 && strcmp(ph.res_name, ch.res_name) == 0);
             XFree(ph.res_class), XFree(ph.res_name);
+            if(same)
+                break;
         }
     }
     
@@ -273,15 +252,11 @@ static bool have_similar_cbutton(const Cbutton *cbutton)
 void update_iconbar_by_state(Window cwin)
 {
     Net_wm_state state=get_net_wm_state(cwin);
-    Cbutton *cbutton=win_to_cbutton(cwin);
     
-    if(cbutton)
+    if(win_to_cbutton(cwin))
     {
         if(!state.hidden)
             taskbar_del_cbutton(cwin);
-        if(state.focused)
-            WIDGET_STATE(WIDGET(cbutton->button)).current=1,
-            update_widget_bg(WIDGET(cbutton->button));
     }
     else if(state.hidden)
         taskbar_add_cbutton(cwin);
@@ -289,7 +264,7 @@ void update_iconbar_by_state(Window cwin)
 
 static Cbutton *win_to_cbutton(Window cwin)
 {
-    for(Cbutton *p=taskbar->iconbar->cbuttons; p; p=p->next)
+    list_for_each_entry(Cbutton, p, &taskbar->iconbar->cbuttons->list, list)
         if(p->cwin == cwin)
             return p;
     return NULL;
@@ -316,7 +291,7 @@ void set_statusbar_label(const char *label)
 {
     int w=0, h=WIDGET_H(taskbar->statusbar);
 
-    vfree(taskbar->statusbar->label);
+    Free(taskbar->statusbar->label);
     taskbar->statusbar->label=copy_string(label);
     get_string_size(label, &w, NULL);
     w += 2*get_font_pad();
@@ -342,11 +317,14 @@ void update_taskbar_bg(const Widget *widget)
 void destroy_taskbar(void)
 {
     for(int i=0; i<TASKBAR_BUTTON_N; i++)
-        destroy_button(taskbar->buttons[i]);
-    destroy_widget(WIDGET(taskbar->iconbar));
-    vfree(taskbar->statusbar->label);
-    destroy_widget(WIDGET(taskbar->statusbar));
-    destroy_widget(WIDGET(taskbar));
+        destroy_button(taskbar->buttons[i]), taskbar->buttons[i]=NULL;
+    list_for_each_entry_safe(Cbutton, c, &taskbar->iconbar->cbuttons->list, list)
+        destroy_cbutton(c);
+    Free(taskbar->iconbar->cbuttons);
+    destroy_widget(WIDGET(taskbar->iconbar)), taskbar->iconbar=NULL;
+    Free(taskbar->statusbar->label);
+    destroy_widget(WIDGET(taskbar->statusbar)), taskbar->statusbar=NULL;
+    destroy_widget(WIDGET(taskbar)), taskbar=NULL;
 }
 
 void set_taskbar_urgency(unsigned int desktop_mask, bool urg)

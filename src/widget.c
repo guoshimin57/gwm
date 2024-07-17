@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "list.h"
+#include "memory.h"
 
 typedef struct widget_node_tag
 {
@@ -43,7 +44,7 @@ static void reg_widget(Widget *widget)
 
 static Widget_node *create_widget_node(Widget *widget)
 {
-    Widget_node *p=malloc_s(sizeof(Widget_node));
+    Widget_node *p=Malloc(sizeof(Widget_node));
     p->widget=widget;
     return p;
 }
@@ -61,7 +62,7 @@ static void unreg_widget(Widget *widget)
 static void free_widget_node(Widget_node *node)
 {
     list_del(&node->list);
-    vfree(node);
+    free(node);
 }
 
 Widget *win_to_widget(Window win)
@@ -74,7 +75,7 @@ Widget *win_to_widget(Window win)
 
 Widget *create_widget(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
 {
-    Widget *widget=malloc_s(sizeof(Widget));
+    Widget *widget=Malloc(sizeof(Widget));
 
     init_widget(widget, parent, id, state, x, y, w, h);
 
@@ -111,10 +112,10 @@ static void set_widget_method(Widget *widget)
 void destroy_widget(Widget *widget)
 {
     unreg_widget(widget);
-    XDestroyWindow(xinfo.display, widget->win);
+    if(widget->id != CLIENT_WIN)
+        XDestroyWindow(xinfo.display, widget->win);
     if(widget->tooltip)
-        destroy_widget(widget->tooltip);
-    vfree(widget);
+        destroy_widget(widget->tooltip), widget->tooltip=NULL;
 }
 
 void set_widget_border_width(Widget *widget, int width)

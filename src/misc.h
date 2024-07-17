@@ -12,16 +12,28 @@
 #ifndef MISC_H
 #define MISC_H
 
-/* 釋放指針類型的參數所指向的內存。注意：不能用作表达式 */
-#define vfree(...)                                      \
+/* 向量化執行指定函數。注意：此宏不能用作表达式 */
+#define vfunc(type, func, ...)                          \
     do                                                  \
     {                                                   \
         void *end=(int []){0};                          \
-        void **list=(void *[]){__VA_ARGS__, end};       \
+        type **list=(type *[]){__VA_ARGS__, end};       \
         for(size_t i=0; list[i]!=end; i++)              \
-            if(list[i])                                 \
-                free(list[i]);                          \
+            func(list[i]);                              \
     } while(0)
+
+/* 釋放指針類型的參數所指向的內存。注意：此宏不能用作表达式 */
+#define vfree(...) vfunc(void, free, __VA_ARGS__)
+
+/* 釋放指針類型的參數所指向的X資源。注意：此宏不能用作表达式 */
+#define vXFree(...) vfunc(void, XFree, __VA_ARGS__)
+
+#define Free(p) (free(p), (p)=NULL)
+
+#define set_null(p) ((p)=NULL)
+
+/* 把所有參數設置爲NULL。注意：此宏不能用作表达式 */
+#define vset_null(...) vfunc(void, set_null, __VA_ARGS__)
 
 typedef struct strings_tag // 字符串鏈表
 {
@@ -29,7 +41,7 @@ typedef struct strings_tag // 字符串鏈表
     struct strings_tag *next;
 } Strings;
 
-void *malloc_s(size_t size);
+void *Malloc(size_t size);
 int x_fatal_handler(Display *display, XErrorEvent *e);
 void exit_with_perror(const char *s);
 void exit_with_msg(const char *msg);

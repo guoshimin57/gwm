@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "wm_cfg.h"
+#include "memory.h"
 
 #define WM_KEY Mod4Mask // 窗口管理器的基本功能轉換鍵
 #define WM_SKEY (WM_KEY|ShiftMask) // 與WM_KEY功能相關功能轉換鍵，通常表示相反
@@ -402,7 +403,7 @@ static void config_misc(void)
 
 void config(void)
 {
-    cfg=malloc_s(sizeof(Config));
+    cfg=Malloc(sizeof(Config));
     SET_NULL(cfg->tooltip, WIDGET_N);
 
     config_misc();

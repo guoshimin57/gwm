@@ -12,6 +12,7 @@
 #include "gwm.h"
 #include "mvresize.h"
 #include "menu.h"
+#include "memory.h"
 
 static bool is_valid_click(XEvent *oe, XEvent *ne);
 
@@ -106,8 +107,8 @@ void clear_wm(WM *wm)
     clear_zombies(0);
     vfreetrings(wm->wallpapers);
     for(size_t i=0; i<DESKTOP_N; i++)
-        vfree(wm->desktop[i]);
-    vfree(cfg);
+        Free(wm->desktop[i]);
+    Free(cfg);
 }
 
 void close_client(WM *wm, XEvent *e, Func_arg arg)

@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "memory.h"
 
 struct _menu_tag // 一級多行多列菜單 
 {
@@ -26,7 +27,7 @@ Menu *act_center=NULL; // 操作中心
 
 Menu *create_menu(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col)
 {
-    Menu *menu=malloc_s(sizeof(Menu));
+    Menu *menu=Malloc(sizeof(Menu));
     int w, wi=0, wl=0, h=get_font_height_by_pad(), maxw=0, sw=xinfo.screen_width,
         pad=get_font_pad(), row=(n+col-1)/col;
 
@@ -45,7 +46,7 @@ Menu *create_menu(Widget *owner, Widget_id id, const char *icon_names[], const c
     set_menu_method(WIDGET(menu));
 
     menu->owner=owner;
-    menu->items=malloc_s(sizeof(Button *)*n);
+    menu->items=Malloc(sizeof(Button *)*n);
     for(int i=0; i<n; i++)
     {
          menu->items[i]=create_button(WIDGET(menu), id+i+1, WIDGET_STATE_1(current), w*(i%col),
@@ -75,10 +76,9 @@ static void set_menu_method(Widget *widget)
 void destroy_menu(Menu *menu)
 {
     for(int i=0; i<menu->n; i++)
-        destroy_button(menu->items[i]);
-    vfree(menu->items);
+        destroy_button(menu->items[i]), menu->items[i]=NULL;
+    Free(menu->items);
     XDestroyWindow(xinfo.display, WIDGET_WIN(menu));
-    vfree(menu);
 }
 
 void show_menu(Widget *widget)

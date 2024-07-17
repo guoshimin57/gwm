@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "menu.h"
+#include "memory.h"
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
@@ -394,12 +395,13 @@ static void handle_pointer_hover(WM *wm, const Widget *widget)
             if(!t.tv_sec && !t.tv_usec)
             {
                 t=t0;
-                if(!show)
+                if(!show && widget->tooltip)
                     show=true, widget->tooltip->show(widget->tooltip);
             }
         }
     }
-    widget->tooltip->hide(widget->tooltip);
+    if(widget->tooltip)
+        widget->tooltip->hide(widget->tooltip);
 }
 
 static void handle_expose(WM *wm, XEvent *e)
@@ -581,7 +583,7 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
         return;
 
     set_button_label(BUTTON(win_to_widget(get_iconic_win(win))), s);
-    vfree(s);
+    Free(s);
     update_iconbar();
 }
 
@@ -591,7 +593,7 @@ static void update_ui(WM *wm)
     // 內容及其顏色，故此處不必更新構件文字顏色。
     char *name=get_main_color_name();
     alloc_color(name);
-    vfree(name);
+    Free(name);
     update_taskbar_bg(WIDGET(taskbar));
     update_menu_bg(WIDGET(act_center));
     for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
@@ -615,11 +617,11 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
         set_statusbar_label(s);
     else
     {
-        vfree(c->title_text);
+        Free(c->title_text);
         c->title_text=copy_string(s);
         change_title(c->frame, s);
     }
-    vfree(s);
+    Free(s);
 }
 
 static void handle_wm_transient_for_notify(WM *wm, Window win)

@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "memory.h"
 
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
@@ -40,7 +41,7 @@ static int get_cur_titlebar_button_n(void);
 
 Frame *create_frame(Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
 {
-    Frame *frame=malloc_s(sizeof(Frame));
+    Frame *frame=Malloc(sizeof(Frame));
     int fx=x-border_w, fy=y-titlebar_h-border_w, fw=w, fh=h+titlebar_h;
 
     init_widget(WIDGET(frame), NULL, CLIENT_FRAME, state, fx, fy, fw, fh);
@@ -68,7 +69,7 @@ Frame *create_frame(Widget *parent, Widget_state state, int x, int y, int w, int
 
 static Titlebar *create_titlebar(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image)
 {
-    Titlebar *titlebar=malloc_s(sizeof(Titlebar));
+    Titlebar *titlebar=Malloc(sizeof(Titlebar));
 
     init_widget(WIDGET(titlebar), parent, TITLEBAR, state, x, y, w, h);
     set_titlebar_method(WIDGET(titlebar));
@@ -117,17 +118,17 @@ void destroy_frame(Frame *frame)
         WIDGET_X(frame)+bw, WIDGET_Y(frame)+th+bw);
 
     if(frame->titlebar)
-        destroy_titlebar(frame->titlebar);
+        destroy_titlebar(frame->titlebar), frame->titlebar=NULL;
     destroy_widget(WIDGET(frame));
 }
 
 static void destroy_titlebar(Titlebar *titlebar)
 {
-    vfree(titlebar->title);
-    destroy_button(titlebar->logo);
+    Free(titlebar->title);
+    destroy_button(titlebar->logo), titlebar->logo=NULL;
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
-        destroy_button(titlebar->buttons[i]);
-    destroy_menu(titlebar->menu);
+        destroy_button(titlebar->buttons[i]), titlebar->buttons[i]=NULL;
+    destroy_menu(titlebar->menu), titlebar->menu=NULL;
     destroy_widget(WIDGET(titlebar));
 }
 
@@ -214,7 +215,7 @@ Titlebar *get_frame_titlebar(const Frame *frame)
 void toggle_titlebar(Frame *frame, const char *title, Imlib_Image image)
 {
     if(frame->titlebar)
-        destroy_titlebar(frame->titlebar);
+        destroy_titlebar(frame->titlebar), frame->titlebar=NULL;
     else
         frame->titlebar=create_titlebar(WIDGET(frame), frame->base.state,
             0, 0, frame->base.w, get_font_height_by_pad(), title, image);
@@ -258,7 +259,7 @@ static int get_cur_titlebar_button_n(void)
 
 void change_title(const Frame *frame, const char *title)
 {
-    vfree(frame->titlebar->title);
+    Free(frame->titlebar->title);
     frame->titlebar->title=copy_string(title);
     change_tooltip_tip(TOOLTIP(WIDGET_TOOLTIP(frame->titlebar)), title);
     update_titlebar_fg(WIDGET(frame->titlebar));

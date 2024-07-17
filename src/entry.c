@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "memory.h"
 
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
 
@@ -33,7 +34,7 @@ Entry *cmd_entry=NULL; // 輸入命令並執行的構件
 
 Entry *create_entry(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
 {
-    Entry *entry=malloc_s(sizeof(Entry));
+    Entry *entry=Malloc(sizeof(Entry));
 
     init_widget(WIDGET(entry), parent, id, WIDGET_STATE_1(current), x, y, w, h);
     set_entry_method(WIDGET(entry));
@@ -241,6 +242,6 @@ static Strings *get_cmd_completion_for_entry(Entry *entry, int *n)
     char *regex=get_part_match_regex(entry);
     char *paths=getenv("PATH");
     Strings *cmds=get_files_in_paths(paths, regex, RISE, false, n);
-    vfree(regex);
+    Free(regex);
     return cmds;
 }

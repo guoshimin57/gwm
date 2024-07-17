@@ -99,6 +99,8 @@ struct _widget_tag
 #define WIDGET_INDEX(type_name, type_class) ((type_name) - type_class ## _BEGIN)
 #define DESKTOP_BUTTON_N(n) (DESKTOP_BUTTON_BEGIN+n-1)
 
+#define destroy(type, widget) (destroy_ ## type(widget), widget=NULL)
+
 Widget *win_to_widget(Window win);
 Widget *create_widget(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
 void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);

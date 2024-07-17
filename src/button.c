@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "memory.h"
 
 #define BUTTON_EVENT_MASK (BUTTON_MASK|ExposureMask|CROSSING_MASK)
 
@@ -27,8 +28,7 @@ static void set_button_method(Widget *widget);
 
 Button *create_button(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label)
 {
-    Button *button=malloc_s(sizeof(Button));
-
+    Button *button=Malloc(sizeof(Button));
     init_widget(WIDGET(button), parent, id, state, x, y, w, h);
     set_button_method(WIDGET(button));
 
@@ -47,8 +47,9 @@ static void set_button_method(Widget *widget)
 
 void destroy_button(Button *button)
 {
-    vfree(button->icon_name, button->symbol, button->label);
     destroy_widget(WIDGET(button));
+    vfree(button->icon_name, button->symbol, button->label);
+    vset_null(button->icon_name, button->symbol, button->label);
 }
 
 void update_button_fg(const Widget *widget)
@@ -94,14 +95,10 @@ void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, c
 
 void change_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
 {
-    /*
-    if(image && image!=button->image)
-        free_image(&button->image);
-    else */
     if(icon_name && icon_name!=button->icon_name)
-        vfree(button->icon_name);
+        Free(button->icon_name);
     else if(symbol && symbol!=button->symbol)
-        vfree(button->symbol);
+        Free(button->symbol);
     else
         return;
     set_button_icon(button, image, icon_name, symbol);
@@ -115,7 +112,7 @@ char *get_button_label(Button *button)
 void set_button_label(Button *button, const char *label)
 {
     if(button->label)
-        vfree(button->label);
+        Free(button->label);
     button->label=copy_string(label);
 }
 

@@ -11,6 +11,7 @@
 
 #include "gwm.h"
 #include "list.h"
+#include "memory.h"
 
 typedef struct image_node_tag
 {
@@ -60,7 +61,7 @@ void free_all_images(void)
 
     list_for_each_entry_safe(Image_node, p, &image_list->list, list)
         free_image_node(p);
-    vfree(image_list);
+    Free(image_list);
 }
 
 void free_image(Imlib_Image image)
@@ -75,11 +76,11 @@ void free_image(Imlib_Image image)
 
 static void free_image_node(Image_node *node)
 {
-    vfree(node->name);
+    Free(node->name);
     imlib_context_set_image(node->image);
     imlib_free_image();
     list_del(&node->list);
-    vfree(node);
+    Free(node);
 }
 
 static void reg_image(const char *name, Imlib_Image image)
@@ -95,7 +96,7 @@ static void reg_image(const char *name, Imlib_Image image)
 
 static Image_node *create_image_node(const char *name, Imlib_Image image)
 {
-    Image_node *p=malloc_s(sizeof(Image_node));
+    Image_node *p=Malloc(sizeof(Image_node));
     p->name=copy_string(name);
     p->image=image;
     return p;
@@ -168,14 +169,20 @@ static Imlib_Image create_icon_image_from_prop(Window win)
     
     CARD32 w=data[0], h=data[1], size=w*h, i;
     Imlib_Image image=imlib_create_image(w, h);
-    imlib_context_set_image(image);
-    imlib_image_set_has_alpha(1);
-    /* imlib2和_NET_WM_ICON同樣使用大端字節序，因此不必轉換字節序 */
-    DATA32 *image_data=imlib_image_get_data();
-    for(i=0; i<size; i++)
-        image_data[i]=data[i+2];
-    vfree(data);
-    imlib_image_put_back_data(image_data);
+    if(image)
+    {
+        imlib_context_set_image(image);
+        imlib_image_set_has_alpha(1);
+        /* imlib2和_NET_WM_ICON同樣使用大端字節序，因此不必轉換字節序 */
+        DATA32 *image_data=imlib_image_get_data();
+        if(image_data)
+        {
+            for(i=0; i<size; i++)
+                image_data[i]=data[i+2];
+            imlib_image_put_back_data(image_data);
+        }
+    }
+    Free(data);
     return image;
 }
 
@@ -214,8 +221,8 @@ static char *find_icon(const char *name, int size, int scale, const char *theme,
         || (filename=lookup_fallback_icon(name, base_dirs)))
     {
         for(char **b=base_dirs; b&&*b; b++)
-            vfree(*b);
-        vfree(base_dirs);
+            Free(*b);
+        Free(base_dirs);
     }
     return filename;
 }
@@ -233,8 +240,8 @@ static char *find_icon_helper(const char *name, int size, int scale, char *const
         char **parent=get_parent_themes(*b, theme);
         for(char **p=parent; p&&*p; p++)
             if((filename=find_icon_helper(name, size, scale, b, *p, context_dir)))
-                { vfree(parent); return filename; }
-        vfree(parent);
+                { Free(parent); return filename; }
+        Free(parent);
     }
 
     return NULL;
@@ -250,8 +257,8 @@ static char *lookup_icon(const char *name, int size, int scale, char *const *bas
         char **sub_dirs=get_sub_dirs(*b, theme, context_dir);
         for(char **s=sub_dirs; s&&*s; s++)
             if(get_closest_icon(name, size, scale, *b, *s, theme, &closest, &min))
-                { vfree(sub_dirs); return closest; }
-        vfree(sub_dirs);
+                { Free(sub_dirs); return closest; }
+        Free(sub_dirs);
     }
     return closest;
 }
@@ -273,7 +280,7 @@ static bool get_closest_icon(const char *name, int size, int scale, const char *
             if(d < *min_distance)
                 *closest=f, *min_distance=d;
         }
-        vfree(f);
+        Free(f);
     }
 
     return false;
@@ -289,7 +296,7 @@ static char *lookup_fallback_icon(const char *name, char *const *base_dirs)
             char *filename=copy_strings(*b, "/", name, ICON_EXT[i], NULL);
             if(is_accessible(filename))
                 return filename;
-            vfree(filename);
+            Free(filename);
         }
     }
 
@@ -346,7 +353,7 @@ static char **get_base_dirs(void)
 
     // 規範規定依次搜索如下三個基本目錄：
     // $HOME/.icons、$XDG_DATA_DIRS/icons、/usr/share/pixmaps
-    dirs=malloc_s(n*sizeof(char *));
+    dirs=Malloc(n*sizeof(char *));
     dirs[0]=copy_strings(home, "/.icons", NULL);
     dirs[n-2]=copy_strings(pix, NULL);
     dirs[n-1]=NULL;
@@ -372,7 +379,7 @@ static char **get_list_val_from_index_theme(const char *base_dir, const char *th
         return NULL;
 
     size_t len, i, n=get_spec_char_num(val, ',')+2;
-    char **result=malloc_s(n*sizeof(char *));
+    char **result=Malloc(n*sizeof(char *));
     for(len=0, i=0; i<n-1 && *val; val+=len+1)
     {
         val[len=strcspn(val, ",")]='\0';
@@ -467,7 +474,7 @@ static FILE *open_index_theme(const char *base_dir, const char *theme)
         return NULL;
 
     FILE *fp=fopen(filename, "r");
-    vfree(filename);
+    Free(filename);
     return fp;
 }
 

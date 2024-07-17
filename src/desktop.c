@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "memory.h"
 
 typedef enum op_type_tag { MOVE_TO_N, CHANGE_TO_N, ATTACH_TO_N, ATTACH_TO_ALL } Op_type;
 
@@ -22,7 +23,7 @@ void init_desktop(WM *wm)
     wm->cur_desktop=cfg->default_cur_desktop;
     for(size_t i=0; i<DESKTOP_N; i++)
     {
-        Desktop *d=wm->desktop[i]=malloc_s(sizeof(Desktop));
+        Desktop *d=wm->desktop[i]=Malloc(sizeof(Desktop));
         d->n_main_max=cfg->default_n_main_max;
         d->cur_layout=d->prev_layout=cfg->default_layout;
         d->default_place_type=TILE_LAYER_MAIN;

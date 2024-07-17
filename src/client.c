@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "memory.h"
 
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);
@@ -61,16 +62,16 @@ void set_all_net_client_list(Client *list)
     Window *wlist=get_client_win_list(list, &n);
 
     set_net_client_list(wlist, n);
-    vfree(wlist);
+    Free(wlist);
 
     wlist=get_client_win_list_stacking(list, &n);
     set_net_client_list_stacking(wlist, n);
-    vfree(wlist);
+    Free(wlist);
 }
 
 static Client *new_client(WM *wm, Window win)
 {
-    Client *c=malloc_s(sizeof(Client));
+    Client *c=Malloc(sizeof(Client));
     memset(c, 0, sizeof(Client));
     init_widget(WIDGET(c), NULL, CLIENT_WIN, WIDGET_STATE_1(current), 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
@@ -231,17 +232,17 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     if(!c)
         return;
 
-    destroy_frame(c->frame);
+    destroy_frame(c->frame), c->frame=NULL;
+    destroy_widget(WIDGET(c));
     del_client_node(c);
     if(!is_for_quit)
         for(size_t i=1; i<=DESKTOP_N; i++)
             if(is_on_desktop_n(i, c->desktop_mask))
                 focus_client(wm, i, NULL);
 
-    XFree(c->class_hint.res_class);
-    XFree(c->class_hint.res_name);
-    XFree(c->wm_hint);
-    vfree(c->title_text, c);
+    vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
+    vfree(c->title_text);
+    vfree(c);
 
     if(!is_for_quit)
         request_layout_update();
@@ -531,8 +532,8 @@ Window *get_client_win_list(Client *list, int *n)
     if(n)
         *n=count;
 
-    Window *wlist=malloc_s(count*sizeof(Window));
-    Client **clist=malloc_s(count*sizeof(Client *));
+    Window *wlist=Malloc(count*sizeof(Window));
+    Client **clist=Malloc(count*sizeof(Client *));
 
     for(Client *c=list->prev; c!=list; c=c->prev)
         if(is_on_cur_desktop(c->desktop_mask))
@@ -541,7 +542,7 @@ Window *get_client_win_list(Client *list, int *n)
 
     for(i=0; i<count; i++)
         wlist[i]=WIDGET_WIN(clist[i]);
-    vfree(clist);
+    Free(clist);
 
     return wlist;
 }
@@ -561,7 +562,7 @@ Window *get_client_win_list_stacking(Client *list, int *n)
     if(n)
         *n=count;
 
-    Window *wlist=malloc_s(count*sizeof(Window)), *w=wlist;
+    Window *wlist=Malloc(count*sizeof(Window)), *w=wlist;
     for(Client *c=list->prev; c!=list; c=c->prev, w++)
         if(is_on_cur_desktop(c->desktop_mask))
             *w=WIDGET_WIN(c);
@@ -642,7 +643,7 @@ void create_clients(WM *wm)
     unsigned int n;
     Desktop **d=wm->desktop;
 
-    wm->clients=malloc_s(sizeof(Client));
+    wm->clients=Malloc(sizeof(Client));
     memset(wm->clients, 0, sizeof(Client));
     for(size_t i=0; i<DESKTOP_N; i++)
         d[i]->cur_focus_client=d[i]->prev_focus_client=wm->clients;

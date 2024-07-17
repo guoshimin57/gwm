@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "memory.h"
 
 static size_t get_files_in_path(const char *path, const char *regex, Strings *head, Order order, bool is_fullname);
 static bool match(const char *s, const char *r, const char *os);
@@ -22,12 +23,12 @@ Strings *get_files_in_paths(const char *paths, const char *regex, Order order, b
 {
     int sum=0;
     char *p=NULL, *ps=copy_string(paths);
-    Strings *head=malloc_s(sizeof(Strings));
+    Strings *head=Malloc(sizeof(Strings));
 
     head->next=NULL, head->str=NULL;
     for(p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
         sum+=get_files_in_path(p, regex, head, order, is_fullname);
-    vfree(ps);
+    Free(ps);
     if(n)
         *n=sum;
     return head;
@@ -78,7 +79,7 @@ static int cmp_basename(const char *s1, const char *s2)
 
 static void create_file_node(Strings *head, const char *path, char *filename, bool is_fullname)
 {
-    Strings *file=malloc_s(sizeof(Strings));
+    Strings *file=Malloc(sizeof(Strings));
     file->str = is_fullname ? copy_strings(path, "/", filename, NULL) : copy_string(filename);
     file->next=head->next;
     head->next=file;
