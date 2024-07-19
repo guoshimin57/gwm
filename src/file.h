@@ -14,12 +14,7 @@
 
 #include "misc.h"
 
-typedef enum // 文件名排序类型
-{
-    RISE=-1, NOSORT=0, FALL=1 // 依次为升序、不排序、降序
-} Order;
-
-Strings *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, int *n);
+Strings *get_files_in_paths(const char *paths, const char *regex, bool fullname);
 void exec_cmd(char *const*cmd);
 void exec_autostart(void);
 bool is_accessible(const char *filename);

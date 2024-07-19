@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.5\n"
+"Project-Id-Version: gwm 2.10.6\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-07-17 17:17+0800\n"
+"POT-Creation-Date: 2024-07-19 23:27+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: client.c:653
+#: client.c:652
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
@@ -288,15 +288,15 @@ msgstr "The following are place info of the %lx window:\n"
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "The following is a list of client windows arranged from bottom to top:\n"
 
-#: file.c:96
+#: file.c:135
 msgid "未能成功地爲命令創建新會話"
 msgstr "Failed to successfully create a new session for the command"
 
-#: file.c:98
+#: file.c:137
 msgid "命令執行錯誤"
 msgstr "Command execution error"
 
-#: file.c:101
+#: file.c:140
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
 

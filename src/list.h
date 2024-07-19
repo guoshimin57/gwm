@@ -32,6 +32,13 @@ typedef struct list_tag
     struct list_tag *next;
 } List;
 
+/* 功能：正向遍歷鏈表節點
+ * node：用於遍歷鏈表節點的List*類型指針
+ * list：List*類型鏈表頭
+ */
+#define list_for_each(node, list) \
+    for(List *node=(list)->next; !list_is_head(node, (list)); node=node->next)
+
 /* 功能：把結構體成員指針強制轉換爲包含該成員的結構體指針
  * ptr：結構體成員指針
  * type：ptr指向的成員所屬的結構體的類型
@@ -63,6 +70,14 @@ typedef struct list_tag
  */
 #define list_next_entry(entry, type, member) \
     list_entry((entry)->member.next, type, member)
+
+/* 功能：獲取鏈表上一個節點對應的容器結體指針
+ * entry：鏈表當前節點對應的type*類型的容器結構體指針
+ * type：容器結構體類型
+ * member：List類型的成員在容器結構體內的名字
+ */
+#define list_prev_entry(entry, type, member) \
+    list_entry((entry)->member.prev, type, member)
 
 /* 功能：測試是否爲鏈表頭節點對應的容器結構體指針
  * entry：待測試的type*類型的容器結構體指針
@@ -99,5 +114,6 @@ void list_init(List *list);
 void list_add(List *node, List *head);
 void list_del(List *node);
 bool list_is_head(const List *node, const List *list);
+size_t list_count_nodes(const List *list);
 
 #endif

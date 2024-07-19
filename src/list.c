@@ -78,3 +78,11 @@ bool list_is_head(const List *node, const List *list)
 {
     return node==list;
 }
+
+size_t list_count_nodes(const List *list)
+{
+    size_t n=0;
+    list_for_each(p, list)
+        n++;
+    return n;
+}

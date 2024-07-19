@@ -21,18 +21,18 @@ struct _entry_tag // 輸入構件
     const char *hint; // 構件的提示文字
     size_t cursor_offset; // 光標偏移字符數
     XIC xic; // 輸入法句柄
-    Strings *(*complete)(Entry *entry, int *n); // 補全函數
+    Strings *(*complete)(Entry *entry); // 補全函數
 };
 
 static void set_entry_method(Widget *widget);
 static int get_entry_cursor_x(Entry *entry);
 static char *get_part_match_regex(Entry *entry);
 static void complete_for_entry(Entry *entry, bool show);
-static Strings *get_cmd_completion_for_entry(Entry *entry, int *n);
+static Strings *get_cmd_completion_for_entry(Entry *entry);
 
 Entry *cmd_entry=NULL; // 輸入命令並執行的構件
 
-Entry *create_entry(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *))
+Entry *create_entry(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *))
 {
     Entry *entry=Malloc(sizeof(Entry));
 
@@ -172,7 +172,7 @@ static char *get_part_match_regex(Entry *entry)
 {
     char text[FILENAME_MAX]={0};
     wcstombs(text, entry->text, FILENAME_MAX);
-    return copy_strings(text, "*", NULL);
+    return copy_strings(".*", text, ".*", NULL);
 }
 
 static void complete_for_entry(Entry *entry, bool show)
@@ -180,15 +180,15 @@ static void complete_for_entry(Entry *entry, bool show)
     if(entry->complete == NULL)
         return;
 
-    int n=0;
-    Strings *s=NULL, *strs=entry->complete(entry, &n);
-    if(strs->next == NULL)
+    Strings *strs=entry->complete(entry);
+    int n=list_count_nodes(&strs->list);
+    if(n == 0)
         return;
 
     if(show)
     {
         Window win=xinfo.hint_win;
-        int i, bw=cfg->border_width, w=WIDGET_W(entry), h=WIDGET_H(entry),
+        int i=0, bw=cfg->border_width, w=WIDGET_W(entry), h=WIDGET_H(entry),
             x=WIDGET_X(entry)+bw, y=WIDGET_Y(entry)+h+2*bw,
             max=(xinfo.screen_height-y)/h;
         Str_fmt fmt={0, 0, w, h, CENTER_LEFT, true, false, 0,
@@ -197,15 +197,20 @@ static void complete_for_entry(Entry *entry, bool show)
         XMoveResizeWindow(xinfo.display, win, x, y, w, MIN(n, max)*h);
         XMapWindow(xinfo.display, win);
         XClearWindow(xinfo.display, win);
-        for(i=0, s=strs->next; s && i<max; s = s->next, i++)
-            draw_string(win, i<max-1 ? s->str : "...", &fmt), fmt.y+=h;
+        list_for_each_entry(Strings, s, &strs->list, list)
+        {
+            if(i < max)
+                draw_string(win, i<max-1 ? s->str : "...", &fmt), fmt.y+=h;
+            i++;
+        }
     }
     else
     {
-        mbstowcs(entry->text, strs->next->str, FILENAME_MAX);
+        Strings *first=list_first_entry(&strs->list, Strings, list);
+        mbstowcs(entry->text, first->str, FILENAME_MAX);
         entry->cursor_offset=wcslen(entry->text);
     }
-    vfreetrings(strs);
+    vfree_strings(strs);
 }
 
 void paste_for_entry(Entry *entry)
@@ -237,11 +242,11 @@ Entry *create_cmd_entry(Widget_id id)
         get_cmd_completion_for_entry);
 }
 
-static Strings *get_cmd_completion_for_entry(Entry *entry, int *n)
+static Strings *get_cmd_completion_for_entry(Entry *entry)
 {
     char *regex=get_part_match_regex(entry);
     char *paths=getenv("PATH");
-    Strings *cmds=get_files_in_paths(paths, regex, RISE, false, n);
+    Strings *cmds=get_files_in_paths(paths, regex, false);
     Free(regex);
     return cmds;
 }

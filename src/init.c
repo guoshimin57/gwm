@@ -140,6 +140,6 @@ static void init_imlib(void)
 static void init_wallpaper_files(WM *wm)
 {
     const char *paths=cfg->wallpaper_paths, *reg="*.png|*.jpg|*.svg|*.webp";
-    wm->wallpapers=get_files_in_paths(paths, reg, NOSORT, true, NULL);
-    wm->cur_wallpaper=wm->wallpapers->next;
+    wm->wallpapers=get_files_in_paths(paths, reg, true);
+    wm->cur_wallpaper=list_first_entry(&wm->wallpapers->list, Strings, list);
 }

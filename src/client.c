@@ -241,8 +241,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
                 focus_client(wm, i, NULL);
 
     vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
-    vfree(c->title_text);
-    vfree(c);
+    vfree(c->title_text, c);
 
     if(!is_for_quit)
         request_layout_update();

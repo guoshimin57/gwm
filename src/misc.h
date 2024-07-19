@@ -12,6 +12,8 @@
 #ifndef MISC_H
 #define MISC_H
 
+#include "list.h"
+
 /* 向量化執行指定函數。注意：此宏不能用作表达式 */
 #define vfunc(type, func, ...)                          \
     do                                                  \
@@ -35,10 +37,10 @@
 /* 把所有參數設置爲NULL。注意：此宏不能用作表达式 */
 #define vset_null(...) vfunc(void, set_null, __VA_ARGS__)
 
-typedef struct strings_tag // 字符串鏈表
+typedef struct // 字符串鏈表
 {
     char *str;
-    struct strings_tag *next;
+    List list;
 } Strings;
 
 void *Malloc(size_t size);
@@ -48,7 +50,7 @@ void exit_with_msg(const char *msg);
 void clear_zombies(int signum);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
-void vfreetrings(Strings *head);
+void vfree_strings(Strings *head);
 int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
 char *get_title_text(Window win, const char *fallback);

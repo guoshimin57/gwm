@@ -16,7 +16,7 @@
 
 typedef struct _entry_tag Entry;
 
-Entry *create_entry(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *, int *));
+Entry *create_entry(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *));
 void destroy_entry(Entry *entry);
 void show_entry(Widget *widget);
 void hide_entry(const Widget *widget);

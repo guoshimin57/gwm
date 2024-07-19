@@ -83,13 +83,10 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
     return result;
 }
 
-void vfreetrings(Strings *head)
+void vfree_strings(Strings *head)
 {
-    for(Strings *f=head; f; f=head)
-    {
-        head=f->next;
-        vfree(f->str, f);
-    }
+    list_for_each_entry_safe(Strings, s, &head->list, list)
+        vfree(s->str, s);
 }
 
 int base_n_floor(int x, int n)

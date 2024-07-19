@@ -105,7 +105,7 @@ void clear_wm(WM *wm)
     XFlush(xinfo.display);
     XCloseDisplay(xinfo.display);
     clear_zombies(0);
-    vfreetrings(wm->wallpapers);
+    vfree_strings(wm->wallpapers);
     for(size_t i=0; i<DESKTOP_N; i++)
         Free(wm->desktop[i]);
     Free(cfg);
@@ -261,12 +261,10 @@ void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
     Pixmap pixmap=None;
     if(cfg->wallpaper_paths)
     {
-        Strings *f=wm->cur_wallpaper;
-        if(f)
-        {
-            f=wm->cur_wallpaper=(f->next ? f->next : wm->wallpapers->next);
-            pixmap=create_pixmap_from_file(xinfo.root_win, f->str);
-        }
+        pixmap=create_pixmap_from_file(xinfo.root_win, wm->cur_wallpaper->str);
+        wm->cur_wallpaper=list_next_entry(wm->cur_wallpaper, Strings, list);
+        if(list_entry_is_head(wm->cur_wallpaper, &wm->wallpapers->list, list))
+            wm->cur_wallpaper=list_next_entry(wm->cur_wallpaper, Strings, list);
     }
     update_win_bg(xinfo.root_win, color, pixmap);
     if(pixmap && !have_compositor())

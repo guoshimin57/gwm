@@ -10,64 +10,111 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "memory.h"
+#include "list.h"
 
-static size_t get_files_in_path(const char *path, const char *regex, Strings *head, Order order, bool is_fullname);
-static bool match(const char *s, const char *r, const char *os);
+static void add_files_in_path(Strings *head, const char *path, const char *regex, bool fullname);
+static bool is_dir(const char *filename);
 static bool regcmp(const char *s, const char *regex);
+static bool match(const char *s, const char *r);
+static void add_file(Strings *head, const char *path, const char *filename, bool fullname);
+static Strings *create_file_node(const char *path, const char *filename, bool fullname);
+static Strings *get_file_insert_point(Strings *head, Strings *file, bool order);
 static int cmp_basename(const char *s1, const char *s2);
-static void create_file_node(Strings *head, const char *path, char *filename, bool is_fullname);
 
-
-Strings *get_files_in_paths(const char *paths, const char *regex, Order order, bool is_fullname, int *n)
+Strings *get_files_in_paths(const char *paths, const char *regex, bool fullname)
 {
-    int sum=0;
     char *p=NULL, *ps=copy_string(paths);
-    Strings *head=Malloc(sizeof(Strings));
+    Strings *files=Malloc(sizeof(Strings));
 
-    head->next=NULL, head->str=NULL;
+    list_init(&files->list);
     for(p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
-        sum+=get_files_in_path(p, regex, head, order, is_fullname);
+        add_files_in_path(files, p, regex, fullname);
     Free(ps);
-    if(n)
-        *n=sum;
-    return head;
+
+    return files;
 }
 
-static size_t get_files_in_path(const char *path, const char *regex, Strings *head, Order order, bool is_fullname)
+static void add_files_in_path(Strings *head, const char *path, const char *regex, bool fullname)
 {
-    size_t n=0;
-    char *fn;
     DIR *dir=opendir(path);
 
-    for(struct dirent *d=NULL; dir && (d=readdir(dir));)
-        if(strcmp(".", fn=d->d_name) && strcmp("..", fn) && regcmp(fn, regex))
-            for(Strings *f=head; f; f=f->next)
-                if(!order || !f->next || cmp_basename(fn, f->next->str)/order>0)
-                    { create_file_node(f, path, fn, is_fullname); n++; break; }
-    if(dir)
-        closedir(dir);
-    return n;
+    if(dir == NULL)
+        return;
+
+    for(struct dirent *d=NULL; (d=readdir(dir));)
+    {
+        if(strcmp(".", d->d_name) && strcmp("..", d->d_name))
+        {
+            char *fn=copy_strings(path, "/", d->d_name, NULL);
+            if(is_dir(fn))
+                add_files_in_path(head, fn, regex, fullname);
+            else if(regcmp(d->d_name, regex))
+                add_file(head, path, d->d_name, fullname);
+            Free(fn);
+        }
+    }
+    closedir(dir);
 }
 
-static bool regcmp(const char *s, const char *regex) // 簡單的全文(即整個s)正則表達式匹配
+static bool is_dir(const char *filename)
 {
-    return match(s, regex, s);
+    struct stat buf;
+    return stat(filename, &buf)==0 && S_ISDIR(buf.st_mode);
 }
 
-// *匹配>=0個字符，.匹配一個字符，|匹配其兩側的表達式
-static bool match(const char *s, const char *r, const char *os)
+/* 簡單的正則表達式匹配，僅支持：.、*、| */
+static bool regcmp(const char *s, const char *regex)
 {
-    char *p=NULL;
+    do
+    {
+        if(match(s, regex))
+            return true;
+    } while((regex=strchr(regex, '|')) && ++regex);
+
+    return false;
+}
+
+/* 功能：匹配正則表達式r。
+ * 說明：*匹配>=0個前一字符，.匹配一個字符，|匹配其兩側的表達式。
+ * 如果r非尾部含有|，則只匹配|之前的部分。
+ */
+static bool match(const char *s, const char *r)
+{
     switch(*r)
     {
-        case '\0':  return !*s;
-        case '*':   return match(s, r+1, os) || (*s && match(s+1, r, os));
-        case '.':   return *s && match(s+1, r+1, os);
-        case '|':   return (!*(r+1) && !*s) || (*(r+1) && match(os, r+1, os));
-        default:    return (*r==*s && match(s+1, r+1, os))
-                        || ((p=strchr(r, '|')) && match(os, p+1, os));
+        case '\0': return !*s;
+        case '*':  return match(s, r+1) || (*s && match(s+1, r));
+        case '.':  return (*(r+1)=='*' && *s) ? match(s, r+1) : match(s+1, r+1);
+        case '|':  return (*(r+1) ? (!*s) : (*r==*s && !*(s+1)));
+        default:   return (*r==*s && match(s+1, r+1));
     }
+}
+
+/* fullname爲真時無序插入，否則按升序插入 */
+static void add_file(Strings *head, const char *path, const char *filename, bool fullname)
+{
+    Strings *file=create_file_node(path, filename, fullname);
+    Strings *ip=get_file_insert_point(head, file, !fullname);
+    list_add(&file->list, &ip->list);
+}
+
+static Strings *create_file_node(const char *path, const char *filename, bool fullname)
+{
+    Strings *file=Malloc(sizeof(Strings));
+    file->str = fullname ? copy_strings(path, "/", filename, NULL) : copy_string(filename);
+    return file;
+}
+
+static Strings *get_file_insert_point(Strings *head, Strings *file, bool order)
+{
+    if(!order)
+        return head;
+
+    list_for_each_entry(Strings, p, &head->list, list)
+        if(cmp_basename(file->str, p->str) <= 0)
+            return list_prev_entry(p, Strings, list);
+
+    return list_prev_entry(head, Strings, list);
 }
 
 static int cmp_basename(const char *s1, const char *s2)
@@ -75,14 +122,6 @@ static int cmp_basename(const char *s1, const char *s2)
     const char *p1=strrchr(s1, '/'), *p2=strrchr(s2, '/');
     p1=(p1 ? p1+1 : s1), p2=(p2 ? p2+1 : s2);
     return strcmp(p1, p2);
-}
-
-static void create_file_node(Strings *head, const char *path, char *filename, bool is_fullname)
-{
-    Strings *file=Malloc(sizeof(Strings));
-    file->str = is_fullname ? copy_strings(path, "/", filename, NULL) : copy_string(filename);
-    file->next=head->next;
-    head->next=file;
 }
 
 void exec_cmd(char *const *cmd)
