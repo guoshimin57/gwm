@@ -10,7 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "memory.h"
 
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);

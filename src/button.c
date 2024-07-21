@@ -10,7 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "memory.h"
 
 #define BUTTON_EVENT_MASK (BUTTON_MASK|ExposureMask|CROSSING_MASK)
 

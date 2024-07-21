@@ -10,7 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "memory.h"
 
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)

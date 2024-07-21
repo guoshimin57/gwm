@@ -72,7 +72,7 @@
     {LOGOUT_BUTTON,             0, Button1,  exec,                       SH_CMD(LOGOUT)},                   \
     {REBOOT_BUTTON,             0, Button1,  exec,                       SH_CMD("reboot")},                 \
     {POWEROFF_BUTTON,           0, Button1,  exec,                       SH_CMD("poweroff")},               \
-    {RUN_BUTTON,                0, Button1,  show_run_cmd_entry,         {0}},                              \
+    {RUN_BUTTON,                0, Button1,  show_cmd_entry,             {0}},                              \
     {TITLE_LOGO,                0, Button1,  open_client_menu,           {0}},                              \
     {VERT_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=VERT_MAX}},              \
     {HORZ_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=HORZ_MAX}},              \

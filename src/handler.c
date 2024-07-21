@@ -11,7 +11,6 @@
 
 #include "gwm.h"
 #include "menu.h"
-#include "memory.h"
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);

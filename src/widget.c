@@ -11,7 +11,6 @@
 
 #include "gwm.h"
 #include "list.h"
-#include "memory.h"
 
 typedef struct widget_node_tag
 {

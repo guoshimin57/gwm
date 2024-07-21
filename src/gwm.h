@@ -221,6 +221,5 @@ typedef struct delta_rect_tag Delta_rect;
 
 extern sig_atomic_t run_flag; // 程序運行標志
 extern Xinfo xinfo;
-extern Entry *cmd_entry; // 輸入命令並執行的構件
 
 #endif

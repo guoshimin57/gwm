@@ -11,19 +11,16 @@
 
 #include <fontconfig/fontconfig.h>
 #include "gwm.h"
-#include "memory.h"
 
-struct _font_tag
+typedef struct
 {
     XftFont *xfont;
-    struct _font_tag *next;
-};
-typedef struct _font_tag WMFont;
+    List list;
+} WMFont;
 
 static WMFont *load_font(const char *fontname);
 static void close_font(WMFont *font);
 static bool has_exist_font(const XftFont *xfont);
-static WMFont *get_last_font(void);
 static void init_font_set(void);
 static int draw_utf8_char(XftDraw *draw, const XftColor *fg, uint32_t codepoint, int len, const FcChar8 *s, int x, int y);
 static WMFont *get_suitable_font(uint32_t codepoint);
@@ -35,6 +32,10 @@ static FcFontSet *font_set=NULL;
 
 void load_fonts(void)
 {
+    fonts=Malloc(sizeof(WMFont));
+    fonts->xfont=NULL;
+    list_init(&fonts->list);
+
     for(int i=0; cfg->font_names[i]; i++)
         load_font(cfg->font_names[i]);
     init_font_set();
@@ -42,7 +43,7 @@ void load_fonts(void)
 
 void close_fonts(void)
 {
-    for(WMFont *p=fonts; p; p=p->next)
+    list_for_each_entry_safe(WMFont, p, &fonts->list, list)
         close_font(p);
     FcFontSetDestroy(font_set);
     FcFini();
@@ -64,46 +65,31 @@ static WMFont *load_font(const char *fontname)
     }
 
     WMFont *font=Malloc(sizeof(WMFont));
-    font->xfont=fp, font->next=NULL;
-    if(fonts)
-        get_last_font()->next=font;
-    else
-        fonts=font;
+    font->xfont=fp;
+    list_add_tail(&font->list, &fonts->list);
 
     return font;
 }
 
 static void close_font(WMFont *font)
 {
-    for(WMFont *p=fonts, *prev=fonts; p; prev=p, p=p->next)
+    list_for_each_entry_safe(WMFont, p, &fonts->list, list)
     {
         if(p == font)
         {
-            if(p == fonts)
-                fonts=p->next;
-            else
-                prev->next=p->next;
             XftFontClose(xinfo.display, p->xfont);
-            free(p);
-            break;
+            list_del(&font->list);
+            Free(font);
         }
     }
 } 
 
 static bool has_exist_font(const XftFont *xfont)
 {
-    for(WMFont *p=fonts; p; p=p->next)
+    list_for_each_entry(WMFont, p, &fonts->list, list)
         if(xfont == p->xfont)
             return true;
     return false;
-}
-
-static WMFont *get_last_font(void)
-{
-    WMFont *p;
-    for(p=fonts; p && p->next; p=p->next)
-        ;
-    return p;
 }
 
 static void init_font_set(void)
@@ -168,16 +154,20 @@ static int draw_utf8_char(XftDraw *draw, const XftColor *fg, uint32_t codepoint,
 
 static WMFont *get_suitable_font(uint32_t codepoint)
 {
-    WMFont *font;
     const FcChar8 *fmt=(const FcChar8 *)"%{=fclist}";
 
-    for(font=fonts; font; font=font->next)
+    list_for_each_entry(WMFont, font, &fonts->list, list)
         if(XftCharExists(xinfo.display, font->xfont, codepoint))
             return font;
 
     for(int i=0; i<font_set->nfont; i++)
     {
-        if((font=load_font((char *)FcPatternFormat(font_set->fonts[i], fmt))))
+        char *fontname=(char *)FcPatternFormat(font_set->fonts[i], fmt);
+        if(!fontname)
+            return NULL;
+
+        WMFont *font=load_font(fontname);
+        if(font)
         {
             if(XftCharExists(xinfo.display, font->xfont, codepoint))
                 return font;
@@ -194,13 +184,14 @@ static WMFont *get_suitable_font(uint32_t codepoint)
 static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *y, int *w, int *h)
 {
     int cx, cy, pad, left, right, top, bottom;
+    WMFont *font=list_first_entry(&fonts->list, WMFont, list);
 
     pad = f->pad ? get_font_pad() : 0;
     get_string_size(str, w, h);
     cx=f->x+f->w/2-*w/2;
-    cy=f->y+(f->h-fonts->xfont->height)/2+fonts->xfont->ascent;
+    cy=f->y+(f->h-font->xfont->height)/2+font->xfont->ascent;
     left=f->x+pad, right=f->x+f->w-*w-pad;
-    top=f->y+fonts->xfont->ascent, bottom=f->y+f->h-fonts->xfont->descent;
+    top=f->y+font->xfont->ascent, bottom=f->y+f->h-font->xfont->descent;
 
     switch(f->align)
     {

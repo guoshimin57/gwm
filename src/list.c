@@ -29,6 +29,12 @@ void list_add(List *node, List *head)
     _list_add(node, head, head->next);
 }
 
+/* 尾插法插入節點 */
+void list_add_tail(List *node, List *head)
+{
+    _list_add(node, head->prev, head);
+}
+
 /* 刪除給定的鏈表節點 */
 void list_del(List *node)
 {

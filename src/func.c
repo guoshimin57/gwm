@@ -12,7 +12,6 @@
 #include "gwm.h"
 #include "mvresize.h"
 #include "menu.h"
-#include "memory.h"
 
 static bool is_valid_click(XEvent *oe, XEvent *ne);
 
@@ -247,7 +246,7 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
     all_attach_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void show_run_cmd_entry(WM *wm, XEvent *e, Func_arg arg)
+void show_cmd_entry(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     show_entry(WIDGET(cmd_entry));

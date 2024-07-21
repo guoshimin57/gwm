@@ -9,6 +9,14 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2024年 07月 21日 星期日 21:42:56 HKT	gsm <406643764@qq.com>
+	* 發布第2.10.7版；
+	* 修復show_entry函數把entry寫爲cmd_entry的缺陷；
+	* 修復entry自動補全列表窗口疊次序異常的缺陷；
+	* 刪除多餘的#include "memory.h"；
+	* show_run_cmd_entry重命名爲show_cmd_entry；
+	* font.c改用雙向鏈表實現。
+
 2024年 07月 19日 星期五 23:17:30 HKT	gsm <406643764@qq.com>
 	* 發布第2.10.6版；
 	* Strings改用雙向鏈表實現；

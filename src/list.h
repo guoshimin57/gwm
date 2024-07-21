@@ -63,6 +63,14 @@ typedef struct list_tag
 #define list_first_entry(list, type, member) \
     list_entry((list)->next, type, member)
 
+/* 功能：獲取鏈表最後一個節點對應的容器結體指針
+ * list：List*類型的成員指針，爲鏈表頭
+ * type：容器結構體類型
+ * member：List類型的成員在容器結構體內的名字
+ */
+#define list_last_entry(list, type, member) \
+    list_entry((list)->prev, type, member)
+
 /* 功能：獲取鏈表下一個節點對應的容器結體指針
  * entry：鏈表當前節點對應的type*類型的容器結構體指針
  * type：容器結構體類型
@@ -112,6 +120,7 @@ typedef struct list_tag
 
 void list_init(List *list);
 void list_add(List *node, List *head);
+void list_add_tail(List *node, List *head);
 void list_del(List *node);
 bool list_is_head(const List *node, const List *list);
 size_t list_count_nodes(const List *list);

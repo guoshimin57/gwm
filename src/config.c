@@ -11,7 +11,6 @@
 
 #include "gwm.h"
 #include "wm_cfg.h"
-#include "memory.h"
 
 #define WM_KEY Mod4Mask // 窗口管理器的基本功能轉換鍵
 #define WM_SKEY (WM_KEY|ShiftMask) // 與WM_KEY功能相關功能轉換鍵，通常表示相反
@@ -115,7 +114,7 @@ static const Keybind keybind[] =
     {WM_KEY,        XK_Page_Up,   prev_desktop,                {0}},
     {0,             XK_Print,     print_screen,                {0}},
     {WM_KEY,        XK_Print,     print_win,                   {0}},
-    {WM_KEY,        XK_r,         show_run_cmd_entry,          {0}},
+    {WM_KEY,        XK_r,         show_cmd_entry,              {0}},
     {WM_KEY,        XK_Delete,    quit_wm,                     {0}},
     DESKTOP_KEYBIND(XK_0, 0),
     DESKTOP_KEYBIND(XK_1, 1), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */

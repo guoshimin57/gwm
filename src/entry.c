@@ -10,7 +10,6 @@
  * ************************************************************************/
 
 #include "gwm.h"
-#include "memory.h"
 
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
 
@@ -22,6 +21,7 @@ struct _entry_tag // 輸入構件
     size_t cursor_offset; // 光標偏移字符數
     XIC xic; // 輸入法句柄
     Strings *(*complete)(Entry *entry); // 補全函數
+    Window list_win; // 用於展示補全結果的窗口
 };
 
 static void set_entry_method(Widget *widget);
@@ -46,6 +46,10 @@ Entry *create_entry(Widget *parent, Widget_id id, int x, int y, int w, int h, co
     XSelectInput(xinfo.display, WIDGET_WIN(entry), ENTRY_EVENT_MASK);
     set_xic(WIDGET_WIN(entry), &entry->xic);
 
+    entry->list_win=create_widget_win(xinfo.root_win, x, y+h, w, h, 0, 0,
+        get_widget_color(WIDGET_STATE_NORMAL));
+    XSelectInput(xinfo.display, entry->list_win, ExposureMask);
+
     return entry;
 }
 
@@ -62,15 +66,16 @@ void destroy_entry(Entry *entry)
     if(entry->xic)
         XDestroyIC(entry->xic);
     destroy_widget(WIDGET(entry));
+    XDestroyWindow(xinfo.display, entry->list_win);
 }
 
 void show_entry(Widget *widget)
 {
     Entry *entry=ENTRY(widget);
 
-    cmd_entry->text[0]=L'\0';
-    cmd_entry->cursor_offset=0;
-    XRaiseWindow(xinfo.display, WIDGET_WIN(cmd_entry));
+    entry->text[0]=L'\0';
+    entry->cursor_offset=0;
+    XRaiseWindow(xinfo.display, WIDGET_WIN(entry));
     show_widget(widget);
     XGrabKeyboard(xinfo.display, WIDGET_WIN(entry), False,
         GrabModeAsync, GrabModeAsync, CurrentTime);
@@ -80,7 +85,7 @@ void hide_entry(const Widget *widget)
 {
     XUngrabKeyboard(xinfo.display, CurrentTime);
     hide_widget(widget);
-    XUnmapWindow(xinfo.display, xinfo.hint_win);
+    XUnmapWindow(xinfo.display, ENTRY(widget)->list_win);
 }
 
 void update_entry_bg(const Widget *widget)
@@ -187,20 +192,19 @@ static void complete_for_entry(Entry *entry, bool show)
 
     if(show)
     {
-        Window win=xinfo.hint_win;
-        int i=0, bw=cfg->border_width, w=WIDGET_W(entry), h=WIDGET_H(entry),
-            x=WIDGET_X(entry)+bw, y=WIDGET_Y(entry)+h+2*bw,
-            max=(xinfo.screen_height-y)/h;
+        Window win=entry->list_win;
+        int i=0, w=WIDGET_W(entry), h=WIDGET_H(entry),
+            y=WIDGET_Y(entry)+h, hmax=xinfo.screen_height-y-h, nmax=hmax/h;
         Str_fmt fmt={0, 0, w, h, CENTER_LEFT, true, false, 0,
             get_widget_fg(WIDGET_STATE(entry))};
 
-        XMoveResizeWindow(xinfo.display, win, x, y, w, MIN(n, max)*h);
-        XMapWindow(xinfo.display, win);
+        XResizeWindow(xinfo.display, win, w, MIN(n*h, hmax));
+        XMapRaised(xinfo.display, win);
         XClearWindow(xinfo.display, win);
         list_for_each_entry(Strings, s, &strs->list, list)
         {
-            if(i < max)
-                draw_string(win, i<max-1 ? s->str : "...", &fmt), fmt.y+=h;
+            if(i < nmax)
+                draw_string(win, i<nmax-1 ? s->str : "...", &fmt), fmt.y+=h;
             i++;
         }
     }
