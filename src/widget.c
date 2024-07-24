@@ -139,6 +139,12 @@ void hide_widget(const Widget *widget)
     XUnmapWindow(xinfo.display, widget->win);
 }
 
+void resize_widget(Widget *widget, int w, int h)
+{
+    widget->w=w, widget->h=h;;
+    XResizeWindow(xinfo.display, widget->win, w, h);
+}
+
 void move_resize_widget(Widget *widget, int x, int y, int w, int h)
 {
     widget->x=x, widget->y=y, widget->w=w, widget->h=h;;

@@ -109,6 +109,7 @@ void set_widget_border_width(Widget *widget, int width);
 void set_widget_border_color(const Widget *widget, unsigned long pixel);
 void show_widget(Widget *widget);
 void hide_widget(const Widget *widget);
+void resize_widget(Widget *widget, int w, int h);
 void move_resize_widget(Widget *widget, int x, int y, int w, int h);
 void update_widget_bg(const Widget *widget);
 void update_widget_fg(const Widget *widget);

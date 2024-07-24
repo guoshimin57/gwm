@@ -122,7 +122,8 @@ void list_init(List *list);
 void list_add(List *node, List *head);
 void list_add_tail(List *node, List *head);
 void list_del(List *node);
-bool list_is_head(const List *node, const List *list);
 size_t list_count_nodes(const List *list);
+bool list_is_head(const List *node, const List *list);
+bool list_is_empty(const List *list);
 
 #endif

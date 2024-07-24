@@ -79,16 +79,23 @@ static bool _list_del_valid(List *node)
     return prev->next==node && next->prev==node;
 }
 
-/* 測試是否爲表頭 */
-bool list_is_head(const List *node, const List *list)
-{
-    return node==list;
-}
-
+/* 取得鏈表節點數 */
 size_t list_count_nodes(const List *list)
 {
     size_t n=0;
     list_for_each(p, list)
         n++;
     return n;
+}
+
+/* 測試是否爲表頭 */
+bool list_is_head(const List *node, const List *list)
+{
+    return node==list;
+}
+
+/* 測試是否爲空表 */
+bool list_is_empty(const List *list)
+{
+    return list==NULL || list->next==list;
 }
