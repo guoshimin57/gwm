@@ -9,7 +9,15 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <wchar.h>
+#include "gwm.h"
+#include "config.h"
 #include "listview.h"
+#include "file.h"
+#include "font.h"
+#include "icccm.h"
+#include "prop.h"
+#include "entry.h"
 
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
 

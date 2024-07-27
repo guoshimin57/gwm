@@ -34,21 +34,7 @@
 #include <X11/Xproto.h>
 
 #include "misc.h"
-#include "font.h"
-#include "color.h"
 #include "widget.h"
-#include "tooltip.h"
-#include "button.h"
-#include "drawable.h"
-#include "entry.h"
-#include "ewmh.h"
-#include "file.h"
-#include "menu.h"
-#include "icccm.h"
-#include "image.h"
-#include "prop.h"
-#include "frame.h"
-#include "taskbar.h"
 
 #define _(s) gettext(s)
 
@@ -139,7 +125,6 @@ struct wm_tag // 窗口管理器相關信息
     Rect workarea; // 工作區坐標和尺寸
     Window wm_check_win; // WM檢測窗口
     Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
-    GC gc; // 窗口管理器的圖形信息
     Client *clients; // 頭結點
     Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
     void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
@@ -201,25 +186,10 @@ struct move_info_tag /* 定位器所點擊的窗口位置每次合理移動或�
 };
 typedef struct move_info_tag Move_info;
 
-struct delta_rect_tag /* 調整窗口尺寸的信息 */
-{
-    int dx, dy, dw, dh; /* 分別爲窗口坐標和尺寸的變化量 */
-};
-typedef struct delta_rect_tag Delta_rect;
-
-#include "client.h"
-#include "config.h"
-#include "debug.h"
-#include "desktop.h"
-#include "func.h"
-#include "handler.h"
-#include "init.h"
-#include "layout.h"
-#include "minimax.h"
-#include "mvresize.h"
-#include "place.h"
-
 extern sig_atomic_t run_flag; // 程序運行標志
 extern Xinfo xinfo;
+
+#include "client.h"
+#include "desktop.h"
 
 #endif

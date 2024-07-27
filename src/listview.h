@@ -12,7 +12,8 @@
 #ifndef LISTVIEW_H
 #define LISTVIEW_H
 
-#include "gwm.h"
+#include "misc.h"
+#include "widget.h"
 
 typedef struct _list_view_tag List_view;
 

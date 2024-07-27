@@ -12,6 +12,8 @@
 #ifndef MISC_H
 #define MISC_H
 
+#include <stdlib.h>
+#include <X11/Xlib.h>
 #include "list.h"
 
 /* 向量化執行指定函數。注意：此宏不能用作表达式 */

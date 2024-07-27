@@ -51,6 +51,7 @@
  */
 
 #include <float.h>
+#include "config.h"
 #include "gwm.h"
 
 enum color_index // *[COLOR_N]數組下標索引，它與構件狀態相關

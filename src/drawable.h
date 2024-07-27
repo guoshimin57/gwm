@@ -12,6 +12,9 @@
 #ifndef DRAWABLE_H
 #define DRAWABLE_H
 
+#include <stdbool.h>
+#include <X11/Xlib.h>
+
 bool is_pointer_on_win(Window win);
 bool is_on_screen(int x, int y, int w, int h);
 void print_area(Drawable d, int x, int y, int w, int h);

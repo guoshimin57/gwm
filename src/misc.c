@@ -10,6 +10,8 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "icccm.h"
+#include "misc.h"
 
 void *Malloc(size_t size)
 {

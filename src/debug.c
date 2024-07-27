@@ -9,7 +9,10 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "config.h"
+#include "font.h"
+#include "taskbar.h"
+#include "debug.h"
 
 void print_client_and_top_win(WM *wm)
 {

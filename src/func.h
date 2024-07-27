@@ -12,6 +12,8 @@
 #ifndef FUNC_H
 #define FUNC_H
 
+#include "gwm.h"
+
 bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg));
 bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne);
 void choose_client(WM *wm, XEvent *e, Func_arg arg);

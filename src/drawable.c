@@ -10,6 +10,9 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "config.h"
+#include "prop.h"
+#include "drawable.h"
 
 static Pixmap create_pixmap_with_color(Drawable d, unsigned long color);
 static void change_prop_for_root_bg(Pixmap pixmap);

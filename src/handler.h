@@ -12,6 +12,8 @@
 #ifndef HANDLER_H
 #define HANDLER_H
 
+#include "gwm.h"
+
 void reg_event_handlers(WM *wm);
 void handle_events(WM *wm);
 

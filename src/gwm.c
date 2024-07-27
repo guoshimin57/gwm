@@ -10,6 +10,9 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "config.h"
+#include "handler.h"
+#include "init.h"
 
 static void set_signals(void);
 static void ready_to_quit(int signum);

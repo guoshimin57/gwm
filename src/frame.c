@@ -9,7 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "button.h"
+#include "config.h"
+#include "prop.h"
+#include "icccm.h"
+#include "tooltip.h"
+#include "frame.h"
 
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)

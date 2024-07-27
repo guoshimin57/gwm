@@ -9,7 +9,14 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "config.h"
 #include "gwm.h"
+#include "font.h"
+#include "minimax.h"
+#include "image.h"
+#include "icccm.h"
+#include "prop.h"
+#include "client.h"
 
 static Client *new_client(WM *wm, Window win);
 static bool should_hide_frame(Client *c);

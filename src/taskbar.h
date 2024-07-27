@@ -12,6 +12,9 @@
 #ifndef TASKBAR_H
 #define TASKBAR_H
 
+#include <stdbool.h>
+#include "widget.h"
+
 typedef struct _taskbar_tag Taskbar; // 任務欄
 
 extern Taskbar *taskbar;

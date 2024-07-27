@@ -9,8 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
 #include "wm_cfg.h"
+#include "font.h"
+#include "func.h"
+#include "minimax.h"
+#include "mvresize.h"
+#include "config.h"
 
 #define WM_KEY Mod4Mask // 窗口管理器的基本功能轉換鍵
 #define WM_SKEY (WM_KEY|ShiftMask) // 與WM_KEY功能相關功能轉換鍵，通常表示相反

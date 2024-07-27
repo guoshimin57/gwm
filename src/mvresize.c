@@ -9,7 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "icccm.h"
+#include "minimax.h"
+#include "mvresize.h"
 
 static void key_move_resize_client(WM *wm, XEvent *e, Direction dir);
 static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize);

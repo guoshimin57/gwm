@@ -12,6 +12,10 @@
 #ifndef HINT_H
 #define HINT_H
 
+#include <stdbool.h>
+#include <X11/Xlib.h>
+#include <X11/Xproto.h>
+
 typedef enum // 與EWMH規範標識符名稱表(ewmh_atom_names)相應的ID
 {
     NET_SUPPORTED, NET_CLIENT_LIST, NET_CLIENT_LIST_STACKING,

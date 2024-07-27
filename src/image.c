@@ -9,8 +9,18 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#include <X11/Xutil.h>
+#include <X11/Xproto.h>
+#include "drawable.h"
+#include "ewmh.h"
+#include "file.h"
 #include "gwm.h"
+#include "misc.h"
 #include "list.h"
+#include "image.h"
 
 typedef struct image_node_tag
 {

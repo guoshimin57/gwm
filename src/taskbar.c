@@ -9,8 +9,14 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "button.h"
+#include "config.h"
 #include "gwm.h"
+#include "image.h"
 #include "list.h"
+#include "prop.h"
+#include "tooltip.h"
+#include "taskbar.h"
 
 typedef struct // 狀態欄
 {

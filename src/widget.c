@@ -9,8 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "config.h"
 #include "gwm.h"
+#include "font.h"
+#include "misc.h"
 #include "list.h"
+#include "widget.h"
 
 typedef struct widget_node_tag
 {

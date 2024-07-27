@@ -12,6 +12,8 @@
 #ifndef COLOR_H 
 #define COLOR_H 
 
+#include <X11/Xft/Xft.h>
+
 #define WIDGET_STATE_NORMAL ((Widget_state){0})
 #define WIDGET_STATE_0(member) ((Widget_state){.member=0})
 #define WIDGET_STATE_1(member) ((Widget_state){.member=1})

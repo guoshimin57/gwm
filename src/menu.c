@@ -9,7 +9,8 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "button.h"
+#include "menu.h"
 
 struct _menu_tag // 一級多行多列菜單 
 {

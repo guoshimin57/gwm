@@ -14,6 +14,9 @@
 
 #include "drawable.h"
 #include "ewmh.h"
+#include "frame.h"
+#include "list.h"
+#include "place.h"
 
 struct client_tag // 客戶窗口相關信息
 {
@@ -32,7 +35,7 @@ struct client_tag // 客戶窗口相關信息
     XClassHint class_hint; // 客戶窗口的程序類型特性提示
     XWMHints *wm_hint; // 客戶窗口的窗口管理程序條件特性提示
     // 分別爲前、後節點以及主窗口節點、亚組組長節點（同屬一個程序實例的客戶構成一個亞組）
-    struct client_tag *prev, *next, *owner, *subgroup_leader;
+    struct client_tag *next, *prev, *owner, *subgroup_leader;
 };
 
 void add_client(WM *wm, Window win);

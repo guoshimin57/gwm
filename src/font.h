@@ -12,6 +12,9 @@
 #ifndef FONT_H
 #define FONT_H
 
+#include <stdbool.h>
+#include <X11/Xft/Xft.h>
+
 typedef enum align_type_tag // 文字對齊方式
 {
     TOP_LEFT, TOP_CENTER, TOP_RIGHT,

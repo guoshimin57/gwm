@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.8\n"
+"Project-Id-Version: gwm 2.10.9\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-07-24 11:40+0800\n"
+"POT-Creation-Date: 2024-07-25 22:42+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -17,273 +17,273 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: client.c:651
+#: client.c:658
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
 #. 操作中心按鈕類型         圖標名 符號     標籤
-#: config.c:286
+#: config.c:290
 msgid "幫助"
 msgstr "Help"
 
-#: config.c:287
+#: config.c:291
 msgid "文件"
 msgstr "Doc"
 
-#: config.c:288
+#: config.c:292
 msgid "終端模擬器"
 msgstr "Terminal"
 
-#: config.c:289
+#: config.c:293
 msgid "網絡瀏覽器"
 msgstr "Web browser"
 
-#: config.c:291
+#: config.c:295
 msgid "遊戲"
 msgstr "Game"
 
-#: config.c:292
+#: config.c:296
 msgid "播放影音"
 msgstr "Player"
 
-#: config.c:293
+#: config.c:297
 msgid "切換播放狀態"
 msgstr "Toggle play status"
 
-#: config.c:294
+#: config.c:298
 msgid "關閉影音"
 msgstr "Quit player"
 
-#: config.c:296
+#: config.c:300
 msgid "减小音量"
 msgstr "Volume down"
 
-#: config.c:297
+#: config.c:301
 msgid "增大音量"
 msgstr "Volume up"
 
-#: config.c:298
+#: config.c:302
 msgid "最大音量"
 msgstr "Volume max"
 
-#: config.c:299
+#: config.c:303
 msgid "靜音切換"
 msgstr "Mute toggle"
 
-#: config.c:301
+#: config.c:305
 msgid "暫主區開窗"
 msgstr "Main next"
 
-#: config.c:302
+#: config.c:306
 msgid "暫次區開窗"
 msgstr "Sec next"
 
-#: config.c:303
+#: config.c:307
 msgid "暫固定區開窗"
 msgstr "Fixed next"
 
-#: config.c:304
+#: config.c:308
 msgid "暫懸浮層開窗"
 msgstr "Float next"
 
-#: config.c:306
+#: config.c:310
 msgid "增大主區容量"
 msgstr "Main area n+"
 
-#: config.c:307
+#: config.c:311
 msgid "减小主區容量"
 msgstr "Main area n-"
 
-#: config.c:308
+#: config.c:312
 msgid "開關當前窗口標題欄"
 msgstr "Toggle cur win titlebar"
 
-#: config.c:309
+#: config.c:313
 msgid "開關當前窗口邊框"
 msgstr "Toggle cur win border"
 
-#: config.c:311
+#: config.c:315
 msgid "關閉桌面所有窗口"
 msgstr "Close all win on desktop"
 
-#: config.c:312
+#: config.c:316
 msgid "當前窗口截圖"
 msgstr "Cur win screenshot"
 
-#: config.c:313
+#: config.c:317
 msgid "全屏截圖"
 msgstr "Full screen screenshot"
 
-#: config.c:314
+#: config.c:318
 msgid "切換聚焦模式"
 msgstr "Toggle focus mode"
 
-#: config.c:316
+#: config.c:320
 msgid "開關合成器"
 msgstr "Toggle compositor"
 
-#: config.c:317
+#: config.c:321
 msgid "切換壁紙"
 msgstr "Switch wallpaper"
 
-#: config.c:318
+#: config.c:322
 msgid "退出gwm"
 msgstr "Quit gwm"
 
-#: config.c:320
+#: config.c:324
 msgid "注銷"
 msgstr "Log out"
 
-#: config.c:321
+#: config.c:325
 msgid "重啓"
 msgstr "Reboot"
 
-#: config.c:322
+#: config.c:326
 msgid "關機"
 msgstr "Shut down"
 
-#: config.c:323
+#: config.c:327
 msgid "運行"
 msgstr "Run command"
 
 #. 客戶窗口菜單項類型   圖標名 符號     標籤
-#: config.c:332
+#: config.c:336
 msgid "卷起/放下"
 msgstr "Roll up / Put down"
 
-#: config.c:333
+#: config.c:337
 msgid "縱向最大化"
 msgstr "Vertical max"
 
-#: config.c:334
+#: config.c:338
 msgid "橫向最大化"
 msgstr "Horizontal max"
 
-#: config.c:335
+#: config.c:339
 msgid "最大化至上半屏"
 msgstr "Max to top half screen"
 
-#: config.c:336
+#: config.c:340
 msgid "最大化至下半屏"
 msgstr "Max to bottom half screen"
 
-#: config.c:337
+#: config.c:341
 msgid "最大化至左半屏"
 msgstr "Max to left half screen"
 
-#: config.c:338
+#: config.c:342
 msgid "最大化至右半屏"
 msgstr "Max to right half screen"
 
-#: config.c:339
+#: config.c:343
 msgid "完全最大化"
 msgstr "fully max"
 
 #. 構件標識             構件功能提示文字
-#: config.c:351
+#: config.c:355
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: config.c:352
+#: config.c:356
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: config.c:353
+#: config.c:357
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: config.c:354
+#: config.c:358
 msgid "切換到懸浮層"
 msgstr "To float layer"
 
-#: config.c:355
+#: config.c:359
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: config.c:356
+#: config.c:360
 msgid "最大化/還原窗口"
 msgstr "Max/Restore window"
 
-#: config.c:357
+#: config.c:361
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: config.c:358
+#: config.c:362
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: config.c:359
+#: config.c:363
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: config.c:360
+#: config.c:364
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: config.c:361
+#: config.c:365
 msgid "切換到預覽模式"
 msgstr "To preview mode"
 
-#: config.c:362
+#: config.c:366
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: config.c:363
+#: config.c:367
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: config.c:364
+#: config.c:368
 msgid "顯示桌面"
 msgstr "Show desktop"
 
-#: config.c:365
+#: config.c:369
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: config.c:366
+#: config.c:370
 msgid "打開窗口菜單"
 msgstr "Open window menu"
 
-#: config.c:394
+#: config.c:398
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
-#: debug.c:22
+#: debug.c:25
 #, c-format
 msgid "以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"
 msgstr "The following is a list of client windows and layer reference windows arranged from bottom to top:\n"
 
-#: debug.c:35
+#: debug.c:38
 #, c-format
 msgid "無法查詢根窗口的子窗口\n"
 msgstr "Unable to query child windows of %lx window:\n"
 
-#: debug.c:45
+#: debug.c:48
 #, c-format
 msgid "以下是%lx窗口的子窗口：\n"
 msgstr "The following are subwindows of the %lx window:\n"
 
-#: debug.c:51
+#: debug.c:54
 #, c-format
 msgid "無法查詢%lx窗口的子窗口\n"
 msgstr "Unable to query child windows of %lx window:\n"
 
-#: debug.c:58
+#: debug.c:61
 #, c-format
 msgid "以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"
 msgstr "The following are the window types of the %lx windows (i.e. _NET_WM_WINDOW_TYPE):\n"
 
-#: debug.c:80
+#: debug.c:83
 #, c-format
 msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
 msgstr "The following are the window states (i.e. _NET_WM_STATE) of the %lx window:\n"
 
-#: debug.c:102
+#: debug.c:105
 #, c-format
 msgid "以下是%lx窗口的位置信息：\n"
 msgstr "The following are place info of the %lx window:\n"
 
-#: debug.c:109
+#: debug.c:112
 #, c-format
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "The following is a list of client windows arranged from bottom to top:\n"
@@ -300,55 +300,55 @@ msgstr "Command execution error"
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
 
-#: gwm.c:37
+#: gwm.c:40
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "SIGCHLD signal handler function cannot be installed"
 
-#: gwm.c:39
+#: gwm.c:42
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "SIGINT signal handler cannot be installed"
 
-#: gwm.c:41
+#: gwm.c:44
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "SIGTERM signal handler cannot be installed"
 
-#: gwm.c:43
+#: gwm.c:46
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "SIGQUIT signal handler cannot be installed"
 
-#: gwm.c:45
+#: gwm.c:48
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 
-#: init.c:121
+#: init.c:127
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: misc.c:18
+#: misc.c:20
 msgid "錯誤：申請內存失敗"
 msgstr "Error: Failed to allocate memory"
 
-#: misc.c:28
+#: misc.c:30
 msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "Error: There is already another window manager running!"
 
-#: misc.c:33
+#: misc.c:35
 #, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X error: Resource number=%#lx, Request number=%lu, Error code=%d, Major request code=%d, Minor request code=%d\n"
 
-#: widget.c:208
+#: widget.c:212
 #, c-format
 msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
 msgstr "Error: Window (0x%lx) input method setup failed!"
 
-#: widget.c:315
+#: widget.c:319
 #, c-format
 msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
 msgstr "Error: The corresponding modifier key for the specified key symbol could not be found!\n"
 
-#: widget.c:318
+#: widget.c:322
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "Error: The key symbol specified does not have a corresponding key code!\n"

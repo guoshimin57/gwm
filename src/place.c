@@ -9,7 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "func.h"
+#include "minimax.h"
+#include "mvresize.h"
+#include "prop.h"
+#include "place.h"
 
 static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
 static bool is_valid_to_normal_layer_sec(WM *wm, Client *c);

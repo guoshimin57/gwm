@@ -12,6 +12,8 @@
 #ifndef DESKTOP_H
 #define DESKTOP_H
 
+#include "gwm.h"
+
 struct desktop_tag // 虛擬桌面相關信息
 {
     int n_main_max; // 主區域可容納的客戶窗口數量

@@ -12,6 +12,8 @@
 #ifndef MENU_H
 #define MENU_H
 
+#include "widget.h"
+
 typedef struct _menu_tag Menu;
 
 #define MENU(widget) ((Menu *)(widget))

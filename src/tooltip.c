@@ -9,7 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "drawable.h"
+#include "font.h"
 #include "gwm.h"
+#include "misc.h"
+#include "tooltip.h"
 
 struct _tooltip_tag // 提示工具
 {

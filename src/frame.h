@@ -12,7 +12,9 @@
 #ifndef FRAME_H 
 #define FRAME_H
 
-#include "gwm.h"
+#include <Imlib2.h>
+#include "menu.h"
+#include "widget.h"
 
 typedef struct _frame_tag Frame;
 typedef struct _titlebar_tag Titlebar;

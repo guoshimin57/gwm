@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "gwm.h"
+#include "config.h"
 #include "list.h"
 
 static void add_files_in_path(Strings *head, const char *path, const char *regex, bool fullname);
@@ -76,7 +77,6 @@ static bool regcmp(const char *s, const char *regex)
 
 /* 功能：匹配正則表達式r。
  * 說明：*匹配>=0個前一字符，.匹配一個字符，|匹配其兩側的表達式。
- * 如果r非尾部含有|，則只匹配|之前的部分。
  */
 static bool match(const char *s, const char *r)
 {
@@ -85,7 +85,7 @@ static bool match(const char *s, const char *r)
         case '\0': return !*s;
         case '*':  return match(s, r+1) || (*s && match(s+1, r));
         case '.':  return (*(r+1)=='*' && *s) ? match(s, r+1) : match(s+1, r+1);
-        case '|':  return (*(r+1) ? (!*s) : (*r==*s && !*(s+1)));
+        case '|':  return *r==*s ? match(s+1, r+1) : true;
         default:   return (*r==*s && match(s+1, r+1));
     }
 }

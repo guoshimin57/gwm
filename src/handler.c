@@ -9,8 +9,22 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "button.h"
+#include "config.h"
+#include "client.h"
+#include "entry.h"
+#include "func.h"
 #include "menu.h"
+#include "minimax.h"
+#include "mvresize.h"
+#include "layout.h"
+#include "place.h"
+#include "prop.h"
+#include "icccm.h"
+#include "image.h"
+#include "taskbar.h"
+#include "widget.h"
+#include "handler.h"
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);

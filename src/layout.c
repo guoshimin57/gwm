@@ -9,7 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "config.h"
+#include "layout.h"
+#include "prop.h"
+#include "icccm.h"
+#include "minimax.h"
+#include "mvresize.h"
+#include "taskbar.h"
 
 static void fix_win_rect(WM *wm, Client *c);
 static void fix_win_size(WM *wm, Client *c, const XSizeHints *hint);

@@ -10,7 +10,11 @@
  * ************************************************************************/
 
 #include <fontconfig/fontconfig.h>
-#include "gwm.h"
+#include <stdint.h>
+#include "config.h"
+#include "misc.h"
+#include "list.h"
+#include "font.h"
 
 typedef struct
 {

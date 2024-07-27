@@ -12,6 +12,13 @@
 #ifndef MVRESIZE_H 
 #define MVRESIZE_H 
 
+#include "gwm.h"
+
+typedef struct /* 調整窗口尺寸的信息 */
+{
+    int dx, dy, dw, dh; /* 分別爲窗口坐標和尺寸的變化量 */
+} Delta_rect;
+
 void move_resize(WM *wm, XEvent *e, Func_arg arg);
 void move_resize_client(Client *c, const Delta_rect *d);
 Place_type get_dest_place_type_for_move(WM *wm, Client *c);

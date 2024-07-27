@@ -9,9 +9,19 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "config.h"
+#include "entry.h"
+#include "file.h"
+#include "font.h"
 #include "mvresize.h"
+#include "minimax.h"
 #include "menu.h"
+#include "icccm.h"
+#include "image.h"
+#include "place.h"
+#include "prop.h"
+#include "taskbar.h"
+#include "func.h"
 
 static bool is_valid_click(XEvent *oe, XEvent *ne);
 
@@ -93,7 +103,6 @@ void clear_wm(WM *wm)
     destroy_menu(act_center);
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
         XDestroyWindow(xinfo.display, wm->top_wins[i]);
-    XFreeGC(xinfo.display, wm->gc);
     XFreeModifiermap(xinfo.mod_map);
     free_cursors();
     XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);

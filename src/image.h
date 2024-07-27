@@ -12,6 +12,8 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include <Imlib2.h>
+
 void free_all_images(void);
 void free_image(Imlib_Image image);
 void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h);

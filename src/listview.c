@@ -9,6 +9,8 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "font.h"
+#include "gwm.h"
 #include "listview.h"
 
 struct _list_view_tag // 清單顯示構件

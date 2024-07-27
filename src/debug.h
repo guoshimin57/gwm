@@ -12,6 +12,9 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include "gwm.h"
+#include "client.h"
+
 void print_client_and_top_win(WM *wm);
 void print_win_tree(Window win);
 void print_net_wm_win_type(Window win);

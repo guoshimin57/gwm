@@ -12,6 +12,8 @@
 #ifndef MINIMAX_H
 #define MINIMAX_H
 
+#include "gwm.h"
+
 void minimize(WM *wm, XEvent *e, Func_arg arg);
 void deiconify(WM *wm, XEvent *e, Func_arg arg);
 void max_restore(WM *wm, XEvent *e, Func_arg arg);

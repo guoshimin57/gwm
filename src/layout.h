@@ -12,6 +12,8 @@
 #ifndef LAYOUT_H
 #define LAYOUT_H
 
+#include "gwm.h"
+
 void update_layout(WM *wm);
 bool is_main_sec_gap(WM *wm, int x);
 bool is_main_fix_gap(WM *wm, int x);

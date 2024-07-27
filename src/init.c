@@ -9,7 +9,15 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "config.h"
+#include "entry.h"
+#include "file.h"
+#include "font.h"
+#include "handler.h"
+#include "prop.h"
+#include "icccm.h"
+#include "taskbar.h"
+#include "init.h"
 
 static void set_visual_info(void);
 static void set_locale(void);
@@ -20,7 +28,6 @@ static void set_atoms(void);
 static void init_imlib(void);
 static void init_wallpaper_files(WM *wm);
 
-Window gwin;
 void init_wm(WM *wm)
 {
     memset(wm, 0, sizeof(WM));
@@ -38,7 +45,6 @@ void init_wm(WM *wm)
     XSelectInput(xinfo.display, xinfo.root_win, ROOT_EVENT_MASK);
     set_visual_info();
     create_refer_wins(wm);
-    wm->gc=XCreateGC(xinfo.display, wm->wm_check_win, 0, NULL);
     config();
     init_imlib();
     if(cfg->wallpaper_paths)

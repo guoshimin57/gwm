@@ -12,6 +12,9 @@
 #ifndef PLACE_H
 #define PLACE_H
 
+#include "gwm.h"
+#include "client.h"
+
 void move_client(WM *wm, Client *from, Client *to, Place_type type);
 bool move_client_node(WM *wm, Client *from, Client *to, Place_type type);
 void change_place(WM *wm, XEvent *e, Func_arg arg);

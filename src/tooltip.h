@@ -12,7 +12,7 @@
 #ifndef TOOLTIP_H
 #define MTOOLTIP_H
 
-#include "gwm.h"
+#include "widget.h"
 
 typedef struct _tooltip_tag Tooltip;
 

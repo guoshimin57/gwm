@@ -9,7 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "mvresize.h"
+#include "prop.h"
+#include "minimax.h"
 
 static void maximize_client(WM *wm, Client *c, Max_way way);
 static void set_max_rect(WM *wm, Client *c, Max_way max_way);

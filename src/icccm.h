@@ -12,6 +12,10 @@
 #ifndef ICCCM_H
 #define ICCCM_H
 
+#include <stdbool.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
 typedef enum // 與ICCCM規範標識符名稱表(icccm_atiom_names)相應的ID
 {
     WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_CHANGE_STATE, WM_TAKE_FOCUS,

@@ -12,6 +12,10 @@
 #ifndef PROP_H
 #define PROP_H
 
+#include <stdbool.h>
+#include <X11/Xlib.h>
+#include <X11/Xproto.h>
+
 typedef enum // 與gwm自定義標識符名稱表(gwm_atom_names)相應的ID
 {
     GWM_CURRENT_LAYOUT, GWM_UPDATE_LAYOUT, GWM_WIDGET_TYPE, GWM_DESKTOP_MASK,

@@ -12,6 +12,10 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
+#include <stdbool.h>
+#include "widget.h"
+#include "misc.h"
+
 #define ENTRY(widget) ((Entry *)(widget))
 
 typedef struct _entry_tag Entry;

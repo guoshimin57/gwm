@@ -9,7 +9,10 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include "config.h"
+#include "prop.h"
+#include "taskbar.h"
+#include "desktop.h"
 
 typedef enum op_type_tag { MOVE_TO_N, CHANGE_TO_N, ATTACH_TO_N, ATTACH_TO_ALL } Op_type;
 

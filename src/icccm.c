@@ -9,7 +9,10 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <X11/Xatom.h>
 #include "gwm.h"
+#include "prop.h"
+#include "icccm.h"
 
 const char *icccm_atom_names[ICCCM_ATOMS_N]= // ICCCM規範標識符名稱
 {

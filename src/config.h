@@ -12,6 +12,9 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "gwm.h"
+#include <stdbool.h>
+
 typedef enum // 窗口聚焦模式
 {
     ENTER_FOCUS, CLICK_FOCUS,

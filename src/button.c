@@ -9,7 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "gwm.h"
+#include <Imlib2.h>
+#include "font.h"
+#include "image.h"
+#include "widget.h"
+#include "button.h"
 
 #define BUTTON_EVENT_MASK (BUTTON_MASK|ExposureMask|CROSSING_MASK)
 

@@ -12,7 +12,8 @@
 #ifndef WIDGET_H_
 #define WIDGET_H_
 
-#include "gwm.h"
+#include <stdbool.h>
+#include "color.h"
 
 typedef enum // 構件標識
 {
