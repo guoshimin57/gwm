@@ -111,12 +111,12 @@ bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     Client *head=NULL;
     del_subgroup(from->subgroup_leader);
     if(to)
-        head = cmp_client_store_order(wm, from, to) < 0 ? to : to->prev;
+        head = cmp_client_store_order(wm, from, to) < 0 ? to : list_prev_entry(to, Client, list);
     else
     {
         head=get_head_client(wm->clients, type);
         if(from->place_type==TILE_LAYER_MAIN && type==TILE_LAYER_SECOND)
-            head=head->next;
+            head=list_next_entry(head, Client, list);
     }
     add_subgroup(head, from->subgroup_leader);
     return true;
@@ -143,15 +143,15 @@ static int cmp_client_store_order(WM *wm, Client *c1, Client *c2)
 {
     if(c1 == c2)
         return 0;
-    for(Client *c=c1; c!=wm->clients; c=c->next)
-        if(c == c2)
+    list_for_each_entry_from(Client, c1, &wm->clients->list, list)
+        if(c1 == c2)
             return -1;
     return 1;
 }
 
 static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type)
 {
-    for(Client *ld=subgroup_leader, *c=ld; ld && c->subgroup_leader==ld; c=c->prev)
+    for(Client *ld=subgroup_leader, *c=ld; ld && c->subgroup_leader==ld; c=list_prev_entry(c, Client, list))
         c->place_type=type;
 }
 
@@ -169,14 +169,14 @@ static void swap_clients(WM *wm, Client *a, Client *b)
 
     top=get_top_transient_client(a_leader, false);
     a_begin=(top ? top : a_leader);
-    a_prev=a_begin->prev;
+    a_prev=list_prev_entry(a_begin, Client, list);
 
     top=get_top_transient_client(b_leader, false);
     b_begin=(top ? top : b_leader);
 
     del_subgroup(a_leader);
     add_subgroup(b_leader, a_leader);
-    if(a_leader->next != b_begin) //不相邻
+    if(list_next_entry(a_leader, Client, list) != b_begin) //不相邻
         del_subgroup(b_leader), add_subgroup(a_prev, b_leader);
 
     raise_client(wm, oa);

@@ -60,7 +60,7 @@ void focus_desktop_n(WM *wm, unsigned int n)
 
 static void hide_cur_desktop_clients(WM *wm)
 {
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
     {
         if(is_on_cur_desktop(c->desktop_mask))
         {
@@ -74,7 +74,7 @@ static void hide_cur_desktop_clients(WM *wm)
 
 static void show_cur_desktop_clients(WM *wm)
 {
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
     {
         if(is_on_cur_desktop(c->desktop_mask))
         {
@@ -98,7 +98,8 @@ void move_to_desktop_n(WM *wm, Client *c, unsigned int n)
 
 static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op)
 {
-    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
+    Client *ld=c->subgroup_leader;
+    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
     {
         if(op==MOVE_TO_N || op==CHANGE_TO_N)
             p->desktop_mask = get_desktop_mask(n);
@@ -116,7 +117,7 @@ void all_move_to_desktop_n(WM *wm, unsigned int n)
         return;
 
     Client *pc=CUR_FOC_CLI(wm);
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
         c->desktop_mask=get_desktop_mask(n);
     for(unsigned int i=1; i<=DESKTOP_N; i++)
         focus_client(wm, i, i==n ? pc : wm->clients);
@@ -160,7 +161,7 @@ void all_attach_to_desktop_n(WM *wm, unsigned int n)
     if(!n)
         return;
 
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
         c->desktop_mask |= get_desktop_mask(n);
     if(n == wm->cur_desktop)
         focus_desktop_n(wm, wm->cur_desktop);

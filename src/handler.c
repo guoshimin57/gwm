@@ -28,6 +28,7 @@
 
 static void ignore_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
+static void handle_button_release(WM *wm, XEvent *e);
 static void unmap_for_click(WM *wm, Widget_id id);
 static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e);
 static void handle_client_message(WM *wm, XEvent *e);
@@ -80,6 +81,7 @@ void reg_event_handlers(WM *wm)
         wm->event_handlers[i]=ignore_event;
 
     wm->event_handlers[ButtonPress]      = handle_button_press;
+    wm->event_handlers[ButtonRelease]    = handle_button_release;
     wm->event_handlers[ClientMessage]    = handle_client_message;
     wm->event_handlers[ConfigureRequest] = handle_config_request;
     wm->event_handlers[EnterNotify]      = handle_enter_notify;
@@ -107,11 +109,17 @@ static void handle_button_press(WM *wm, XEvent *e)
     Client *c=win_to_client(wm->clients, id==CLIENT_ICON ? get_iconic_win(win) : win);
     Client *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
 
+    if(widget)
+    {
+        widget->state.active=1;
+        widget->update_bg(widget);
+    }
     for(const Buttonbind *b=cfg->buttonbind; b->func; b++)
     {
         if( is_func_click(id, b, e)
             && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
+
             if(id == CLIENT_WIN)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
             if(c && c!=CUR_FOC_CLI(wm))
@@ -129,7 +137,7 @@ static void unmap_for_click(WM *wm, Widget_id id)
     if(id != ACT_CENTER_ITEM)
         hide_widget(WIDGET(act_center));
     if(id != TITLE_LOGO)
-        for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+        list_for_each_entry(Client, c, &wm->clients->list, list)
             if(c->show_titlebar)
                 hide_widget(WIDGET(get_frame_menu(c->frame)));
     if(id!=RUN_CMD_ENTRY && id!=RUN_BUTTON)
@@ -144,6 +152,17 @@ static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e)
     return (b->widget_id == id
         && b->button == e->xbutton.button
         && is_equal_modifier_mask( b->modifier, e->xbutton.state));
+}
+
+static void handle_button_release(WM *wm, XEvent *e)
+{
+    UNUSED(wm);
+    Widget *widget=win_to_widget(e->xbutton.window);
+    if(widget)
+    {
+        widget->state.active=0;
+        widget->update_bg(widget);
+    }
 }
 
 static void handle_client_message(WM *wm, XEvent *e)
@@ -609,7 +628,7 @@ static void update_ui(WM *wm)
     Free(name);
     update_taskbar_bg(WIDGET(taskbar));
     update_menu_bg(WIDGET(act_center));
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
         if(c->show_titlebar)
             update_menu_bg(WIDGET(get_frame_menu(c->frame)));
     update_entry_bg(WIDGET(cmd_entry));

@@ -110,7 +110,7 @@ void print_place_info(Client *c)
 void print_all_client_win(WM *wm)
 {
     printf(_("以下是自頂向底排列的客戶窗口列表：\n"));
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
         print_client_win(c);
 }
 
@@ -133,4 +133,16 @@ void show_top_win(WM *wm)
         XMapWindow(xinfo.display, wm->top_wins[i]);
         draw_string(wm->top_wins[i], s[i], &f);
     }
+}
+
+void print_widget_state(Widget_state state)
+{
+    printf("disable=%d\n", state.disable);
+    printf("active=%d\n", state.active);
+    printf("warn=%d\n", state.warn);
+    printf("hot=%d\n", state.hot);
+    printf("urgent=%d\n", state.urgent);
+    printf("attent=%d\n", state.attent);
+    printf("chosen=%d\n", state.chosen);
+    printf("current=%d\n", state.current);
 }

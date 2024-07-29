@@ -151,26 +151,29 @@ void iconify_client(WM *wm, Client *c)
         return;
 
     move_client_node(wm, c, get_icon_client_head(wm), ANY_PLACE);
-    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
+
+    Client *ld=c->subgroup_leader;
+    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
     {
         p->win_state.hidden=1;
         update_net_wm_state(WIDGET_WIN(p), p->win_state);
-        hide_widget(WIDGET(c->frame));
-        if(c == CUR_FOC_CLI(wm))
+        hide_widget(WIDGET(p->frame));
+        if(p == CUR_FOC_CLI(wm))
         {
             focus_client(wm, wm->cur_desktop, NULL);
-            update_frame_bg(c->frame);
+            update_frame_bg(p->frame);
         }
     }
+
     request_layout_update();
 }
 
 static Client *get_icon_client_head(WM *wm)
 {
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
-            return c->prev;
-    return wm->clients->prev;
+            return list_prev_entry(c, Client, list);
+    return list_last_entry(&wm->clients->list, Client, list);
 }
 
 void deiconify_client(WM *wm, Client *c)
@@ -179,14 +182,15 @@ void deiconify_client(WM *wm, Client *c)
         return;
 
     move_client_node(wm, c, NULL, c->place_type);
-    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
+    Client *ld=c->subgroup_leader;
+    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
     {
         if(is_iconic_client(p))
         {
             p->win_state.hidden=0;
             update_net_wm_state(WIDGET_WIN(p), p->win_state);
-            show_widget(WIDGET(c->frame));
-            focus_client(wm, wm->cur_desktop, c);
+            show_widget(WIDGET(p->frame));
+            focus_client(wm, wm->cur_desktop, p);
         }
     }
     request_layout_update();
@@ -194,14 +198,14 @@ void deiconify_client(WM *wm, Client *c)
 
 void iconify_all_clients(WM *wm)
 {
-    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+    list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
             iconify_client(wm, c);
 }
 
 void deiconify_all_clients(WM *wm)
 {
-    for(Client *c=wm->clients->prev; c!=wm->clients; c=c->prev)
+    list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             deiconify_client(wm, c);
 }
@@ -273,7 +277,8 @@ void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
 static void set_fullscreen(WM *wm, Client *c)
 {
     save_place_info_of_client(c);
-    WIDGET_X(c)=WIDGET_Y(c)=0, WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
+    WIDGET_X(c)=WIDGET_Y(c)=0;
+    WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
     move_client(wm, c, NULL, FULLSCREEN_LAYER);
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }

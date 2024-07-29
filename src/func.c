@@ -90,7 +90,7 @@ void quit_wm(WM *wm, XEvent *e, Func_arg arg)
 
 void clear_wm(WM *wm)
 {
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry_safe(Client, c, &wm->clients->list, list)
     {
         XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
         del_client(wm, c, true);
@@ -131,7 +131,7 @@ void close_client(WM *wm, XEvent *e, Func_arg arg)
 void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask))
             close_win(WIDGET_WIN(c));
 }

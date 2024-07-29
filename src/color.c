@@ -290,8 +290,8 @@ static RGB get_widget_rgb_on_color(Widget_state state, HSB hsb)
     {
         [STATE_NORMAL]          = {h,      s/2, b/2}, 
         [STATE_DISABLE]         = {h,      s/2, b/2}, 
-        [STATE_ACTIVE]          = {h,      1,   1},   
-        [STATE_WARN]            = {0,      1,   1}, // 紅色
+        [STATE_ACTIVE]          = {h,      s,   1},   
+        [STATE_WARN]            = {0,      1,   0.9}, // 紅色
         [STATE_HOT]             = {h,      s,   b+db},
         [STATE_URGENT]          = {h+dh*2, s,   b},   
         [STATE_ATTENT]          = {h+dh,   s,   b},   
@@ -313,8 +313,8 @@ static RGB get_widget_rgb_on_neutral(Widget_state state, HSB hsb)
     {
         [STATE_NORMAL]          = {h,      s/2, b/2}, 
         [STATE_DISABLE]         = {h,      s/2, b/2}, 
-        [STATE_ACTIVE]          = {h,      1,   1}, 
-        [STATE_WARN]            = {0,      1,   1}, // 紅色
+        [STATE_ACTIVE]          = {h,      s,   1}, 
+        [STATE_WARN]            = {0,      1,   0.9}, // 紅色
         [STATE_HOT]             = {h,      s,   b+db},
         [STATE_URGENT]          = {h+dh*2, cs,  cb}, 
         [STATE_ATTENT]          = {h+dh,   cs,  cb}, 
@@ -336,7 +336,7 @@ static RGB get_widget_rgb_on_grey(Widget_state state, HSB hsb)
         [STATE_NORMAL]          = {h,   s,  b/2}, 
         [STATE_DISABLE]         = {h,   s,  b/2}, 
         [STATE_ACTIVE]          = {h,   s,  1}, 
-        [STATE_WARN]            = {0,   1,  1}, // 紅色
+        [STATE_WARN]            = {0,   1,  0.9}, // 紅色
         [STATE_HOT]             = {h,   s,  b+db},
         [STATE_URGENT]          = {175, cs, cb}, 
         [STATE_ATTENT]          = {155, cs, cb}, 

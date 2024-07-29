@@ -79,6 +79,33 @@ static bool _list_del_valid(List *node)
     return prev->next==node && next->prev==node;
 }
 
+/* 把鏈表中first至last之間的段落移動到head之後。
+ * 注意：first和last可以相同；head須不在first至last之間；三者須屬同一鏈表。*/
+void list_bulk_move(List *head, List *first, List *last)
+{
+    list_bulk_del(first, last);
+    list_bulk_add(head, first, last);
+}
+
+/* 把first至last之間的鏈表段落添加到head之後。
+ * 注意：first和last可以相同且須屬同一鏈表；head須不在first至last之間。*/
+void list_bulk_add(List *head, List *first, List *last)
+{
+    head->next->prev=last;
+    last->next=head->next;
+
+    head->next=first;
+    first->prev=head;
+}
+
+/* 把鏈表中first至last之間的段落刪除。
+ * 注意：first和last可以相同；兩者須屬同一鏈表。*/
+void list_bulk_del(List *first, List *last)
+{
+    first->prev->next=last->next;
+    last->next->prev=first->prev;
+}
+
 /* 取得鏈表節點數 */
 size_t list_count_nodes(const List *list)
 {

@@ -119,10 +119,66 @@ typedef struct list_tag
         !list_entry_is_head(entry, list, member); \
         entry=n, n=list_next_entry(n, type, member))
 
+/* 功能：逆向遍歷鏈表項
+ * type：容器結構體類型
+ * entry：用於遍歷鏈表項的type*類型的容器結構體指針
+ * list：List*類型的成員指針，爲鏈表頭
+ * member：List類型的成員在容器結構體內的名字
+ */
+#define list_for_each_entry_reverse(type, entry, list, member) \
+    for(type *entry=list_last_entry(list, type, member); \
+        !list_entry_is_head(entry, list, member); \
+        entry=list_prev_entry(entry, type, member))
+
+/* 功能：繼續正向遍歷鏈表項
+ * type：容器結構體類型
+ * entry：用於遍歷鏈表項的type*類型的容器結構體指針
+ * list：List*類型的成員指針，爲鏈表頭
+ * member：List類型的成員在容器結構體內的名字
+ */
+#define list_for_each_entry_continue(type, entry, list, member) \
+    for(entry=list_next_entry(entry, type, member); \
+        !list_entry_is_head(entry, list, member); \
+        entry=list_next_entry(entry, type, member))
+
+/* 功能：繼續逆向遍歷鏈表項
+ * type：容器結構體類型
+ * entry：用於遍歷鏈表項的type*類型的容器結構體指針
+ * list：List*類型的成員指針，爲鏈表頭
+ * member：List類型的成員在容器結構體內的名字
+ */
+#define list_for_each_entry_continue_reverse(type, entry, list, member) \
+    for(entry=list_prev_entry(entry, type, member); \
+        !list_entry_is_head(entry, list, member); \
+        entry=list_prev_entry(entry, type, member))
+
+/* 功能：從指定表項開始正向遍歷鏈表項
+ * type：容器結構體類型
+ * entry：用於遍歷鏈表項的type*類型的容器結構體指針
+ * list：List*類型的成員指針，爲鏈表頭
+ * member：List類型的成員在容器結構體內的名字
+ */
+#define list_for_each_entry_from(type, entry, list, member) \
+    for(; !list_entry_is_head(entry, list, member); \
+        entry=list_next_entry(entry, type, member))
+
+/* 功能：從指定表項開始逆向遍歷鏈表項
+ * type：容器結構體類型
+ * entry：用於遍歷鏈表項的type*類型的容器結構體指針
+ * list：List*類型的成員指針，爲鏈表頭
+ * member：List類型的成員在容器結構體內的名字
+ */
+#define list_for_each_entry_from_reverse(type, entry, list, member) \
+    for(; !list_entry_is_head(entry, list, member); \
+        entry=list_prev_entry(entry, type, member))
+
 void list_init(List *list);
 void list_add(List *node, List *head);
 void list_add_tail(List *node, List *head);
 void list_del(List *node);
+void list_bulk_move(List *head, List *first, List *last);
+void list_bulk_add(List *head, List *first, List *last);
+void list_bulk_del(List *first, List *last);
 size_t list_count_nodes(const List *list);
 bool list_is_head(const List *node, const List *list);
 bool list_is_empty(const List *list);

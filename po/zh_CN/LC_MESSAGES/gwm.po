@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.9\n"
+"Project-Id-Version: gwm 2.10.10\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-07-25 22:42+0800\n"
+"POT-Creation-Date: 2024-07-29 11:19+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: client.c:658
+#: client.c:649
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 

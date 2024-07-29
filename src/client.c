@@ -13,6 +13,7 @@
 #include "gwm.h"
 #include "font.h"
 #include "minimax.h"
+#include "list.h"
 #include "image.h"
 #include "icccm.h"
 #include "prop.h"
@@ -23,17 +24,15 @@ static bool should_hide_frame(Client *c);
 static void set_default_desktop_mask(Client *c, unsigned int cur_desktop);
 static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
-static Client *get_head_for_add_client(Client *list, Client *c);
-static void add_client_node(Client *list, Client *c);
+static Client *get_head_for_add_client(Client *clients, Client *c);
 static void set_default_place_type(Client *c);
 static void set_default_win_rect(Client *c);
 static void set_win_rect_by_attr(Client *c);
-static void del_client_node(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
-static bool is_map_client(Client *list, unsigned int desktop_n, Client *c);
-static Client *get_prev_map_client(Client *list, unsigned int desktop_n, Client *c);
-static Client *get_next_map_client(Client *list, unsigned int desktop_n, Client *c);
+static bool is_map_client(Client *clients, unsigned int desktop_n, Client *c);
+static Client *get_prev_map_client(Client *clients, unsigned int desktop_n, Client *c);
+static Client *get_next_map_client(Client *clients, unsigned int desktop_n, Client *c);
 static int cmp_map_order(const void *pclient1, const void *pclient2);
 
 static long map_count=0; // 所有客戶窗口的累計映射次數
@@ -45,7 +44,7 @@ void add_client(WM *wm, Window win)
     if(should_hide_frame(c))
         c->show_border=c->show_titlebar=false;
     apply_rules(c);
-    add_client_node(get_head_for_add_client(wm->clients, c), c);
+    list_add(&c->list, &get_head_for_add_client(wm->clients, c)->list);
     grab_buttons(WIDGET_WIN(c));
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
@@ -62,15 +61,15 @@ void add_client(WM *wm, Window win)
     set_net_wm_allowed_actions(WIDGET_WIN(c));
 }
 
-void set_all_net_client_list(Client *list)
+void set_all_net_client_list(Client *clients)
 {
     int n=0;
-    Window *wlist=get_client_win_list(list, &n);
+    Window *wlist=get_client_win_list(clients, &n);
 
     set_net_client_list(wlist, n);
     Free(wlist);
 
-    wlist=get_client_win_list_stacking(list, &n);
+    wlist=get_client_win_list_stacking(clients, &n);
     set_net_client_list_stacking(wlist, n);
     Free(wlist);
 }
@@ -151,25 +150,17 @@ static bool have_rule(const Rule *r, Client *c)
         && (!pt || !title || !strcmp(title, pt) || !strcmp(pt, "*")));
 }
 
-static Client *get_head_for_add_client(Client *list, Client *c)
+static Client *get_head_for_add_client(Client *clients, Client *c)
 {
     Client *top=NULL, *head=NULL;
     if(c->owner)
     {
         top=get_top_transient_client(c->subgroup_leader, false);
-        head = top ? top->prev : c->owner->prev;
+        head = top ? list_prev_entry(top, Client, list) : list_prev_entry(c->owner, Client, list);
     }
     else
-        head=get_head_client(list, c->place_type);
+        head=get_head_client(clients, c->place_type);
     return head;
-}
-
-static void add_client_node(Client *list, Client *c)
-{
-    c->prev=list;
-    c->next=list->next;
-    list->next=c;
-    c->next->prev=c;
 }
 
 static void set_default_place_type(Client *c)
@@ -207,10 +198,10 @@ static void set_win_rect_by_attr(Client *c)
         WIDGET_X(c)=a.x, WIDGET_Y(c)=a.y, WIDGET_W(c)=a.width, WIDGET_H(c)=a.height;
 }
 
-int get_clients_n(Client *list, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)
+int get_clients_n(Client *clients, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)
 {
     int n=0;
-    for(Client *c=list->next; c!=list; c=c->next)
+    list_for_each_entry(Client, c, &clients->list, list)
         if( (type==ANY_PLACE || c->place_type==type)
             && (count_icon || !is_iconic_client(c))
             && (count_trans || !c->owner)
@@ -224,10 +215,10 @@ bool is_iconic_client(Client *c)
     return WIDGET_WIN(c)!=xinfo.root_win && c->win_state.hidden;
 }
 
-Client *win_to_client(Client *list, Window win)
+Client *win_to_client(Client *clients, Window win)
 {
     // 當隱藏標題欄時，標題區和按鈕的窗口ID爲0。故win爲0時，不應視爲找到
-    for(Client *c=list->next; win && c!=list; c=c->next)
+    list_for_each_entry(Client, c, &clients->list, list)
         if(win==WIDGET_WIN(c) || is_frame_part(c->frame, win))
             return c;
     return NULL;
@@ -240,7 +231,7 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
 
     destroy_frame(c->frame), c->frame=NULL;
     destroy_widget(WIDGET(c));
-    del_client_node(c);
+    list_del(&c->list);
     if(!is_for_quit)
         for(size_t i=1; i<=DESKTOP_N; i++)
             if(is_on_desktop_n(i, c->desktop_mask))
@@ -254,12 +245,6 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     set_all_net_client_list(wm->clients);
 }
 
-static void del_client_node(Client *c)
-{
-    c->prev->next=c->next;
-    c->next->prev=c->prev;
-}
-
 /* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
 void raise_client(WM *wm, Client *c)
 {
@@ -267,7 +252,8 @@ void raise_client(WM *wm, Client *c)
     Window wins[n+1];
 
     wins[0]=get_top_win(wm, c);
-    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
+    Client *ld=c->subgroup_leader;
+    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
         wins[i--]=WIDGET_WIN(p->frame);
 
     XRestackWindows(xinfo.display, wins, n+1);
@@ -292,29 +278,30 @@ static Window get_top_win(WM *wm, Client *c)
 }
 
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過非模態窗口 */
-Client *get_next_client(Client *list, Client *c)
+Client *get_next_client(Client *clients, Client *c)
 {
-    for(Client *m=NULL, *p=c->next; p!=list; p=p->next)
+    list_for_each_entry_continue(Client, c, &clients->list, list)
     {
-        if(is_on_cur_desktop(p->desktop_mask))
+        if(is_on_cur_desktop(c->desktop_mask))
         {
-            m=get_top_transient_client(p->subgroup_leader, true);
-            if(!m || p==m)
-                return p;
+            Client *m=get_top_transient_client(c->subgroup_leader, true);
+            if(!m || c==m)
+                return c;
             else
-                return p->subgroup_leader->next;
+                return list_next_entry(c->subgroup_leader, Client, list);
         }
     }
-    return list;
+    return clients;
 }
 
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過非模態窗口 */
-Client *get_prev_client(Client *list, Client *c)
+Client *get_prev_client(Client *clients, Client *c)
 {
-    for(Client *m=NULL, *p=c->prev; p!=c; p=p->prev)
-        if(is_on_cur_desktop(p->desktop_mask))
-            return (m=get_top_transient_client(p->subgroup_leader, true)) ? m : p;
-    return list;
+    Client *m=NULL;
+    list_for_each_entry_continue_reverse(Client, c, &clients->list, list)
+        if(is_on_cur_desktop(c->desktop_mask))
+            return (m=get_top_transient_client(c->subgroup_leader, true)) ? m : c;
+    return clients;
 }
 
 bool is_normal_layer(Place_type t)
@@ -325,50 +312,58 @@ bool is_normal_layer(Place_type t)
 void add_subgroup(Client *head, Client *subgroup_leader)
 {
     Client *top=get_top_transient_client(subgroup_leader, false),
-           *begin=(top ? top : subgroup_leader), *end=subgroup_leader;
+           *first=(top ? top : subgroup_leader),
+           *last=subgroup_leader;
 
-    begin->prev=head;
-    end->next=head->next;
-    head->next=begin;
-    end->next->prev=end;
+    list_bulk_add(&head->list, &first->list, &last->list);
 }
 
 void del_subgroup(Client *subgroup_leader)
 {
     Client *top=get_top_transient_client(subgroup_leader, false),
-           *begin=(top ? top : subgroup_leader), *end=subgroup_leader;
+           *first=(top ? top : subgroup_leader),
+           *last=subgroup_leader;
 
-    begin->prev->next=end->next;
-    end->next->prev=begin->prev;
+    list_bulk_del(&first->list, &last->list);
 }
 
-bool is_last_typed_client(Client *list, Client *c, Place_type type)
+bool is_last_typed_client(Client *clients, Client *c, Place_type type)
 {
-    for(Client *p=list->prev; p!=c; p=p->prev)
+    list_for_each_entry_reverse(Client, p, &clients->list, list)
+    {
+        if(p == c)
+            break;
         if(is_on_cur_desktop(p->desktop_mask) && p->place_type==type)
             return false;
+    }
     return true;
 }
 
-Client *get_head_client(Client *list, Place_type type)
+Client *get_head_client(Client *clients, Place_type type)
 {
-    for(Client *c=list->next; c!=list; c=c->next)
+    list_for_each_entry(Client, c, &clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask) && c->place_type==type)
-            return c->prev;
-    for(Client *c=list->next; c!=list; c=c->next)
+            return list_prev_entry(c, Client, list);
+
+    list_for_each_entry(Client, c, &clients->list, list)
         if(c->place_type == type)
-            return c->prev;
-    for(Client *c=list->prev; c!=list; c=c->prev)
+            return list_prev_entry(c, Client, list);
+
+    list_for_each_entry_reverse(Client, c, &clients->list, list)
         if(c->place_type < type)
-            return c->prev;
-    return list;
+            return list_prev_entry(c, Client, list);
+
+    return clients;
 }
 
 int get_subgroup_n(Client *c)
 {
     int n=0;
-    for(Client *ld=c->subgroup_leader, *p=ld; ld && p->subgroup_leader==ld; p=p->prev)
+    Client *ld=c->subgroup_leader;
+
+    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
         n++;
+
     return n;
 }
 
@@ -383,7 +378,7 @@ Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
 {
     Client *result=NULL, *ld=subgroup_leader;
 
-    for(Client *c=ld; ld && c->subgroup_leader==ld; c=c->prev)
+    for(Client *c=ld; ld && c->subgroup_leader==ld; c=list_prev_entry(c, Client, list))
         if((only_modal && c->win_state.modal) || (!only_modal && c->owner))
             result=c;
 
@@ -412,16 +407,12 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
             set_input_focus(WIDGET_WIN(pc), pc->wm_hint);
     }
 
-    /*
     if(pc != wm->clients)
         WIDGET_STATE(pc).current=WIDGET_STATE(pc->frame).current=1;
-        */
     update_client_bg(wm, desktop_n, pc);
 
-    /*
     if(pp != wm->clients)
         WIDGET_STATE(pp).current=WIDGET_STATE(pp->frame).current=0;
-        */
     update_client_bg(wm, desktop_n, pp);
 
     raise_client(wm, pc);
@@ -467,30 +458,30 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
     }
 }
 
-static bool is_map_client(Client *list, unsigned int desktop_n, Client *c)
+static bool is_map_client(Client *clients, unsigned int desktop_n, Client *c)
 {
     if(c && !is_iconic_client(c) && is_on_desktop_n(desktop_n, c->desktop_mask))
-        for(Client *p=list->next; p!=list; p=p->next)
+        list_for_each_entry(Client, p, &clients->list, list)
             if(p == c)
                 return true;
     return false;
 }
 
 /* 取得存儲結構意義上的上一個處於映射狀態的客戶窗口 */
-static Client *get_prev_map_client(Client *list, unsigned int desktop_n, Client *c)
+static Client *get_prev_map_client(Client *clients, unsigned int desktop_n, Client *c)
 {
-    for(Client *p=c->prev; p!=list; p=p->prev)
-        if(!is_iconic_client(p) && is_on_desktop_n(desktop_n, p->desktop_mask))
-            return p;
+    list_for_each_entry_continue_reverse(Client, c, &clients->list, list)
+        if(!is_iconic_client(c) && is_on_desktop_n(desktop_n, c->desktop_mask))
+            return c;
     return NULL;
 }
 
 /* 取得存儲結構意義上的下一個處於映射狀態的客戶窗口 */
-static Client *get_next_map_client(Client *list, unsigned int desktop_n, Client *c)
+static Client *get_next_map_client(Client *clients, unsigned int desktop_n, Client *c)
 {
-    for(Client *p=c->next; p!=list; p=p->next)
-        if(!is_iconic_client(p) && is_on_desktop_n(desktop_n, p->desktop_mask))
-            return p;
+    list_for_each_entry_continue(Client, c, &clients->list, list)
+        if(!is_iconic_client(c) && is_on_desktop_n(desktop_n, c->desktop_mask))
+            return c;
     return NULL;
 }
 
@@ -500,9 +491,9 @@ void save_place_info_of_client(Client *c)
     c->old_place_type=c->place_type;
 }
 
-void save_place_info_of_clients(Client *list)
+void save_place_info_of_clients(Client *clients)
 {
-    for(Client *c=list->prev; c!=list; c=c->prev)
+    list_for_each_entry_reverse(Client, c, &clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask))
             save_place_info_of_client(c);
 }
@@ -513,9 +504,9 @@ void restore_place_info_of_client(Client *c)
     c->place_type=c->old_place_type;
 }
 
-void restore_place_info_of_clients(Client *list)
+void restore_place_info_of_clients(Client *clients)
 {
-    for(Client *c=list->next; c!=list; c=c->next)
+    list_for_each_entry(Client, c, &clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask))
             restore_place_info_of_client(c);
 }
@@ -527,9 +518,9 @@ bool is_tile_client(Client *c)
 }
 
 /* 獲取當前桌面按從早到遲的映射順序排列的客戶窗口列表 */
-Window *get_client_win_list(Client *list, int *n)
+Window *get_client_win_list(Client *clients, int *n)
 {
-    int i=0, count=get_clients_n(list, ANY_PLACE, true, true, false);
+    int i=0, count=get_clients_n(clients, ANY_PLACE, true, true, false);
 
     if(count == 0)
         return NULL;
@@ -540,7 +531,7 @@ Window *get_client_win_list(Client *list, int *n)
     Window *wlist=Malloc(count*sizeof(Window));
     Client **clist=Malloc(count*sizeof(Client *));
 
-    for(Client *c=list->prev; c!=list; c=c->prev)
+    list_for_each_entry_reverse(Client, c, &clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask))
             clist[i++]=c;
     qsort(clist, *n, sizeof(Client *), cmp_map_order);
@@ -558,9 +549,9 @@ static int cmp_map_order(const void *pclient1, const void *pclient2)
 }
 
 /* 獲取當前桌面按從下到上的疊次序排列的客戶窗口列表 */
-Window *get_client_win_list_stacking(Client *list, int *n)
+Window *get_client_win_list_stacking(Client *clients, int *n)
 {
-    int count=get_clients_n(list, ANY_PLACE, true, true, false);
+    int count=get_clients_n(clients, ANY_PLACE, true, true, false);
     if(count == 0)
         return NULL;
 
@@ -568,9 +559,9 @@ Window *get_client_win_list_stacking(Client *list, int *n)
         *n=count;
 
     Window *wlist=Malloc(count*sizeof(Window)), *w=wlist;
-    for(Client *c=list->prev; c!=list; c=c->prev, w++)
+    list_for_each_entry_reverse(Client, c, &clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask))
-            *w=WIDGET_WIN(c);
+            *w++=WIDGET_WIN(c);
 
     return wlist;
 }
@@ -584,7 +575,7 @@ void set_state_attent(Client *c, bool attent)
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
-bool is_wm_win(Client *list, Window win, bool before_wm)
+bool is_wm_win(Client *clients, Window win, bool before_wm)
 {
     XWindowAttributes a;
     bool status=XGetWindowAttributes(xinfo.display, win, &a);
@@ -594,7 +585,7 @@ bool is_wm_win(Client *list, Window win, bool before_wm)
         return false;
 
     if(!before_wm)
-        return !win_to_client(list, win);
+        return !win_to_client(clients, win);
 
     return is_iconic_state(win) || a.map_state==IsViewable;
 }
@@ -625,7 +616,7 @@ void restack_win(WM *wm, Window win)
 
 void update_clients_bg(WM *wm)
 {
-    for(Client *c=wm->clients->next; c!=wm->clients; c=c->next)
+    list_for_each_entry(Client, c, &wm->clients->list, list)
         update_client_bg(wm, wm->cur_desktop, c);
 }
 
@@ -650,10 +641,10 @@ void create_clients(WM *wm)
 
     wm->clients=Malloc(sizeof(Client));
     memset(wm->clients, 0, sizeof(Client));
+    list_init(&wm->clients->list);
     for(size_t i=0; i<DESKTOP_N; i++)
         d[i]->cur_focus_client=d[i]->prev_focus_client=wm->clients;
     WIDGET_WIN(wm->clients)=xinfo.root_win;
-    wm->clients->prev=wm->clients->next=wm->clients;
     if(!XQueryTree(xinfo.display, xinfo.root_win, &root, &parent, &child, &n))
         exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
     for(size_t i=0; i<n; i++)
