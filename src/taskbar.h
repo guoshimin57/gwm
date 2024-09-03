@@ -30,8 +30,8 @@ void update_statusbar_fg(void);
 void set_statusbar_label(const char *label);
 void update_taskbar_bg(const Widget *widget);
 void destroy_taskbar(void);
-void set_taskbar_urgency(unsigned int desktop_mask, bool urg);
-void set_taskbar_attention(unsigned int desktop_mask, bool attent);
+void set_taskbar_urgency(Window cwin, bool urg);
+void set_taskbar_attention(Window cwin, bool attent);
 void update_taskbar_buttons_bg_by_chosen(void);
 
 #endif

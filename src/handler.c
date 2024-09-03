@@ -109,7 +109,7 @@ static void handle_button_press(WM *wm, XEvent *e)
     Client *c=win_to_client(wm->clients, id==CLIENT_ICON ? get_iconic_win(win) : win);
     Client *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
 
-    if(widget)
+    if(widget && widget->id!=TITLEBAR)
     {
         widget->state.active=1;
         widget->update_bg(widget);
@@ -228,9 +228,9 @@ static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
     bool add=SHOULD_ADD_STATE(c, act, sticky);
 
     if(add)
-        c->desktop_mask=~0U;
+        set_gwm_desktop_mask(WIDGET_WIN(c), ~0U);
     else
-        c->desktop_mask=get_desktop_mask(wm->cur_desktop);
+        set_gwm_desktop_mask(WIDGET_WIN(c), get_desktop_mask(wm->cur_desktop));
     request_layout_update();
     c->win_state.sticky=add;
 }
@@ -289,8 +289,9 @@ static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
+    Window win=WIDGET_WIN(c);
     c->win_state.attent=SHOULD_ADD_STATE(c, act, attent);
-    set_taskbar_attention(c->desktop_mask, !is_on_cur_desktop(c->desktop_mask));
+    set_taskbar_attention(win, !is_on_cur_desktop(win));
 }
 
 static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
@@ -312,7 +313,7 @@ static void activate_win(WM *wm, Window win, unsigned long src)
 
     if(src == 2) // 源自分頁器
     {
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(WIDGET_WIN(c)))
             focus_client(wm, wm->cur_desktop, c);
         else
             set_urgency_hint(win, c->wm_hint, true);
@@ -600,7 +601,7 @@ static void handle_wm_hints_notify(WM *wm, Window win)
     if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
         set_state_attent(c, true);
     if(nh && nh->flags & XUrgencyHint)
-        set_taskbar_urgency(c->desktop_mask, !is_on_cur_desktop(c->desktop_mask));
+        set_taskbar_urgency(WIDGET_WIN(c), !is_on_cur_desktop(WIDGET_WIN(c)));
     update_taskbar_buttons_bg();
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;

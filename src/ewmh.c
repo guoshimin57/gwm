@@ -108,11 +108,11 @@ void set_net_number_of_desktops(int n)
     replace_cardinal_prop(xinfo.root_win, prop, &num, 1);
 }
 
-bool get_net_number_of_desktops(int *n)
+int get_net_number_of_desktops(void)
 {
     Atom prop=ewmh_atoms[NET_NUMBER_OF_DESKTOPS];
-
-    return get_cardinal_prop(xinfo.root_win, prop, (CARD32 *)n);
+    CARD32 *p=get_cardinal_prop(xinfo.root_win, prop);
+    return p ? *p : 1;
 }
 
 void set_net_desktop_geometry(int w, int h)
@@ -140,14 +140,20 @@ void set_net_current_desktop(unsigned int cur_desktop)
     replace_cardinal_prop(xinfo.root_win, prop, &cur, 1);
 }
 
-bool get_net_current_desktop(unsigned int *cur_desktop)
+unsigned int get_net_current_desktop(void)
 {
-    return get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_CURRENT_DESKTOP], (CARD32 *)cur_desktop);
+    CARD32 *p=get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_CURRENT_DESKTOP]);
+    return p ? *p : 0;
 }
 
-bool get_net_wm_desktop(Window win, unsigned int *desktop)
+/* 因爲EWMH規定窗口要麼在某個桌面，要麼在所有窗口，不能同時在幾個桌面上，
+ * 而gwm支持後者，相應的函數爲set_gwm_desktop_mask。也正因爲這個原因，不
+ * 創建與get_net_wm_desktop對應的set_net_wm_desktop。
+ */
+unsigned int get_net_wm_desktop(Window win)
 {
-    return get_cardinal_prop(win, ewmh_atoms[NET_WM_DESKTOP], (CARD32 *)desktop);
+    CARD32 *p=get_cardinal_prop(win, ewmh_atoms[NET_WM_DESKTOP]);
+    return p ? *p : get_net_current_desktop();
 }
 
 void set_net_desktop_names(const char **names, int n)

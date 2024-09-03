@@ -98,10 +98,9 @@ static void create_taskbar_buttons(void)
 
 static bool is_chosen_taskbar_button(Widget_id id)
 {
-    unsigned int n, lay;
+    unsigned int n=get_net_current_desktop(), lay=get_gwm_current_layout();
 
-    return (get_net_current_desktop(&n) && id==DESKTOP_BUTTON_BEGIN+n)
-        || (get_gwm_current_layout((int *)&lay) && id==LAYOUT_BUTTON_BEGIN+lay);
+    return (id==DESKTOP_BUTTON_BEGIN+n || id==LAYOUT_BUTTON_BEGIN+lay);
 }
 
 static void create_iconbar(void)
@@ -332,29 +331,23 @@ void destroy_taskbar(void)
     destroy_widget(WIDGET(taskbar)), taskbar=NULL;
 }
 
-void set_taskbar_urgency(unsigned int desktop_mask, bool urg)
+void set_taskbar_urgency(Window cwin, bool urg)
 {
-    unsigned int cur_desktop;
-    if(get_net_current_desktop(&cur_desktop))
-        return;
-
+    unsigned int cur_desktop=get_net_current_desktop();
     int incr = (urg ? 1 : -1);
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        if( (desktop_mask & get_desktop_mask(i+1) && i!=cur_desktop)
+        if( i!=cur_desktop && is_on_desktop_n(cwin, i+1)
             && taskbar->urgency_n[i]+incr >= 0)
-             taskbar->urgency_n[i] += incr;
+            taskbar->urgency_n[i] += incr;
     update_taskbar_buttons_bg();
 }
 
-void set_taskbar_attention(unsigned int desktop_mask, bool attent)
+void set_taskbar_attention(Window cwin, bool attent)
 {
-    unsigned int cur_desktop;
-    if(get_net_current_desktop(&cur_desktop))
-        return;
-
+    unsigned int cur_desktop=get_net_current_desktop();
     int incr = attent ? 1 : -1;
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        if((desktop_mask & get_desktop_mask(i+1) && i!=cur_desktop)
+        if( i!=cur_desktop && is_on_desktop_n(cwin, (i+1))
             && taskbar->attent_n[i]+incr >= 0)
             taskbar->attent_n[i] += incr;
     update_taskbar_buttons_bg();

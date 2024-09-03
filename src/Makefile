@@ -11,8 +11,8 @@
 
 CC ?= gcc
 #DEBUG ?= -ggdb3 -fanalyzer -fno-omit-frame-pointer -fsanitize=address
-#DEBUG ?= -ggdb3
-CFLAGS ?= -std=c17 -Wall -W -pedantic-errors $(DEBUG) `pkg-config --cflags --libs x11 xft imlib2 fontconfig` -lm
+DEBUG ?= -ggdb3
+CFLAGS ?= -std=c17 -Wall -Wextra -pedantic-errors $(DEBUG) `pkg-config --cflags --libs x11 xft imlib2 fontconfig` -lm
 CTAGS ?= ctags
 backup := $(wildcard *~)
 srcs := $(wildcard *.c)

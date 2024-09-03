@@ -132,7 +132,7 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(WIDGET_WIN(c)))
             close_win(WIDGET_WIN(c));
 }
 

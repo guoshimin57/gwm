@@ -62,7 +62,7 @@ static void hide_cur_desktop_clients(WM *wm)
 {
     list_for_each_entry(Client, c, &wm->clients->list, list)
     {
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(WIDGET_WIN(c)))
         {
             if(is_iconic_client(c))
                 taskbar_del_cbutton(WIDGET_WIN(c));
@@ -76,7 +76,7 @@ static void show_cur_desktop_clients(WM *wm)
 {
     list_for_each_entry(Client, c, &wm->clients->list, list)
     {
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(WIDGET_WIN(c)))
         {
             if(is_iconic_client(c))
                 taskbar_add_cbutton(WIDGET_WIN(c));
@@ -99,14 +99,16 @@ void move_to_desktop_n(WM *wm, Client *c, unsigned int n)
 static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op)
 {
     Client *ld=c->subgroup_leader;
+    unsigned int mask=0, nmask=get_desktop_mask(n);
     for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
     {
         if(op==MOVE_TO_N || op==CHANGE_TO_N)
-            p->desktop_mask = get_desktop_mask(n);
+            mask = nmask;
         else if(op == ATTACH_TO_N)
-            p->desktop_mask |= get_desktop_mask(n);
+            mask = get_gwm_desktop_mask(WIDGET_WIN(p)) | nmask;
         else
-            p->desktop_mask = ~0;
+            mask = ~0;
+        set_gwm_desktop_mask(WIDGET_WIN(p), mask);
         focus_client(wm, n, p);
     }
 }
@@ -117,8 +119,9 @@ void all_move_to_desktop_n(WM *wm, unsigned int n)
         return;
 
     Client *pc=CUR_FOC_CLI(wm);
+    unsigned int mask=get_desktop_mask(n);
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        c->desktop_mask=get_desktop_mask(n);
+        set_gwm_desktop_mask(WIDGET_WIN(c), mask);
     for(unsigned int i=1; i<=DESKTOP_N; i++)
         focus_client(wm, i, i==n ? pc : wm->clients);
     focus_desktop_n(wm, wm->cur_desktop);
@@ -161,8 +164,9 @@ void all_attach_to_desktop_n(WM *wm, unsigned int n)
     if(!n)
         return;
 
+    unsigned int mask=get_desktop_mask(n);
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        c->desktop_mask |= get_desktop_mask(n);
+        set_gwm_desktop_mask(WIDGET_WIN(c), get_gwm_desktop_mask(WIDGET_WIN(c)) | mask);
     if(n == wm->cur_desktop)
         focus_desktop_n(wm, wm->cur_desktop);
     else

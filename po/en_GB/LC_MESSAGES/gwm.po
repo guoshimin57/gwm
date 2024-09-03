@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.10\n"
+"Project-Id-Version: gwm 2.10.11\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-07-29 11:19+0800\n"
+"POT-Creation-Date: 2024-09-03 11:15+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: client.c:649
+#: client.c:658
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
@@ -325,15 +325,15 @@ msgstr "SIGHUP signal handler cannot be installed"
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: misc.c:20
+#: misc.c:21
 msgid "錯誤：申請內存失敗"
 msgstr "Error: Failed to allocate memory"
 
-#: misc.c:30
+#: misc.c:31
 msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "Error: There is already another window manager running!"
 
-#: misc.c:35
+#: misc.c:36
 #, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X error: Resource number=%#lx, Request number=%lu, Error code=%d, Major request code=%d, Minor request code=%d\n"

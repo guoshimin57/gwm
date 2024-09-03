@@ -18,7 +18,7 @@
 
 #define FRAME_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     ExposureMask|ButtonPressMask|CROSSING_MASK|FocusChangeMask)
-#define TITLEBAR_EVENT_MASK (ButtonPressMask|ExposureMask|CROSSING_MASK)
+#define TITLEBAR_EVENT_MASK (BUTTON_MASK|ExposureMask|CROSSING_MASK)
 
 struct _titlebar_tag // 標題欄
 {
@@ -255,10 +255,8 @@ void update_titlebar_layout(const Frame *frame)
 
 static int get_cur_titlebar_button_n(void)
 {
-    int layout=cfg->default_layout;
-    get_gwm_current_layout(&layout);
     int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7};
-    return buttons_n[layout];
+    return buttons_n[get_gwm_current_layout()];
 }
 
 void change_title(const Frame *frame, const char *title)

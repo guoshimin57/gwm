@@ -171,7 +171,7 @@ void iconify_client(WM *wm, Client *c)
 static Client *get_icon_client_head(WM *wm)
 {
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
+        if(is_on_cur_desktop(WIDGET_WIN(c)) && is_iconic_client(c))
             return list_prev_entry(c, Client, list);
     return list_last_entry(&wm->clients->list, Client, list);
 }
@@ -199,14 +199,14 @@ void deiconify_client(WM *wm, Client *c)
 void iconify_all_clients(WM *wm)
 {
     list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
+        if(is_on_cur_desktop(WIDGET_WIN(c)) && !is_iconic_client(c))
             iconify_client(wm, c);
 }
 
 void deiconify_all_clients(WM *wm)
 {
     list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
+        if(is_on_cur_desktop(WIDGET_WIN(c)) && is_iconic_client(c))
             deiconify_client(wm, c);
 }
 

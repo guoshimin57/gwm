@@ -49,7 +49,7 @@ void update_layout(WM *wm)
         case TILE: set_tile_layout(wm); break;
     }
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(WIDGET_WIN(c)))
             move_resize_client(c, NULL);
 }
 
@@ -155,7 +155,7 @@ static void set_rect_of_main_win_for_preview(WM *wm)
     w=ww/cols, h=wh/rows;
 
     list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && !c->owner && (n--)>=0)
+        if(is_on_cur_desktop(WIDGET_WIN(c)) && !c->owner && (n--)>=0)
             set_client_rect_by_outline(c, wx+(n%cols)*w, wy+(n/cols)*h, w, h);
 }
 
@@ -163,7 +163,7 @@ static void set_stack_layout(WM *wm)
 {
     list_for_each_entry(Client, c, &wm->clients->list, list)
     {
-        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
+        if(is_on_cur_desktop(WIDGET_WIN(c)) && !is_iconic_client(c))
         {
             if(is_win_state_max(c) || c->win_state.fullscreen)
                 fix_win_rect_by_state(wm, c);
@@ -186,7 +186,7 @@ static void fix_place_type_for_tile(WM *wm)
     int n=0, m=DESKTOP(wm)->n_main_max;
     list_for_each_entry(Client, c, &wm->clients->list, list)
     {
-        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c) && !c->owner)
+        if(is_on_cur_desktop(WIDGET_WIN(c)) && !is_iconic_client(c) && !c->owner)
         {
             if(c->place_type==TILE_LAYER_MAIN && ++n>m)
                 c->place_type=TILE_LAYER_SECOND;
@@ -233,14 +233,14 @@ static void set_rect_of_transient_win_for_tiling(WM *wm)
 {
     XSizeHints hint;
     list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && c->owner)
+        if(is_on_cur_desktop(WIDGET_WIN(c)) && c->owner)
             hint=get_size_hint(WIDGET_WIN(c)), fix_win_pos(wm, c, &hint);
 }
 
 static void set_rect_of_float_win_for_tiling(WM *wm)
 {
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && c->place_type==FLOAT_LAYER)
+        if(is_on_cur_desktop(WIDGET_WIN(c)) && c->place_type==FLOAT_LAYER)
             fix_win_rect(wm, c);
 }
 
@@ -263,7 +263,7 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
 static void update_titlebars_layout(WM *wm)
 {
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        if(c->show_titlebar && is_on_cur_desktop(c->desktop_mask))
+        if(c->show_titlebar && is_on_cur_desktop(WIDGET_WIN(c)))
             update_titlebar_layout(c->frame);
 }
 
@@ -305,14 +305,14 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
 
     if(*cl == PREVIEW)
         list_for_each_entry(Client, c, &wm->clients->list, list)
-            if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
+            if(is_on_cur_desktop(WIDGET_WIN(c)) && is_iconic_client(c))
             {
                 update_net_wm_state(WIDGET_WIN(c), c->win_state);
                 hide_widget(WIDGET(c->frame));
             }
     if(arg.layout == PREVIEW)
         list_for_each_entry(Client, c, &wm->clients->list, list)
-            if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
+            if(is_on_cur_desktop(WIDGET_WIN(c)) && is_iconic_client(c))
             {
                 c->win_state.hidden=0;
                 update_net_wm_state(WIDGET_WIN(c), c->win_state);
@@ -322,12 +322,12 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
 
     if(*cl==TILE && arg.layout==STACK)
         list_for_each_entry(Client, c, &wm->clients->list, list)
-            if(is_on_cur_desktop(c->desktop_mask) && is_normal_layer(c->place_type))
+            if(is_on_cur_desktop(WIDGET_WIN(c)) && is_normal_layer(c->place_type))
                 c->place_type=FLOAT_LAYER;
 
     if(*cl==STACK && arg.layout==TILE)
         list_for_each_entry(Client, c, &wm->clients->list, list)
-            if(is_on_cur_desktop(c->desktop_mask) && c->place_type==FLOAT_LAYER)
+            if(is_on_cur_desktop(WIDGET_WIN(c)) && c->place_type==FLOAT_LAYER)
                 c->place_type=TILE_LAYER_MAIN;
 
     *pl=*cl, *cl=arg.layout;

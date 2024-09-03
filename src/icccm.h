@@ -36,7 +36,7 @@ void set_input_focus(Window win, const XWMHints *hint);
 bool has_focus_hint(const XWMHints *hint);
 bool send_wm_protocol_msg(Atom protocol, Window win);
 bool has_spec_wm_protocol(Window win, Atom protocol);
-bool set_urgency_hint(Window win, XWMHints *h, bool urg);
+void set_urgency_hint(Window win, XWMHints *h, bool urg);
 bool is_iconic_state(Window win);
 void close_win(Window win);
 char *get_wm_name(Window win);

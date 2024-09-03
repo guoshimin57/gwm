@@ -73,24 +73,15 @@ char *get_text_prop(Window win, Atom atom)
     return result;
 }
 
-bool get_cardinal_prop(Window win, Atom prop, CARD32 *result)
+CARD32 *get_cardinal_prop(Window win, Atom prop)
 {
-    CARD32 *p=(CARD32 *)get_prop(win, prop, NULL);
-    if(!p)
-        return false;
-    *result=*p;
-    XFree(p);
-    return true;
+    return (CARD32 *)get_prop(win, prop, NULL);
 }
 
-bool get_atom_prop(Window win, Atom prop, Atom *result)
+Atom get_atom_prop(Window win, Atom prop)
 {
     Atom *p=(Atom *)get_prop(win, prop, NULL);
-    if(!p)
-        return false;
-    *result=*p;
-    XFree(p);
-    return true;
+    return p ? *p : 0;
 }
 
 void replace_atom_prop(Window win, Atom prop, const Atom *values, int n)
@@ -137,16 +128,13 @@ void copy_prop(Window dest, Window src)
 
 void set_gwm_current_layout(long cur_layout)
 {
-    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT],
-        &cur_layout, 1);
+    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], &cur_layout, 1);
 }
 
-bool get_gwm_current_layout(int *cur_layout)
+int get_gwm_current_layout(void)
 {
-    CARD32 cur;
-    bool flag=get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], &cur);
-    *cur_layout=cur;
-    return flag;
+    CARD32 *p=get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT]);
+    return p ? *p : 0;
 }
 
 void set_gwm_desktop_mask(Window win, long mask)
@@ -154,9 +142,10 @@ void set_gwm_desktop_mask(Window win, long mask)
     replace_cardinal_prop(win, gwm_atoms[GWM_DESKTOP_MASK], &mask, 1);
 }
 
-bool get_gwm_desktop_mask(Window win, CARD32 *mask)
+unsigned int get_gwm_desktop_mask(Window win)
 {
-    return get_cardinal_prop(win, gwm_atoms[GWM_DESKTOP_MASK], mask);
+    CARD32 *p=get_cardinal_prop(win, gwm_atoms[GWM_DESKTOP_MASK]);
+    return p ? *p : 0;
 }
 
 void request_layout_update(void)

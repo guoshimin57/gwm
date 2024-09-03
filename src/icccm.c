@@ -205,15 +205,13 @@ bool has_spec_wm_protocol(Window win, Atom protocol)
     return false;
 }
 
-bool set_urgency_hint(Window win, XWMHints *h, bool urg)
+void set_urgency_hint(Window win, XWMHints *h, bool urg)
 {
     if(!h || urg==!!(h->flags & XUrgencyHint)) // 避免重復設置
-        return false;
+        return ;
 
     h->flags = urg ? (h->flags | XUrgencyHint) : (h->flags & ~XUrgencyHint);
-
     XSetWMHints(xinfo.display, win, h);
-    return true;
 }
 
 bool is_iconic_state(Window win)
