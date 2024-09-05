@@ -112,7 +112,7 @@ unsigned int get_net_current_desktop(void);
 unsigned int get_net_wm_desktop(Window win);
 void set_net_desktop_names(const char **names, int n);
 void set_net_active_window(Window act_win);
-void set_net_workarea(int x, int y, int w, int h, int desktop_n);
+void set_net_workarea(int x, int y, int w, int h, int ndesktop);
 void set_net_supporting_wm_check(Window check_win, const char *wm_name);
 void set_net_showing_desktop(bool show);
 void set_net_wm_allowed_actions(Window win);

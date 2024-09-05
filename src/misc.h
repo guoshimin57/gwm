@@ -58,8 +58,8 @@ int base_n_ceil(int x, int n);
 char *get_title_text(Window win, const char *fallback);
 char *get_icon_title_text(Window win, const char *fallback);
 bool is_match_button_release(XEvent *oe, XEvent *ne);
-bool is_on_desktop_n(Window win, unsigned int n);
-bool is_on_cur_desktop(Window win);
+bool is_on_desktop_n(unsigned int n, unsigned int mask);
+bool is_on_cur_desktop(unsigned int mask);
 unsigned int get_desktop_mask(unsigned int desktop_n);
 
 #endif

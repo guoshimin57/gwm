@@ -331,23 +331,23 @@ void destroy_taskbar(void)
     destroy_widget(WIDGET(taskbar)), taskbar=NULL;
 }
 
-void set_taskbar_urgency(Window cwin, bool urg)
+void set_taskbar_urgency(unsigned int desktop_mask)
 {
     unsigned int cur_desktop=get_net_current_desktop();
-    int incr = (urg ? 1 : -1);
+    int incr = is_on_cur_desktop(desktop_mask) ? -1 : 1;
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        if( i!=cur_desktop && is_on_desktop_n(cwin, i+1)
+        if( i!=cur_desktop && is_on_desktop_n(i, desktop_mask)
             && taskbar->urgency_n[i]+incr >= 0)
             taskbar->urgency_n[i] += incr;
     update_taskbar_buttons_bg();
 }
 
-void set_taskbar_attention(Window cwin, bool attent)
+void set_taskbar_attention(unsigned int desktop_mask)
 {
     unsigned int cur_desktop=get_net_current_desktop();
-    int incr = attent ? 1 : -1;
+    int incr = is_on_cur_desktop(desktop_mask) ? -1 : 1;
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        if( i!=cur_desktop && is_on_desktop_n(cwin, (i+1))
+        if( i!=cur_desktop && is_on_desktop_n(i, desktop_mask)
             && taskbar->attent_n[i]+incr >= 0)
             taskbar->attent_n[i] += incr;
     update_taskbar_buttons_bg();

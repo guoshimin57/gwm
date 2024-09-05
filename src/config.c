@@ -45,7 +45,7 @@
  * 轉換鍵符號的對應關系，當功能轉換鍵爲0時，表示不綁定任何功能轉換鍵。下同。
  * 鍵符號的定義詳見<X11/keysymdef.h>和<X11/XF86keysym.h>。下同。
  * 可綁定的函數詳見func.h，相應的函數參數詳見gwm.h。下同。
- * n=0表示所有虛擬桌面，僅適用於attach_to_all_desktops。
+ * n=~0表示所有虛擬桌面，僅適用於attach_to_all_desktops。
  * 格式：
  *     功能轉換鍵掩碼     鍵符號 要綁定的函數             函數的參數
  */
@@ -120,10 +120,10 @@ static const Keybind keybind[] =
     {WM_KEY,        XK_Print,     print_win,                   {0}},
     {WM_KEY,        XK_r,         show_cmd_entry,              {0}},
     {WM_KEY,        XK_Delete,    quit_wm,                     {0}},
-    DESKTOP_KEYBIND(XK_0, 0),
-    DESKTOP_KEYBIND(XK_1, 1), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */
-    DESKTOP_KEYBIND(XK_2, 2),
-    DESKTOP_KEYBIND(XK_3, 3),
+    DESKTOP_KEYBIND(XK_0, ~0),
+    DESKTOP_KEYBIND(XK_1, 0), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */
+    DESKTOP_KEYBIND(XK_2, 1),
+    DESKTOP_KEYBIND(XK_3, 2),
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 
@@ -147,9 +147,9 @@ static const Keybind keybind[] =
 static const Buttonbind buttonbind[] =
 {
     WM_BUTTONBIND,
+    DESKTOP_BUTTONBIND(0), 
     DESKTOP_BUTTONBIND(1), 
     DESKTOP_BUTTONBIND(2), 
-    DESKTOP_BUTTONBIND(3), 
 
     /* 構件標識        功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數 */
     {DESKTOP_BUTTON,       WM_KEY, Button2,  close_all_clients,          {0}},
@@ -170,8 +170,8 @@ static const Buttonbind buttonbind[] =
  *     WM_NAME(STRING) = "標題"
  *     _NET_WM_NAME(UTF8_STRING) = "標題"
  * 當客戶程序類型和客戶程序名稱、標題取NULL或"*"時，表示匹配任何字符串。
- * 一個窗口可以歸屬多個桌面，桌面從1開始編號，桌面n的掩碼計算公式：1<<(n-1)。
- * 譬如，桌面1的掩碼是1<<(1-1)，即1；桌面2的掩碼是1<<(2-1)，即2；1&2即3表示窗口歸屬桌面1和2。
+ * 一個窗口可以歸屬多個桌面，桌面從0開始編號，桌面n的掩碼計算公式：1<<n。
+ * 譬如，桌面0的掩碼是1<<0，即1；桌面1的掩碼是1<<1，即2；1&2即3表示窗口歸屬桌面0和1。
  * 若掩碼爲0，表示窗口歸屬默認桌面。
  */
 static const Rule rule[] =
@@ -271,9 +271,9 @@ static void config_title_button_text(void)
 static void config_taskbar_button_text(void)
 {
     /*                      任務欄按鈕類型   按鈕文字 */
-    SET_TASKBAR_BUTTON_TEXT(DESKTOP1_BUTTON, "1");
-    SET_TASKBAR_BUTTON_TEXT(DESKTOP2_BUTTON, "2");
-    SET_TASKBAR_BUTTON_TEXT(DESKTOP3_BUTTON, "3");
+    SET_TASKBAR_BUTTON_TEXT(DESKTOP0_BUTTON, "1");
+    SET_TASKBAR_BUTTON_TEXT(DESKTOP1_BUTTON, "2");
+    SET_TASKBAR_BUTTON_TEXT(DESKTOP2_BUTTON, "3");
     SET_TASKBAR_BUTTON_TEXT(PREVIEW_BUTTON,  "▦");
     SET_TASKBAR_BUTTON_TEXT(STACK_BUTTON,    "▣");
     SET_TASKBAR_BUTTON_TEXT(TILE_BUTTON,     "▥");
@@ -359,9 +359,9 @@ static void config_tooltip(void)
     tooltip[ICON_BUTTON]     = _("切換到圖符區域");
     tooltip[MAX_BUTTON]      = _("最大化/還原窗口");
     tooltip[CLOSE_BUTTON]    = _("關閉窗口");
-    tooltip[DESKTOP1_BUTTON] = _("切換到虛擬桌面1");
-    tooltip[DESKTOP2_BUTTON] = _("切換到虛擬桌面2");
-    tooltip[DESKTOP3_BUTTON] = _("切換到虛擬桌面3");
+    tooltip[DESKTOP0_BUTTON] = _("切換到虛擬桌面1");
+    tooltip[DESKTOP1_BUTTON] = _("切換到虛擬桌面2");
+    tooltip[DESKTOP2_BUTTON] = _("切換到虛擬桌面3");
     tooltip[PREVIEW_BUTTON]  = _("切換到預覽模式");
     tooltip[STACK_BUTTON]    = _("切換到堆疊模式");
     tooltip[TILE_BUTTON]     = _("切換到平鋪模式");
@@ -383,7 +383,7 @@ static void config_misc(void)
     cfg->screen_saver_time_out=600;
     cfg->screen_saver_interval=600;
     cfg->hover_time=300;
-    cfg->default_cur_desktop=1;
+    cfg->default_cur_desktop=0;
     cfg->default_n_main_max=1;
     cfg->act_center_col=4;
     cfg->font_pad_ratio=0.25;

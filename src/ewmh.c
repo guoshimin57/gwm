@@ -131,7 +131,6 @@ void set_net_desktop_viewport(int x, int y)
     replace_cardinal_prop(xinfo.root_win, prop, pos, 2);
 }
 
-/* EWMH桌面編號從0起算，gwm則從1起算 */
 void set_net_current_desktop(unsigned int cur_desktop)
 {
     long cur=cur_desktop;
@@ -147,8 +146,7 @@ unsigned int get_net_current_desktop(void)
 }
 
 /* 因爲EWMH規定窗口要麼在某個桌面，要麼在所有窗口，不能同時在幾個桌面上，
- * 而gwm支持後者，相應的函數爲set_gwm_desktop_mask。也正因爲這個原因，不
- * 創建與get_net_wm_desktop對應的set_net_wm_desktop。
+ * 而gwm支持後者，故不創建與get_net_wm_desktop對應的set_net_wm_desktop。
  */
 unsigned int get_net_wm_desktop(Window win)
 {
@@ -173,14 +171,14 @@ void set_net_active_window(Window act_win)
     replace_window_prop(xinfo.root_win, prop, &act_win, 1);
 }
 
-void set_net_workarea(int x, int y, int w, int h, int desktop_n)
+void set_net_workarea(int x, int y, int w, int h, int ndesktop)
 {
     Atom prop=ewmh_atoms[NET_WORKAREA];
-    long rect[DESKTOP_N][4];
+    long rect[ndesktop][4];
 
-    for(size_t i=0; i<DESKTOP_N; i++)
+    for(int i=0; i<ndesktop; i++)
         rect[i][0]=x, rect[i][1]=y, rect[i][2]=w, rect[i][3]=h;
-    replace_cardinal_prop(xinfo.root_win, prop, rect[0], desktop_n*4);
+    replace_cardinal_prop(xinfo.root_win, prop, rect[0], ndesktop*4);
 }
 
 void set_net_supporting_wm_check(Window check_win, const char *wm_name)

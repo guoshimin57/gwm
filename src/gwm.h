@@ -62,7 +62,7 @@
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     PropertyChangeMask|ButtonPressMask|CROSSING_MASK|ExposureMask|KeyPressMask)
 
-#define DESKTOP(wm) (wm->desktop[wm->cur_desktop-1])
+#define DESKTOP(wm) (wm->desktop[get_net_current_desktop()])
 #define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client
 
 typedef struct desktop_tag Desktop;
@@ -120,7 +120,6 @@ typedef enum // 窗口疊次序分層類型
 
 struct wm_tag // 窗口管理器相關信息
 {
-    unsigned int cur_desktop; // 當前虛擬桌面編號，從1開始編號
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
     Rect workarea; // 工作區坐標和尺寸
     Window wm_check_win; // WM檢測窗口
@@ -155,7 +154,7 @@ union func_arg_tag // 函數參數類型
     Pointer_act pointer_act; // 窗口操作類型
     Max_way max_way; // 窗口最大化的方式
     int n; // 表示數量
-    unsigned int desktop_n; // 虛擬桌面編號，從1開始編號
+    unsigned int desktop_n; // 虛擬桌面編號，從0開始編號
     Place_type place_type; // 窗口位置類型
     double change_ratio; // 變化率
 };

@@ -18,7 +18,7 @@
 
 typedef enum // 與gwm自定義標識符名稱表(gwm_atom_names)相應的ID
 {
-    GWM_CURRENT_LAYOUT, GWM_UPDATE_LAYOUT, GWM_WIDGET_TYPE, GWM_DESKTOP_MASK,
+    GWM_CURRENT_LAYOUT, GWM_UPDATE_LAYOUT, GWM_WIDGET_TYPE,
     GWM_MAIN_COLOR_NAME, GWM_ATOM_N
 } GWM_atom_id;
 
@@ -35,8 +35,6 @@ void replace_cardinal_prop(Window win, Atom prop, const long *values, int n);
 void copy_prop(Window dest, Window src);
 void set_gwm_current_layout(long cur_layout);
 int get_gwm_current_layout(void);
-void set_gwm_desktop_mask(Window win, long mask);
-unsigned int get_gwm_desktop_mask(Window win);
 void request_layout_update(void);
 char *get_main_color_name(void);
 

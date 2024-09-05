@@ -160,7 +160,7 @@ void iconify_client(WM *wm, Client *c)
         hide_widget(WIDGET(p->frame));
         if(p == CUR_FOC_CLI(wm))
         {
-            focus_client(wm, wm->cur_desktop, NULL);
+            focus_client(wm, get_net_current_desktop(), NULL);
             update_frame_bg(p->frame);
         }
     }
@@ -171,7 +171,7 @@ void iconify_client(WM *wm, Client *c)
 static Client *get_icon_client_head(WM *wm)
 {
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(WIDGET_WIN(c)) && is_iconic_client(c))
+        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             return list_prev_entry(c, Client, list);
     return list_last_entry(&wm->clients->list, Client, list);
 }
@@ -190,7 +190,7 @@ void deiconify_client(WM *wm, Client *c)
             p->win_state.hidden=0;
             update_net_wm_state(WIDGET_WIN(p), p->win_state);
             show_widget(WIDGET(p->frame));
-            focus_client(wm, wm->cur_desktop, p);
+            focus_client(wm, get_net_current_desktop(), p);
         }
     }
     request_layout_update();
@@ -199,14 +199,14 @@ void deiconify_client(WM *wm, Client *c)
 void iconify_all_clients(WM *wm)
 {
     list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(WIDGET_WIN(c)) && !is_iconic_client(c))
+        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
             iconify_client(wm, c);
 }
 
 void deiconify_all_clients(WM *wm)
 {
     list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(WIDGET_WIN(c)) && is_iconic_client(c))
+        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             deiconify_client(wm, c);
 }
 

@@ -14,7 +14,7 @@
 
 static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 {
-    "GWM_CURRENT_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE", "GWM_DESKTOP_MASK",
+    "GWM_CURRENT_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE",
     "GWM_MAIN_COLOR_NAME"
 };
 
@@ -134,17 +134,6 @@ void set_gwm_current_layout(long cur_layout)
 int get_gwm_current_layout(void)
 {
     CARD32 *p=get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT]);
-    return p ? *p : 0;
-}
-
-void set_gwm_desktop_mask(Window win, long mask)
-{
-    replace_cardinal_prop(win, gwm_atoms[GWM_DESKTOP_MASK], &mask, 1);
-}
-
-unsigned int get_gwm_desktop_mask(Window win)
-{
-    CARD32 *p=get_cardinal_prop(win, gwm_atoms[GWM_DESKTOP_MASK]);
     return p ? *p : 0;
 }
 

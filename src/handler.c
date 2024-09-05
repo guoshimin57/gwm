@@ -123,7 +123,7 @@ static void handle_button_press(WM *wm, XEvent *e)
             if(id == CLIENT_WIN)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
             if(c && c!=CUR_FOC_CLI(wm))
-                focus_client(wm, wm->cur_desktop, c);
+                focus_client(wm, get_net_current_desktop(), c);
             if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc) && b->func)
                 b->func(wm, e, b->arg);
         }
@@ -172,7 +172,7 @@ static void handle_client_message(WM *wm, XEvent *e)
     Client *c=win_to_client(wm->clients, win);
 
     if(is_spec_ewmh_atom(type, NET_CURRENT_DESKTOP))
-        focus_desktop_n(wm, e->xclient.data.l[0]+1);
+        focus_desktop_n(wm, e->xclient.data.l[0]);
     else if(is_spec_ewmh_atom(type, NET_SHOWING_DESKTOP))
         toggle_showing_desktop_mode(wm, e->xclient.data.l[0]);
     else if(c)
@@ -225,12 +225,13 @@ static void change_net_wm_state_for_modal(WM *wm, Client *c, long act)
 
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act)
 {
+    UNUSED(wm);
     bool add=SHOULD_ADD_STATE(c, act, sticky);
 
     if(add)
-        set_gwm_desktop_mask(WIDGET_WIN(c), ~0U);
+        c->desktop_mask=~0U;
     else
-        set_gwm_desktop_mask(WIDGET_WIN(c), get_desktop_mask(wm->cur_desktop));
+        c->desktop_mask=get_desktop_mask(get_net_current_desktop());
     request_layout_update();
     c->win_state.sticky=add;
 }
@@ -289,9 +290,8 @@ static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
-    Window win=WIDGET_WIN(c);
     c->win_state.attent=SHOULD_ADD_STATE(c, act, attent);
-    set_taskbar_attention(win, !is_on_cur_desktop(win));
+    set_taskbar_attention(c->desktop_mask);
 }
 
 static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
@@ -299,9 +299,9 @@ static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
     bool add=SHOULD_ADD_STATE(c, act, focused);
 
     if(add)
-        focus_client(wm, wm->cur_desktop, c);
+        focus_client(wm, get_net_current_desktop(), c);
     else
-        focus_client(wm, wm->cur_desktop, NULL);
+        focus_client(wm, get_net_current_desktop(), NULL);
     c->win_state.focused=add;
 }
 
@@ -313,8 +313,8 @@ static void activate_win(WM *wm, Window win, unsigned long src)
 
     if(src == 2) // 源自分頁器
     {
-        if(is_on_cur_desktop(WIDGET_WIN(c)))
-            focus_client(wm, wm->cur_desktop, c);
+        if(is_on_cur_desktop(c->desktop_mask))
+            focus_client(wm, get_net_current_desktop(), c);
         else
             set_urgency_hint(win, c->wm_hint, true);
     }
@@ -329,10 +329,10 @@ static void change_desktop(WM *wm, Window win, unsigned int desktop)
     if(!c || c==wm->clients)
         return;
 
-    if(desktop == 0xFFFFFFFF)
+    if(desktop == ~0U)
         attach_to_desktop_all(wm, c);
     else
-        move_to_desktop_n(wm, c, desktop+1);
+        move_to_desktop_n(wm, c, desktop);
 }
 
 static void handle_config_request(WM *wm, XEvent *e)
@@ -377,7 +377,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     Widget *widget=win_to_widget(win);
 
     if(cfg->focus_mode==ENTER_FOCUS && c)
-        focus_client(wm, wm->cur_desktop, c);
+        focus_client(wm, get_net_current_desktop(), c);
     if( is_layout_adjust_area(wm, win, x)
         && get_clients_n(wm->clients, TILE_LAYER_MAIN, false, false, false))
         set_cursor(win, ADJUST_LAYOUT_RATIO);
@@ -601,7 +601,7 @@ static void handle_wm_hints_notify(WM *wm, Window win)
     if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
         set_state_attent(c, true);
     if(nh && nh->flags & XUrgencyHint)
-        set_taskbar_urgency(WIDGET_WIN(c), !is_on_cur_desktop(WIDGET_WIN(c)));
+        set_taskbar_urgency(c->desktop_mask);
     update_taskbar_buttons_bg();
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;

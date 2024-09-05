@@ -151,7 +151,7 @@ void resize_widget(Widget *widget, int w, int h)
 
 void move_resize_widget(Widget *widget, int x, int y, int w, int h)
 {
-    widget->x=x, widget->y=y, widget->w=w, widget->h=h;;
+    widget->x=x, widget->y=y, widget->w=w, widget->h=h;
     XMoveResizeWindow(xinfo.display, widget->win, x, y, w, h);
 }
 

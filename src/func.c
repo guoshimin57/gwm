@@ -132,7 +132,7 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     list_for_each_entry(Client, c, &wm->clients->list, list)
-        if(is_on_cur_desktop(WIDGET_WIN(c)))
+        if(is_on_cur_desktop(c->desktop_mask))
             close_win(WIDGET_WIN(c));
 }
 
@@ -141,7 +141,8 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 void next_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    focus_client(wm, wm->cur_desktop, get_prev_client(wm->clients, CUR_FOC_CLI(wm)));
+    unsigned int cur_desktop=get_net_current_desktop();
+    focus_client(wm, cur_desktop, get_prev_client(wm->clients, CUR_FOC_CLI(wm)));
 }
 
 /* 取得存儲次序上在當前客戶（或其亞組長）之後的客戶。因使用頭插法存儲客戶，
@@ -149,7 +150,8 @@ void next_client(WM *wm, XEvent *e, Func_arg arg)
 void prev_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    focus_client(wm, wm->cur_desktop, get_next_client(wm->clients, CUR_FOC_CLI(wm)));
+    unsigned int cur_desktop=get_net_current_desktop();
+    focus_client(wm, cur_desktop, get_next_client(wm->clients, CUR_FOC_CLI(wm)));
 }
 
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
@@ -158,7 +160,7 @@ void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
     if(DESKTOP(wm)->cur_layout == TILE)
     {
         int *m=&DESKTOP(wm)->n_main_max;
-        *m = *m+arg.desktop_n>=1 ? *m+arg.desktop_n : 1;
+        *m = *m+arg.n>=1 ? *m+arg.n : 1;
         request_layout_update();
     }
 }
@@ -210,13 +212,15 @@ void focus_desktop(WM *wm, XEvent *e, Func_arg arg)
 void next_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    focus_desktop_n(wm, wm->cur_desktop<DESKTOP_N ? wm->cur_desktop+1 : 1);
+    unsigned int cur_desktop=get_net_current_desktop();
+    focus_desktop_n(wm, cur_desktop+1<DESKTOP_N ? cur_desktop+1 : 1);
 }
 
 void prev_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    focus_desktop_n(wm, wm->cur_desktop>1 ? wm->cur_desktop-1 : DESKTOP_N);
+    unsigned int cur_desktop=get_net_current_desktop();
+    focus_desktop_n(wm, cur_desktop>0 ? cur_desktop-1 : DESKTOP_N-1);
 }
 
 void move_to_desktop(WM *wm, XEvent *e, Func_arg arg)

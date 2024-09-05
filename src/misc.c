@@ -128,17 +128,17 @@ bool is_match_button_release(XEvent *oe, XEvent *ne)
     return (ne->type==ButtonRelease && ne->xbutton.button==oe->xbutton.button);
 }
 
-bool is_on_desktop_n(Window win, unsigned int n)
+bool is_on_desktop_n(unsigned int n, unsigned int mask)
 {
-    return (get_gwm_desktop_mask(win) & get_desktop_mask(n));
+    return (mask & get_desktop_mask(n));
 }
 
-bool is_on_cur_desktop(Window win)
+bool is_on_cur_desktop(unsigned int mask)
 {
-    return is_on_desktop_n(win, get_net_current_desktop()+1);
+    return is_on_desktop_n(get_net_current_desktop(), mask);
 }
 
 unsigned int get_desktop_mask(unsigned int desktop_n)
 {
-    return 1<<(desktop_n-1);
+    return desktop_n==~0U ? desktop_n : 1U<<desktop_n;
 }
