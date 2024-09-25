@@ -26,7 +26,7 @@
 #include "widget.h"
 #include "handler.h"
 
-static void ignore_event(WM *wm, XEvent *e);
+static void handle_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
 static void handle_button_release(WM *wm, XEvent *e);
 static void unmap_for_click(WM *wm, Widget_id id);
@@ -65,40 +65,43 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom);
 static void handle_wm_transient_for_notify(WM *wm, Window win);
 static void handle_selection_notify(WM *wm, XEvent *e);
 
+static event_handler_type event_handlers[LASTEvent]; // 事件處理器數組
+
 void handle_events(WM *wm)
 {
 	XEvent e;
     XSync(xinfo.display, False);
     while(run_flag && !XNextEvent(xinfo.display, &e))
-        if(!XFilterEvent(&e, None))
-            wm->event_handlers[e.type](wm, &e);
+        handle_event(wm, &e);
     clear_wm(wm);
+}
+
+static void handle_event(WM *wm, XEvent *e)
+{
+    if(!XFilterEvent(e, None) && event_handlers[e->type])
+        event_handlers[e->type](wm, e);
 }
 
 void reg_event_handlers(WM *wm)
 {
     for(int i=0; i<LASTEvent; i++)
-        wm->event_handlers[i]=ignore_event;
+        event_handlers[i]=NULL;
+    wm->handle_event=handle_event;
 
-    wm->event_handlers[ButtonPress]      = handle_button_press;
-    wm->event_handlers[ButtonRelease]    = handle_button_release;
-    wm->event_handlers[ClientMessage]    = handle_client_message;
-    wm->event_handlers[ConfigureRequest] = handle_config_request;
-    wm->event_handlers[EnterNotify]      = handle_enter_notify;
-    wm->event_handlers[Expose]           = handle_expose;
-    wm->event_handlers[FocusIn]          = handle_focus_in;
-    wm->event_handlers[FocusOut]         = handle_focus_out;
-    wm->event_handlers[KeyPress]         = handle_key_press;
-    wm->event_handlers[LeaveNotify]      = handle_leave_notify;
-    wm->event_handlers[MapRequest]       = handle_map_request;
-    wm->event_handlers[UnmapNotify]      = handle_unmap_notify;
-    wm->event_handlers[PropertyNotify]   = handle_property_notify;
-    wm->event_handlers[SelectionNotify]  = handle_selection_notify;
-}
-
-static void ignore_event(WM *wm, XEvent *e)
-{
-    UNUSED(wm), UNUSED(e);
+    event_handlers[ButtonPress]      = handle_button_press;
+    event_handlers[ButtonRelease]    = handle_button_release;
+    event_handlers[ClientMessage]    = handle_client_message;
+    event_handlers[ConfigureRequest] = handle_config_request;
+    event_handlers[EnterNotify]      = handle_enter_notify;
+    event_handlers[Expose]           = handle_expose;
+    event_handlers[FocusIn]          = handle_focus_in;
+    event_handlers[FocusOut]         = handle_focus_out;
+    event_handlers[KeyPress]         = handle_key_press;
+    event_handlers[LeaveNotify]      = handle_leave_notify;
+    event_handlers[MapRequest]       = handle_map_request;
+    event_handlers[UnmapNotify]      = handle_unmap_notify;
+    event_handlers[PropertyNotify]   = handle_property_notify;
+    event_handlers[SelectionNotify]  = handle_selection_notify;
 }
 
 static void handle_button_press(WM *wm, XEvent *e)
@@ -151,7 +154,7 @@ static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e)
 {
     return (b->widget_id == id
         && b->button == e->xbutton.button
-        && is_equal_modifier_mask( b->modifier, e->xbutton.state));
+        && is_equal_modifier_mask(b->modifier, e->xbutton.state));
 }
 
 static void handle_button_release(WM *wm, XEvent *e)
@@ -413,7 +416,7 @@ static void handle_pointer_hover(WM *wm, const Widget *widget)
         if(XPending(xinfo.display))
         {
             XNextEvent(xinfo.display, &ev);
-                wm->event_handlers[ev.type](wm, &ev);
+                handle_event(wm, &ev);
             if(ev.type == MotionNotify && ev.xmotion.window==widget->win)
                 t=t0, show=false;
             else if(ev.type==LeaveNotify && ev.xcrossing.window==widget->win)

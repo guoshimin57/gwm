@@ -173,14 +173,8 @@ static void set_default_place_type(Client *c)
     else if(c->win_type.dock)        c->place_type = DOCK_LAYER;
     else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
     else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
-    else if(is_win_state_max(c))     c->place_type = FLOAT_LAYER;
+    else if(is_win_state_max(c->win_state)) c->place_type = FLOAT_LAYER;
     else                             c->place_type = TILE_LAYER_MAIN;  
-}
-
-void set_win_rect_by_frame(Client *c)
-{
-    Rect r=get_frame_rect_by_win(c->frame, WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c));
-    WIDGET_X(c)=r.x, WIDGET_Y(c)=r.y, WIDGET_W(c)=r.w, WIDGET_H(c)=r.h;
 }
 
 static void set_default_win_rect(Client *c)
@@ -529,6 +523,11 @@ bool is_tile_client(Client *c)
         && is_normal_layer(c->place_type);
 }
 
+bool is_tiled_client(Client *c)
+{
+    return get_gwm_current_layout()==TILE && is_tile_client(c);
+}
+
 /* 獲取當前桌面按從早到遲的映射順序排列的客戶窗口列表 */
 Window *get_client_win_list(Client *clients, int *n)
 {
@@ -645,6 +644,15 @@ void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
         update_frame_bg(c->frame);
 }
 
+void move_resize_client(Client *c, const Delta_rect *d)
+{
+    if(d)
+        WIDGET_X(c)+=d->dx, WIDGET_Y(c)+=d->dy, WIDGET_W(c)+=d->dw, WIDGET_H(c)+=d->dh;
+    set_frame_rect_by_client(c);
+    move_resize_frame(c->frame, WIDGET_X(c->frame), WIDGET_Y(c->frame), WIDGET_W(c->frame), WIDGET_H(c->frame));
+    XResizeWindow(xinfo.display, WIDGET_WIN(c), WIDGET_W(c), WIDGET_H(c));
+}
+
 /* 生成帶表頭結點的雙向循環鏈表 */
 void create_clients(WM *wm)
 {
@@ -667,4 +675,33 @@ void create_clients(WM *wm)
         restack_win(wm, child[i]);
     }
     XFree(child);
+}
+
+void set_client_rect_by_outline(Client *c, int x, int y, int w, int h)
+{
+    int bw=WIDGET_BORDER_W(c->frame);
+    set_widget_rect(WIDGET(c->frame), x, y, w-2*bw, h-2*bw);
+    set_client_rect_by_frame(c);
+}
+
+void set_frame_rect_by_client(Client *c)
+{
+    int bw=WIDGET_BORDER_W(c->frame),
+        bh=get_frame_titlebar_height(c->frame),
+        x=WIDGET_X(c)-bw,
+        y=WIDGET_Y(c)-bh-bw,
+        w=WIDGET_W(c),
+        h=WIDGET_H(c)+bh;
+    set_widget_rect(WIDGET(c->frame), x, y, w, h);
+}
+
+void set_client_rect_by_frame(Client *c)
+{
+    int bw=WIDGET_BORDER_W(c->frame),
+        bh=get_frame_titlebar_height(c->frame),
+        x=WIDGET_X(c->frame)+bw,
+        y=WIDGET_Y(c->frame)+bh+bw,
+        w=WIDGET_W(c->frame),
+        h=WIDGET_H(c->frame)-bh;
+    set_widget_rect(WIDGET(c), x, y, w, h);
 }

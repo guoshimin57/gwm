@@ -41,7 +41,6 @@ struct client_tag // 客戶窗口相關信息
 
 void add_client(WM *wm, Window win);
 void set_all_net_client_list(Client *clients);
-void set_win_rect_by_frame(Client *c);
 Rect get_title_area_rect(Client *c);
 int get_clients_n(Client *clients, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop);
 bool is_iconic_client(Client *c);
@@ -62,6 +61,7 @@ void save_place_info_of_clients(Client *clients);
 void restore_place_info_of_client(Client *c);
 void restore_place_info_of_clients(Client *clients);
 bool is_tile_client(Client *c);
+bool is_tiled_client(Client *c);
 Window *get_client_win_list(Client *clients, int *n);
 Window *get_client_win_list_stacking(Client *clients, int *n);
 void set_state_attent(Client *c, bool attent);
@@ -69,8 +69,12 @@ bool is_wm_win(Client *clients, Window win, bool before_wm);
 void restack_win(WM *wm, Window win);
 void update_clients_bg(WM *wm);
 void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);
+void move_resize_client(Client *c, const Delta_rect *d);
 void create_clients(WM *wm);
 void add_subgroup(Client *head, Client *subgroup_leader);
 void del_subgroup(Client *subgroup_leader);
+void set_client_rect_by_outline(Client *c, int x, int y, int w, int h);
+void set_client_rect_by_frame(Client *c);
+void set_frame_rect_by_client(Client *c);
 
 #endif

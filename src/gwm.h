@@ -96,6 +96,11 @@ struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 };
 typedef struct rectangle_tag Rect;
 
+typedef struct /* 調整窗口尺寸的信息 */
+{
+    int dx, dy, dw, dh; /* 分別爲窗口坐標和尺寸的變化量 */
+} Delta_rect;
+
 enum layout_tag // 窗口管理器的布局模式
 {
     PREVIEW, STACK, TILE,
@@ -118,6 +123,9 @@ typedef enum // 窗口疊次序分層類型
     FULLSCREEN_TOP, TOP_WIN_TYPE_N
 } Top_win_type;
 
+typedef struct wm_tag WM;
+typedef void (*event_handler_type)(WM*, XEvent *); // 事件處理器類型
+
 struct wm_tag // 窗口管理器相關信息
 {
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
@@ -126,9 +134,8 @@ struct wm_tag // 窗口管理器相關信息
     Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
     Client *clients; // 頭結點
     Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
-    void (*event_handlers[LASTEvent])(struct wm_tag*, XEvent *); // 事件處理器數組
+    event_handler_type handle_event; // 事件處理器
 };
-typedef struct wm_tag WM;
 
 enum direction_tag // 方向
 {

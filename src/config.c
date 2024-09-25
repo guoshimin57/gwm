@@ -387,7 +387,7 @@ static void config_misc(void)
     cfg->default_n_main_max=1;
     cfg->act_center_col=4;
     cfg->font_pad_ratio=0.25;
-    cfg->default_main_area_ratio=0.6;
+    cfg->default_main_area_ratio=0.533;
     cfg->default_fixed_area_ratio=0.15;
     cfg->autostart="~/.config/gwm/autostart.sh";
     cfg->cur_icon_theme="default";

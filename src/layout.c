@@ -13,8 +13,8 @@
 #include "layout.h"
 #include "prop.h"
 #include "icccm.h"
+#include "ewmh.h"
 #include "minimax.h"
-#include "mvresize.h"
 #include "taskbar.h"
 
 static void fix_win_rect(WM *wm, Client *c);
@@ -76,8 +76,7 @@ static void fix_win_size_by_workarea(WM *wm, Client *c)
         WIDGET_W(c->frame)=ww-2*bw;
     if(WIDGET_H(c->frame)+2*bw > wh)
         WIDGET_H(c->frame)=wh-2*bw;
-    Rect r=get_win_rect_by_frame(c->frame);
-    WIDGET_W(c)=r.w, WIDGET_H(c)=r.h;
+    set_client_rect_by_frame(c);
 }
 
 static void fix_win_pos(WM *wm, Client *c, const XSizeHints *hint)
@@ -91,8 +90,7 @@ static bool fix_win_pos_by_hint(Client *c, const XSizeHints *hint)
     if(!c->owner && ((hint->flags & USPosition) || (hint->flags & PPosition)))
     {
         WIDGET_X(c->frame)=hint->x, WIDGET_Y(c->frame)=hint->y;
-        Rect r=get_win_rect_by_frame(c->frame);
-        WIDGET_X(c)=r.x, WIDGET_Y(c)=r.y;
+        set_client_rect_by_frame(c);
         return true;
     }
     return false;
@@ -129,8 +127,7 @@ static void fix_win_pos_by_workarea(WM *wm, Client *c)
         WIDGET_Y(c->frame)=wy+wh-h-2*bw;
     if(WIDGET_Y(c->frame) < wy) // 窗口在工作區上邊出界
         WIDGET_Y(c->frame)=wy;
-    Rect r=get_win_rect_by_frame(c->frame);
-    WIDGET_X(c)=r.x, WIDGET_Y(c)=r.y;
+    set_client_rect_by_frame(c);
 }
 
 static void set_preview_layout(WM *wm)
@@ -165,7 +162,7 @@ static void set_stack_layout(WM *wm)
     {
         if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
         {
-            if(is_win_state_max(c) || c->win_state.fullscreen)
+            if(is_win_state_max(c->win_state) || c->win_state.fullscreen)
                 fix_win_rect_by_state(wm, c);
             else
                 fix_win_rect(wm, c);
@@ -357,7 +354,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
                 request_layout_update(), ox=nx;
         }
         else
-            wm->event_handlers[ev.type](wm, &ev);
+            wm->handle_event(wm, &ev);
     }while(!is_match_button_release(e, &ev));
     XUngrabPointer(xinfo.display, CurrentTime);
 }

@@ -11,7 +11,6 @@
 
 #include "func.h"
 #include "minimax.h"
-#include "mvresize.h"
 #include "prop.h"
 #include "place.h"
 
@@ -43,7 +42,7 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
         move_client(wm, from, NULL, TILE_LAYER_MAIN);
     else if(to)
         move_client(wm, from, to, ANY_PLACE);
-    update_win_state_for_move_resize(wm, from);
+    update_net_wm_state_for_no_max(WIDGET_WIN(from), from->win_state);
 }
 
 void change_place(WM *wm, XEvent *e, Func_arg arg)
@@ -51,7 +50,7 @@ void change_place(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(e);
     Client *c=CUR_FOC_CLI(wm);
     move_client(wm, c, NULL, arg.place_type);
-    update_win_state_for_move_resize(wm, c);
+    update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
 void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)

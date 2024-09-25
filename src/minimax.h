@@ -20,8 +20,6 @@ void max_restore(WM *wm, XEvent *e, Func_arg arg);
 void maximize(WM *wm, XEvent *e, Func_arg arg);
 void fix_win_rect_by_state(WM *wm, Client *c);
 void restore_client(WM *wm, Client *c);
-void get_max_outline_rect(WM *wm, int *left_x, int *top_y, int *max_w, int *max_h, int *mid_x, int *mid_y, int *half_w, int *half_h);
-bool is_win_state_max(Client *c);
 void fix_win_rect_by_state(WM *wm, Client *c);
 void iconify_client(WM *wm, Client *c);
 void deiconify_client(WM *wm, Client *c);

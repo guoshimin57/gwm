@@ -10,7 +10,6 @@
  * ************************************************************************/
 
 #include "icccm.h"
-#include "minimax.h"
 #include "mvresize.h"
 
 static void key_move_resize_client(WM *wm, XEvent *e, Direction dir);
@@ -35,7 +34,7 @@ void move_resize(WM *wm, XEvent *e, Func_arg arg)
         pointer_move_resize_client(wm, e, arg.resize);
 }
 
-void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
+static void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
 {
     if(DESKTOP(wm)->cur_layout == PREVIEW)
         return;
@@ -43,16 +42,15 @@ void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
     Client *c=CUR_FOC_CLI(wm);
     bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
     Delta_rect d=get_key_delta_rect(c, dir);
-    Place_type type=get_dest_place_type_for_move(wm, c);
 
-    if(c->place_type!=FLOAT_LAYER && type==FLOAT_LAYER)
-        move_client(wm, c, NULL, type);
+    if(is_tiled_client(c))
+        move_client(wm, c, NULL, FLOAT_LAYER);
     if(get_move_resize_delta_rect(c, &d, is_move))
     {
         move_resize_client(c, &d);
         update_hint_win_for_move_resize(c);
         hide_hint_win_for_key_release(wm, e);
-        update_win_state_for_move_resize(wm, c);
+        update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
     }
 }
 
@@ -79,14 +77,8 @@ void hide_hint_win_for_key_release(WM *wm, XEvent *e)
             break;
         }
         else
-            wm->event_handlers[ev.type](wm, &ev);
+            wm->handle_event(wm, &ev);
     }
-}
-
-Place_type get_dest_place_type_for_move(WM *wm, Client *c)
-{
-    return DESKTOP(wm)->cur_layout==TILE && is_tile_client(c) ?
-        FLOAT_LAYER : c->place_type;
 }
 
 static Delta_rect get_key_delta_rect(Client *c, Direction dir)
@@ -112,16 +104,7 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
     return dr[dir];
 }
 
-void move_resize_client(Client *c, const Delta_rect *d)
-{
-    if(d)
-        WIDGET_X(c)+=d->dx, WIDGET_Y(c)+=d->dy, WIDGET_W(c)+=d->dw, WIDGET_H(c)+=d->dh;
-    Rect fr=get_frame_rect_by_win(c->frame, WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c));
-    move_resize_frame(c->frame, fr.x, fr.y, fr.w, fr.h);
-    XResizeWindow(xinfo.display, WIDGET_WIN(c), WIDGET_W(c), WIDGET_H(c));
-}
-
-void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
+static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
 {
     Layout layout=DESKTOP(wm)->cur_layout;
     Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
@@ -134,7 +117,6 @@ void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
     XSizeHints hint=get_size_hint(WIDGET_WIN(c));
 
     XEvent ev;
-    Place_type type=get_dest_place_type_for_move(wm, c);
     if(act==MOVE || is_resizable(&hint))
     {
         do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
@@ -142,20 +124,19 @@ void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
             XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
             if(ev.type == MotionNotify)
             {
-                static long n=1;
-                if(n++ == 1)
-                    move_client(wm, c, NULL, type);
+                if(is_tiled_client(c))
+                    move_client(wm, c, NULL, FLOAT_LAYER);
                 /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
                 m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
                 do_valid_pointer_move_resize(c, &m, act);
             }
             else
-                wm->event_handlers[ev.type](wm, &ev);
+                wm->handle_event(wm, &ev);
         }while(!is_match_button_release(e, &ev));
     }
     XUngrabPointer(xinfo.display, CurrentTime);
     XUnmapWindow(xinfo.display, xinfo.hint_win);
-    update_win_state_for_move_resize(wm, c);
+    update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
 static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act)
@@ -216,7 +197,6 @@ static bool fix_delta_rect(Client *c, Delta_rect *d)
     int dw=d->dw, dh=d->dh;
     XSizeHints hint=get_size_hint(WIDGET_WIN(c));
 
-    //printf("w=%d, h=%d, dw=%d, dh=%d\n", WIDGET_W(c), WIDGET_H(c), dw, dh);
     fix_dw_by_width_hint(WIDGET_W(c), &hint, &dw);
     fix_dh_by_height_hint(WIDGET_W(c), &hint, &dh);
 
@@ -228,7 +208,6 @@ static bool fix_delta_rect(Client *c, Delta_rect *d)
         d->dx=-dw;
     if(d->dy)
         d->dy=-dh;
-    //printf("==> w=%d, h=%d, dw=%d, dh=%d\n", WIDGET_W(c), WIDGET_H(c), dw, dh);
     return true;
 }
 
@@ -267,37 +246,6 @@ static void update_hint_win_for_move_resize(Client *c)
 
     sprintf(str, "(%d, %d) %ldx%ld", WIDGET_X(c), WIDGET_Y(c), col, row);
     update_hint_win_for_info(None, str);
-}
-
-void update_win_state_for_move_resize(WM *wm, Client *c)
-{
-    int x=WIDGET_X(c->frame), y=WIDGET_Y(c->frame),
-        w=WIDGET_W(c->frame), h=WIDGET_H(c->frame),
-        left_x, top_y, max_w, max_h, mid_x, mid_y, half_w, half_h;
-    bool update=false;
-    Net_wm_state *s=&c->win_state;
-
-    get_max_outline_rect(wm, &left_x, &top_y, &max_w, &max_h, &mid_x, &mid_y, &half_w, &half_h);
-    if(s->vmax && (y!=top_y || h!=max_h))
-        s->vmax=0, update=true;
-
-    if(s->hmax && (x!=left_x || w!=max_w))
-        s->hmax=0, update=true;
-
-    if( s->tmax && (x!=left_x || y!=top_y || w!=max_w || h!=half_h))
-        s->tmax=0, update=true;
-
-    if( s->bmax && (x!=left_x || y!=mid_y || w!=max_w || h!=half_h))
-        s->bmax=0, update=true;
-
-    if( s->lmax && (x!=left_x || y!=top_y || w!=half_w || h!=max_h))
-        s->lmax=0, update=true;
-
-    if( s->rmax && (x!=mid_x || y!=top_y || w!=half_w || h!=max_h))
-        s->rmax=0, update=true;
-
-    if(update)
-        update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
 Pointer_act get_resize_act(Client *c, const Move_info *m)
@@ -348,19 +296,4 @@ void toggle_shade_client_mode(Client *c, bool shade)
     else
         move_resize_frame(c->frame, x, y, w, h+ch);
     c->win_state.shaded=shade;
-}
-
-void set_client_rect_by_outline(Client *c, int x, int y, int w, int h)
-{
-    int bw=WIDGET_BORDER_W(c->frame);
-    set_widget_rect(WIDGET(c->frame), x, y, w-2*bw, h-2*bw);
-    Rect r=get_win_rect_by_frame(c->frame);
-    set_widget_rect(WIDGET(c), r.x, r.y, r.w, r.h);
-}
-
-void set_client_rect_by_win(Client *c, int x, int y, int w, int h)
-{
-    set_widget_rect(WIDGET(c), x, y, w, h);
-    Rect r=get_frame_rect_by_win(c->frame, x, y, w, h);
-    set_widget_rect(WIDGET(c->frame), r.x, r.y, r.w, r.h);
 }

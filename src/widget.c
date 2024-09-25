@@ -145,13 +145,13 @@ void hide_widget(const Widget *widget)
 
 void resize_widget(Widget *widget, int w, int h)
 {
-    widget->w=w, widget->h=h;;
+    widget->w=w, widget->h=h;
     XResizeWindow(xinfo.display, widget->win, w, h);
 }
 
 void move_resize_widget(Widget *widget, int x, int y, int w, int h)
 {
-    widget->x=x, widget->y=y, widget->w=w, widget->h=h;
+    set_widget_rect(widget, x, y, w, h);
     XMoveResizeWindow(xinfo.display, widget->win, x, y, w, h);
 }
 
@@ -168,6 +168,12 @@ void update_widget_fg(const Widget *widget)
 void set_widget_rect(Widget *widget, int x, int y, int w, int h)
 {
     widget->x=x, widget->y=y, widget->w=w, widget->h=h;
+}
+
+Rect get_widget_outline(const Widget *widget)
+{
+    int bw=widget->border_w;
+    return (Rect){widget->x, widget->y, widget->w+2*bw, widget->h+2*bw};
 }
 
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)

@@ -78,6 +78,8 @@ struct _widget_tag
     void (*update_fg)(const Widget *widget);
 };
 
+typedef struct rectangle_tag Rect;
+
 #define WIDGET_EVENT_MASK (ExposureMask)
 #define TITLE_BUTTON_N (TITLE_BUTTON_END-TITLE_BUTTON_BEGIN+1)
 #define TASKBAR_BUTTON_N (TASKBAR_BUTTON_END-TASKBAR_BUTTON_BEGIN+1)
@@ -115,6 +117,7 @@ void move_resize_widget(Widget *widget, int x, int y, int w, int h);
 void update_widget_bg(const Widget *widget);
 void update_widget_fg(const Widget *widget);
 void set_widget_rect(Widget *widget, int x, int y, int w, int h);
+Rect get_widget_outline(const Widget *widget);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);

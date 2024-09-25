@@ -51,7 +51,7 @@ bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
     do
     {
         XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, p);
-        wm->event_handlers[p->type](wm, p);
+        wm->handle_event(wm, p);
     }while(!is_match_button_release(oe, p));
     if(act != NO_OP)
         XUngrabPointer(xinfo.display, CurrentTime);

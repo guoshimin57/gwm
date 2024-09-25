@@ -151,18 +151,6 @@ void move_resize_frame(Frame *frame, int x, int y, int w, int h)
     move_resize_widget(WIDGET(frame), x, y, w, h);
 }
 
-Rect get_frame_rect_by_win(const Frame *frame, int x, int y, int w, int h)
-{
-    int bw=frame->base.border_w, bh=(frame->titlebar ? WIDGET_H(frame->titlebar) : 0);
-    return (Rect){x-bw, y-bh-bw, w, h+bh};
-}
-
-Rect get_win_rect_by_frame(const Frame *frame)
-{
-    int bw=frame->base.border_w, bh=(frame->titlebar ? WIDGET_H(frame->titlebar) : 0);
-    return (Rect){WIDGET_X(frame)+bw, WIDGET_Y(frame)+bh+bw, WIDGET_W(frame), WIDGET_H(frame)-bh};
-}
-
 bool is_frame_part(const Frame *frame, Window win)
 {
     if(win == WIDGET_WIN(frame))
@@ -211,9 +199,9 @@ Menu *get_frame_menu(const Frame *frame)
     return (frame && frame->titlebar) ? frame->titlebar->menu : NULL;
 }
 
-Titlebar *get_frame_titlebar(const Frame *frame)
+int get_frame_titlebar_height(const Frame *frame)
 {
-    return frame->titlebar;
+    return frame->titlebar ? WIDGET_H(frame->titlebar) : 0;
 }
 
 void toggle_titlebar(Frame *frame, const char *title, Imlib_Image image)
