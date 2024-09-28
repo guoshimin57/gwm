@@ -9,7 +9,6 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-//#include "mvresize.h"
 #include "prop.h"
 #include "minimax.h"
 #include "client.h"
@@ -149,28 +148,6 @@ void restore_client(WM *wm, Client *c)
     if(c->win_state.fullscreen)
         c->win_state.fullscreen=0;
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
-}
-
-void fix_win_rect_by_state(WM *wm, Client *c)
-{
-    if(is_win_state_max(c->win_state))
-    {
-        Max_way way=FULL_MAX;
-        if(c->win_state.vmax)   way=VERT_MAX;
-        if(c->win_state.hmax)   way=HORZ_MAX;
-        if(c->win_state.tmax)   way=TOP_MAX;
-        if(c->win_state.bmax)   way=BOTTOM_MAX;
-        if(c->win_state.lmax)   way=LEFT_MAX;
-        if(c->win_state.rmax)   way=RIGHT_MAX;
-        if(c->win_state.vmax && c->win_state.hmax)
-            way=FULL_MAX;
-        set_max_rect(wm, c, way);
-    }
-    else if(c->win_state.fullscreen)
-    {
-        set_widget_rect(WIDGET(c), 0, 0, xinfo.screen_width, xinfo.screen_height);
-        set_frame_rect_by_client(c);
-    }
 }
 
 void iconify_client(WM *wm, Client *c)

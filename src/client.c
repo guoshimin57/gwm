@@ -27,14 +27,22 @@ static bool have_rule(const Rule *r, Client *c);
 static Client *get_head_for_add_client(Client *clients, Client *c);
 static void set_default_place_type(Client *c);
 static void set_default_win_rect(Client *c);
-static void set_win_rect_by_attr(Client *c);
+static void fix_win_rect_by_attr(Client *c);
+static void fix_transient_win_size(Client *c);
+static void fix_transient_win_pos(Client *c);
+static void fix_win_rect_by_hint(Client *c);
+static void fix_win_pos_by_hint(Client *c, const XSizeHints *hint);
+static void fix_win_rect_by_workarea(Client *c);
+static void fix_win_size_by_workarea(Client *c, const Rect *workarea);
+static void fix_win_pos_by_workarea(Client *c, const Rect *workarea);
+static void fix_dialog_win_rect(Client *c, const Rect *workarea);
+static void fix_win_rect_by_frame(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
 static bool is_map_client(Client *clients, unsigned int desktop_n, Client *c);
 static Client *get_prev_map_client(Client *clients, unsigned int desktop_n, Client *c);
 static Client *get_next_map_client(Client *clients, unsigned int desktop_n, Client *c);
 static int cmp_map_order(const void *pclient1, const void *pclient2);
-
 static long map_count=0; // 所有客戶窗口的累計映射次數
 
 void add_client(WM *wm, Window win)
@@ -48,7 +56,7 @@ void add_client(WM *wm, Window win)
     grab_buttons(WIDGET_WIN(c));
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
-    set_default_win_rect(c);
+    set_win_rect(c);
     save_place_info_of_client(c);
     c->frame=create_frame(WIDGET(c), WIDGET_STATE(c),
         WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c),
@@ -177,21 +185,118 @@ static void set_default_place_type(Client *c)
     else                             c->place_type = TILE_LAYER_MAIN;  
 }
 
+void set_win_rect(Client *c)
+{
+    set_default_win_rect(c);
+    fix_win_rect_by_attr(c);
+    fix_transient_win_size(c);
+    fix_win_rect_by_hint(c);
+    fix_transient_win_pos(c);
+    fix_win_rect_by_workarea(c);
+    fix_win_rect_by_frame(c);
+}
+
 static void set_default_win_rect(Client *c)
 {
     WIDGET_W(c)=xinfo.screen_width/4;
     WIDGET_H(c)=xinfo.screen_height/4;
     WIDGET_X(c)=(xinfo.screen_width-WIDGET_W(c))/2;
     WIDGET_Y(c)=(xinfo.screen_height-WIDGET_H(c))/2;
-    set_win_rect_by_attr(c);
 }
 
-
-static void set_win_rect_by_attr(Client *c)
+static void fix_win_rect_by_attr(Client *c)
 {
     XWindowAttributes a;
     if(XGetWindowAttributes(xinfo.display, WIDGET_WIN(c), &a))
         WIDGET_X(c)=a.x, WIDGET_Y(c)=a.y, WIDGET_W(c)=a.width, WIDGET_H(c)=a.height;
+}
+
+static void fix_transient_win_size(Client *c)
+{
+    if(c->owner)
+    {
+        WIDGET_W(c)=WIDGET_W(c->owner)/2;
+        WIDGET_H(c)=WIDGET_H(c->owner)/2;
+    }
+}
+
+static void fix_transient_win_pos(Client *c)
+{
+    if(c->owner)
+    {
+        WIDGET_X(c)=WIDGET_X(c->owner)+(WIDGET_W(c->owner)-WIDGET_W(c))/2;
+        WIDGET_Y(c)=WIDGET_Y(c->owner)+(WIDGET_H(c->owner)-WIDGET_H(c))/2;
+    }
+}
+
+static void fix_win_rect_by_hint(Client *c)
+{
+    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
+    fix_win_size_by_hint(&hint, &WIDGET_W(c), &WIDGET_H(c));
+    fix_win_pos_by_hint(c, &hint);
+}
+
+static void fix_win_pos_by_hint(Client *c, const XSizeHints *hint)
+{
+    if(!c->owner && ((hint->flags & USPosition) || (hint->flags & PPosition)))
+        WIDGET_X(c)=hint->x, WIDGET_Y(c)=hint->y;
+}
+
+static void fix_win_rect_by_workarea(Client *c)
+{
+    if(c->win_type.desktop || c->win_type.dock || c->win_state.fullscreen)
+        return;
+
+    Rect r;
+    get_net_workarea(&r.x, &r.y, &r.w, &r.h);
+    fix_win_size_by_workarea(c, &r);
+    fix_win_pos_by_workarea(c, &r);
+    fix_dialog_win_rect(c, &r);
+}
+
+static void fix_win_size_by_workarea(Client *c, const Rect *workarea)
+{
+    if(WIDGET_W(c) > workarea->w)
+        WIDGET_W(c)=workarea->w;
+    if(WIDGET_H(c) > workarea->h)
+        WIDGET_H(c)=workarea->h;
+}
+
+static void fix_win_pos_by_workarea(Client *c, const Rect *workarea)
+{
+    int w=WIDGET_W(c), h=WIDGET_H(c),
+        wx=workarea->x, wy=workarea->y, ww=workarea->w, wh=workarea->h;
+    if(WIDGET_X(c) >= wx+ww-w) // 窗口在工作區右邊出界
+        WIDGET_X(c)=wx+ww-w;
+    if(WIDGET_X(c) < wx) // 窗口在工作區左邊出界
+        WIDGET_X(c)=wx;
+    if(WIDGET_Y(c) >= wy+wh-h) // 窗口在工作區下邊出界
+        WIDGET_Y(c)=wy+wh-h;
+    if(WIDGET_Y(c) < wy) // 窗口在工作區上邊出界
+        WIDGET_Y(c)=wy;
+}
+
+static void fix_dialog_win_rect(Client *c, const Rect *workarea)
+{
+    if(!c->owner && c->win_type.dialog)
+    {
+        WIDGET_W(c)=workarea->w/2;
+        WIDGET_H(c)=workarea->h/2;
+        WIDGET_X(c)=workarea->x+(workarea->w-WIDGET_W(c))/2;
+        WIDGET_Y(c)=workarea->y+(workarea->h-WIDGET_H(c))/2;
+    }
+}
+
+static void fix_win_rect_by_frame(Client *c)
+{
+    if(c->frame)
+        return;
+
+    int bw = c->show_border ? cfg->border_width : 0,
+        bh = c->show_titlebar ? get_font_height_by_pad() : 0;
+    WIDGET_X(c) += bw;
+    WIDGET_Y(c) += bw+bh;
+    WIDGET_H(c) -= bh;
 }
 
 int get_clients_n(Client *clients, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)

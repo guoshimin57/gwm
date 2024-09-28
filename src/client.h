@@ -41,7 +41,9 @@ struct client_tag // 客戶窗口相關信息
 
 void add_client(WM *wm, Window win);
 void set_all_net_client_list(Client *clients);
+void set_win_rect(Client *c);
 Rect get_title_area_rect(Client *c);
+void set_transient_win_rect(Client *c);
 int get_clients_n(Client *clients, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop);
 bool is_iconic_client(Client *c);
 Client *win_to_client(Client *clients, Window win);

@@ -181,6 +181,15 @@ void set_net_workarea(int x, int y, int w, int h, int ndesktop)
     replace_cardinal_prop(xinfo.root_win, prop, rect[0], ndesktop*4);
 }
 
+void get_net_workarea(int *x, int *y, int *w, int *h)
+{
+    long *p=(long *)get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_WORKAREA]);
+    if(p)
+        *x=p[0], *y=p[1], *w=p[2], *h=p[3];
+    else
+        *x=*y=0, *w=xinfo.screen_width, *h=xinfo.screen_height;
+}
+
 void set_net_supporting_wm_check(Window check_win, const char *wm_name)
 {
     Atom prop=ewmh_atoms[NET_SUPPORTING_WM_CHECK];
