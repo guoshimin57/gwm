@@ -46,6 +46,7 @@ Tooltip *create_tooltip(Widget *owner, const char *tip)
 
 static void set_tooltip_method(Widget *widget)
 {
+    widget->destroy=destroy_tooltip;
     widget->show=show_tooltip;
     widget->update_fg=update_tooltip_fg;
 }
@@ -61,11 +62,12 @@ void change_tooltip_tip(Tooltip *tooltip, const char *tip)
     XResizeWindow(xinfo.display, WIDGET_WIN(tooltip), *pw, h);
 }
 
-void destroy_tooltip(Tooltip *tooltip)
+void destroy_tooltip(Widget *widget)
 {
+    Tooltip *tooltip=TOOLTIP(widget);
     tooltip->owner->tooltip=NULL;
     Free(tooltip->tip);
-    destroy_widget(WIDGET(tooltip));
+    destroy_widget(widget);
 }
 
 void show_tooltip(Widget *widget)

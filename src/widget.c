@@ -106,6 +106,7 @@ void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state stat
 
 static void set_widget_method(Widget *widget)
 {
+    widget->destroy=destroy_widget;
     widget->show=show_widget;
     widget->hide=hide_widget;
     widget->update_bg=update_widget_bg;
@@ -118,7 +119,8 @@ void destroy_widget(Widget *widget)
     if(widget->id != CLIENT_WIN)
         XDestroyWindow(xinfo.display, widget->win);
     if(widget->tooltip)
-        destroy_widget(widget->tooltip), widget->tooltip=NULL;
+        widget->tooltip->destroy(widget->tooltip), widget->tooltip=NULL;
+    Free(widget);
 }
 
 void set_widget_border_width(Widget *widget, int width)

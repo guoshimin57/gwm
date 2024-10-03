@@ -330,21 +330,20 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     if(!c)
         return;
 
-    destroy_frame(c->frame), c->frame=NULL;
-    destroy_widget(WIDGET(c));
-    list_del(&c->list);
     if(!is_for_quit)
         for(size_t i=0; i<DESKTOP_N; i++)
             if(is_on_desktop_n(i, c->desktop_mask))
                 focus_client(wm, i, NULL);
 
+    list_del(&c->list);
     vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
-    vfree(c->title_text, c);
+    Free(c->title_text);
+    destroy_frame(c->frame), c->frame=NULL;
+    destroy_widget(WIDGET(c));
 
     if(!is_for_quit)
         request_layout_update();
     set_all_net_client_list(wm->clients);
-    list_for_each_entry(Client, c, &wm->clients->list, list);
 }
 
 /* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */

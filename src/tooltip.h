@@ -20,7 +20,7 @@ typedef struct _tooltip_tag Tooltip;
 
 Tooltip *create_tooltip(Widget *owner, const char *tip);
 void change_tooltip_tip(Tooltip *tooltip, const char *tip);
-void destroy_tooltip(Tooltip *tooltip);
+void destroy_tooltip(Widget *widget);
 void show_tooltip(Widget *widget);
 void update_tooltip_fg(const Widget *widget);
 

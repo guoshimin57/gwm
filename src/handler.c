@@ -122,12 +122,11 @@ static void handle_button_press(WM *wm, XEvent *e)
         if( is_func_click(id, b, e)
             && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
-
             if(id == CLIENT_WIN)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
             if(c && c!=CUR_FOC_CLI(wm))
                 focus_client(wm, get_net_current_desktop(), c);
-            if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc) && b->func)
+            if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc || id==CLIENT_ICON) && b->func)
                 b->func(wm, e, b->arg);
         }
     }

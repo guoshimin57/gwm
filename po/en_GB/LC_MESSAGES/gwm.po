@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.14\n"
+"Project-Id-Version: gwm 2.10.15\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-09-28 12:02+0800\n"
+"POT-Creation-Date: 2024-10-04 01:12+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: client.c:775
+#: client.c:774
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
@@ -338,17 +338,17 @@ msgstr "Error: There is already another window manager running!"
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X error: Resource number=%#lx, Request number=%lu, Error code=%d, Major request code=%d, Minor request code=%d\n"
 
-#: widget.c:218
+#: widget.c:220
 #, c-format
 msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
 msgstr "Error: Window (0x%lx) input method setup failed!"
 
-#: widget.c:325
+#: widget.c:327
 #, c-format
 msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
 msgstr "Error: The corresponding modifier key for the specified key symbol could not be found!\n"
 
-#: widget.c:328
+#: widget.c:330
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "Error: The key symbol specified does not have a corresponding key code!\n"

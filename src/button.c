@@ -50,9 +50,9 @@ static void set_button_method(Widget *widget)
 
 void destroy_button(Button *button)
 {
-    destroy_widget(WIDGET(button));
     vfree(button->icon_name, button->symbol, button->label);
     vset_null(button->icon_name, button->symbol, button->label);
+    destroy_widget(WIDGET(button));
 }
 
 void update_button_fg(const Widget *widget)

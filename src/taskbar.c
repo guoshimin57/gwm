@@ -118,11 +118,12 @@ static void create_iconbar(void)
 static void create_statusbar(void)
 {
     int w=0;
-    char *p=get_text_prop(xinfo.root_win, XA_WM_NAME);
+    char *label=get_text_prop(xinfo.root_win, XA_WM_NAME);
 
     taskbar->statusbar=Malloc(sizeof(Statusbar));
-        p=copy_string("gwm");
-    get_string_size(p, &w, NULL);
+    if(!label)
+        label=copy_string("gwm");
+    get_string_size(label, &w, NULL);
     w += 2*get_font_pad();
     if(w > cfg->status_area_width_max)
         w=cfg->status_area_width_max;
@@ -131,7 +132,7 @@ static void create_statusbar(void)
     init_widget(WIDGET(taskbar->statusbar), WIDGET(taskbar), STATUSBAR,
         WIDGET_STATE(taskbar), WIDGET_W(taskbar)-w, 0, w, WIDGET_H(taskbar));
     XSelectInput(xinfo.display, WIDGET_WIN(taskbar->statusbar), ExposureMask);
-    taskbar->statusbar->label=copy_string(p);
+    taskbar->statusbar->label=label;
 }
 
 static void create_act_center(void)

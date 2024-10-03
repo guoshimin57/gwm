@@ -110,9 +110,9 @@ void set_net_number_of_desktops(int n)
 
 int get_net_number_of_desktops(void)
 {
-    Atom prop=ewmh_atoms[NET_NUMBER_OF_DESKTOPS];
-    CARD32 *p=get_cardinal_prop(xinfo.root_win, prop);
-    return p ? *p : 1;
+    CARD32 n=1;
+    get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_NUMBER_OF_DESKTOPS], &n);
+    return n;
 }
 
 void set_net_desktop_geometry(int w, int h)
@@ -141,8 +141,9 @@ void set_net_current_desktop(unsigned int cur_desktop)
 
 unsigned int get_net_current_desktop(void)
 {
-    CARD32 *p=get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_CURRENT_DESKTOP]);
-    return p ? *p : 0;
+    CARD32 desktop=0;
+    get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_CURRENT_DESKTOP], &desktop);
+    return desktop;
 }
 
 /* 因爲EWMH規定窗口要麼在某個桌面，要麼在所有窗口，不能同時在幾個桌面上，
@@ -150,8 +151,10 @@ unsigned int get_net_current_desktop(void)
  */
 unsigned int get_net_wm_desktop(Window win)
 {
-    CARD32 *p=get_cardinal_prop(win, ewmh_atoms[NET_WM_DESKTOP]);
-    return p ? *p : get_net_current_desktop();
+    CARD32 desktop=0;
+    if(get_cardinal_prop(win, ewmh_atoms[NET_WM_DESKTOP], &desktop))
+        return desktop;
+    return get_net_current_desktop();
 }
 
 void set_net_desktop_names(const char **names, int n)
@@ -183,11 +186,12 @@ void set_net_workarea(int x, int y, int w, int h, int ndesktop)
 
 void get_net_workarea(int *x, int *y, int *w, int *h)
 {
-    long *p=(long *)get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_WORKAREA]);
+    long *p=(long *)get_prop(xinfo.root_win, ewmh_atoms[NET_WORKAREA], NULL);
     if(p)
         *x=p[0], *y=p[1], *w=p[2], *h=p[3];
     else
         *x=*y=0, *w=xinfo.screen_width, *h=xinfo.screen_height;
+    XFree(p);
 }
 
 void set_net_supporting_wm_check(Window check_win, const char *wm_name)

@@ -78,7 +78,7 @@ void destroy_menu(Menu *menu)
     for(int i=0; i<menu->n; i++)
         destroy_button(menu->items[i]), menu->items[i]=NULL;
     Free(menu->items);
-    XDestroyWindow(xinfo.display, WIDGET_WIN(menu));
+    destroy_widget(WIDGET(menu));
 }
 
 void show_menu(Widget *widget)
