@@ -200,7 +200,6 @@ void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
     Client *c=CUR_FOC_CLI(wm);
     c->show_titlebar=!c->show_titlebar;
     toggle_titlebar(c->frame, c->title_text, c->image);
-    show_widget(WIDGET(c->frame));
     request_layout_update();
 }
 

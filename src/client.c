@@ -330,12 +330,12 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
     if(!c)
         return;
 
+    list_del(&c->list);
     if(!is_for_quit)
         for(size_t i=0; i<DESKTOP_N; i++)
             if(is_on_desktop_n(i, c->desktop_mask))
                 focus_client(wm, i, NULL);
 
-    list_del(&c->list);
     vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
     Free(c->title_text);
     destroy_frame(c->frame), c->frame=NULL;
@@ -549,7 +549,7 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
                 *pc=wm->clients;
         }
 
-        if(!is_map_client(wm->clients, desktop_n, *pp))
+        if(!is_map_client(wm->clients, desktop_n, *pp) || *pp==*pc)
         {
             if(is_map_client(wm->clients, desktop_n, (*pp)->owner))
                 *pp=(*pp)->owner;
@@ -566,6 +566,8 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
         p=get_top_transient_client(c->subgroup_leader, true);
         *pp=*pc, *pc=(p ? p : c);
     }
+    if(*pp == *pc)
+        *pp=wm->clients;
 }
 
 static bool is_map_client(Client *clients, unsigned int desktop_n, Client *c)
@@ -754,7 +756,9 @@ void move_resize_client(Client *c, const Delta_rect *d)
         WIDGET_X(c)+=d->dx, WIDGET_Y(c)+=d->dy, WIDGET_W(c)+=d->dw, WIDGET_H(c)+=d->dh;
     set_frame_rect_by_client(c);
     move_resize_frame(c->frame, WIDGET_X(c->frame), WIDGET_Y(c->frame), WIDGET_W(c->frame), WIDGET_H(c->frame));
-    XResizeWindow(xinfo.display, WIDGET_WIN(c), WIDGET_W(c), WIDGET_H(c));
+
+    int bh=get_frame_titlebar_height(c->frame);
+    XMoveResizeWindow(xinfo.display, WIDGET_WIN(c), 0, bh, WIDGET_W(c), WIDGET_H(c));
 }
 
 /* 生成帶表頭結點的雙向循環鏈表 */
