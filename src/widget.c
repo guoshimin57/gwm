@@ -116,10 +116,10 @@ static void set_widget_method(Widget *widget)
 void destroy_widget(Widget *widget)
 {
     unreg_widget(widget);
-    if(widget->id != CLIENT_WIN)
-        XDestroyWindow(xinfo.display, widget->win);
     if(widget->tooltip)
         widget->tooltip->destroy(widget->tooltip), widget->tooltip=NULL;
+    if(widget->id != CLIENT_WIN)
+        XDestroyWindow(xinfo.display, widget->win);
     Free(widget);
 }
 

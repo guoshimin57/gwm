@@ -92,7 +92,7 @@ static void create_taskbar_buttons(void)
         Widget_state state={.chosen=is_chosen_taskbar_button(id), .current=1};
         taskbar->buttons[i]=create_button(WIDGET(taskbar), id, state,
             w*i, 0, w, h, cfg->taskbar_button_text[i]);
-        create_tooltip(WIDGET(taskbar->buttons[i]), cfg->tooltip[id]);
+        WIDGET_TOOLTIP(taskbar->buttons[i])=(Widget *)create_tooltip(WIDGET(taskbar->buttons[i]), cfg->tooltip[id]);
     }
 }
 
@@ -164,7 +164,7 @@ static Cbutton *create_cbutton(Widget *parent, int x, int y, int w, int h, Windo
     cbutton->cwin=cwin;
 
     set_cbutton_icon(cbutton);
-    create_tooltip(WIDGET(cbutton->button), icon_title);
+    WIDGET_TOOLTIP(cbutton->button)=(Widget *)create_tooltip(WIDGET(cbutton->button), icon_title);
     Free(icon_title);
 
     return cbutton;

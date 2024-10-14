@@ -78,10 +78,10 @@ static Titlebar *create_titlebar(Widget *parent, Widget_state state, int x, int 
     init_widget(WIDGET(titlebar), parent, TITLEBAR, state, x, y, w, h);
     set_titlebar_method(WIDGET(titlebar));
     titlebar->title=copy_string(title);
-    create_tooltip(WIDGET(titlebar), title);
+    WIDGET_TOOLTIP(titlebar)=(Widget *)create_tooltip(WIDGET(titlebar), title);
 
     titlebar->logo=create_button(WIDGET(titlebar), TITLE_LOGO, state, 0, 0, h, h, NULL);
-    create_tooltip(WIDGET(titlebar->logo), cfg->tooltip[TITLE_LOGO]);
+    WIDGET_TOOLTIP(titlebar->logo)=(Widget *)create_tooltip(WIDGET(titlebar->logo), cfg->tooltip[TITLE_LOGO]);
     set_button_icon(BUTTON(titlebar->logo), image, NULL, "∨");
 
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
@@ -90,7 +90,7 @@ static Titlebar *create_titlebar(Widget *parent, Widget_state state, int x, int 
         Widget_id id=TITLE_BUTTON_BEGIN+i;
         titlebar->buttons[i]=create_button(WIDGET(titlebar), id, state,
             br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
-        create_tooltip(WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
+        WIDGET_TOOLTIP(titlebar->buttons[i])=(Widget *)create_tooltip(WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
     }
 
     titlebar->menu=create_menu(WIDGET(titlebar->logo), CLIENT_MENU,

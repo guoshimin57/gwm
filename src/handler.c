@@ -418,7 +418,8 @@ static void handle_pointer_hover(WM *wm, const Widget *widget)
                 handle_event(wm, &ev);
             if(ev.type == MotionNotify && ev.xmotion.window==widget->win)
                 t=t0, show=false;
-            else if(ev.type==LeaveNotify && ev.xcrossing.window==widget->win)
+            else if( (ev.type==LeaveNotify && ev.xcrossing.window==widget->win)
+                ||   (ev.type==ButtonPress && ev.xbutton.window==widget->win) )
                 break;
         }
         else

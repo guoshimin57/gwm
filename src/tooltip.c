@@ -39,7 +39,6 @@ Tooltip *create_tooltip(Widget *owner, const char *tip)
 
     tooltip->tip=copy_string(tip);
     tooltip->owner=owner;
-    owner->tooltip=WIDGET(tooltip);
 
     return tooltip;
 }
