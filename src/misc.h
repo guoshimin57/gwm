@@ -34,11 +34,6 @@
 
 #define Free(p) (free(p), (p)=NULL)
 
-#define set_null(p) ((p)=NULL)
-
-/* 把所有參數設置爲NULL。注意：此宏不能用作表达式 */
-#define vset_null(...) vfunc(void, set_null, __VA_ARGS__)
-
 typedef struct // 字符串鏈表
 {
     char *str;

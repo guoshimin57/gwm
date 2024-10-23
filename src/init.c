@@ -19,6 +19,7 @@
 #include "taskbar.h"
 #include "init.h"
 
+static Rect compute_taskbar_rect(void);
 static void set_visual_info(void);
 static void set_locale(void);
 static void create_refer_wins(WM *wm);
@@ -59,14 +60,22 @@ void init_wm(WM *wm)
     set_workarea(wm);
     set_ewmh(wm);
     set_gwm_current_layout(DESKTOP(wm)->cur_layout);
-    create_taskbar();
+    Rect r=compute_taskbar_rect();
+    wm->taskbar=taskbar_new(NULL, WIDGET_STATE_1(current), r.x, r.y, r.w, r.h);
     if(cfg->show_taskbar)
-        show_widget(WIDGET(taskbar));
-    cmd_entry=create_cmd_entry(RUN_CMD_ENTRY);
+        widget_show(WIDGET(wm->taskbar));
+    cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
     create_hint_win();
     create_clients(wm);
     grab_keys();
     exec_autostart();
+}
+
+static Rect compute_taskbar_rect(void)
+{
+    int w=xinfo.screen_width, h=get_font_height_by_pad(),
+        x=0, y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-h);
+    return (Rect){x, y, w, h};
 }
 
 static void create_refer_wins(WM *wm)

@@ -95,13 +95,13 @@ static void set_max_rect(WM *wm, Client *c, Max_way max_way)
 
 static Rect get_vert_max_rect(const WM *wm, const Client *c)
 {
-    Rect r=get_widget_outline(WIDGET(c->frame)), w=wm->workarea;
+    Rect r=widget_get_outline(WIDGET(c->frame)), w=wm->workarea;
     return (Rect){r.x, w.y, r.w, w.h};
 }
 
 static Rect get_horz_max_rect(const WM *wm, const Client *c)
 {
-    Rect r=get_widget_outline(WIDGET(c->frame)), w=wm->workarea;
+    Rect r=widget_get_outline(WIDGET(c->frame)), w=wm->workarea;
     return (Rect){w.x, r.y, w.w, r.h};
 }
 
@@ -162,11 +162,11 @@ void iconify_client(WM *wm, Client *c)
     {
         p->win_state.hidden=1;
         update_net_wm_state(WIDGET_WIN(p), p->win_state);
-        hide_widget(WIDGET(p->frame));
+        widget_hide(WIDGET(p->frame));
         if(p == CUR_FOC_CLI(wm))
         {
             focus_client(wm, get_net_current_desktop(), NULL);
-            update_frame_bg(p->frame);
+            frame_update_bg(p->frame);
         }
     }
 
@@ -194,7 +194,7 @@ void deiconify_client(WM *wm, Client *c)
         {
             p->win_state.hidden=0;
             update_net_wm_state(WIDGET_WIN(p), p->win_state);
-            show_widget(WIDGET(p->frame));
+            widget_show(WIDGET(p->frame));
             focus_client(wm, get_net_current_desktop(), p);
         }
     }

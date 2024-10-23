@@ -40,7 +40,7 @@ typedef struct
     int border_width; // 窗口框架边框的宽度
     int title_button_width; // 窗口按鈕的寬度
     int win_gap; // 窗口間隔
-    int status_area_width_max; // 任務欄狀態區域的最大寬度
+    int statusbar_width_max; // 任務欄狀態區域的最大寬度
     int taskbar_button_width; // 任務欄按鈕的寬度
     int icon_win_width_max; // 縮微窗口的最大寬度
     int icon_image_size; // 圖標映像的邊長

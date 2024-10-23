@@ -129,7 +129,7 @@ void show_top_win(WM *wm)
 
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
     {
-        XMoveResizeWindow(xinfo.display, wm->top_wins[i], i*w/2, WIDGET_Y(taskbar)-h, w, h);
+        XMoveResizeWindow(xinfo.display, wm->top_wins[i], i*w/2, WIDGET_Y(wm->taskbar)-h, w, h);
         XMapWindow(xinfo.display, wm->top_wins[i]);
         draw_string(wm->top_wins[i], s[i], &f);
     }

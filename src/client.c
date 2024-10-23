@@ -58,13 +58,13 @@ void add_client(WM *wm, Window win)
     set_cursor(win, NO_OP);
     set_win_rect(c);
     save_place_info_of_client(c);
-    c->frame=create_frame(WIDGET(c), WIDGET_STATE(c),
+    c->frame=frame_new(WIDGET(c), WIDGET_STATE(c),
         WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c),
         c->show_titlebar ? get_font_height_by_pad() : 0,
         c->show_border ? cfg->border_width : 0,
         c->title_text, c->image);
     request_layout_update();
-    show_widget(WIDGET(c->frame));
+    widget_show(WIDGET(c->frame));
     focus_client(wm, get_net_current_desktop(), c);
     set_net_wm_allowed_actions(WIDGET_WIN(c));
 }
@@ -86,7 +86,7 @@ static Client *new_client(WM *wm, Window win)
 {
     Client *c=Malloc(sizeof(Client));
     memset(c, 0, sizeof(Client));
-    init_widget(WIDGET(c), NULL, CLIENT_WIN, WIDGET_STATE_1(current), 0, 0, 1, 1);
+    widget_ctor(WIDGET(c), NULL, CLIENT_WIN, WIDGET_STATE_1(current), 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
     c->show_border=c->show_titlebar=true;
     c->map_n=++map_count;
@@ -320,7 +320,7 @@ Client *win_to_client(Client *clients, Window win)
 {
     // 當隱藏標題欄時，標題區和按鈕的窗口ID爲0。故win爲0時，不應視爲找到
     list_for_each_entry(Client, c, &clients->list, list)
-        if(win==WIDGET_WIN(c) || is_frame_part(c->frame, win))
+        if(win==WIDGET_WIN(c) || frame_has_win(c->frame, win))
             return c;
     return NULL;
 }
@@ -338,8 +338,8 @@ void del_client(WM *wm, Client *c, bool is_for_quit)
 
     vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
     Free(c->title_text);
-    destroy_frame(c->frame), c->frame=NULL;
-    destroy_widget(WIDGET(c));
+    frame_del(c->frame), c->frame=NULL;
+    widget_del(WIDGET(c));
 
     if(!is_for_quit)
         request_layout_update();
@@ -499,13 +499,13 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     if(pc!=wm->clients)
     {
         if(pc->frame)
-            set_frame_state_current(pc->frame, 1);
+            frame_set_state_current(pc->frame, 1);
         WIDGET_STATE(pc).current=1;
     }
     if(pp!=wm->clients && pp!=pc)
     {
         if(pp->frame)
-            set_frame_state_current(pp->frame, 0);
+            frame_set_state_current(pp->frame, 0);
         WIDGET_STATE(pp).current=0;
     }
 
@@ -747,7 +747,7 @@ void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
     if(is_iconic_client(c) && d->cur_layout!=PREVIEW)
         c->win_state.focused=1, update_net_wm_state(WIDGET_WIN(c), c->win_state);
     else if(c->frame)
-        update_frame_bg(c->frame);
+        frame_update_bg(c->frame);
 }
 
 void move_resize_client(Client *c, const Delta_rect *d)
@@ -755,9 +755,9 @@ void move_resize_client(Client *c, const Delta_rect *d)
     if(d)
         WIDGET_X(c)+=d->dx, WIDGET_Y(c)+=d->dy, WIDGET_W(c)+=d->dw, WIDGET_H(c)+=d->dh;
     set_frame_rect_by_client(c);
-    move_resize_frame(c->frame, WIDGET_X(c->frame), WIDGET_Y(c->frame), WIDGET_W(c->frame), WIDGET_H(c->frame));
+    frame_move_resize(c->frame, WIDGET_X(c->frame), WIDGET_Y(c->frame), WIDGET_W(c->frame), WIDGET_H(c->frame));
 
-    int bh=get_frame_titlebar_height(c->frame);
+    int bh=frame_get_titlebar_height(c->frame);
     XMoveResizeWindow(xinfo.display, WIDGET_WIN(c), 0, bh, WIDGET_W(c), WIDGET_H(c));
 }
 
@@ -788,28 +788,28 @@ void create_clients(WM *wm)
 void set_client_rect_by_outline(Client *c, int x, int y, int w, int h)
 {
     int bw=WIDGET_BORDER_W(c->frame);
-    set_widget_rect(WIDGET(c->frame), x, y, w-2*bw, h-2*bw);
+    widget_set_rect(WIDGET(c->frame), x, y, w-2*bw, h-2*bw);
     set_client_rect_by_frame(c);
 }
 
 void set_frame_rect_by_client(Client *c)
 {
     int bw=WIDGET_BORDER_W(c->frame),
-        bh=get_frame_titlebar_height(c->frame),
+        bh=frame_get_titlebar_height(c->frame),
         x=WIDGET_X(c)-bw,
         y=WIDGET_Y(c)-bh-bw,
         w=WIDGET_W(c),
         h=WIDGET_H(c)+bh;
-    set_widget_rect(WIDGET(c->frame), x, y, w, h);
+    widget_set_rect(WIDGET(c->frame), x, y, w, h);
 }
 
 void set_client_rect_by_frame(Client *c)
 {
     int bw=WIDGET_BORDER_W(c->frame),
-        bh=get_frame_titlebar_height(c->frame),
+        bh=frame_get_titlebar_height(c->frame),
         x=WIDGET_X(c->frame)+bw,
         y=WIDGET_Y(c->frame)+bh+bw,
         w=WIDGET_W(c->frame),
         h=WIDGET_H(c->frame)-bh;
-    set_widget_rect(WIDGET(c), x, y, w, h);
+    widget_set_rect(WIDGET(c), x, y, w, h);
 }

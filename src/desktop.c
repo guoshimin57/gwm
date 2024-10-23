@@ -39,7 +39,7 @@ unsigned int get_desktop_n(XEvent *e, Func_arg arg)
     if(e->type == KeyPress)
         return (arg.desktop_n<DESKTOP_N || arg.desktop_n==~0U) ? arg.desktop_n : 0;
     if(e->type == ButtonPress)
-        return win_to_widget(e->xbutton.window)->id-TASKBAR_BUTTON_BEGIN;
+        return widget_find(e->xbutton.window)->id-TASKBAR_BUTTON_BEGIN;
     return 1;
 }
 
@@ -64,9 +64,9 @@ static void hide_cur_desktop_clients(WM *wm)
         if(is_on_cur_desktop(c->desktop_mask))
         {
             if(is_iconic_client(c))
-                taskbar_del_cbutton(WIDGET_WIN(c));
+                taskbar_del_client(wm->taskbar, WIDGET_WIN(c));
             else
-                hide_widget(WIDGET(c->frame));
+                widget_hide(WIDGET(c->frame));
         }
     }
 }
@@ -78,9 +78,9 @@ static void show_cur_desktop_clients(WM *wm)
         if(is_on_cur_desktop(c->desktop_mask))
         {
             if(is_iconic_client(c))
-                taskbar_add_cbutton(WIDGET_WIN(c));
+                taskbar_add_client(wm->taskbar, WIDGET_WIN(c));
             else
-                show_widget(WIDGET(c->frame));
+                widget_show(WIDGET(c->frame));
         }
     }
 }

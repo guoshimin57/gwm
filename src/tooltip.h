@@ -18,10 +18,10 @@ typedef struct _tooltip_tag Tooltip;
 
 #define TOOLTIP(widget) ((Tooltip *)(widget))
 
-Tooltip *create_tooltip(Widget *owner, const char *tip);
-void change_tooltip_tip(Tooltip *tooltip, const char *tip);
-void destroy_tooltip(Widget *widget);
-void show_tooltip(Widget *widget);
-void update_tooltip_fg(const Widget *widget);
+Tooltip *tooltip_new(const Widget *owner, const char *tip);
+void tooltip_change_tip(Tooltip *tooltip, const char *tip);
+void tooltip_del(Widget *widget);
+void tooltip_show(Widget *widget);
+void tooltip_update_fg(const Widget *widget);
 
 #endif

@@ -19,13 +19,13 @@ typedef struct _button_tag Button;
 
 #define BUTTON(widget) ((Button *)(widget))
 
-Button *create_button(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label);
-void destroy_button(Button *button);
-void update_button_fg(const Widget *widget);
-void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol);
-void change_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol);
-char *get_button_label(Button *button);
-void set_button_label(Button *button, const char *label);
-void set_button_align(Button *button, Align_type align);
+Button *button_new(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label);
+void button_del(Button *button);
+void button_update_fg(const Widget *widget);
+void button_set_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol);
+void button_change_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol);
+char *button_get_label(const Button *button);
+void button_set_label(Button *button, const char *label);
+void button_set_align(Button *button, Align_type align);
 
 #endif

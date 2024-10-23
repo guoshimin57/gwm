@@ -36,32 +36,21 @@ struct _frame_tag // 客戶窗口裝飾
     Titlebar *titlebar;
 };
 
-static Titlebar *create_titlebar(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image);
-static void set_titlebar_method(Widget *widget);
-static void destroy_titlebar(Titlebar *titlebar);
-static Rect get_titlebar_button_rect(const Titlebar *titlebar, size_t index);
-static Rect get_title_rect(const Titlebar *titlebar);
-static int get_cur_titlebar_button_n(void);
+static void frame_ctor(Frame *frame, Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image);
+static Titlebar *titlebar_new(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image);
+static void titlebar_ctor(Titlebar *titlebar, Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image);
+static void titlebar_set_method(Widget *widget);
+static void frame_dtor(Frame *frame);
+static void titlebar_del(Titlebar *titlebar);
+static void titlebar_dtor(Titlebar *titlebar);
+static Rect titlebar_get_button_rect(const Titlebar *titlebar, size_t index);
+static Rect titlebar_get_title_rect(const Titlebar *titlebar);
+static int titlebar_get_button_n(void);
 
-Frame *create_frame(Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
+Frame *frame_new(Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
 {
     Frame *frame=Malloc(sizeof(Frame));
-    int fx=x-border_w, fy=y-titlebar_h-border_w, fw=w, fh=h+titlebar_h;
-
-    init_widget(WIDGET(frame), NULL, CLIENT_FRAME, state, fx, fy, fw, fh);
-    set_widget_border_width(WIDGET(frame), border_w);
-    set_widget_border_color(WIDGET(frame), get_widget_color(state));
-    frame->cwin=WIDGET_WIN(parent);
-    frame->titlebar=NULL;
-    XSelectInput(xinfo.display, WIDGET_WIN(frame), FRAME_EVENT_MASK);
-    if(cfg->set_frame_prop)
-        copy_prop(WIDGET_WIN(frame), frame->cwin);
-    if(titlebar_h)
-        frame->titlebar=create_titlebar(WIDGET(frame), state, 0, 0, w, titlebar_h, title, image);
-    XAddToSaveSet(xinfo.display, frame->cwin);
-    XReparentWindow(xinfo.display, frame->cwin, WIDGET_WIN(frame), 0, titlebar_h);
-    set_client_leader(WIDGET_WIN(frame), frame->cwin);
-    return frame;
+    frame_ctor(frame, parent, state, x, y, w, h, titlebar_h, border_w, title, image);
     
     /* 以下是同時設置窗口前景和背景透明度的非EWMH標準方法：
     unsigned long opacity = (unsigned long)(0xfffffffful);
@@ -69,89 +58,125 @@ Frame *create_frame(Widget *parent, Widget_state state, int x, int y, int w, int
     XChangeProperty(xinfo.display, c->frame, XA_NET_WM_WINDOW_OPACITY, XA_CARDINAL, 32,
         PropModeReplace, (unsigned char *)&opacity, 1L);
     */
+
+    XAddToSaveSet(xinfo.display, frame->cwin);
+    XReparentWindow(xinfo.display, frame->cwin, WIDGET_WIN(frame), 0, titlebar_h);
+    set_client_leader(WIDGET_WIN(frame), frame->cwin);
+    XSelectInput(xinfo.display, WIDGET_WIN(frame), FRAME_EVENT_MASK);
+
+    return frame;
 }
 
-static Titlebar *create_titlebar(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image)
+static void frame_ctor(Frame *frame, Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
+{
+    int fx=x-border_w, fy=y-titlebar_h-border_w, fw=w, fh=h+titlebar_h;
+
+    widget_ctor(WIDGET(frame), NULL, CLIENT_FRAME, state, fx, fy, fw, fh);
+    widget_set_border_width(WIDGET(frame), border_w);
+    widget_set_border_color(WIDGET(frame), get_widget_color(state));
+    frame->cwin=WIDGET_WIN(parent);
+    frame->titlebar=NULL;
+    if(cfg->set_frame_prop)
+        copy_prop(WIDGET_WIN(frame), frame->cwin);
+    if(titlebar_h)
+        frame->titlebar=titlebar_new(WIDGET(frame), state, 0, 0, w, titlebar_h, title, image);
+}
+
+static Titlebar *titlebar_new(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image)
 {
     Titlebar *titlebar=Malloc(sizeof(Titlebar));
 
-    init_widget(WIDGET(titlebar), parent, TITLEBAR, state, x, y, w, h);
-    set_titlebar_method(WIDGET(titlebar));
-    titlebar->title=copy_string(title);
-    WIDGET_TOOLTIP(titlebar)=(Widget *)create_tooltip(WIDGET(titlebar), title);
-
-    titlebar->logo=create_button(WIDGET(titlebar), TITLE_LOGO, state, 0, 0, h, h, NULL);
-    WIDGET_TOOLTIP(titlebar->logo)=(Widget *)create_tooltip(WIDGET(titlebar->logo), cfg->tooltip[TITLE_LOGO]);
-    set_button_icon(BUTTON(titlebar->logo), image, NULL, "∨");
-
-    for(size_t i=0; i<TITLE_BUTTON_N; i++)
-    {
-        Rect br=get_titlebar_button_rect(titlebar, i);
-        Widget_id id=TITLE_BUTTON_BEGIN+i;
-        titlebar->buttons[i]=create_button(WIDGET(titlebar), id, state,
-            br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
-        WIDGET_TOOLTIP(titlebar->buttons[i])=(Widget *)create_tooltip(WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
-    }
-
-    titlebar->menu=create_menu(WIDGET(titlebar->logo), CLIENT_MENU,
-        cfg->client_menu_item_icon, cfg->client_menu_item_symbol,
-        cfg->client_menu_item_label, CLIENT_MENU_ITEM_N, 1);
-
-    XSelectInput(xinfo.display, WIDGET_WIN(titlebar), TITLEBAR_EVENT_MASK);
-    show_widget(WIDGET(titlebar));
+    titlebar_ctor(titlebar, parent, state, x, y, w, h, title, image);
+    widget_show(WIDGET(titlebar));
 
     return titlebar;
 }
 
-static void set_titlebar_method(Widget *widget)
+static void titlebar_ctor(Titlebar *titlebar, Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image)
 {
-    widget->update_fg=update_titlebar_fg;
+    widget_ctor(WIDGET(titlebar), parent, TITLEBAR, state, x, y, w, h);
+    titlebar_set_method(WIDGET(titlebar));
+    titlebar->title=copy_string(title);
+    WIDGET_TOOLTIP(titlebar)=(Widget *)tooltip_new(WIDGET(titlebar), title);
+
+    titlebar->logo=button_new(WIDGET(titlebar), TITLE_LOGO, state, 0, 0, h, h, NULL);
+    WIDGET_TOOLTIP(titlebar->logo)=(Widget *)tooltip_new(WIDGET(titlebar->logo), cfg->tooltip[TITLE_LOGO]);
+    button_set_icon(BUTTON(titlebar->logo), image, NULL, "∨");
+
+    for(size_t i=0; i<TITLE_BUTTON_N; i++)
+    {
+        Rect br=titlebar_get_button_rect(titlebar, i);
+        Widget_id id=TITLE_BUTTON_BEGIN+i;
+        titlebar->buttons[i]=button_new(WIDGET(titlebar), id, state,
+            br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
+        WIDGET_TOOLTIP(titlebar->buttons[i])=(Widget *)tooltip_new(WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
+    }
+
+    titlebar->menu=menu_new(WIDGET(titlebar->logo), CLIENT_MENU,
+        cfg->client_menu_item_icon, cfg->client_menu_item_symbol,
+        cfg->client_menu_item_label, CLIENT_MENU_ITEM_N, 1);
+
+    XSelectInput(xinfo.display, WIDGET_WIN(titlebar), TITLEBAR_EVENT_MASK);
 }
 
-static Rect get_titlebar_button_rect(const Titlebar *titlebar, size_t index)
+static void titlebar_set_method(Widget *widget)
+{
+    widget->update_fg=titlebar_update_fg;
+}
+
+static Rect titlebar_get_button_rect(const Titlebar *titlebar, size_t index)
 {
     int tw=WIDGET_W(titlebar), w=cfg->title_button_width, h=get_font_height_by_pad();
     return (Rect){tw-w*(TITLE_BUTTON_N-index), 0, w, h};
 }
 
-void destroy_frame(Frame *frame)
+void frame_del(Frame *frame)
 {
     int bw=frame->base.border_w, th=(frame->titlebar ? WIDGET_H(frame->titlebar) : 0);
 
     XReparentWindow(xinfo.display, frame->cwin, xinfo.root_win, 
         WIDGET_X(frame)+bw, WIDGET_Y(frame)+th+bw);
-
-    if(frame->titlebar)
-        destroy_titlebar(frame->titlebar), frame->titlebar=NULL;
-    destroy_widget(WIDGET(frame));
+    frame_dtor(frame);
+    widget_del(WIDGET(frame));
 }
 
-static void destroy_titlebar(Titlebar *titlebar)
+static void frame_dtor(Frame *frame)
+{
+    if(frame->titlebar)
+        titlebar_del(frame->titlebar), frame->titlebar=NULL;
+}
+
+static void titlebar_del(Titlebar *titlebar)
+{
+    titlebar_dtor(titlebar);
+    widget_del(WIDGET(titlebar));
+}
+
+static void titlebar_dtor(Titlebar *titlebar)
 {
     Free(titlebar->title);
-    destroy_button(titlebar->logo), titlebar->logo=NULL;
+    button_del(titlebar->logo), titlebar->logo=NULL;
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
-        destroy_button(titlebar->buttons[i]), titlebar->buttons[i]=NULL;
-    destroy_menu(titlebar->menu), titlebar->menu=NULL;
-    destroy_widget(WIDGET(titlebar));
+        button_del(titlebar->buttons[i]), titlebar->buttons[i]=NULL;
+    menu_del(titlebar->menu), titlebar->menu=NULL;
 }
 
-void move_resize_frame(Frame *frame, int x, int y, int w, int h)
+void frame_move_resize(Frame *frame, int x, int y, int w, int h)
 {
     Titlebar *p=frame->titlebar;
     if(p)
     {
-        move_resize_widget(WIDGET(p), WIDGET_X(p), WIDGET_Y(p), w, WIDGET_H(p));
+        widget_move_resize(WIDGET(p), WIDGET_X(p), WIDGET_Y(p), w, WIDGET_H(p));
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
         {
-            Rect br=get_titlebar_button_rect(p, i);
-            move_resize_widget(WIDGET(p->buttons[i]), br.x, br.y, br.w, br.h);
+            Rect br=titlebar_get_button_rect(p, i);
+            widget_move_resize(WIDGET(p->buttons[i]), br.x, br.y, br.w, br.h);
         }
     }
-    move_resize_widget(WIDGET(frame), x, y, w, h);
+    widget_move_resize(WIDGET(frame), x, y, w, h);
 }
 
-bool is_frame_part(const Frame *frame, Window win)
+bool frame_has_win(const Frame *frame, Window win)
 {
     if(win == WIDGET_WIN(frame))
         return true;
@@ -168,7 +193,7 @@ bool is_frame_part(const Frame *frame, Window win)
     return false;
 }
 
-void set_frame_state_current(Frame *frame, int value)
+void frame_set_state_current(Frame *frame, int value)
 {
     WIDGET_STATE(frame).current=value;
     if(frame->titlebar)
@@ -180,83 +205,83 @@ void set_frame_state_current(Frame *frame, int value)
     }
 }
 
-void update_frame_bg(const Frame *frame)
+void frame_update_bg(const Frame *frame)
 {
     if(frame->base.border_w)
-        set_widget_border_color(WIDGET(frame),
+        widget_set_border_color(WIDGET(frame),
             get_widget_color(WIDGET_STATE(frame)));
     if(frame->titlebar)
     {
-        update_widget_bg(WIDGET(frame->titlebar));
-        update_widget_bg(WIDGET(frame->titlebar->logo));
+        widget_update_bg(WIDGET(frame->titlebar));
+        widget_update_bg(WIDGET(frame->titlebar->logo));
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            update_widget_bg(WIDGET(frame->titlebar->buttons[i]));
+            widget_update_bg(WIDGET(frame->titlebar->buttons[i]));
     }
 }
 
-Menu *get_frame_menu(const Frame *frame)
+Menu *frame_get_menu(const Frame *frame)
 {
     return (frame && frame->titlebar) ? frame->titlebar->menu : NULL;
 }
 
-int get_frame_titlebar_height(const Frame *frame)
+int frame_get_titlebar_height(const Frame *frame)
 {
     return frame->titlebar ? WIDGET_H(frame->titlebar) : 0;
 }
 
-void toggle_titlebar(Frame *frame, const char *title, Imlib_Image image)
+void titlebar_toggle(Frame *frame, const char *title, Imlib_Image image)
 {
     if(frame->titlebar)
-        destroy_titlebar(frame->titlebar), frame->titlebar=NULL;
+        titlebar_del(frame->titlebar), frame->titlebar=NULL;
     else
-        frame->titlebar=create_titlebar(WIDGET(frame), frame->base.state,
+        frame->titlebar=titlebar_new(WIDGET(frame), frame->base.state,
             0, 0, frame->base.w, get_font_height_by_pad(), title, image);
 }
 
-void update_titlebar_fg(const Widget *widget)
+void titlebar_update_fg(const Widget *widget)
 {
     Titlebar *titlebar=(Titlebar *)widget;
-    Rect r=get_title_rect(titlebar);
+    Rect r=titlebar_get_title_rect(titlebar);
     Str_fmt f={r.x, r.y, r.w, r.h, CENTER, true, false, 0,
         get_widget_fg(WIDGET_STATE(titlebar))};
     draw_string(WIDGET_WIN(titlebar), titlebar->title, &f);
 }
 
-static Rect get_title_rect(const Titlebar *titlebar)
+static Rect titlebar_get_title_rect(const Titlebar *titlebar)
 {
-    int n=get_cur_titlebar_button_n(), bw=cfg->title_button_width, w=bw*n;
+    int n=titlebar_get_button_n(), bw=cfg->title_button_width, w=bw*n;
     return (Rect){bw, 0, titlebar->base.w-bw-w, titlebar->base.h};
 }
 
-void update_titlebar_layout(const Frame *frame)
+void titlebar_update_layout(const Frame *frame)
 {
-    int n=get_cur_titlebar_button_n();
+    int n=titlebar_get_button_n();
     for(int i=0; i<TITLE_BUTTON_N; i++)
     {
         if(i<TITLE_BUTTON_N-n)
-            hide_widget(WIDGET(frame->titlebar->buttons[i]));
+            widget_hide(WIDGET(frame->titlebar->buttons[i]));
         else
-            show_widget(WIDGET(frame->titlebar->buttons[i]));
+            widget_show(WIDGET(frame->titlebar->buttons[i]));
     }
-    update_titlebar_fg(WIDGET(frame->titlebar));
+    titlebar_update_fg(WIDGET(frame->titlebar));
 }
 
-static int get_cur_titlebar_button_n(void)
+static int titlebar_get_button_n(void)
 {
     int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7};
     return buttons_n[get_gwm_current_layout()];
 }
 
-void change_title(const Frame *frame, const char *title)
+void frame_change_title(const Frame *frame, const char *title)
 {
     Free(frame->titlebar->title);
     frame->titlebar->title=copy_string(title);
-    change_tooltip_tip(TOOLTIP(WIDGET_TOOLTIP(frame->titlebar)), title);
-    update_titlebar_fg(WIDGET(frame->titlebar));
+    tooltip_change_tip(TOOLTIP(WIDGET_TOOLTIP(frame->titlebar)), title);
+    titlebar_update_fg(WIDGET(frame->titlebar));
 }
 
-void change_frame_logo(const Frame *frame, Imlib_Image image)
+void frame_change_logo(const Frame *frame, Imlib_Image image)
 {
-    change_button_icon(frame->titlebar->logo, image, NULL, NULL);
-    update_button_fg(WIDGET(frame->titlebar->logo));
+    button_change_icon(frame->titlebar->logo, image, NULL, NULL);
+    button_update_fg(WIDGET(frame->titlebar->logo));
 }

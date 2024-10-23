@@ -20,18 +20,18 @@ typedef struct _frame_tag Frame;
 typedef struct _titlebar_tag Titlebar;
 typedef struct rectangle_tag Rect;
 
-Frame *create_frame(Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image);
-void destroy_frame(Frame *frame);
-void move_resize_frame(Frame *frame, int x, int y, int w, int h);
-bool is_frame_part(const Frame *frame, Window win);
-void set_frame_state_current(Frame *frame, int value);
-void update_frame_bg(const Frame *frame);
-Menu *get_frame_menu(const Frame *frame);
-int get_frame_titlebar_height(const Frame *frame);
-void toggle_titlebar(Frame *frame, const char *title, Imlib_Image image);
-void update_titlebar_fg(const Widget *widget);
-void update_titlebar_layout(const Frame *frame);
-void change_title(const Frame *frame, const char *title);
-void change_frame_logo(const Frame *frame, Imlib_Image image);
+Frame *frame_new(Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image);
+void frame_del(Frame *frame);
+void frame_move_resize(Frame *frame, int x, int y, int w, int h);
+bool frame_has_win(const Frame *frame, Window win);
+void frame_set_state_current(Frame *frame, int value);
+void frame_update_bg(const Frame *frame);
+Menu *frame_get_menu(const Frame *frame);
+int frame_get_titlebar_height(const Frame *frame);
+void titlebar_toggle(Frame *frame, const char *title, Imlib_Image image);
+void titlebar_update_fg(const Widget *widget);
+void titlebar_update_layout(const Frame *frame);
+void frame_change_title(const Frame *frame, const char *title);
+void frame_change_logo(const Frame *frame, Imlib_Image image);
 
 #endif

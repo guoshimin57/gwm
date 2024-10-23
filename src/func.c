@@ -40,7 +40,7 @@ static bool is_grab_root_act(Pointer_act act)
 
 bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
 {
-    if(act==CHOOSE && win_to_widget(oe->xbutton.window)->id==CLIENT_WIN)
+    if(act==CHOOSE && widget_find(oe->xbutton.window)->id==CLIENT_WIN)
         return true;
 
     Window win = is_grab_root_act(act) ? xinfo.root_win : oe->xbutton.window;
@@ -98,9 +98,9 @@ void clear_wm(WM *wm)
     free_all_images();
     XDestroyWindow(xinfo.display, xinfo.hint_win);
     XDestroyWindow(xinfo.display, wm->wm_check_win);
-    destroy_taskbar();
-    destroy_entry(cmd_entry);
-    destroy_menu(act_center);
+    taskbar_del(wm->taskbar);
+    entry_del(cmd_entry);
+    menu_del(act_center);
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
         XDestroyWindow(xinfo.display, wm->top_wins[i]);
     XFreeModifiermap(xinfo.mod_map);
@@ -174,7 +174,7 @@ void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)
 void open_act_center(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    show_menu(WIDGET(act_center));
+    menu_show(WIDGET(act_center));
 }
 
 void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
@@ -182,7 +182,7 @@ void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
     if(c->show_titlebar)
-        show_menu(WIDGET(get_frame_menu(c->frame)));
+        menu_show(WIDGET(frame_get_menu(c->frame)));
 }
 
 void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
@@ -190,16 +190,16 @@ void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
     c->show_border = !c->show_border;
-    set_widget_border_width(WIDGET(c->frame), c->show_border ? cfg->border_width : 0);
+    widget_set_border_width(WIDGET(c->frame), c->show_border ? cfg->border_width : 0);
     request_layout_update();
 }
 
-void toggle_titlebar_visibility(WM *wm, XEvent *e, Func_arg arg)
+void titlebar_toggle_visibility(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
     c->show_titlebar=!c->show_titlebar;
-    toggle_titlebar(c->frame, c->title_text, c->image);
+    titlebar_toggle(c->frame, c->title_text, c->image);
     request_layout_update();
 }
 
@@ -261,7 +261,7 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 void show_cmd_entry(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    show_entry(WIDGET(cmd_entry));
+    entry_show(WIDGET(cmd_entry));
 }
 
 void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)

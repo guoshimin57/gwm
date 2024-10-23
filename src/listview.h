@@ -15,14 +15,14 @@
 #include "misc.h"
 #include "widget.h"
 
-typedef struct _list_view_tag List_view;
+typedef struct _listview_tag Listview;
 
-#define LIST_VIEW(widget) ((List_view *)(widget))
+#define LIST_VIEW(widget) ((Listview *)(widget))
 
-List_view *create_list_view(Widget *parent, Widget_id id, int x, int y, int w, int h, const Strings *texts);
-void show_list_view(Widget *widget);
-void update_list_view_fg(const Widget *widget);
-void update_list_view(List_view *list_view, Strings *texts);
-void set_list_view_nmax(List_view *list_view, int nmax);
+Listview *listview_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const Strings *texts);
+void listview_show(Widget *widget);
+void listview_update_fg(const Widget *widget);
+void listview_update(Listview *listview, Strings *texts);
+void listview_set_nmax(Listview *listview, int nmax);
 
 #endif

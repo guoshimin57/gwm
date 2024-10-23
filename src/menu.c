@@ -20,14 +20,22 @@ struct _menu_tag // 一級多行多列菜單
     int n, col, row; // 菜單項數量、列數、行數
 };
 
+static void menu_ctor(Menu *menu, Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col);
 static bool is_null_strings(const char *strings[], int n);
-static void set_menu_method(Widget *widget);
+static void menu_set_method(Widget *widget);
+static void menu_dtor(Menu *menu);
 
 Menu *act_center=NULL; // 操作中心
 
-Menu *create_menu(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col)
+Menu *menu_new(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col)
 {
     Menu *menu=Malloc(sizeof(Menu));
+    menu_ctor(menu, owner, id, icon_names, symbols, labels, n, col);
+    return menu;
+}
+
+static void menu_ctor(Menu *menu, Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col)
+{
     int w, wi=0, wl=0, h=get_font_height_by_pad(), maxw=0, sw=xinfo.screen_width,
         pad=get_font_pad(), row=(n+col-1)/col;
 
@@ -42,21 +50,19 @@ Menu *create_menu(Widget *owner, Widget_id id, const char *icon_names[], const c
     if(w > sw)
         w=sw/col;
 
-    init_widget(WIDGET(menu), NULL, id, WIDGET_STATE_1(current), 0, 0, w*col, h*row);
-    set_menu_method(WIDGET(menu));
+    widget_ctor(WIDGET(menu), NULL, id, WIDGET_STATE_1(current), 0, 0, w*col, h*row);
+    menu_set_method(WIDGET(menu));
 
     menu->owner=owner;
     menu->items=Malloc(sizeof(Button *)*n);
     for(int i=0; i<n; i++)
     {
-         menu->items[i]=create_button(WIDGET(menu), id+i+1, WIDGET_STATE_1(current), w*(i%col),
+         menu->items[i]=button_new(WIDGET(menu), id+i+1, WIDGET_STATE_1(current), w*(i%col),
              h*(i/col), w, h, labels[i]);
-         set_button_icon(menu->items[i], NULL, icon_names[i], symbols[i]);
-         set_button_align(menu->items[i], CENTER_LEFT);
+         button_set_icon(menu->items[i], NULL, icon_names[i], symbols[i]);
+         button_set_align(menu->items[i], CENTER_LEFT);
     }
     menu->n=n, menu->col=col, menu->row=row;
-
-    return menu;
 }
 
 static bool is_null_strings(const char *strings[], int n)
@@ -67,36 +73,41 @@ static bool is_null_strings(const char *strings[], int n)
     return true;
 }
 
-static void set_menu_method(Widget *widget)
+static void menu_set_method(Widget *widget)
 {
-    widget->show=show_menu;
-    widget->update_bg=update_menu_bg;
+    widget->show=menu_show;
+    widget->update_bg=menu_update_bg;
 }
 
-void destroy_menu(Menu *menu)
+void menu_del(Menu *menu)
+{
+    menu_dtor(menu);
+    widget_del(WIDGET(menu));
+}
+
+static void menu_dtor(Menu *menu)
 {
     for(int i=0; i<menu->n; i++)
-        destroy_button(menu->items[i]), menu->items[i]=NULL;
+        button_del(menu->items[i]), menu->items[i]=NULL;
     Free(menu->items);
-    destroy_widget(WIDGET(menu));
 }
 
-void show_menu(Widget *widget)
+void menu_show(Widget *widget)
 {
     Menu *menu=MENU(widget);
 
     set_pos_for_click(WIDGET_WIN(menu->owner),
         &WIDGET_X(menu), &WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
-    move_resize_widget(WIDGET(menu), WIDGET_X(menu), WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
+    widget_move_resize(WIDGET(menu), WIDGET_X(menu), WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
     XRaiseWindow(xinfo.display, WIDGET_WIN(menu));
-    show_widget(widget);
+    widget_show(widget);
 }
 
-void update_menu_bg(const Widget *widget)
+void menu_update_bg(const Widget *widget)
 {
     Menu *menu=MENU(widget);
 
-    update_widget_bg(widget);
+    widget_update_bg(widget);
     for(int i=0; i<menu->n; i++)
-        update_widget_bg(WIDGET(menu->items[i]));
+        widget_update_bg(WIDGET(menu->items[i]));
 }

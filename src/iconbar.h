@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     entry.h：與entry.c相應的頭文件。
+ *     iconbar.h：與iconbar.c相應的頭文件。
  *     版權 (C) 2020-2024 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,28 +9,21 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef ENTRY_H
-#define ENTRY_H
+#ifndef ICONBAR_H
+#define ICONBAR_H
 
-#include <stdbool.h>
 #include "widget.h"
-#include "misc.h"
 
-#define ENTRY(widget) ((Entry *)(widget))
+typedef struct iconbar_tag Iconbar;
 
-typedef struct _entry_tag Entry;
-
-extern Entry *cmd_entry;
-
-Entry *entry_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *));
-void entry_del(Entry *entry);
-void entry_show(Widget *widget);
-void entry_hide(const Widget *widget);
-void entry_update_bg(const Widget *widget);
-void entry_update_fg(const Widget *widget);
-wchar_t *entry_get_text(Entry *entry);
-bool entry_input(Entry *entry, XKeyEvent *ke);
-void entry_paste(Entry *entry);
-Entry *cmd_entry_new(Widget_id id);
+Window iconbar_get_client_win(Iconbar *iconbar, Window button_win);
+Iconbar *iconbar_new(Widget *parent, Widget_state state, int x, int y, int w, int h);
+void iconbar_del(Iconbar *iconbar);
+void iconbar_add_cbutton(Iconbar *iconbar, Window cwin);
+void iconbar_del_cbutton(Iconbar *iconbar, Window cwin);
+void iconbar_update(Iconbar *iconbar);
+void iconbar_update_by_state(Iconbar *iconbar, Window cwin);
+void iconbar_update_by_icon_name(Iconbar *iconbar, Window cwin, const char *icon_name);
+void iconbar_update_by_icon(Iconbar *iconbar, Window cwin, Imlib_Image image);
 
 #endif

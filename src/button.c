@@ -27,35 +27,48 @@ struct _button_tag
     Align_type align; // 標籤的對齊方式
 };
 
-static void set_button_method(Widget *widget);
+static void button_ctor(Button *button, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label);
+static void button_set_method(Widget *widget);
+static void button_dtor(Button *button);
 
-Button *create_button(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label)
+Button *button_new(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label)
 {
     Button *button=Malloc(sizeof(Button));
-    init_widget(WIDGET(button), parent, id, state, x, y, w, h);
-    set_button_method(WIDGET(button));
-
-    button->image=button->icon_name=button->symbol=NULL;
-    button->label=copy_string(label);
-    button->align=CENTER;
-    XSelectInput(xinfo.display, WIDGET_WIN(button), BUTTON_EVENT_MASK);
-
+    button_ctor(button, parent, id, state, x, y, w, h, label);
     return button;
 }
 
-static void set_button_method(Widget *widget)
+static void button_ctor(Button *button, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label)
 {
-    widget->update_fg=update_button_fg;
+    widget_ctor(WIDGET(button), parent, id, state, x, y, w, h);
+    button_set_method(WIDGET(button));
+    button->image=NULL;
+    button->icon_name=NULL;
+    button->symbol=NULL;
+    button->label=copy_string(label);
+    button->align=CENTER;
+    XSelectInput(xinfo.display, WIDGET_WIN(button), BUTTON_EVENT_MASK);
 }
 
-void destroy_button(Button *button)
+static void button_set_method(Widget *widget)
 {
-    vfree(button->icon_name, button->symbol, button->label);
-    vset_null(button->icon_name, button->symbol, button->label);
-    destroy_widget(WIDGET(button));
+    widget->update_fg=button_update_fg;
 }
 
-void update_button_fg(const Widget *widget)
+void button_del(Button *button)
+{
+    button_dtor(button);
+    widget_del(WIDGET(button));
+}
+
+static void button_dtor(Button *button)
+{
+    Free(button->icon_name);
+    Free(button->symbol);
+    Free(button->label);
+}
+
+void button_update_fg(const Widget *widget)
 {
     Button *button=BUTTON(widget);
     XftColor fg=get_widget_fg(WIDGET_STATE(button));
@@ -84,7 +97,7 @@ void update_button_fg(const Widget *widget)
     }
 }
 
-void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
+void button_set_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
 {
     if(image)
         button->image=image;
@@ -96,7 +109,7 @@ void set_button_icon(Button *button, Imlib_Image image, const char *icon_name, c
         return;
 }
 
-void change_button_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
+void button_change_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
 {
     if(icon_name && icon_name!=button->icon_name)
         Free(button->icon_name);
@@ -104,22 +117,22 @@ void change_button_icon(Button *button, Imlib_Image image, const char *icon_name
         Free(button->symbol);
     else
         return;
-    set_button_icon(button, image, icon_name, symbol);
+    button_set_icon(button, image, icon_name, symbol);
 }
 
-char *get_button_label(Button *button)
+char *button_get_label(const Button *button)
 {
     return button->label;
 }
 
-void set_button_label(Button *button, const char *label)
+void button_set_label(Button *button, const char *label)
 {
     if(button->label)
         Free(button->label);
     button->label=copy_string(label);
 }
 
-void set_button_align(Button *button, Align_type align)
+void button_set_align(Button *button, Align_type align)
 {
     button->align=align;
 }

@@ -292,8 +292,8 @@ void toggle_shade_client_mode(Client *c, bool shade)
     int x=WIDGET_X(c->frame), y=WIDGET_Y(c->frame),
         w=WIDGET_W(c->frame), h=WIDGET_H(c->frame), ch=WIDGET_H(c);
     if(shade)
-        move_resize_frame(c->frame, x, y, w, h-ch);
+        frame_move_resize(c->frame, x, y, w, h-ch);
     else
-        move_resize_frame(c->frame, x, y, w, h+ch);
+        frame_move_resize(c->frame, x, y, w, h+ch);
     c->win_state.shaded=shade;
 }

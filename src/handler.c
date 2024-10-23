@@ -107,9 +107,9 @@ void reg_event_handlers(WM *wm)
 static void handle_button_press(WM *wm, XEvent *e)
 {
     Window win=e->xbutton.window;
-    Widget *widget=win_to_widget(win);
+    Widget *widget=widget_find(win);
     Widget_id id = widget ? widget->id : (win==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
-    Client *c=win_to_client(wm->clients, id==CLIENT_ICON ? get_iconic_win(win) : win);
+    Client *c=win_to_client(wm->clients, id==CLIENT_ICON ? iconbar_get_client_win(taskbar_get_iconbar(wm->taskbar), win) : win);
     Client *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
 
     if(widget && widget->id!=TITLEBAR)
@@ -137,14 +137,14 @@ static void handle_button_press(WM *wm, XEvent *e)
 static void unmap_for_click(WM *wm, Widget_id id)
 {
     if(id != ACT_CENTER_ITEM)
-        hide_widget(WIDGET(act_center));
+        widget_hide(WIDGET(act_center));
     if(id != TITLE_LOGO)
         list_for_each_entry(Client, c, &wm->clients->list, list)
             if(c->show_titlebar)
-                hide_widget(WIDGET(get_frame_menu(c->frame)));
+                widget_hide(WIDGET(frame_get_menu(c->frame)));
     if(id!=RUN_CMD_ENTRY && id!=RUN_BUTTON)
     {
-        hide_widget(WIDGET(cmd_entry));
+        widget_hide(WIDGET(cmd_entry));
         XUnmapWindow(xinfo.display, xinfo.hint_win);
     }
 }
@@ -159,7 +159,7 @@ static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e)
 static void handle_button_release(WM *wm, XEvent *e)
 {
     UNUSED(wm);
-    Widget *widget=win_to_widget(e->xbutton.window);
+    Widget *widget=widget_find(e->xbutton.window);
     if(widget)
     {
         widget->state.active=0;
@@ -293,7 +293,7 @@ static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 {
     UNUSED(wm);
     c->win_state.attent=SHOULD_ADD_STATE(c, act, attent);
-    set_taskbar_attention(c->desktop_mask);
+    taskbar_set_attention(wm->taskbar, c->desktop_mask);
 }
 
 static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
@@ -376,7 +376,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     Client *c=win_to_client(wm->clients, win);
     Pointer_act act=NO_OP;
     Move_info m={x, y, 0, 0};
-    Widget *widget=win_to_widget(win);
+    Widget *widget=widget_find(win);
 
     if(cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, get_net_current_desktop(), c);
@@ -394,7 +394,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
         if(widget->id == CLOSE_BUTTON)
             widget->state.warn=1;
         widget->state.hot=1;
-        update_widget_bg(widget);
+        widget_update_bg(widget);
     }
     if(widget->id != UNUSED_WIDGET_ID)
         set_cursor(win, act);
@@ -447,13 +447,11 @@ static void handle_expose(WM *wm, XEvent *e)
         return;
 
     Window win=e->xexpose.window;
-    Widget *widget=win_to_widget(win);
+    Widget *widget=widget_find(win);
     if(widget == NULL)
         return;
 
-    if(widget->id == STATUSBAR)
-        update_statusbar_fg();
-    else if(widget->id != CLIENT_WIN)
+    if(widget->id != CLIENT_WIN)
         widget->update_fg(widget);
 }
 
@@ -500,11 +498,11 @@ static void handle_key_press(WM *wm, XEvent *e)
 
 static void key_run_cmd(WM *wm, XKeyEvent *e)
 {
-    if(!input_for_entry(cmd_entry, e))
+    if(!entry_input(cmd_entry, e))
         return;
 
     char cmd[BUFSIZ]={0};
-    wcstombs(cmd, get_entry_text(cmd_entry), BUFSIZ);
+    wcstombs(cmd, entry_get_text(cmd_entry), BUFSIZ);
     exec(wm, NULL, (Func_arg)SH_CMD(cmd));
 }
 
@@ -512,7 +510,7 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 {
     UNUSED(wm);
     Window win=e->xcrossing.window;
-    Widget *widget=win_to_widget(win);
+    Widget *widget=widget_find(win);
     if(widget == NULL)
         return;
 
@@ -579,15 +577,15 @@ static void handle_property_notify(WM *wm, XEvent *e)
         free_image(c->image);
         c->image=get_icon_image(win, c->class_hint.res_name, 0, NULL);
         if(c->show_titlebar)
-            change_frame_logo(c->frame, c->image);
+            frame_change_logo(c->frame, c->image);
         if(is_iconic_client(c))
-            update_iconbar();
+            iconbar_update_by_icon(taskbar_get_iconbar(wm->taskbar), win, c->image);
     }
     else if(c && is_spec_ewmh_atom(atom, NET_WM_STATE))
-        update_iconbar_by_state(win);
+        iconbar_update_by_state(taskbar_get_iconbar(wm->taskbar), win);
     else if(is_spec_ewmh_atom(atom, NET_CURRENT_DESKTOP)
         || is_spec_gwm_atom(atom, GWM_CURRENT_LAYOUT))
-        update_taskbar_buttons_bg_by_chosen();
+        taskbar_buttons_update_bg_by_chosen(wm->taskbar);
     else if(is_spec_gwm_atom(atom, GWM_UPDATE_LAYOUT))
         update_layout(wm);
     else if(is_spec_gwm_atom(atom, GWM_MAIN_COLOR_NAME))
@@ -604,8 +602,8 @@ static void handle_wm_hints_notify(WM *wm, Window win)
     if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
         set_state_attent(c, true);
     if(nh && nh->flags & XUrgencyHint)
-        set_taskbar_urgency(c->desktop_mask);
-    update_taskbar_buttons_bg();
+        taskbar_set_urgency(wm->taskbar, c->desktop_mask);
+    taskbar_buttons_update_bg(wm->taskbar);
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
 }
@@ -618,9 +616,8 @@ static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
     if(!c || !is_iconic_client(c) || !(s=get_text_prop(win, atom)))
         return;
 
-    set_button_label(BUTTON(win_to_widget(get_iconic_win(win))), s);
+    iconbar_update_by_icon_name(taskbar_get_iconbar(wm->taskbar), win, s);
     Free(s);
-    update_iconbar();
 }
 
 static void update_ui(WM *wm)
@@ -630,12 +627,12 @@ static void update_ui(WM *wm)
     char *name=get_main_color_name();
     alloc_color(name);
     Free(name);
-    update_taskbar_bg(WIDGET(taskbar));
-    update_menu_bg(WIDGET(act_center));
+    taskbar_update_bg(WIDGET(wm->taskbar));
+    menu_update_bg(WIDGET(act_center));
     list_for_each_entry(Client, c, &wm->clients->list, list)
         if(c->show_titlebar)
-            update_menu_bg(WIDGET(get_frame_menu(c->frame)));
-    update_entry_bg(WIDGET(cmd_entry));
+            menu_update_bg(WIDGET(frame_get_menu(c->frame)));
+    entry_update_bg(WIDGET(cmd_entry));
     update_win_bg(xinfo.hint_win, get_widget_color(WIDGET_STATE_NORMAL), None);
     update_win_bg(xinfo.root_win, get_root_bg_color(), None);
     update_clients_bg(wm);
@@ -650,12 +647,12 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
         return;
 
     if(win == xinfo.root_win)
-        set_statusbar_label(s);
+        statusbar_change_label(taskbar_get_statusbar(wm->taskbar), s);
     else
     {
         Free(c->title_text);
         c->title_text=copy_string(s);
-        change_title(c->frame, s);
+        frame_change_title(c->frame, s);
     }
     Free(s);
 }
@@ -673,5 +670,5 @@ static void handle_selection_notify(WM *wm, XEvent *e)
     Window win=e->xselection.requestor;
     if( is_spec_icccm_atom(e->xselection.property, UTF8_STRING)
         && win==WIDGET_WIN(cmd_entry))
-        paste_for_entry(cmd_entry);
+        entry_paste(cmd_entry);
 }

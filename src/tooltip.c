@@ -18,39 +18,45 @@
 struct _tooltip_tag // 提示工具
 {
     Widget base;
-    Widget *owner;
+    const Widget *owner;
     char *tip;
 };
 
-static void set_tooltip_method(Widget *widget);
+static void tooltip_ctor(Tooltip *tooltip, const Widget *owner, const char *tip);
+static void tooltip_set_method(Widget *widget);
+static void tooltip_dtor(Tooltip *tooltip);
 
-Tooltip *create_tooltip(Widget *owner, const char *tip)
+Tooltip *tooltip_new(const Widget *owner, const char *tip)
 {
     if(tip == NULL)
         return NULL;
 
     Tooltip *tooltip=Malloc(sizeof(Tooltip));
-    int x=0, y=0, w=0, h=get_font_height_by_pad(), pad=get_font_pad();
-
-    get_string_size(tip, &w, NULL);
-    w+=pad*2;
-    init_widget(WIDGET(tooltip), NULL, UNUSED_WIDGET_ID, WIDGET_STATE_1(current), x, y, w, h);
-    set_tooltip_method(WIDGET(tooltip));
-
-    tooltip->tip=copy_string(tip);
-    tooltip->owner=owner;
+    tooltip_ctor(tooltip, owner, tip);
 
     return tooltip;
 }
 
-static void set_tooltip_method(Widget *widget)
+static void tooltip_ctor(Tooltip *tooltip, const Widget *owner, const char *tip)
 {
-    widget->destroy=destroy_tooltip;
-    widget->show=show_tooltip;
-    widget->update_fg=update_tooltip_fg;
+    int x=0, y=0, w=0, h=get_font_height_by_pad(), pad=get_font_pad();
+
+    get_string_size(tip, &w, NULL);
+    w+=pad*2;
+    widget_ctor(WIDGET(tooltip), NULL, UNUSED_WIDGET_ID, WIDGET_STATE_1(current), x, y, w, h);
+    tooltip_set_method(WIDGET(tooltip));
+    tooltip->owner=owner;
+    tooltip->tip=copy_string(tip);
 }
 
-void change_tooltip_tip(Tooltip *tooltip, const char *tip)
+static void tooltip_set_method(Widget *widget)
+{
+    widget->del=tooltip_del;
+    widget->show=tooltip_show;
+    widget->update_fg=tooltip_update_fg;
+}
+
+void tooltip_change_tip(Tooltip *tooltip, const char *tip)
 {
     Free(tooltip->tip);
     tooltip->tip=copy_string(tip);
@@ -61,25 +67,29 @@ void change_tooltip_tip(Tooltip *tooltip, const char *tip)
     XResizeWindow(xinfo.display, WIDGET_WIN(tooltip), *pw, h);
 }
 
-void destroy_tooltip(Widget *widget)
+void tooltip_del(Widget *widget)
 {
     Tooltip *tooltip=TOOLTIP(widget);
-    tooltip->owner->tooltip=NULL;
-    Free(tooltip->tip);
-    destroy_widget(widget);
+    tooltip_dtor(tooltip);
+    widget_del(widget);
 }
 
-void show_tooltip(Widget *widget)
+static void tooltip_dtor(Tooltip *tooltip)
+{
+    Free(tooltip->tip);
+}
+
+void tooltip_show(Widget *widget)
 {
     Tooltip *t=TOOLTIP(widget);
     int *px=&WIDGET_X(t), *py=&WIDGET_Y(t), w=WIDGET_W(t), h=WIDGET_H(t);
     set_pos_for_click(WIDGET_WIN(t->owner), px, py, w, h);
     XMoveWindow(xinfo.display, WIDGET_WIN(t), *px, *py);
     XRaiseWindow(xinfo.display, WIDGET_WIN(t));
-    show_widget(widget);
+    widget_show(widget);
 }
 
-void update_tooltip_fg(const Widget *widget)
+void tooltip_update_fg(const Widget *widget)
 {
     Str_fmt f={0, 0, WIDGET_W(widget), WIDGET_H(widget), CENTER, true, false, 0,
         get_widget_fg(WIDGET_STATE_NORMAL)};

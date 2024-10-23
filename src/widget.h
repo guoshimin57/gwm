@@ -72,7 +72,7 @@ struct _widget_tag
     Widget *parent, *tooltip;
 
     /* 以下爲虛函數 */
-    void (*destroy)(Widget *widget);
+    void (*del)(Widget *widget);
     void (*show)(Widget *widget);
     void (*hide)(const Widget *widget);
     void (*update_bg)(const Widget *widget);
@@ -103,20 +103,20 @@ typedef struct rectangle_tag Rect;
 #define WIDGET_INDEX(type_name, type_class) ((type_name) - type_class ## _BEGIN)
 #define DESKTOP_BUTTON_N(n) (DESKTOP_BUTTON_BEGIN+n-1)
 
-Widget *win_to_widget(Window win);
-Widget *create_widget(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
-void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
-void destroy_widget(Widget *widget);
-void set_widget_border_width(Widget *widget, int width);
-void set_widget_border_color(const Widget *widget, unsigned long pixel);
-void show_widget(Widget *widget);
-void hide_widget(const Widget *widget);
-void resize_widget(Widget *widget, int w, int h);
-void move_resize_widget(Widget *widget, int x, int y, int w, int h);
-void update_widget_bg(const Widget *widget);
-void update_widget_fg(const Widget *widget);
-void set_widget_rect(Widget *widget, int x, int y, int w, int h);
-Rect get_widget_outline(const Widget *widget);
+Widget *widget_find(Window win);
+Widget *widget_new(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
+void widget_ctor(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
+void widget_del(Widget *widget);
+void widget_set_border_width(Widget *widget, int width);
+void widget_set_border_color(const Widget *widget, unsigned long pixel);
+void widget_show(Widget *widget);
+void widget_hide(const Widget *widget);
+void widget_resize(Widget *widget, int w, int h);
+void widget_move_resize(Widget *widget, int x, int y, int w, int h);
+void widget_update_bg(const Widget *widget);
+void widget_update_fg(const Widget *widget);
+void widget_set_rect(Widget *widget, int x, int y, int w, int h);
+Rect widget_get_outline(const Widget *widget);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);

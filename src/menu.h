@@ -20,9 +20,9 @@ typedef struct _menu_tag Menu;
 
 extern Menu *act_center;
 
-Menu *create_menu(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col);
-void destroy_menu(Menu *menu);
-void show_menu(Widget *widget);
-void update_menu_bg(const Widget *widget);
+Menu *menu_new(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col);
+void menu_del(Menu *menu);
+void menu_show(Widget *widget);
+void menu_update_bg(const Widget *widget);
 
 #endif

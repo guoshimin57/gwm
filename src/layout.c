@@ -159,7 +159,7 @@ static void update_titlebars_layout(WM *wm)
 {
     list_for_each_entry(Client, c, &wm->clients->list, list)
         if(c->show_titlebar && is_on_cur_desktop(c->desktop_mask))
-            update_titlebar_layout(c->frame);
+            titlebar_update_layout(c->frame);
 }
 
 bool is_main_sec_gap(WM *wm, int x)
@@ -203,7 +203,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
             if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             {
                 update_net_wm_state(WIDGET_WIN(c), c->win_state);
-                hide_widget(WIDGET(c->frame));
+                widget_hide(WIDGET(c->frame));
             }
     if(arg.layout == PREVIEW)
         list_for_each_entry(Client, c, &wm->clients->list, list)
@@ -212,7 +212,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
                 c->win_state.hidden=0;
                 update_net_wm_state(WIDGET_WIN(c), c->win_state);
                 c->win_state.hidden=1;
-                show_widget(WIDGET(c->frame));
+                widget_show(WIDGET(c->frame));
             }
 
     if(*cl==TILE && arg.layout==STACK)
@@ -229,7 +229,7 @@ void change_layout(WM *wm, XEvent *e, Func_arg arg)
     set_gwm_current_layout(*cl);
     request_layout_update();
     update_titlebars_layout(wm);
-    update_taskbar_buttons_bg();
+    taskbar_buttons_update_bg(wm->taskbar);
 }
 
 void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)

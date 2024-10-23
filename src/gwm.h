@@ -35,6 +35,7 @@
 
 #include "misc.h"
 #include "widget.h"
+#include "taskbar.h"
 
 #define _(s) gettext(s)
 
@@ -128,6 +129,7 @@ typedef void (*event_handler_type)(WM*, XEvent *); // 事件處理器類型
 
 struct wm_tag // 窗口管理器相關信息
 {
+    Taskbar *taskbar; // 任務欄
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
     Rect workarea; // 工作區坐標和尺寸
     Window wm_check_win; // WM檢測窗口
@@ -194,6 +196,7 @@ typedef struct move_info_tag Move_info;
 
 extern sig_atomic_t run_flag; // 程序運行標志
 extern Xinfo xinfo;
+
 
 #include "client.h"
 #include "desktop.h"

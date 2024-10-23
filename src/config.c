@@ -217,7 +217,7 @@ static void config_widget_size(void)
     cfg->border_width=cfg->font_size/8.0+0.5;
     cfg->title_button_width=get_font_height_by_pad();
     cfg->win_gap=cfg->border_width*2;
-    cfg->status_area_width_max=cfg->font_size*30;
+    cfg->statusbar_width_max=cfg->font_size*30;
     cfg->taskbar_button_width=get_font_height_by_pad()/0.618+0.5;
     cfg->icon_win_width_max=cfg->font_size*15;
     cfg->icon_image_size=cfg->font_size*15;

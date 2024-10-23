@@ -22,11 +22,12 @@ typedef struct widget_node_tag
     Widget *widget;
 } Widget_node;
 
-static void reg_widget(Widget *widget);
-static Widget_node *create_widget_node(Widget *widget);
-static void unreg_widget(Widget *widget);
-static void free_widget_node(Widget_node *node);
-static void set_widget_method(Widget *widget);
+static void widget_reg(Widget *widget);
+static Widget_node *widget_node_new(Widget *widget);
+static void widget_unreg(Widget *widget);
+static void widget_node_del(Widget_node *node);
+static void widget_set_method(Widget *widget);
+static void widget_dtor(Widget *widget);
 static unsigned int get_num_lock_mask(void);
 static unsigned int get_valid_mask(unsigned int mask);
 static unsigned int get_modifier_mask(KeySym key_sym);
@@ -34,41 +35,41 @@ static Cursor cursors[POINTER_ACT_N]; // 光標
 
 static Widget_node *widget_list=NULL;
 
-static void reg_widget(Widget *widget)
+static void widget_reg(Widget *widget)
 {
     if(!widget_list)
     {
-        widget_list=create_widget_node(NULL);
+        widget_list=widget_node_new(NULL);
         list_init(&widget_list->list);
     }
-    Widget_node *p=create_widget_node(widget);
+    Widget_node *p=widget_node_new(widget);
     list_add(&p->list, &widget_list->list);
 }
 
-static Widget_node *create_widget_node(Widget *widget)
+static Widget_node *widget_node_new(Widget *widget)
 {
     Widget_node *p=Malloc(sizeof(Widget_node));
     p->widget=widget;
     return p;
 }
 
-static void unreg_widget(Widget *widget)
+static void widget_unreg(Widget *widget)
 {
     if(!widget_list)
         return;
 
     list_for_each_entry_safe(Widget_node, p, &widget_list->list, list)
         if(p->widget == widget)
-            { free_widget_node(p); break; }
+            { widget_node_del(p); break; }
 }
 
-static void free_widget_node(Widget_node *node)
+static void widget_node_del(Widget_node *node)
 {
     list_del(&node->list);
     free(node);
 }
 
-Widget *win_to_widget(Window win)
+Widget *widget_find(Window win)
 {
     list_for_each_entry(Widget_node, p, &widget_list->list, list)
         if(p->widget->win == win)
@@ -76,16 +77,16 @@ Widget *win_to_widget(Window win)
     return NULL;
 }
 
-Widget *create_widget(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
+Widget *widget_new(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
 {
     Widget *widget=Malloc(sizeof(Widget));
 
-    init_widget(widget, parent, id, state, x, y, w, h);
+    widget_ctor(widget, parent, id, state, x, y, w, h);
 
     return widget;
 }
 
-void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
+void widget_ctor(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
 {
     unsigned long bg;
     Window pwin = parent ? parent->win : xinfo.root_win;
@@ -98,81 +99,85 @@ void init_widget(Widget *widget, Widget *parent, Widget_id id, Widget_state stat
     widget->x=x, widget->y=y, widget->w=w, widget->h=h, widget->border_w=0;
     widget->parent=parent;
     widget->tooltip=NULL;
-
-    set_widget_method(widget);
+    widget_set_method(widget);
     XSelectInput(xinfo.display, widget->win, WIDGET_EVENT_MASK);
-    reg_widget(widget);
+    widget_reg(widget);
 }
 
-static void set_widget_method(Widget *widget)
+static void widget_set_method(Widget *widget)
 {
-    widget->destroy=destroy_widget;
-    widget->show=show_widget;
-    widget->hide=hide_widget;
-    widget->update_bg=update_widget_bg;
-    widget->update_fg=update_widget_fg;
+    widget->del=widget_del;
+    widget->show=widget_show;
+    widget->hide=widget_hide;
+    widget->update_bg=widget_update_bg;
+    widget->update_fg=widget_update_fg;
 }
 
-void destroy_widget(Widget *widget)
+void widget_del(Widget *widget)
 {
-    unreg_widget(widget);
+    widget_dtor(widget);
     if(widget->tooltip)
-        widget->tooltip->destroy(widget->tooltip), widget->tooltip=NULL;
-    if(widget->id != CLIENT_WIN)
-        XDestroyWindow(xinfo.display, widget->win);
+        widget->tooltip->del(widget->tooltip), widget->tooltip=NULL;
     Free(widget);
 }
 
-void set_widget_border_width(Widget *widget, int width)
+static void widget_dtor(Widget *widget)
+{
+    if(widget->id != CLIENT_WIN)
+        XDestroyWindow(xinfo.display, widget->win);
+    widget_unreg(widget);
+}
+
+void widget_set_border_width(Widget *widget, int width)
 {
     widget->border_w=width;
     XSetWindowBorderWidth(xinfo.display, widget->win, width);
 }
 
-void set_widget_border_color(const Widget *widget, unsigned long pixel)
+void widget_set_border_color(const Widget *widget, unsigned long pixel)
 {
     XSetWindowBorder(xinfo.display, widget->win, pixel);
 }
 
-void show_widget(Widget *widget)
+void widget_show(Widget *widget)
 {
     XMapWindow(xinfo.display, widget->win);
     XMapSubwindows(xinfo.display, widget->win);
 }
 
-void hide_widget(const Widget *widget)
+void widget_hide(const Widget *widget)
 {
     XUnmapWindow(xinfo.display, widget->win);
 }
 
-void resize_widget(Widget *widget, int w, int h)
+void widget_resize(Widget *widget, int w, int h)
 {
     widget->w=w, widget->h=h;
     XResizeWindow(xinfo.display, widget->win, w, h);
 }
 
-void move_resize_widget(Widget *widget, int x, int y, int w, int h)
+void widget_move_resize(Widget *widget, int x, int y, int w, int h)
 {
-    set_widget_rect(widget, x, y, w, h);
+    widget_set_rect(widget, x, y, w, h);
     XMoveResizeWindow(xinfo.display, widget->win, x, y, w, h);
 }
 
-void update_widget_bg(const Widget *widget)
+void widget_update_bg(const Widget *widget)
 {
     update_win_bg(widget->win, get_widget_color(widget->state), None);
 }
 
-void update_widget_fg(const Widget *widget)
+void widget_update_fg(const Widget *widget)
 {
     UNUSED(widget);
 }
 
-void set_widget_rect(Widget *widget, int x, int y, int w, int h)
+void widget_set_rect(Widget *widget, int x, int y, int w, int h)
 {
     widget->x=x, widget->y=y, widget->w=w, widget->h=h;
 }
 
-Rect get_widget_outline(const Widget *widget)
+Rect widget_get_outline(const Widget *widget)
 {
     int bw=widget->border_w;
     return (Rect){widget->x, widget->y, widget->w+2*bw, widget->h+2*bw};
