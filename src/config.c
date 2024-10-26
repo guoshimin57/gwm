@@ -13,6 +13,7 @@
 #include "font.h"
 #include "func.h"
 #include "minimax.h"
+#include "misc.h"
 #include "mvresize.h"
 #include "config.h"
 
@@ -39,6 +40,8 @@
 #define LIGHT_DOWN "light -U 5" // 調低屏幕亮度
 #define LIGHT_UP "light -A 5" // 調高屏幕亮度
 #define LOGOUT "pkill -9 'startgwm|gwm'" // 注銷
+
+#define SET_NULL(array, n) for(size_t i=0; i<n; i++) array[i]=NULL
 
 /* 功能：設置與虛擬桌面相關的按鍵功能綁定。
  * 說明：邏輯功能轉換鍵掩碼的定義詳見<X11/X.h>，用xmodmap(1)命令可查看與功能

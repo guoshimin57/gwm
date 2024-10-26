@@ -16,6 +16,12 @@
 #include <X11/Xlib.h>
 #include "list.h"
 
+#define _(s) gettext(s)
+#define UNUSED(x) ((void)(x))
+#define MIN(a, b) ((a)<(b) ? (a) : (b))
+#define MAX(a, b) ((a)>(b) ? (a) : (b))
+#define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
+
 /* 向量化執行指定函數。注意：此宏不能用作表达式 */
 #define vfunc(type, func, ...)                          \
     do                                                  \

@@ -11,6 +11,7 @@
 
 #include "config.h"
 #include "font.h"
+#include "misc.h"
 #include "taskbar.h"
 #include "debug.h"
 

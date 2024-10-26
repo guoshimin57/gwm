@@ -13,6 +13,7 @@
 #include "gwm.h"
 #include "font.h"
 #include "minimax.h"
+#include "misc.h"
 #include "list.h"
 #include "image.h"
 #include "icccm.h"

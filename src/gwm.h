@@ -37,8 +37,6 @@
 #include "widget.h"
 #include "taskbar.h"
 
-#define _(s) gettext(s)
-
 #define NET_WM_STATE_REMOVE 0
 #define NET_WM_STATE_ADD    1
 #define NET_WM_STATE_TOGGLE 2
@@ -47,15 +45,8 @@
     (act==NET_WM_STATE_ADD || (act==NET_WM_STATE_TOGGLE && !c->win_state.flag))
 
 
-#define SET_NULL(array, n) for(size_t i=0; i<n; i++) array[i]=NULL
-#define UNUSED(x) ((void)(x))
-#define MIN(a, b) ((a)<(b) ? (a) : (b))
-#define MAX(a, b) ((a)>(b) ? (a) : (b))
-#define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define FUNC_ARG(var, data) (Func_arg){.var=data}
-
-#define FONT_NAME_MAX 64
 
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)

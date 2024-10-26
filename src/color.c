@@ -50,9 +50,13 @@
  * 超過500的顏色搭配。
  */
 
+#include <stdbool.h>
 #include <float.h>
+#include <math.h>
+#include <X11/Xft/Xft.h>
 #include "config.h"
 #include "gwm.h"
+#include "color.h"
 
 enum color_index // *[COLOR_N]數組下標索引，它與構件狀態相關
 {
