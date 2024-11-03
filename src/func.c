@@ -258,9 +258,10 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
     all_attach_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void show_cmd_entry(WM *wm, XEvent *e, Func_arg arg)
+void run_cmd(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
+    cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
     entry_show(WIDGET(cmd_entry));
 }
 

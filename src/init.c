@@ -65,7 +65,6 @@ void init_wm(WM *wm)
     wm->taskbar=taskbar_new(NULL, WIDGET_STATE_1(current), r.x, r.y, r.w, r.h);
     if(cfg->show_taskbar)
         widget_show(WIDGET(wm->taskbar));
-    cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
     create_hint_win();
     create_clients(wm);
     grab_keys();

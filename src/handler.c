@@ -142,11 +142,8 @@ static void unmap_for_click(WM *wm, Widget_id id)
         list_for_each_entry(Client, c, &wm->clients->list, list)
             if(c->show_titlebar)
                 widget_hide(WIDGET(frame_get_menu(c->frame)));
-    if(id!=RUN_CMD_ENTRY && id!=RUN_BUTTON)
-    {
-        widget_hide(WIDGET(cmd_entry));
-        XUnmapWindow(xinfo.display, xinfo.hint_win);
-    }
+    if(cmd_entry && id!=RUN_CMD_ENTRY && id!=RUN_BUTTON)
+        entry_hide(WIDGET(cmd_entry));
 }
 
 static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e)
@@ -480,7 +477,8 @@ static void handle_focus_out(WM *wm, XEvent *e)
 
 static void handle_key_press(WM *wm, XEvent *e)
 {
-    if(e->xkey.window == WIDGET_WIN(cmd_entry))
+    Widget *widget=widget_find(e->xkey.window);
+    if(widget && widget==WIDGET(cmd_entry))
         key_run_cmd(wm, &e->xkey);
     else
     {

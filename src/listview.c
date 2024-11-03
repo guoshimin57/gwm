@@ -103,7 +103,7 @@ void listview_update_fg(const Widget *widget)
     }
 }
 
-void listview_update(Listview *listview, Strings *texts)
+void listview_update(Listview *listview, const Strings *texts)
 {
     int w=WIDGET_W(listview), hl=get_font_height_by_pad(),
         n=list_count_nodes(&texts->list), h=MIN(n, listview->nmax)*hl;

@@ -22,7 +22,7 @@ typedef struct _listview_tag Listview;
 Listview *listview_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const Strings *texts);
 void listview_show(Widget *widget);
 void listview_update_fg(const Widget *widget);
-void listview_update(Listview *listview, Strings *texts);
+void listview_update(Listview *listview, const Strings *texts);
 void listview_set_nmax(Listview *listview, int nmax);
 
 #endif
