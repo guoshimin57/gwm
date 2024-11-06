@@ -115,6 +115,7 @@ static void titlebar_ctor(Titlebar *titlebar, Widget *parent, Widget_state state
     titlebar->menu=menu_new(WIDGET(titlebar->logo), CLIENT_MENU,
         cfg->client_menu_item_icon, cfg->client_menu_item_symbol,
         cfg->client_menu_item_label, CLIENT_MENU_ITEM_N, 1);
+    widget_set_poppable(WIDGET(titlebar->menu), true);
 
     XSelectInput(xinfo.display, WIDGET_WIN(titlebar), TITLEBAR_EVENT_MASK);
 }

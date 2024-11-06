@@ -68,6 +68,7 @@ struct _widget_tag
     Widget_id id;
     Widget_state state;
     int x, y, w, h, border_w;
+    bool poppable;
     Window win;
     Widget *parent, *tooltip;
 
@@ -117,6 +118,10 @@ void widget_update_bg(const Widget *widget);
 void widget_update_fg(const Widget *widget);
 void widget_set_rect(Widget *widget, int x, int y, int w, int h);
 Rect widget_get_outline(const Widget *widget);
+void widget_set_poppable(Widget *widget, bool poppable);
+bool widget_get_poppable(const Widget *widget);
+bool widget_is_viewable(const Widget *widget);
+bool hide_popped_widgets(const Widget *clicked_widget);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);

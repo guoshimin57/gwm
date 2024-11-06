@@ -136,9 +136,12 @@ static bool taskbar_button_is_chosen(Widget_id id)
 static Menu *act_center_new(const Taskbar *taskbar)
 {
     int i=WIDGET_INDEX(ACT_CENTER_ITEM, TASKBAR_BUTTON);
-    return menu_new(WIDGET(taskbar->buttons[i]),
+    Menu *menu=menu_new(WIDGET(taskbar->buttons[i]),
         ACT_CENTER, cfg->act_center_item_icon, cfg->act_center_item_symbol,
         cfg->act_center_item_label, ACT_CENTER_ITEM_N, cfg->act_center_col);
+    widget_set_poppable(WIDGET(menu), true);
+
+    return menu;
 }
 
 void taskbar_buttons_update_bg(Taskbar *taskbar)

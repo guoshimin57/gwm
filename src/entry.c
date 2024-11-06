@@ -12,7 +12,6 @@
 #include <wchar.h>
 #include "gwm.h"
 #include "config.h"
-#include "listview.h"
 #include "file.h"
 #include "font.h"
 #include "icccm.h"
@@ -33,7 +32,6 @@ struct _entry_tag // 輸入構件
 };
 
 static void entry_ctor(Entry *entry, Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *));
-static void entry_clear(Entry *entry);
 static void entry_set_method(Widget *widget);
 static void entry_dtor(Entry *entry);
 static int entry_get_cursor_x(Entry *entry);
@@ -57,12 +55,13 @@ static void entry_ctor(Entry *entry, Widget *parent, Widget_id id, int x, int y,
     entry->hint=hint;
     entry->complete=complete;
     entry->listview=listview_new(parent, UNUSED_WIDGET_ID, x, y+h, w, h, NULL);
+    widget_set_poppable(WIDGET(entry->listview), true);
     entry_clear(entry);
     XSelectInput(xinfo.display, WIDGET_WIN(entry), ENTRY_EVENT_MASK);
     set_xic(WIDGET_WIN(entry), &entry->xic);
 }
 
-static void entry_clear(Entry *entry)
+void entry_clear(Entry *entry)
 {
     entry->text[0]=L'\0';
     entry->cursor_offset=0;
@@ -170,7 +169,7 @@ bool entry_input(Entry *entry, XKeyEvent *ke)
         {
             case XK_Escape:    entry_hide(widget); entry_clear(entry); return false;
             case XK_Return:
-            case XK_KP_Enter:  entry_complete(entry, false); entry_hide(widget); entry_clear(entry); return true;
+            case XK_KP_Enter:  entry_complete(entry, false); entry_hide(widget); return true;
             case XK_BackSpace: if(n1) wmemmove(s+*i-1, s+*i, no+1), --*i; break;
             case XK_Delete:
             case XK_KP_Delete: if(n1 < n) wmemmove(s+*i, s+*i+1, no+1); break;
@@ -236,6 +235,11 @@ void entry_paste(Entry *entry)
     entry_update_fg(WIDGET(entry));
 }
 
+Listview *entry_get_listview(Entry *entry)
+{
+    return entry->listview;
+}
+
 Entry *cmd_entry_new(Widget_id id)
 {
     int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
@@ -248,6 +252,7 @@ Entry *cmd_entry_new(Widget_id id)
     Entry *entry=entry_new(NULL, id, x, y, w, h, cfg->cmd_entry_hint,
         entry_get_cmd_completion);
     listview_set_nmax(entry->listview, (sh-y-h-h)/h);
+    widget_set_poppable(WIDGET(entry), true);
 
     return entry;
 }

@@ -29,7 +29,6 @@
 static void handle_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
 static void handle_button_release(WM *wm, XEvent *e);
-static void unmap_for_click(WM *wm, Widget_id id);
 static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e);
 static void handle_client_message(WM *wm, XEvent *e);
 static void change_net_wm_state(WM *wm, Client *c, long *full_act);
@@ -112,7 +111,8 @@ static void handle_button_press(WM *wm, XEvent *e)
     Client *c=win_to_client(wm->clients, id==CLIENT_ICON ? iconbar_get_client_win(taskbar_get_iconbar(wm->taskbar), win) : win);
     Client *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
 
-    if(widget && widget->id!=TITLEBAR)
+    hide_popped_widgets(widget);
+    if(widget && widget->id!=TITLEBAR && widget->id!=CLIENT_FRAME)
     {
         widget->state.active=1;
         widget->update_bg(widget);
@@ -130,20 +130,6 @@ static void handle_button_press(WM *wm, XEvent *e)
                 b->func(wm, e, b->arg);
         }
     }
-
-    unmap_for_click(wm, id);
-}
-
-static void unmap_for_click(WM *wm, Widget_id id)
-{
-    if(id != ACT_CENTER_ITEM)
-        widget_hide(WIDGET(act_center));
-    if(id != TITLE_LOGO)
-        list_for_each_entry(Client, c, &wm->clients->list, list)
-            if(c->show_titlebar)
-                widget_hide(WIDGET(frame_get_menu(c->frame)));
-    if(cmd_entry && id!=RUN_CMD_ENTRY && id!=RUN_BUTTON)
-        entry_hide(WIDGET(cmd_entry));
 }
 
 static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e)
@@ -502,6 +488,7 @@ static void key_run_cmd(WM *wm, XKeyEvent *e)
     char cmd[BUFSIZ]={0};
     wcstombs(cmd, entry_get_text(cmd_entry), BUFSIZ);
     exec(wm, NULL, (Func_arg)SH_CMD(cmd));
+    entry_clear(cmd_entry);
 }
 
 static void handle_leave_notify(WM *wm, XEvent *e)

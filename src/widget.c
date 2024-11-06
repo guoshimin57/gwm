@@ -97,6 +97,7 @@ void widget_ctor(Widget *widget, Widget *parent, Widget_id id, Widget_state stat
     if(widget->id != CLIENT_WIN)
         widget->win=create_widget_win(pwin, x, y, w, h, 0, 0, bg);
     widget->x=x, widget->y=y, widget->w=w, widget->h=h, widget->border_w=0;
+    widget->poppable=false;
     widget->parent=parent;
     widget->tooltip=NULL;
     widget_set_method(widget);
@@ -181,6 +182,34 @@ Rect widget_get_outline(const Widget *widget)
 {
     int bw=widget->border_w;
     return (Rect){widget->x, widget->y, widget->w+2*bw, widget->h+2*bw};
+}
+
+void widget_set_poppable(Widget *widget, bool poppable)
+{
+    widget->poppable=poppable;
+}
+
+bool widget_get_poppable(const Widget *widget)
+{
+    return widget->poppable;
+}
+
+bool widget_is_viewable(const Widget *widget)
+{
+    XWindowAttributes a;
+    return XGetWindowAttributes(xinfo.display, widget->win, &a) && a.map_state==IsViewable;
+}
+
+bool hide_popped_widgets(const Widget *clicked_widget)
+{
+    if(!clicked_widget)puts("root");
+    bool hide=false;
+    list_for_each_entry(Widget_node, p, &widget_list->list, list)
+        if( p->widget != clicked_widget
+            && widget_get_poppable(p->widget)
+            && widget_is_viewable(p->widget))
+            p->widget->hide(p->widget), hide=true;
+    return hide;
 }
 
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)
