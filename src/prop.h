@@ -27,7 +27,7 @@ void set_gwm_atoms(void);
 Window get_transient_for(Window win);
 unsigned char *get_prop(Window win, Atom prop, unsigned long *n);
 char *get_text_prop(Window win, Atom atom);
-bool get_cardinal_prop(Window win, Atom prop, CARD32 *value);
+long get_cardinal_prop(Window win, Atom prop, long fallback);
 Atom get_atom_prop(Window win, Atom prop);
 void replace_atom_prop(Window win, Atom prop, const Atom *values, int n);
 void replace_window_prop(Window win, Atom prop, const Window *wins, int n);

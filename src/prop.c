@@ -73,16 +73,14 @@ char *get_text_prop(Window win, Atom atom)
     return result;
 }
 
-bool get_cardinal_prop(Window win, Atom prop, CARD32 *value)
+long get_cardinal_prop(Window win, Atom prop, long fallback)
 {
-    CARD32 *p=(CARD32 *)get_prop(win, prop, NULL);
+    long result, *p=(long *)get_prop(win, prop, NULL);
 
-    if(!p)
-        return false;
-
-    *value=*p;
+    result = p ? *p : fallback;
     XFree(p);
-    return true;
+
+    return result;
 }
 
 Atom get_atom_prop(Window win, Atom prop)
@@ -140,9 +138,7 @@ void set_gwm_current_layout(long cur_layout)
 
 int get_gwm_current_layout(void)
 {
-    CARD32 layout=0;
-    get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], &layout);
-    return layout;
+    return get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], 0);
 }
 
 void request_layout_update(void)

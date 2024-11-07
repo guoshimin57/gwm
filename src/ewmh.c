@@ -110,9 +110,7 @@ void set_net_number_of_desktops(int n)
 
 int get_net_number_of_desktops(void)
 {
-    CARD32 n=1;
-    get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_NUMBER_OF_DESKTOPS], &n);
-    return n;
+    return get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_NUMBER_OF_DESKTOPS], 0);
 }
 
 void set_net_desktop_geometry(int w, int h)
@@ -141,9 +139,7 @@ void set_net_current_desktop(unsigned int cur_desktop)
 
 unsigned int get_net_current_desktop(void)
 {
-    CARD32 desktop=0;
-    get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_CURRENT_DESKTOP], &desktop);
-    return desktop;
+    return get_cardinal_prop(xinfo.root_win, ewmh_atoms[NET_CURRENT_DESKTOP], 0);
 }
 
 /* 因爲EWMH規定窗口要麼在某個桌面，要麼在所有窗口，不能同時在幾個桌面上，
@@ -151,10 +147,7 @@ unsigned int get_net_current_desktop(void)
  */
 unsigned int get_net_wm_desktop(Window win)
 {
-    CARD32 desktop=0;
-    if(get_cardinal_prop(win, ewmh_atoms[NET_WM_DESKTOP], &desktop))
-        return desktop;
-    return get_net_current_desktop();
+    return get_cardinal_prop(win, ewmh_atoms[NET_WM_DESKTOP], get_net_current_desktop());
 }
 
 void set_net_desktop_names(const char **names, int n)
@@ -397,7 +390,7 @@ char *get_net_wm_icon_name(Window win)
     return get_text_prop(win, ewmh_atoms[NET_WM_ICON_NAME]);
 }
 
-CARD32 *get_net_wm_icon(Window win)
+long *get_net_wm_icon(Window win)
 {
-    return (CARD32 *)get_prop(win, ewmh_atoms[NET_WM_ICON], NULL);
+    return (long *)get_prop(win, ewmh_atoms[NET_WM_ICON], NULL);
 }

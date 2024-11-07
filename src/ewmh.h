@@ -127,6 +127,6 @@ bool have_compositor(void);
 Window get_compositor(void);
 char *get_net_wm_name(Window win);
 char *get_net_wm_icon_name(Window win);
-CARD32 *get_net_wm_icon(Window win);
+long *get_net_wm_icon(Window win);
 
 #endif

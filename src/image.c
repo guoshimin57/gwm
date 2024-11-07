@@ -122,7 +122,7 @@ void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
 
 Imlib_Image get_icon_image(Window win, const char *name, int size, const char *theme)
 {
-    Imlib_Image image=search_icon_image(name);
+    Imlib_Image image = name ? search_icon_image(name) : NULL;
 
     return image ? image : create_icon_image(win, name, size, theme);
 }
@@ -144,8 +144,8 @@ static Imlib_Image create_icon_image(Window win, const char *name, int size, con
     Imlib_Image image=NULL;
 
     /* 根據加載效率依次嘗試 */
-    if( (image=create_icon_image_from_hint(win))
-        || (image=create_icon_image_from_prop(win))
+    if( (image=create_icon_image_from_prop(win))
+        || (image=create_icon_image_from_hint(win))
         || (image=create_icon_image_from_file(name, size, theme)))
     {
         reg_image(name, image);
@@ -166,17 +166,24 @@ static Imlib_Image create_icon_image_from_hint(Window win)
     XFree(hint);
     if(!get_geometry(pixmap, NULL, NULL, &w, &h, NULL, NULL))
         return NULL;
+
+    /* Nautilus未正確設置icon_mask，需要繞過此缺陷 */
+    XClassHint class_hint;
+    if( XGetClassHint(xinfo.display, win, &class_hint)
+        && strcmp(class_hint.res_name, "org.gnome.Nautilus") == 0)
+        mask=None;
+
     imlib_context_set_drawable(pixmap);   
     return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
 }
 
 static Imlib_Image create_icon_image_from_prop(Window win)
 {
-    CARD32 *data=get_net_wm_icon(win);
+    long *data=get_net_wm_icon(win);
     if(!data)
         return NULL;
     
-    CARD32 w=data[0], h=data[1], size=w*h, i;
+    long w=data[0], h=data[1], size=w*h, i;
     Imlib_Image image=imlib_create_image(w, h);
     if(image)
     {
