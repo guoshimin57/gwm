@@ -28,6 +28,7 @@
 
 static void handle_event(WM *wm, XEvent *e);
 static void handle_button_press(WM *wm, XEvent *e);
+static void exec_buttonbind_func(WM *wm, XEvent *e);
 static void handle_button_release(WM *wm, XEvent *e);
 static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e);
 static void handle_client_message(WM *wm, XEvent *e);
@@ -105,13 +106,30 @@ void reg_event_handlers(WM *wm)
 
 static void handle_button_press(WM *wm, XEvent *e)
 {
+    Widget *widget=widget_find(e->xbutton.window);
+
+    if(!has_popped_widget())
+        exec_buttonbind_func(wm, e);
+    else if(widget && widget_get_ancestor(widget))
+    {
+        exec_buttonbind_func(wm, e);
+        hide_popped_widgets(widget);
+    }
+    else
+    {
+        hide_popped_widgets(widget);
+        XUngrabPointer(xinfo.display, CurrentTime);
+    }
+}
+
+static void exec_buttonbind_func(WM *wm, XEvent *e)
+{
     Window win=e->xbutton.window;
     Widget *widget=widget_find(win);
     Widget_id id = widget ? widget->id : (win==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
     Client *c=win_to_client(wm->clients, id==CLIENT_ICON ? iconbar_get_client_win(taskbar_get_iconbar(wm->taskbar), win) : win);
     Client *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
 
-    hide_popped_widgets(widget);
     if(widget && widget->id!=TITLEBAR && widget->id!=CLIENT_FRAME)
     {
         widget->state.active=1;

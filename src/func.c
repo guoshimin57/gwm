@@ -261,6 +261,7 @@ void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 void run_cmd(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
+    entry_clear(cmd_entry);
     entry_show(WIDGET(cmd_entry));
 }
 

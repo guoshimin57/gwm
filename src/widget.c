@@ -200,16 +200,30 @@ bool widget_is_viewable(const Widget *widget)
     return XGetWindowAttributes(xinfo.display, widget->win, &a) && a.map_state==IsViewable;
 }
 
-bool hide_popped_widgets(const Widget *clicked_widget)
+Widget *widget_get_ancestor(const Widget *widget)
 {
-    if(!clicked_widget)puts("root");
-    bool hide=false;
+    Widget *w;
+    for(w=widget->parent; w; w=widget->parent)
+        if(w->parent == NULL)
+            break;
+    return w;
+}
+
+bool has_popped_widget(void)
+{
+    list_for_each_entry(Widget_node, p, &widget_list->list, list)
+        if(widget_get_poppable(p->widget) && widget_is_viewable(p->widget))
+            return true;
+    return false;
+}
+
+void hide_popped_widgets(const Widget *clicked_widget)
+{
     list_for_each_entry(Widget_node, p, &widget_list->list, list)
         if( p->widget != clicked_widget
             && widget_get_poppable(p->widget)
             && widget_is_viewable(p->widget))
-            p->widget->hide(p->widget), hide=true;
-    return hide;
+            p->widget->hide(p->widget);
 }
 
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)

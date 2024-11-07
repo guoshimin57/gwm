@@ -19,11 +19,12 @@
 #include "entry.h"
 
 #define ENTRY_EVENT_MASK (ButtonPressMask|KeyPressMask|ExposureMask)
+#define ENTRY_TEXT_SIZE BUFSIZ
 
 struct _entry_tag // 輸入構件
 {
     Widget base;
-    wchar_t text[BUFSIZ]; // 構件上的文字
+    wchar_t text[ENTRY_TEXT_SIZE]; // 構件上的文字
     const char *hint; // 構件的提示文字
     size_t cursor_offset; // 光標偏移字符數
     XIC xic; // 輸入法句柄
@@ -35,6 +36,7 @@ static void entry_ctor(Entry *entry, Widget *parent, Widget_id id, int x, int y,
 static void entry_set_method(Widget *widget);
 static void entry_dtor(Entry *entry);
 static int entry_get_cursor_x(Entry *entry);
+static void insert_wcs(wchar_t *src, size_t size, size_t *offset, const wchar_t *ins);
 static char *entry_get_part_match_regex(Entry *entry);
 static void entry_complete(Entry *entry, bool show);
 static Strings *entry_get_cmd_completion(Entry *entry);
@@ -63,7 +65,7 @@ static void entry_ctor(Entry *entry, Widget *parent, Widget_id id, int x, int y,
 
 void entry_clear(Entry *entry)
 {
-    entry->text[0]=L'\0';
+    wmemset(entry->text, L'\0', ENTRY_TEXT_SIZE);
     entry->cursor_offset=0;
 }
 
@@ -115,11 +117,10 @@ void entry_update_fg(const Widget *widget)
 {
     Entry *entry=ENTRY(widget);
     int x=entry_get_cursor_x(entry);
-    bool empty = entry->text[0]==L'\0';
     Str_fmt fmt={0, 0, WIDGET_W(entry), WIDGET_H(entry), CENTER_LEFT, true, false, 0,
         get_widget_fg(WIDGET_STATE(entry))};
 
-    if(empty)
+    if(wcslen(entry->text) == 0)
         draw_string(WIDGET_WIN(entry), entry->hint, &fmt);
     else
         draw_wcs(WIDGET_WIN(entry), entry->text, &fmt);
@@ -152,7 +153,7 @@ bool entry_input(Entry *entry, XKeyEvent *ke)
     wchar_t *s=entry->text, keyname[FILENAME_MAX]={0};
     size_t *i=&entry->cursor_offset, no=wcslen(s+*i);
     KeySym ks=look_up_key(entry->xic, ke, keyname, FILENAME_MAX);
-    size_t n1=wcslen(s), n2=wcslen(keyname), n=ARRAY_NUM(entry->text);
+    size_t ns=wcslen(s), n=ARRAY_NUM(entry->text);
 
     if(is_equal_modifier_mask(ControlMask, ke->state))
     {
@@ -170,25 +171,33 @@ bool entry_input(Entry *entry, XKeyEvent *ke)
             case XK_Escape:    entry_hide(widget); entry_clear(entry); return false;
             case XK_Return:
             case XK_KP_Enter:  entry_complete(entry, false); entry_hide(widget); return true;
-            case XK_BackSpace: if(n1) wmemmove(s+*i-1, s+*i, no+1), --*i; break;
+            case XK_BackSpace: if(ns) wmemmove(s+*i-1, s+*i, no+1), --*i; break;
             case XK_Delete:
-            case XK_KP_Delete: if(n1 < n) wmemmove(s+*i, s+*i+1, no+1); break;
+            case XK_KP_Delete: if(ns < n) wmemmove(s+*i, s+*i+1, no+1); break;
             case XK_Left:
             case XK_KP_Left:   *i = *i ? *i-1 : *i; break;
             case XK_Right:
-            case XK_KP_Right:  *i = *i<n1 ? *i+1 : *i; break;
+            case XK_KP_Right:  *i = *i<ns ? *i+1 : *i; break;
             case XK_Home:      (*i)=0; break;
-            case XK_End:       (*i)=n1; break;
+            case XK_End:       (*i)=ns; break;
             case XK_Tab:       entry_complete(entry, false); break;
-            default:           wcsncpy(s+n1, keyname, n-n1-1), (*i)+=n2;
+            default:           insert_wcs(s, n, i, keyname);
         }
     }
     else if(is_equal_modifier_mask(ShiftMask, ke->state))
-        wcsncpy(s+n1, keyname, n-n1-1), (*i)+=n2;
+        insert_wcs(s, n, i, keyname);
 
     entry_complete(entry, true);
     entry_update_fg(WIDGET(entry));
     return false;
+}
+
+static void insert_wcs(wchar_t *src, size_t size, size_t *offset, const wchar_t *ins)
+{
+    size_t ns=wcslen(src), ni=wcslen(ins), i=*offset;
+    wmemmove(src+i+ni, src+i, ns-i);
+    wcsncpy(src+i, ins, ni < size-i ? ni : size-i);
+    *offset = i + (ni < size-i ? ni : size-i);
 }
 
 static char *entry_get_part_match_regex(Entry *entry)
@@ -222,8 +231,8 @@ static void entry_complete(Entry *entry, bool show)
 void entry_paste(Entry *entry)
 {
     char *p=(char *)get_prop(WIDGET_WIN(entry), get_utf8_string_atom(), NULL);
-    wchar_t text[BUFSIZ];
-    int n=mbstowcs(text, p, BUFSIZ);
+    wchar_t text[ENTRY_TEXT_SIZE];
+    int n=mbstowcs(text, p, ENTRY_TEXT_SIZE);
     XFree(p);
     if(n <= 0)
         return;
