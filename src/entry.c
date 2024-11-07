@@ -36,6 +36,7 @@ static void entry_ctor(Entry *entry, Widget *parent, Widget_id id, int x, int y,
 static void entry_set_method(Widget *widget);
 static void entry_dtor(Entry *entry);
 static int entry_get_cursor_x(Entry *entry);
+static void entry_input_ctrl_seq(Entry *entry, XKeyEvent *ke, KeySym ks);
 static void insert_wcs(wchar_t *src, size_t size, size_t *offset, const wchar_t *ins);
 static char *entry_get_part_match_regex(Entry *entry);
 static void entry_complete(Entry *entry, bool show);
@@ -155,14 +156,14 @@ bool entry_input(Entry *entry, XKeyEvent *ke)
     KeySym ks=look_up_key(entry->xic, ke, keyname, FILENAME_MAX);
     size_t ns=wcslen(s), n=ARRAY_NUM(entry->text);
 
-    if(is_equal_modifier_mask(ControlMask, ke->state))
+    if(ns == 0)
     {
-        if(ks == XK_u)
-            wmemmove(s, s+*i, no+1), *i=0;
-        else if(ks == XK_v)
-            XConvertSelection(xinfo.display, XA_PRIMARY, get_utf8_string_atom(),
-                None, WIDGET_WIN(entry), ke->time);
+        WIDGET(entry)->state.active=1;
+        WIDGET(entry)->update_bg(WIDGET(entry));
     }
+
+    if(is_equal_modifier_mask(ControlMask, ke->state))
+        entry_input_ctrl_seq(entry, ke, ks);
     else if(is_equal_modifier_mask(None, ke->state))
     {
         Widget *widget=WIDGET(entry);
@@ -190,6 +191,19 @@ bool entry_input(Entry *entry, XKeyEvent *ke)
     entry_complete(entry, true);
     entry_update_fg(WIDGET(entry));
     return false;
+}
+
+static void entry_input_ctrl_seq(Entry *entry, XKeyEvent *ke, KeySym ks)
+{
+    if(ks == XK_u)
+    {
+        wchar_t *ins=entry->text+entry->cursor_offset;
+        wmemmove(entry->text, ins, wcslen(ins)+1);
+        entry->cursor_offset=0;
+    }
+    else if(ks == XK_v)
+        XConvertSelection(xinfo.display, XA_PRIMARY, get_utf8_string_atom(),
+            None, WIDGET_WIN(entry), ke->time);
 }
 
 static void insert_wcs(wchar_t *src, size_t size, size_t *offset, const wchar_t *ins)

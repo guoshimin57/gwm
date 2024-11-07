@@ -110,7 +110,7 @@ static void handle_button_press(WM *wm, XEvent *e)
 
     if(!has_popped_widget())
         exec_buttonbind_func(wm, e);
-    else if(widget && widget_get_ancestor(widget))
+    else if(widget)
     {
         exec_buttonbind_func(wm, e);
         hide_popped_widgets(widget);

@@ -200,15 +200,6 @@ bool widget_is_viewable(const Widget *widget)
     return XGetWindowAttributes(xinfo.display, widget->win, &a) && a.map_state==IsViewable;
 }
 
-Widget *widget_get_ancestor(const Widget *widget)
-{
-    Widget *w;
-    for(w=widget->parent; w; w=widget->parent)
-        if(w->parent == NULL)
-            break;
-    return w;
-}
-
 bool has_popped_widget(void)
 {
     list_for_each_entry(Widget_node, p, &widget_list->list, list)
