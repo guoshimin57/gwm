@@ -89,21 +89,40 @@ Atom get_atom_prop(Window win, Atom prop)
     return p ? *p : 0;
 }
 
-void replace_atom_prop(Window win, Atom prop, const Atom *values, int n)
+/* 根據XChangeProperty手冊顯示，當format爲32時，data必須是long類型的數組。
+ * 另外，手冊沒有解析當n爲0時會發生什麼，實測此時並非什麼也不幹，而是會有
+ * 些不可預知的行爲。後同。 */
+void replace_atom_prop(Window win, Atom prop, const Atom values[], int n)
 {
+    if(n <= 0)
+        return;
+
+    long v[n];
+    for(int i=0; i<n; i++)
+        v[i]=values[i];
+
     XChangeProperty(xinfo.display, win, prop, XA_ATOM, 32, PropModeReplace,
-        (unsigned char *)values, n);
+        (unsigned char *)v, n);
 }
 
-void replace_window_prop(Window win, Atom prop, const Window *wins, int n)
+void replace_window_prop(Window win, Atom prop, const Window wins[], int n)
 {
+    if(n <= 0)
+        return;
+
+    long v[n];
+    for(int i=0; i<n; i++)
+        v[i]=wins[i];
+
     XChangeProperty(xinfo.display, win, prop, XA_WINDOW, 32, PropModeReplace,
-        (unsigned char *)wins, n);
+        (unsigned char *)v, n);
 }
 
-/* 根據XChangeProperty顯示，當format爲32時，data必須是long類型的數組 */
-void replace_cardinal_prop(Window win, Atom prop, const long *values, int n)
+void replace_cardinal_prop(Window win, Atom prop, const long values[], int n)
 {
+    if(n <= 0)
+        return;
+
     XChangeProperty(xinfo.display, win, prop, XA_CARDINAL, 32, PropModeReplace,
         (unsigned char *)values, n);
 }

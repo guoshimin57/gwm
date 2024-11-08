@@ -105,9 +105,10 @@ typedef struct rectangle_tag Rect;
 #define DESKTOP_BUTTON_N(n) (DESKTOP_BUTTON_BEGIN+n-1)
 
 Widget *widget_find(Window win);
-Widget *widget_new(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
-void widget_ctor(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h);
+Widget *widget_new(Widget *parent, Widget_id id, int x, int y, int w, int h);
+void widget_ctor(Widget *widget, Widget *parent, Widget_id id, int x, int y, int w, int h);
 void widget_del(Widget *widget);
+void widget_set_state(Widget *widget, Widget_state state);
 void widget_set_border_width(Widget *widget, int width);
 void widget_set_border_color(const Widget *widget, unsigned long pixel);
 void widget_show(Widget *widget);

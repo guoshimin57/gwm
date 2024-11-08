@@ -40,7 +40,7 @@ static void listview_ctor(Listview *listview, Widget *parent, Widget_id id, int 
 {
     w = w>0 ? w : get_strings_width(texts);
     h = h>0 ? h : get_strings_height(texts);
-    widget_ctor(WIDGET(listview), parent, id, WIDGET_STATE_NORMAL, x, y, w, h);
+    widget_ctor(WIDGET(listview), parent, id, x, y, w, h);
     listview->texts=texts;
     listview->nmax=INT_MAX;
     listview_set_method(WIDGET(listview));
@@ -91,7 +91,7 @@ void listview_update_fg(const Widget *widget)
     int w=WIDGET_W(listview), h=get_font_height_by_pad(),
         i=0, nmax=listview->nmax;
     Str_fmt fmt={0, 0, w, h, CENTER_LEFT, true, false, 0,
-        get_widget_fg(WIDGET_STATE_NORMAL)};
+        get_widget_fg(WIDGET_STATE(listview))};
 
     list_for_each_entry(Strings, s, &listview->texts->list, list)
     {

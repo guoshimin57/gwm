@@ -61,15 +61,13 @@
 enum color_index // *[COLOR_N]數組下標索引，它與構件狀態相關
 {
     STATE_NORMAL, 
-    STATE_DISABLE, 
     STATE_ACTIVE, 
     STATE_WARN, 
     STATE_HOT, 
     STATE_URGENT, 
     STATE_ATTENT, 
     STATE_CHOSEN, 
-    STATE_CURRENT, 
-    STATE_DISABLE_CURRENT, 
+    STATE_UNFOCUSED, 
     STATE_HOT_CHOSEN,
     STATE_LAST=STATE_HOT_CHOSEN
 };
@@ -246,17 +244,15 @@ static void alloc_widget_colors(HSB hsb)
 {
     Widget_state state[]=
     {
-        [STATE_NORMAL]          = {0},
-        [STATE_DISABLE]         = {.disable=1},
-        [STATE_ACTIVE]          = {.active=1},
-        [STATE_WARN]            = {.warn=1},
-        [STATE_HOT]             = {.hot=1},
-        [STATE_URGENT]          = {.urgent=1},
-        [STATE_ATTENT]          = {.attent=1},
-        [STATE_CHOSEN]          = {.chosen=1},
-        [STATE_CURRENT]         = {.current=1},
-        [STATE_DISABLE_CURRENT] = {.disable=1, .current=1},
-        [STATE_HOT_CHOSEN]      = {.hot=1, .chosen=1},
+        [STATE_NORMAL]            = {0},
+        [STATE_ACTIVE]            = {.active=1},
+        [STATE_WARN]              = {.warn=1},
+        [STATE_HOT]               = {.hot=1},
+        [STATE_URGENT]            = {.urgent=1},
+        [STATE_ATTENT]            = {.attent=1},
+        [STATE_CHOSEN]            = {.chosen=1},
+        [STATE_UNFOCUSED]         = {.unfocused=1},
+        [STATE_HOT_CHOSEN]        = {.hot=1, .chosen=1},
     };
 
     for(int i=0; i<COLOR_N; i++)
@@ -292,17 +288,15 @@ static RGB get_widget_rgb_on_color(Widget_state state, HSB hsb)
     float dh=get_valid_dh(h, -60)/3, db=fminf((1-b)/2, 0.2);
     HSB table[COLOR_N] =
     {
-        [STATE_NORMAL]          = {h,      s/2, b/2}, 
-        [STATE_DISABLE]         = {h,      s/2, b/2}, 
-        [STATE_ACTIVE]          = {h,      s,   1},   
-        [STATE_WARN]            = {0,      1,   0.9}, // 紅色
-        [STATE_HOT]             = {h,      s,   b+db},
-        [STATE_URGENT]          = {h+dh*2, s,   b},   
-        [STATE_ATTENT]          = {h+dh,   s,   b},   
-        [STATE_CHOSEN]          = {h+dh*3, s,   b},   
-        [STATE_CURRENT]         = {h,      s,   b},   
-        [STATE_DISABLE_CURRENT] = {h,      s,   b},   
-        [STATE_HOT_CHOSEN]      = {h+dh*3, s,   b+db},
+        [STATE_NORMAL]            = {h,      s,   b}, 
+        [STATE_ACTIVE]            = {h,      s,   1},   
+        [STATE_WARN]              = {0,      1,   0.9}, // 紅色
+        [STATE_HOT]               = {h,      s,   b+db},
+        [STATE_URGENT]            = {h+dh*2, s,   b},   
+        [STATE_ATTENT]            = {h+dh,   s,   b},   
+        [STATE_CHOSEN]            = {h+dh*3, s,   b},   
+        [STATE_UNFOCUSED]         = {h,      s/2, b/2},   
+        [STATE_HOT_CHOSEN]        = {h+dh*3, s,   b+db},
     };
 
     return hsb_to_rgb(table[state_to_index(state)]);
@@ -315,17 +309,15 @@ static RGB get_widget_rgb_on_neutral(Widget_state state, HSB hsb)
     float cs=get_cozy_s(hsb), cb=get_cozy_b(hsb);
     HSB table[COLOR_N] =
     {
-        [STATE_NORMAL]          = {h,      s/2, b/2}, 
-        [STATE_DISABLE]         = {h,      s/2, b/2}, 
-        [STATE_ACTIVE]          = {h,      s,   1}, 
-        [STATE_WARN]            = {0,      1,   0.9}, // 紅色
-        [STATE_HOT]             = {h,      s,   b+db},
-        [STATE_URGENT]          = {h+dh*2, cs,  cb}, 
-        [STATE_ATTENT]          = {h+dh,   cs,  cb}, 
-        [STATE_CHOSEN]          = {h+dh*3, cs,  cb},
-        [STATE_CURRENT]         = {h,      s,   b},   
-        [STATE_DISABLE_CURRENT] = {h,      s,   b},   
-        [STATE_HOT_CHOSEN]      = {h+dh*3, cs,  1}, 
+        [STATE_NORMAL]            = {h,      s,   b}, 
+        [STATE_ACTIVE]            = {h,      s,   1}, 
+        [STATE_WARN]              = {0,      1,   0.9}, // 紅色
+        [STATE_HOT]               = {h,      s,   b+db},
+        [STATE_URGENT]            = {h+dh*2, cs,  cb}, 
+        [STATE_ATTENT]            = {h+dh,   cs,  cb}, 
+        [STATE_CHOSEN]            = {h+dh*3, cs,  cb},
+        [STATE_UNFOCUSED]         = {h,      s/2, b/2},   
+        [STATE_HOT_CHOSEN]        = {h+dh*3, cs,  1}, 
     };
 
     return hsb_to_rgb(table[state_to_index(state)]);
@@ -337,17 +329,15 @@ static RGB get_widget_rgb_on_grey(Widget_state state, HSB hsb)
     float cs=get_cozy_s(hsb), cb=get_cozy_b(hsb);
     HSB table[COLOR_N] =
     {
-        [STATE_NORMAL]          = {h,   s,  b/2}, 
-        [STATE_DISABLE]         = {h,   s,  b/2}, 
-        [STATE_ACTIVE]          = {h,   s,  1}, 
-        [STATE_WARN]            = {0,   1,  0.9}, // 紅色
-        [STATE_HOT]             = {h,   s,  b+db},
-        [STATE_URGENT]          = {175, cs, cb}, 
-        [STATE_ATTENT]          = {155, cs, cb}, 
-        [STATE_CHOSEN]          = {195, cs, cb},
-        [STATE_CURRENT]         = {h,   s,  b},   
-        [STATE_DISABLE_CURRENT] = {h,   s,  b},   
-        [STATE_HOT_CHOSEN]      = {195, cs, 1}, 
+        [STATE_NORMAL]            = {h,   s,   b}, 
+        [STATE_ACTIVE]            = {h,   s,   1}, 
+        [STATE_WARN]              = {0,   1,   0.9}, // 紅色
+        [STATE_HOT]               = {h,   s,   b+db},
+        [STATE_URGENT]            = {175, cs,  cb}, 
+        [STATE_ATTENT]            = {155, cs,  cb}, 
+        [STATE_CHOSEN]            = {195, cs,  cb},
+        [STATE_UNFOCUSED]         = {h,   s/2, b/2},   
+        [STATE_HOT_CHOSEN]        = {195, cs,  1}, 
     };
 
     return hsb_to_rgb(table[state_to_index(state)]);
@@ -389,14 +379,13 @@ static XftColor alloc_xftcolor_by_rgb(RGB rgb)
 
 static size_t state_to_index(Widget_state state)
 {
-    if(state.disable) return state.current ? STATE_DISABLE_CURRENT : STATE_DISABLE;
     if(state.active)  return STATE_ACTIVE; 
     if(state.warn)    return STATE_WARN; 
     if(state.hot)     return state.chosen ? STATE_HOT_CHOSEN : STATE_HOT; 
     if(state.urgent)  return STATE_URGENT; 
     if(state.attent)  return STATE_ATTENT; 
     if(state.chosen)  return STATE_CHOSEN; 
-    if(state.current) return STATE_CURRENT; 
+    if(state.unfocused) return STATE_UNFOCUSED; 
     return STATE_NORMAL;
 }
 
@@ -414,17 +403,15 @@ static RGB get_text_rgb(Widget_state state, RGB rgb)
 {
     float dark_b[COLOR_N]= // 深色主題的顏色亮度列表
     {
-        [STATE_NORMAL]          = 0.3,
-        [STATE_DISABLE]         = 1.0,
-        [STATE_ACTIVE]          = 0.0,
-        [STATE_WARN]            = 0.0,
-        [STATE_HOT]             = 0.1,
-        [STATE_URGENT]          = 0.2,
-        [STATE_ATTENT]          = 0.2,
-        [STATE_CHOSEN]          = 0.2,
-        [STATE_CURRENT]         = 0.0,
-        [STATE_DISABLE_CURRENT] = 1.0,
-        [STATE_HOT_CHOSEN]      = 0.1,
+        [STATE_NORMAL]            = 0.0,
+        [STATE_ACTIVE]            = 0.0,
+        [STATE_WARN]              = 0.0,
+        [STATE_HOT]               = 0.1,
+        [STATE_URGENT]            = 0.2,
+        [STATE_ATTENT]            = 0.2,
+        [STATE_CHOSEN]            = 0.2,
+        [STATE_UNFOCUSED]         = 0.3,
+        [STATE_HOT_CHOSEN]        = 0.1,
     };
     float b=dark_b[state_to_index(state)];
     HSB hsb=rgb_to_hsb(rgb);

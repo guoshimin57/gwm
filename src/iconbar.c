@@ -37,7 +37,7 @@ static void cbutton_ctor(Cbutton *cbutton, Widget *parent, int x, int y, int w, 
 static void cbutton_dtor(Cbutton *cbutton);
 static void cbutton_set_icon(Cbutton *cbutton);
 static Cbutton *iconbar_find_cbutton(const Iconbar *iconbar, Window cwin);
-static void iconbar_ctor(Iconbar *iconbar, Widget *parent, Widget_state state, int x, int y, int w, int h);
+static void iconbar_ctor(Iconbar *iconbar, Widget *parent, int x, int y, int w, int h);
 static void iconbar_dtor(Iconbar *iconbar);
 static bool iconbar_has_similar_cbutton(Iconbar *iconbar, const Cbutton *cbutton);
 
@@ -58,7 +58,7 @@ static void cbutton_ctor(Cbutton *cbutton, Widget *parent, int x, int y, int w, 
 {
     char *icon_title=get_icon_title_text(cwin, "");
 
-    cbutton->button=button_new(parent, CLIENT_ICON, WIDGET_STATE_1(current),
+    cbutton->button=button_new(parent, CLIENT_ICON,
         x, y, w, h, icon_title);
     button_set_align(cbutton->button, CENTER_LEFT);
 
@@ -104,16 +104,16 @@ static Cbutton *iconbar_find_cbutton(const Iconbar *iconbar, Window cwin)
     return NULL;
 }
 
-Iconbar *iconbar_new(Widget *parent, Widget_state state, int x, int y, int w, int h)
+Iconbar *iconbar_new(Widget *parent, int x, int y, int w, int h)
 {
     Iconbar *iconbar=Malloc(sizeof(Iconbar));
-    iconbar_ctor(iconbar, parent, state, x, y, w, h);
+    iconbar_ctor(iconbar, parent, x, y, w, h);
     return iconbar;
 }
 
-static void iconbar_ctor(Iconbar *iconbar, Widget *parent, Widget_state state, int x, int y, int w, int h)
+static void iconbar_ctor(Iconbar *iconbar, Widget *parent, int x, int y, int w, int h)
 {
-    widget_ctor(WIDGET(iconbar), parent, ICONBAR, state, x, y, w, h);
+    widget_ctor(WIDGET(iconbar), parent, ICONBAR, x, y, w, h);
     iconbar->cbuttons=Malloc(sizeof(Cbutton));
     list_init(&iconbar->cbuttons->list);
 }

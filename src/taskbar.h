@@ -18,7 +18,7 @@
 
 typedef struct _taskbar_tag Taskbar; // 任務欄
 
-Taskbar *taskbar_new(Widget *parent, Widget_state state, int x, int y, int w, int h);
+Taskbar *taskbar_new(Widget *parent, int x, int y, int w, int h);
 void taskbar_del(Taskbar *taskbar);
 void taskbar_iconbar_update(Taskbar *taskbar);
 void taskbar_iconbar_update_by_state(Taskbar *taskbar, Window cwin);

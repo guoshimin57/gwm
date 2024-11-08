@@ -193,6 +193,7 @@ static void handle_client_message(WM *wm, XEvent *e)
 
 static void change_net_wm_state(WM *wm, Client *c, long *full_act)
 {
+    puts("change state");
     long act=full_act[0];
     if((act!=NET_WM_STATE_REMOVE && act!=NET_WM_STATE_ADD && act!=NET_WM_STATE_TOGGLE))
         return;

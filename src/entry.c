@@ -53,7 +53,7 @@ Entry *entry_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const
 
 static void entry_ctor(Entry *entry, Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *))
 {
-    widget_ctor(WIDGET(entry), parent, id, WIDGET_STATE_1(current), x, y, w, h);
+    widget_ctor(WIDGET(entry), parent, id, x, y, w, h);
     entry_set_method(WIDGET(entry));
     entry->hint=hint;
     entry->complete=complete;

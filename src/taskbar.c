@@ -29,7 +29,7 @@ struct _taskbar_tag // 任務欄
     Statusbar *statusbar;
 };
 
-static void taskbar_ctor(Taskbar *taskbar, Widget *parent, Widget_state state, int x, int y, int w, int h);
+static void taskbar_ctor(Taskbar *taskbar, Widget *parent, int x, int y, int w, int h);
 static Rect taskbar_compute_iconbar_rect(Taskbar *taskbar);
 static Rect taskbar_compute_statusbar_rect(Taskbar *taskbar, const char *label);
 static char *get_statusbar_label(void);
@@ -40,27 +40,27 @@ static bool taskbar_button_is_chosen(Widget_id id);
 static Menu *act_center_new(const Taskbar *taskbar);
 static void taskbar_set_method(Widget *widget);
 
-Taskbar *taskbar_new(Widget *parent, Widget_state state, int x, int y, int w, int h)
+Taskbar *taskbar_new(Widget *parent, int x, int y, int w, int h)
 {
     Taskbar *taskbar=Malloc(sizeof(Taskbar));
-    taskbar_ctor(taskbar, parent, state, x, y, w, h);
+    taskbar_ctor(taskbar, parent, x, y, w, h);
     return taskbar;
 }
 
-static void taskbar_ctor(Taskbar *taskbar, Widget *parent, Widget_state state, int x, int y, int w, int h)
+static void taskbar_ctor(Taskbar *taskbar, Widget *parent, int x, int y, int w, int h)
 {
     Rect r;
 
-    widget_ctor(WIDGET(taskbar), parent, TASKBAR, state, x, y, w, h);
+    widget_ctor(WIDGET(taskbar), parent, TASKBAR, x, y, w, h);
     taskbar_set_method(WIDGET(taskbar));
     taskbar_buttons_new(taskbar);
 
     r=taskbar_compute_iconbar_rect(taskbar);
-    taskbar->iconbar=iconbar_new(WIDGET(taskbar), WIDGET_STATE(taskbar), r.x, r.y, r.w, r.h);
+    taskbar->iconbar=iconbar_new(WIDGET(taskbar), r.x, r.y, r.w, r.h);
 
     char *label=get_statusbar_label();
     r=taskbar_compute_statusbar_rect(taskbar, label);
-    taskbar->statusbar=statusbar_new(WIDGET(taskbar), WIDGET_STATE(taskbar), r.x, r.y, r.w, r.h, label);
+    taskbar->statusbar=statusbar_new(WIDGET(taskbar), r.x, r.y, r.w, r.h, label);
     free(label);
 
     act_center=act_center_new(taskbar);
@@ -113,9 +113,10 @@ static void taskbar_buttons_new(Taskbar *taskbar)
     for(int i=0; i<TASKBAR_BUTTON_N; i++)
     {
         Widget_id id=TASKBAR_BUTTON_BEGIN+i;
-        Widget_state state={.chosen=taskbar_button_is_chosen(id), .current=1};
-        taskbar->buttons[i]=button_new(WIDGET(taskbar), id, state,
+        Widget_state state={.chosen=taskbar_button_is_chosen(id), .unfocused=0};
+        taskbar->buttons[i]=button_new(WIDGET(taskbar), id,
             w*i, 0, w, h, cfg->taskbar_button_text[i]);
+        widget_set_state(WIDGET(taskbar->buttons[i]), state);
         WIDGET_TOOLTIP(taskbar->buttons[i])=(Widget *)tooltip_new(WIDGET(taskbar->buttons[i]), cfg->tooltip[id]);
     }
 }

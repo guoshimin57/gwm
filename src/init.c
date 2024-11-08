@@ -62,7 +62,7 @@ void init_wm(WM *wm)
     set_ewmh(wm);
     set_gwm_current_layout(DESKTOP(wm)->cur_layout);
     Rect r=compute_taskbar_rect();
-    wm->taskbar=taskbar_new(NULL, WIDGET_STATE_1(current), r.x, r.y, r.w, r.h);
+    wm->taskbar=taskbar_new(NULL, r.x, r.y, r.w, r.h);
     if(cfg->show_taskbar)
         widget_show(WIDGET(wm->taskbar));
     cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);

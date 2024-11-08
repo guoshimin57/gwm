@@ -15,8 +15,6 @@
 #include <X11/Xft/Xft.h>
 
 #define WIDGET_STATE_NORMAL ((Widget_state){0})
-#define WIDGET_STATE_0(member) ((Widget_state){.member=0})
-#define WIDGET_STATE_1(member) ((Widget_state){.member=1})
 
 typedef struct // 構件狀態。全0表示普通狀態，即以上狀態以外的狀態。
 {
@@ -27,7 +25,7 @@ typedef struct // 構件狀態。全0表示普通狀態，即以上狀態以外�
     unsigned int urgent : 1;    // 緊急狀態，即構件有緊急消息
     unsigned int attent : 1;    // 關注狀態，即構件有需要關注的消息
     unsigned int chosen : 1;    // 選中狀態，即選中了此構件所表示的功能
-    unsigned int current : 1;   // 當前狀態，即構件在同類構件中優先接受輸入
+    unsigned int unfocused : 1; // 失去焦點狀態，即可接收輸入的構件失去了輸入焦點
 } Widget_state;
 
 void alloc_color(const char *main_color_name);

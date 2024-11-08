@@ -17,7 +17,7 @@
 typedef struct iconbar_tag Iconbar;
 
 Window iconbar_get_client_win(Iconbar *iconbar, Window button_win);
-Iconbar *iconbar_new(Widget *parent, Widget_state state, int x, int y, int w, int h);
+Iconbar *iconbar_new(Widget *parent, int x, int y, int w, int h);
 void iconbar_del(Iconbar *iconbar);
 void iconbar_add_cbutton(Iconbar *iconbar, Window cwin);
 void iconbar_del_cbutton(Iconbar *iconbar, Window cwin);

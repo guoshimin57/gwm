@@ -9,6 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2024年 11月 08日 星期五 23:05:33 HKT	gsm <406643764@qq.com>
+	* 發布第2.10.25版；
+	* 修復replace_atom_prop、replace_window_prop、replace_cardinal_prop函數未考慮數據項數及數據類型的缺陷；
+	* 微調構件顏色；
+	* 刪除disable這種構件狀態。
+
 2024年 11月 08日 星期五 01:25:37 HKT	gsm <406643764@qq.com>
 	* 發布第2.10.24版；
 	* 修復get_icon_image函數未考慮name爲空的情況的缺陷；

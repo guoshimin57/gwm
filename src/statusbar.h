@@ -16,7 +16,7 @@
 
 typedef struct statusbar_tag Statusbar;
 
-Statusbar *statusbar_new(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *label);
+Statusbar *statusbar_new(Widget *parent, int x, int y, int w, int h, const char *label);
 void statusbar_del(Statusbar *statusbar);
 void statusbar_change_label(Statusbar *statusbar, const char *label);
 

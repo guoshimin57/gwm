@@ -20,21 +20,21 @@ struct statusbar_tag // 狀態欄
     char *label;
 };
 
-static void statusbar_ctor(Statusbar *statusbar, Widget *parent, Widget_state state, int x, int y, int w, int h, const char *label);
+static void statusbar_ctor(Statusbar *statusbar, Widget *parent, int x, int y, int w, int h, const char *label);
 static void statusbar_set_method(Widget *widget);
 static void statusbar_dtor(Statusbar *statusbar);
 static void statusbar_update_fg(const Widget *widget);
 
-Statusbar *statusbar_new(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *label)
+Statusbar *statusbar_new(Widget *parent, int x, int y, int w, int h, const char *label)
 {
     Statusbar *statusbar=Malloc(sizeof(Statusbar));
-    statusbar_ctor(statusbar, parent, state, x, y, w, h, label);
+    statusbar_ctor(statusbar, parent, x, y, w, h, label);
     return statusbar;
 }
 
-static void statusbar_ctor(Statusbar *statusbar, Widget *parent, Widget_state state, int x, int y, int w, int h, const char *label)
+static void statusbar_ctor(Statusbar *statusbar, Widget *parent, int x, int y, int w, int h, const char *label)
 {
-    widget_ctor(WIDGET(statusbar), parent, STATUSBAR, state, x, y, w, h);
+    widget_ctor(WIDGET(statusbar), parent, STATUSBAR, x, y, w, h);
     statusbar_set_method(WIDGET(statusbar));
     XSelectInput(xinfo.display, WIDGET_WIN(statusbar), ExposureMask);
     statusbar->label=copy_string(label);

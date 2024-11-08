@@ -59,11 +59,12 @@ void add_client(WM *wm, Window win)
     set_cursor(win, NO_OP);
     set_win_rect(c);
     save_place_info_of_client(c);
-    c->frame=frame_new(WIDGET(c), WIDGET_STATE(c),
+    c->frame=frame_new(WIDGET(c),
         WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c),
         c->show_titlebar ? get_font_height_by_pad() : 0,
         c->show_border ? cfg->border_width : 0,
         c->title_text, c->image);
+    widget_set_state(WIDGET(c->frame), WIDGET_STATE(c));
     request_layout_update();
     widget_show(WIDGET(c->frame));
     focus_client(wm, get_net_current_desktop(), c);
@@ -87,7 +88,7 @@ static Client *new_client(WM *wm, Window win)
 {
     Client *c=Malloc(sizeof(Client));
     memset(c, 0, sizeof(Client));
-    widget_ctor(WIDGET(c), NULL, CLIENT_WIN, WIDGET_STATE_1(current), 0, 0, 1, 1);
+    widget_ctor(WIDGET(c), NULL, CLIENT_WIN, 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
     c->show_border=c->show_titlebar=true;
     c->map_n=++map_count;
@@ -500,14 +501,14 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     if(pc!=wm->clients)
     {
         if(pc->frame)
-            frame_set_state_current(pc->frame, 1);
-        WIDGET_STATE(pc).current=1;
+            frame_set_state_unfocused(pc->frame, 0);
+        WIDGET_STATE(pc).unfocused=0;
     }
     if(pp!=wm->clients && pp!=pc)
     {
         if(pp->frame)
-            frame_set_state_current(pp->frame, 0);
-        WIDGET_STATE(pp).current=0;
+            frame_set_state_unfocused(pp->frame, 1);
+        WIDGET_STATE(pp).unfocused=1;
     }
 
     if(desktop_n == get_net_current_desktop())
@@ -519,11 +520,11 @@ void focus_client(WM *wm, unsigned int desktop_n, Client *c)
     }
 
     if(pc!=wm->clients && pc->frame)
-        WIDGET_STATE(pc).current=WIDGET_STATE(pc->frame).current=1;
+        WIDGET_STATE(pc).unfocused=WIDGET_STATE(pc->frame).unfocused=0;
     update_client_bg(wm, desktop_n, pc);
 
     if(pp!=wm->clients && pp->frame)
-        WIDGET_STATE(pp).current=WIDGET_STATE(pp->frame).current=0;
+        WIDGET_STATE(pp).unfocused=WIDGET_STATE(pp->frame).unfocused=1;
     update_client_bg(wm, desktop_n, pp);
 
     raise_client(wm, pc);

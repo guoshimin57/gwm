@@ -27,20 +27,20 @@ struct _button_tag
     Align_type align; // 標籤的對齊方式
 };
 
-static void button_ctor(Button *button, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label);
+static void button_ctor(Button *button, Widget *parent, Widget_id id, int x, int y, int w, int h, const char *label);
 static void button_set_method(Widget *widget);
 static void button_dtor(Button *button);
 
-Button *button_new(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label)
+Button *button_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *label)
 {
     Button *button=Malloc(sizeof(Button));
-    button_ctor(button, parent, id, state, x, y, w, h, label);
+    button_ctor(button, parent, id, x, y, w, h, label);
     return button;
 }
 
-static void button_ctor(Button *button, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h, const char *label)
+static void button_ctor(Button *button, Widget *parent, Widget_id id, int x, int y, int w, int h, const char *label)
 {
-    widget_ctor(WIDGET(button), parent, id, state, x, y, w, h);
+    widget_ctor(WIDGET(button), parent, id, x, y, w, h);
     button_set_method(WIDGET(button));
     button->image=NULL;
     button->icon_name=NULL;

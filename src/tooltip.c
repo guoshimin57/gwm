@@ -43,7 +43,7 @@ static void tooltip_ctor(Tooltip *tooltip, const Widget *owner, const char *tip)
 
     get_string_size(tip, &w, NULL);
     w+=pad*2;
-    widget_ctor(WIDGET(tooltip), NULL, UNUSED_WIDGET_ID, WIDGET_STATE_1(current), x, y, w, h);
+    widget_ctor(WIDGET(tooltip), NULL, UNUSED_WIDGET_ID, x, y, w, h);
     tooltip_set_method(WIDGET(tooltip));
     tooltip->owner=owner;
     tooltip->tip=copy_string(tip);
@@ -92,6 +92,6 @@ void tooltip_show(Widget *widget)
 void tooltip_update_fg(const Widget *widget)
 {
     Str_fmt f={0, 0, WIDGET_W(widget), WIDGET_H(widget), CENTER, true, false, 0,
-        get_widget_fg(WIDGET_STATE_NORMAL)};
+        get_widget_fg(WIDGET_STATE(widget))};
     draw_string(WIDGET_WIN(widget), TOOLTIP(widget)->tip, &f);
 }

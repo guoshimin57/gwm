@@ -36,9 +36,9 @@ struct _frame_tag // 客戶窗口裝飾
     Titlebar *titlebar;
 };
 
-static void frame_ctor(Frame *frame, Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image);
-static Titlebar *titlebar_new(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image);
-static void titlebar_ctor(Titlebar *titlebar, Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image);
+static void frame_ctor(Frame *frame, Widget *parent, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image);
+static Titlebar *titlebar_new(Widget *parent, int x, int y, int w, int h, const char *title, Imlib_Image image);
+static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int w, int h, const char *title, Imlib_Image image);
 static void titlebar_set_method(Widget *widget);
 static void frame_dtor(Frame *frame);
 static void titlebar_del(Titlebar *titlebar);
@@ -47,10 +47,10 @@ static Rect titlebar_get_button_rect(const Titlebar *titlebar, size_t index);
 static Rect titlebar_get_title_rect(const Titlebar *titlebar);
 static int titlebar_get_button_n(void);
 
-Frame *frame_new(Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
+Frame *frame_new(Widget *parent, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
 {
     Frame *frame=Malloc(sizeof(Frame));
-    frame_ctor(frame, parent, state, x, y, w, h, titlebar_h, border_w, title, image);
+    frame_ctor(frame, parent, x, y, w, h, titlebar_h, border_w, title, image);
     
     /* 以下是同時設置窗口前景和背景透明度的非EWMH標準方法：
     unsigned long opacity = (unsigned long)(0xfffffffful);
@@ -67,39 +67,39 @@ Frame *frame_new(Widget *parent, Widget_state state, int x, int y, int w, int h,
     return frame;
 }
 
-static void frame_ctor(Frame *frame, Widget *parent, Widget_state state, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
+static void frame_ctor(Frame *frame, Widget *parent, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
 {
     int fx=x-border_w, fy=y-titlebar_h-border_w, fw=w, fh=h+titlebar_h;
 
-    widget_ctor(WIDGET(frame), NULL, CLIENT_FRAME, state, fx, fy, fw, fh);
+    widget_ctor(WIDGET(frame), NULL, CLIENT_FRAME, fx, fy, fw, fh);
     widget_set_border_width(WIDGET(frame), border_w);
-    widget_set_border_color(WIDGET(frame), get_widget_color(state));
+    widget_set_border_color(WIDGET(frame), get_widget_color(WIDGET_STATE(frame)));
     frame->cwin=WIDGET_WIN(parent);
     frame->titlebar=NULL;
     if(cfg->set_frame_prop)
         copy_prop(WIDGET_WIN(frame), frame->cwin);
     if(titlebar_h)
-        frame->titlebar=titlebar_new(WIDGET(frame), state, 0, 0, w, titlebar_h, title, image);
+        frame->titlebar=titlebar_new(WIDGET(frame), 0, 0, w, titlebar_h, title, image);
 }
 
-static Titlebar *titlebar_new(Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image)
+static Titlebar *titlebar_new(Widget *parent, int x, int y, int w, int h, const char *title, Imlib_Image image)
 {
     Titlebar *titlebar=Malloc(sizeof(Titlebar));
 
-    titlebar_ctor(titlebar, parent, state, x, y, w, h, title, image);
+    titlebar_ctor(titlebar, parent, x, y, w, h, title, image);
     widget_show(WIDGET(titlebar));
 
     return titlebar;
 }
 
-static void titlebar_ctor(Titlebar *titlebar, Widget *parent, Widget_state state, int x, int y, int w, int h, const char *title, Imlib_Image image)
+static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int w, int h, const char *title, Imlib_Image image)
 {
-    widget_ctor(WIDGET(titlebar), parent, TITLEBAR, state, x, y, w, h);
+    widget_ctor(WIDGET(titlebar), parent, TITLEBAR, x, y, w, h);
     titlebar_set_method(WIDGET(titlebar));
     titlebar->title=copy_string(title);
     WIDGET_TOOLTIP(titlebar)=(Widget *)tooltip_new(WIDGET(titlebar), title);
 
-    titlebar->logo=button_new(WIDGET(titlebar), TITLE_LOGO, state, 0, 0, h, h, NULL);
+    titlebar->logo=button_new(WIDGET(titlebar), TITLE_LOGO, 0, 0, h, h, NULL);
     WIDGET_TOOLTIP(titlebar->logo)=(Widget *)tooltip_new(WIDGET(titlebar->logo), cfg->tooltip[TITLE_LOGO]);
     button_set_icon(BUTTON(titlebar->logo), image, NULL, "∨");
 
@@ -107,7 +107,7 @@ static void titlebar_ctor(Titlebar *titlebar, Widget *parent, Widget_state state
     {
         Rect br=titlebar_get_button_rect(titlebar, i);
         Widget_id id=TITLE_BUTTON_BEGIN+i;
-        titlebar->buttons[i]=button_new(WIDGET(titlebar), id, state,
+        titlebar->buttons[i]=button_new(WIDGET(titlebar), id,
             br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
         WIDGET_TOOLTIP(titlebar->buttons[i])=(Widget *)tooltip_new(WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
     }
@@ -194,15 +194,15 @@ bool frame_has_win(const Frame *frame, Window win)
     return false;
 }
 
-void frame_set_state_current(Frame *frame, int value)
+void frame_set_state_unfocused(Frame *frame, int value)
 {
-    WIDGET_STATE(frame).current=value;
+    WIDGET_STATE(frame).unfocused=value;
     if(frame->titlebar)
     {
-        WIDGET_STATE(frame->titlebar).current=value;
-        WIDGET_STATE(frame->titlebar->logo).current=value;
+        WIDGET_STATE(frame->titlebar).unfocused=value;
+        WIDGET_STATE(frame->titlebar->logo).unfocused=value;
         for(size_t i=0; i<TITLE_BUTTON_N; i++)
-            WIDGET_STATE(frame->titlebar->buttons[i]).current=value;
+            WIDGET_STATE(frame->titlebar->buttons[i]).unfocused=value;
     }
 }
 
@@ -235,8 +235,11 @@ void titlebar_toggle(Frame *frame, const char *title, Imlib_Image image)
     if(frame->titlebar)
         titlebar_del(frame->titlebar), frame->titlebar=NULL;
     else
-        frame->titlebar=titlebar_new(WIDGET(frame), frame->base.state,
+    {
+        frame->titlebar=titlebar_new(WIDGET(frame),
             0, 0, frame->base.w, get_font_height_by_pad(), title, image);
+        widget_set_state(WIDGET(frame->titlebar), WIDGET_STATE(frame));
+    }
 }
 
 void titlebar_update_fg(const Widget *widget)

@@ -208,7 +208,7 @@ void set_net_showing_desktop(bool show)
 void set_net_wm_allowed_actions(Window win)
 {
     Atom prop=ewmh_atoms[NET_WM_ALLOWED_ACTIONS];
-    unsigned long acts[]=
+    Atom acts[]=
     {
         ewmh_atoms[NET_WM_ACTION_MOVE],
         ewmh_atoms[NET_WM_ACTION_RESIZE],

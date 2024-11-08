@@ -50,14 +50,14 @@ static void menu_ctor(Menu *menu, Widget *owner, Widget_id id, const char *icon_
     if(w > sw)
         w=sw/col;
 
-    widget_ctor(WIDGET(menu), NULL, id, WIDGET_STATE_1(current), 0, 0, w*col, h*row);
+    widget_ctor(WIDGET(menu), NULL, id, 0, 0, w*col, h*row);
     menu_set_method(WIDGET(menu));
 
     menu->owner=owner;
     menu->items=Malloc(sizeof(Button *)*n);
     for(int i=0; i<n; i++)
     {
-         menu->items[i]=button_new(WIDGET(menu), id+i+1, WIDGET_STATE_1(current), w*(i%col),
+         menu->items[i]=button_new(WIDGET(menu), id+i+1, w*(i%col),
              h*(i/col), w, h, labels[i]);
          button_set_icon(menu->items[i], NULL, icon_names[i], symbols[i]);
          button_set_align(menu->items[i], CENTER_LEFT);

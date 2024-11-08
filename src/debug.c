@@ -145,5 +145,5 @@ void print_widget_state(Widget_state state)
     printf("urgent=%d\n", state.urgent);
     printf("attent=%d\n", state.attent);
     printf("chosen=%d\n", state.chosen);
-    printf("current=%d\n", state.current);
+    printf("unfocused=%d\n", state.unfocused);
 }

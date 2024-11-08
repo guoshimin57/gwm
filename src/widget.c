@@ -77,22 +77,22 @@ Widget *widget_find(Window win)
     return NULL;
 }
 
-Widget *widget_new(Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
+Widget *widget_new(Widget *parent, Widget_id id, int x, int y, int w, int h)
 {
     Widget *widget=Malloc(sizeof(Widget));
 
-    widget_ctor(widget, parent, id, state, x, y, w, h);
+    widget_ctor(widget, parent, id, x, y, w, h);
 
     return widget;
 }
 
-void widget_ctor(Widget *widget, Widget *parent, Widget_id id, Widget_state state, int x, int y, int w, int h)
+void widget_ctor(Widget *widget, Widget *parent, Widget_id id, int x, int y, int w, int h)
 {
     unsigned long bg;
     Window pwin = parent ? parent->win : xinfo.root_win;
 
     widget->id=id;
-    widget->state=state;
+    widget->state=WIDGET_STATE_NORMAL;
     bg=get_widget_color(widget->state);
     if(widget->id != CLIENT_WIN)
         widget->win=create_widget_win(pwin, x, y, w, h, 0, 0, bg);
@@ -127,6 +127,11 @@ static void widget_dtor(Widget *widget)
     if(widget->id != CLIENT_WIN)
         XDestroyWindow(xinfo.display, widget->win);
     widget_unreg(widget);
+}
+
+void widget_set_state(Widget *widget, Widget_state state)
+{
+    widget->state=state;
 }
 
 void widget_set_border_width(Widget *widget, int width)
