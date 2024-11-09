@@ -17,7 +17,7 @@
 const char *icccm_atom_names[ICCCM_ATOMS_N]= // ICCCM規範標識符名稱
 {
     "WM_PROTOCOLS", "WM_DELETE_WINDOW", "WM_STATE", "WM_CHANGE_STATE",
-    "WM_TAKE_FOCUS", "UTF8_STRING", "WM_CLIENT_LEADER",
+    "WM_TAKE_FOCUS", "WM_CLIENT_LEADER",
 };
 
 static Atom icccm_atoms[ICCCM_ATOMS_N]; // ICCCM規範的標識符
@@ -29,19 +29,6 @@ static bool is_prefer_aspect(int w, int h, const XSizeHints *hint);
 bool is_spec_icccm_atom(Atom spec, ICCCM_atom_id id)
 {
     return spec == icccm_atoms[id];
-}
-
-/* UTF8_STRING需要特殊處理，因其是否屬於ICCCM尚存疑，詳見：
- *     https://gitlab.freedesktop.org/xorg/doc/xorg-docs/-/issues/5 */
-Atom get_utf8_string_atom(void)
-{
-    return icccm_atoms[UTF8_STRING];
-}
-
-void replace_utf8_prop(Window win, Atom prop, const void *strs, int n)
-{
-    XChangeProperty(xinfo.display, win, prop, get_utf8_string_atom(), 8,
-        PropModeReplace, (unsigned char *)strs, n);
 }
 
 void set_icccm_atoms(void)

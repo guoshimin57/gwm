@@ -322,6 +322,7 @@ static void config_act_center_item(void)
 
     SET_ACT_CENTER_MENU_ITEM(COMPOSITOR_BUTTON,        NULL, "🪡", _("開關合成器"));
     SET_ACT_CENTER_MENU_ITEM(WALLPAPER_BUTTON,         NULL, "🌌", _("切換壁紙"));
+    SET_ACT_CENTER_MENU_ITEM(COLOR_BUTTON,             NULL, "🎨", _("设置顏色"));
     SET_ACT_CENTER_MENU_ITEM(QUIT_WM_BUTTON,           NULL, "❌", _("退出gwm"));
 
     SET_ACT_CENTER_MENU_ITEM(LOGOUT_BUTTON,            NULL, "🚶", _("注銷"));
@@ -399,6 +400,7 @@ static void config_misc(void)
     cfg->wallpaper_paths="/usr/share/backgrounds/fedora-workstation:/usr/share/wallpapers";
     cfg->wallpaper_filename="/usr/share/backgrounds/gwm.png";
     cfg->cmd_entry_hint=_("請輸入命令，然後按回車執行");
+    cfg->color_entry_hint=_("請輸入颜色名，然後按回車執行");
     cfg->compositor="picom";
     cfg->keybind=keybind;
     cfg->buttonbind=buttonbind;

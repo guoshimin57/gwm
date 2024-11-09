@@ -96,7 +96,7 @@ void update_win_bg(Window win, unsigned long color, Pixmap pixmap)
     if(pixmap || win==xinfo.root_win)
         XClearWindow(xinfo.display, win);
     else
-        XSendEvent(xinfo.display, win, False, NoEventMask, &event);
+        XSendEvent(xinfo.display, win, False, ExposureMask, &event);
 
     if(compos_root)
         change_prop_for_root_bg(pixmap);

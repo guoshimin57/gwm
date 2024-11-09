@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.25\n"
+"Project-Id-Version: gwm 2.10.26\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2024-11-08 23:12+0800\n"
+"POT-Creation-Date: 2024-11-09 23:56+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -127,125 +127,134 @@ msgid "切換壁紙"
 msgstr "切换壁纸"
 
 #: config.c:325
+msgid "设置顏色"
+msgstr "设置颜色"
+
+#: config.c:326
 msgid "退出gwm"
 msgstr "退出gwm"
 
-#: config.c:327
+#: config.c:328
 msgid "注銷"
 msgstr "注销"
 
-#: config.c:328
+#: config.c:329
 msgid "重啓"
 msgstr "重启"
 
-#: config.c:329
+#: config.c:330
 msgid "關機"
 msgstr "关机"
 
-#: config.c:330
+#: config.c:331
 msgid "運行"
 msgstr "运行"
 
 #. 客戶窗口菜單項類型   圖標名 符號     標籤
-#: config.c:339
+#: config.c:340
 msgid "卷起/放下"
 msgstr "卷起/放下"
 
-#: config.c:340
+#: config.c:341
 msgid "縱向最大化"
 msgstr "纵向最大化"
 
-#: config.c:341
+#: config.c:342
 msgid "橫向最大化"
 msgstr "横向最大化"
 
-#: config.c:342
+#: config.c:343
 msgid "最大化至上半屏"
 msgstr "最大化至上半屏"
 
-#: config.c:343
+#: config.c:344
 msgid "最大化至下半屏"
 msgstr "最大化至下半屏"
 
-#: config.c:344
+#: config.c:345
 msgid "最大化至左半屏"
 msgstr "最大化至左半屏"
 
-#: config.c:345
+#: config.c:346
 msgid "最大化至右半屏"
 msgstr "最大化至右半屏"
 
-#: config.c:346
+#: config.c:347
 msgid "完全最大化"
 msgstr "完全最大化"
 
 #. 構件標識             構件功能提示文字
-#: config.c:358
+#: config.c:359
 msgid "切換到次要區域"
 msgstr "切换到次要区域"
 
-#: config.c:359
+#: config.c:360
 msgid "切換到主要區域"
 msgstr "切换到主要区域"
 
-#: config.c:360
+#: config.c:361
 msgid "切換到固定區域"
 msgstr "切换到固定区域"
 
-#: config.c:361
+#: config.c:362
 msgid "切換到懸浮層"
 msgstr "切换到悬浮层"
 
-#: config.c:362
+#: config.c:363
 msgid "切換到圖符區域"
 msgstr "切换到图符区域"
 
-#: config.c:363
+#: config.c:364
 msgid "最大化/還原窗口"
 msgstr "最大化/还原窗口"
 
-#: config.c:364
+#: config.c:365
 msgid "關閉窗口"
 msgstr "关闭窗口"
 
-#: config.c:365
+#: config.c:366
 msgid "切換到虛擬桌面1"
 msgstr "切换到虚拟桌面1"
 
-#: config.c:366
+#: config.c:367
 msgid "切換到虛擬桌面2"
 msgstr "切换到虚拟桌面2"
 
-#: config.c:367
+#: config.c:368
 msgid "切換到虛擬桌面3"
 msgstr "切换到虚拟桌面3"
 
-#: config.c:368
+#: config.c:369
 msgid "切換到預覽模式"
 msgstr "切换到预览模式"
 
-#: config.c:369
+#: config.c:370
 msgid "切換到堆疊模式"
 msgstr "切换到堆叠模式"
 
-#: config.c:370
+#: config.c:371
 msgid "切換到平鋪模式"
 msgstr "切换到平铺模式"
 
-#: config.c:371
+#: config.c:372
 msgid "顯示桌面"
 msgstr "显示桌面"
 
-#: config.c:372
+#: config.c:373
 msgid "打開操作中心"
 msgstr "打开操作中心"
 
-#: config.c:373
+#: config.c:374
 msgid "打開窗口菜單"
 msgstr "打开窗口菜单"
 
-#: config.c:401
+#: config.c:402
 msgid "請輸入命令，然後按回車執行"
+msgstr "请输入命令，然后按回车执行"
+
+#: config.c:403
+#, fuzzy
+msgid "請輸入颜色名，然後按回車執行"
 msgstr "请输入命令，然后按回车执行"
 
 #: debug.c:26
@@ -320,7 +329,7 @@ msgstr "不能安装SIGQUIT信号处理函数"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 
-#: init.c:137
+#: init.c:138
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "错误： 不能设置输入法"
@@ -338,17 +347,17 @@ msgstr "错误：已经有其他窗口管理器在运行！"
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X错误：资源号=%#lx，请求量=%lu，错误码=%d，主请求码=%d，次请求码=%d\n"
 
-#: widget.c:264
+#: widget.c:255
 #, c-format
 msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
 msgstr "错误：窗口（0x%lx）输入法设置失败！"
 
-#: widget.c:371
+#: widget.c:362
 #, c-format
 msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
 msgstr "错误：找不到指定的键符号相应的功能转换键！\n"
 
-#: widget.c:374
+#: widget.c:365
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "错误：指定的键符号不存在对应的键代码！\n"

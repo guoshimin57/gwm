@@ -24,6 +24,9 @@ typedef enum // 與gwm自定義標識符名稱表(gwm_atom_names)相應的ID
 
 bool is_spec_gwm_atom(Atom spec, GWM_atom_id id);
 void set_gwm_atoms(void);
+void set_utf8_string_atom(void);
+Atom get_utf8_string_atom(void);
+void replace_utf8_prop(Window win, Atom prop, const void *strs, int n);
 Window get_transient_for(Window win);
 unsigned char *get_prop(Window win, Atom prop, unsigned long *n);
 char *get_text_prop(Window win, Atom atom);
@@ -36,6 +39,7 @@ void copy_prop(Window dest, Window src);
 void set_gwm_current_layout(long cur_layout);
 int get_gwm_current_layout(void);
 void request_layout_update(void);
+void set_main_color_name(const char *name);
 char *get_main_color_name(void);
 
 #endif

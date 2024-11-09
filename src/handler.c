@@ -54,6 +54,7 @@ static void handle_focus_in(WM *wm, XEvent *e);
 static void handle_focus_out(WM *wm, XEvent *e);
 static void handle_key_press(WM *wm, XEvent *e);
 static void key_run_cmd(WM *wm, XKeyEvent *e);
+static void key_set_color(WM *wm, XKeyEvent *e);
 static void handle_leave_notify(WM *wm, XEvent *e);
 static void handle_map_request(WM *wm, XEvent *e);
 static void handle_unmap_notify(WM *wm, XEvent *e);
@@ -106,18 +107,19 @@ void reg_event_handlers(WM *wm)
 
 static void handle_button_press(WM *wm, XEvent *e)
 {
-    Widget *widget=widget_find(e->xbutton.window);
+    Widget *clicked_widget=widget_find(e->xbutton.window),
+           *popped_widget=get_popped_widget();
 
-    if(!has_popped_widget())
+    if(!popped_widget)
         exec_buttonbind_func(wm, e);
-    else if(widget)
+    else if(clicked_widget)
     {
         exec_buttonbind_func(wm, e);
-        hide_popped_widgets(widget);
+        popped_widget->hide(popped_widget);
     }
     else
     {
-        hide_popped_widgets(widget);
+        popped_widget->hide(popped_widget);
         XUngrabPointer(xinfo.display, CurrentTime);
     }
 }
@@ -193,7 +195,6 @@ static void handle_client_message(WM *wm, XEvent *e)
 
 static void change_net_wm_state(WM *wm, Client *c, long *full_act)
 {
-    puts("change state");
     long act=full_act[0];
     if((act!=NET_WM_STATE_REMOVE && act!=NET_WM_STATE_ADD && act!=NET_WM_STATE_TOGGLE))
         return;
@@ -483,8 +484,10 @@ static void handle_focus_out(WM *wm, XEvent *e)
 static void handle_key_press(WM *wm, XEvent *e)
 {
     Widget *widget=widget_find(e->xkey.window);
-    if(widget && widget==WIDGET(cmd_entry))
+    if(widget && widget->id==RUN_CMD_ENTRY)
         key_run_cmd(wm, &e->xkey);
+    else if(widget && widget->id==COLOR_ENTRY)
+        key_set_color(wm, &e->xkey);
     else
     {
         int n;
@@ -508,6 +511,18 @@ static void key_run_cmd(WM *wm, XKeyEvent *e)
     wcstombs(cmd, entry_get_text(cmd_entry), BUFSIZ);
     exec(wm, NULL, (Func_arg)SH_CMD(cmd));
     entry_clear(cmd_entry);
+}
+
+static void key_set_color(WM *wm, XKeyEvent *e)
+{
+    if(!entry_input(color_entry, e))
+        return;
+
+    char color[BUFSIZ]={0};
+    wcstombs(color, entry_get_text(color_entry), BUFSIZ);
+    set_main_color_name(color);
+    update_ui(wm);
+    entry_clear(color_entry);
 }
 
 static void handle_leave_notify(WM *wm, XEvent *e)
@@ -641,6 +656,7 @@ static void update_ui(WM *wm)
         if(c->show_titlebar)
             menu_update_bg(WIDGET(frame_get_menu(c->frame)));
     entry_update_bg(WIDGET(cmd_entry));
+    entry_update_bg(WIDGET(color_entry));
     update_win_bg(xinfo.hint_win, get_widget_color(WIDGET_STATE_NORMAL), None);
     update_win_bg(xinfo.root_win, get_root_bg_color(), None);
     update_clients_bg(wm);
@@ -676,7 +692,7 @@ static void handle_selection_notify(WM *wm, XEvent *e)
 {
     UNUSED(wm);
     Window win=e->xselection.requestor;
-    if( is_spec_icccm_atom(e->xselection.property, UTF8_STRING)
+    if( e->xselection.property == get_utf8_string_atom()
         && win==WIDGET_WIN(cmd_entry))
         entry_paste(cmd_entry);
 }

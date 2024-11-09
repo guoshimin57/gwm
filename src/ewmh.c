@@ -153,11 +153,7 @@ unsigned int get_net_wm_desktop(Window win)
 void set_net_desktop_names(const char **names, int n)
 {
     Atom prop=ewmh_atoms[NET_DESKTOP_NAMES];
-    int size=0;
-
-    for(int i=0; i<n; i++)
-        size += strlen(names[i])+1;
-    replace_utf8_prop(xinfo.root_win, prop, names, size);
+    replace_utf8_prop(xinfo.root_win, prop, names, n);
 }
 
 void set_net_active_window(Window act_win)
@@ -194,7 +190,7 @@ void set_net_supporting_wm_check(Window check_win, const char *wm_name)
     replace_window_prop(xinfo.root_win, prop, &check_win, 1);
     replace_window_prop(check_win, prop, &check_win, 1);
     prop=ewmh_atoms[NET_WM_NAME];
-    replace_utf8_prop(check_win, prop, wm_name, strlen(wm_name)+1);
+    replace_utf8_prop(check_win, prop, wm_name, 1);
 }
 
 void set_net_showing_desktop(bool show)

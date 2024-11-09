@@ -12,6 +12,8 @@
 #include "button.h"
 #include "menu.h"
 
+#define MENU_EVENT_MASK (BUTTON_MASK|ExposureMask)
+
 struct _menu_tag // 一級多行多列菜單 
 {
     Widget base;
@@ -63,6 +65,7 @@ static void menu_ctor(Menu *menu, Widget *owner, Widget_id id, const char *icon_
          button_set_align(menu->items[i], CENTER_LEFT);
     }
     menu->n=n, menu->col=col, menu->row=row;
+    //XSelectInput(xinfo.display, WIDGET_WIN(menu), MENU_EVENT_MASK);
 }
 
 static bool is_null_strings(const char *strings[], int n)
@@ -88,7 +91,7 @@ void menu_del(Menu *menu)
 static void menu_dtor(Menu *menu)
 {
     for(int i=0; i<menu->n; i++)
-        button_del(menu->items[i]), menu->items[i]=NULL;
+        button_del(WIDGET(menu->items[i])), menu->items[i]=NULL;
     Free(menu->items);
 }
 

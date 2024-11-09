@@ -73,6 +73,7 @@ typedef struct
     const char *client_menu_item_symbol[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的符號
     const char *client_menu_item_label[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的標籤
     const char *cmd_entry_hint; // 運行輸入框的提示文字
+    const char *color_entry_hint; // 颜色輸入框的提示文字
     const char *compositor; // 合成管理器命令
     const Keybind *keybind; // 按鍵功能綁定。有的鍵盤同時按多個鍵會衝突，故組合鍵宜盡量少
     const Buttonbind *buttonbind; // 定位器按鈕功能綁定。

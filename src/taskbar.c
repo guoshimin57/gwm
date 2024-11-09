@@ -124,7 +124,7 @@ static void taskbar_buttons_new(Taskbar *taskbar)
 static void taskbar_buttons_del(Taskbar *taskbar)
 {
     for(int i=0; i<TASKBAR_BUTTON_N; i++)
-        button_del(taskbar->buttons[i]), taskbar->buttons[i]=NULL;
+        button_del(WIDGET(taskbar->buttons[i])), taskbar->buttons[i]=NULL;
 }
 
 static bool taskbar_button_is_chosen(Widget_id id)

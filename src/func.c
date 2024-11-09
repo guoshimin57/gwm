@@ -100,6 +100,7 @@ void clear_wm(WM *wm)
     XDestroyWindow(xinfo.display, wm->wm_check_win);
     taskbar_del(wm->taskbar);
     entry_del(cmd_entry);
+    entry_del(color_entry);
     menu_del(act_center);
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
         XDestroyWindow(xinfo.display, wm->top_wins[i]);
@@ -263,6 +264,13 @@ void run_cmd(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     entry_clear(cmd_entry);
     entry_show(WIDGET(cmd_entry));
+}
+
+void set_color(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    entry_clear(color_entry);
+    entry_show(WIDGET(color_entry));
 }
 
 void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)

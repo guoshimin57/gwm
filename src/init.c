@@ -66,6 +66,7 @@ void init_wm(WM *wm)
     if(cfg->show_taskbar)
         widget_show(WIDGET(wm->taskbar));
     cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
+    color_entry=color_entry_new(COLOR_ENTRY);
     create_hint_win();
     create_clients(wm);
     grab_keys();
@@ -142,6 +143,7 @@ static void set_atoms(void)
 {
     set_icccm_atoms();
     set_ewmh_atoms();
+    set_utf8_string_atom();
     set_gwm_atoms();
 }
 

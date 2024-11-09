@@ -52,13 +52,14 @@ static void button_ctor(Button *button, Widget *parent, Widget_id id, int x, int
 
 static void button_set_method(Widget *widget)
 {
+    widget->del=button_del;
     widget->update_fg=button_update_fg;
 }
 
-void button_del(Button *button)
+void button_del(Widget *widget)
 {
-    button_dtor(button);
-    widget_del(WIDGET(button));
+    button_dtor(BUTTON(widget));
+    widget_del(widget);
 }
 
 static void button_dtor(Button *button)

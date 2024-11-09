@@ -17,7 +17,7 @@
 
 typedef enum // 構件標識
 {
-    ROOT_WIN, HINT_WIN, RUN_CMD_ENTRY,
+    ROOT_WIN, HINT_WIN, RUN_CMD_ENTRY, COLOR_ENTRY,
 
     CLIENT_FRAME, CLIENT_WIN, TITLE_LOGO, TITLEBAR,
 
@@ -40,7 +40,7 @@ typedef enum // 構件標識
     MAIN_NEW_BUTTON, SEC_NEW_BUTTON, FIX_NEW_BUTTON, FLOAT_NEW_BUTTON,
     N_MAIN_UP_BUTTON, N_MAIN_DOWN_BUTTON, TITLEBAR_TOGGLE_BUTTON, CLI_BORDER_TOGGLE_BUTTON,
     CLOSE_ALL_CLIENTS_BUTTON, PRINT_WIN_BUTTON, PRINT_SCREEN_BUTTON, FOCUS_MODE_BUTTON,
-    COMPOSITOR_BUTTON, WALLPAPER_BUTTON, QUIT_WM_BUTTON, LOGOUT_BUTTON,
+    COMPOSITOR_BUTTON, WALLPAPER_BUTTON, COLOR_BUTTON, QUIT_WM_BUTTON, LOGOUT_BUTTON,
     REBOOT_BUTTON, POWEROFF_BUTTON, RUN_BUTTON,
 
     UNUSED_WIDGET_ID,
@@ -122,8 +122,7 @@ Rect widget_get_outline(const Widget *widget);
 void widget_set_poppable(Widget *widget, bool poppable);
 bool widget_get_poppable(const Widget *widget);
 bool widget_is_viewable(const Widget *widget);
-bool has_popped_widget(void);
-void hide_popped_widgets(const Widget *clicked_widget);
+Widget *get_popped_widget(void);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);

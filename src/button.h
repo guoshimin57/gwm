@@ -20,7 +20,7 @@ typedef struct _button_tag Button;
 #define BUTTON(widget) ((Button *)(widget))
 
 Button *button_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *label);
-void button_del(Button *button);
+void button_del(Widget *widget);
 void button_update_fg(const Widget *widget);
 void button_set_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol);
 void button_change_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol);

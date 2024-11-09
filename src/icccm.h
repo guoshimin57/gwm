@@ -19,12 +19,10 @@
 typedef enum // 與ICCCM規範標識符名稱表(icccm_atiom_names)相應的ID
 {
     WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_CHANGE_STATE, WM_TAKE_FOCUS,
-    UTF8_STRING, WM_CLIENT_LEADER, ICCCM_ATOMS_N
+    WM_CLIENT_LEADER, ICCCM_ATOMS_N
 } ICCCM_atom_id;
 
 bool is_spec_icccm_atom(Atom spec, ICCCM_atom_id id);
-Atom get_utf8_string_atom(void);
-void replace_utf8_prop(Window win, Atom prop, const void *strs, int n);
 void set_icccm_atoms(void);
 int get_win_col(int width, const XSizeHints *hint);
 int get_win_row(int height, const XSizeHints *hint);

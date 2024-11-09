@@ -9,6 +9,13 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2024年 11月 09日 星期六 23:55:07 HKT	gsm <406643764@qq.com>
+	* 發布第2.10.26版；
+	* 修復menu_new函數未選擇事件的缺陷；
+	* 修復handle_button_press函數邏輯錯誤；
+	* 修復button_del函數可間接導致內存漏洞的缺陷；
+	* 代碼重構。
+
 2024年 11月 08日 星期五 23:05:33 HKT	gsm <406643764@qq.com>
 	* 發布第2.10.25版；
 	* 修復replace_atom_prop、replace_window_prop、replace_cardinal_prop函數未考慮數據項數及數據類型的缺陷；

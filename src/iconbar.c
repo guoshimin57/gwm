@@ -71,7 +71,7 @@ static void cbutton_ctor(Cbutton *cbutton, Widget *parent, int x, int y, int w, 
 
 static void cbutton_dtor(Cbutton *cbutton)
 {
-    button_del(cbutton->button);
+    button_del(WIDGET(cbutton->button));
     cbutton->button=NULL;
 }
 

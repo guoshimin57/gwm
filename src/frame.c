@@ -156,9 +156,9 @@ static void titlebar_del(Titlebar *titlebar)
 static void titlebar_dtor(Titlebar *titlebar)
 {
     Free(titlebar->title);
-    button_del(titlebar->logo), titlebar->logo=NULL;
+    button_del(WIDGET(titlebar->logo)), titlebar->logo=NULL;
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
-        button_del(titlebar->buttons[i]), titlebar->buttons[i]=NULL;
+        button_del(WIDGET(titlebar->buttons[i])), titlebar->buttons[i]=NULL;
     menu_del(titlebar->menu), titlebar->menu=NULL;
 }
 

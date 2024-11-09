@@ -43,6 +43,7 @@ static void entry_complete(Entry *entry, bool show);
 static Strings *entry_get_cmd_completion(Entry *entry);
 
 Entry *cmd_entry=NULL; // 輸入命令並執行的構件
+Entry *color_entry=NULL; // 输入颜色名并设置颜色的構件
 
 Entry *entry_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *))
 {
@@ -287,4 +288,19 @@ static Strings *entry_get_cmd_completion(Entry *entry)
     Strings *cmds=get_files_in_paths(paths, regex, false);
     Free(regex);
     return cmds;
+}
+
+Entry *color_entry_new(Widget_id id)
+{
+    int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
+        x, y, w, h=get_font_height_by_pad(), pad=get_font_pad();
+
+    get_string_size(cfg->color_entry_hint, &w, NULL);
+    w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
+    x=(sw-w)/2-bw, y=(sh-h)/2-bw;
+
+    Entry *entry=entry_new(NULL, id, x, y, w, h, cfg->color_entry_hint, NULL);
+    widget_set_poppable(WIDGET(entry), true);
+
+    return entry;
 }

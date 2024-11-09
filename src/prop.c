@@ -19,6 +19,7 @@ static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 };
 
 static Atom gwm_atoms[GWM_ATOM_N];
+static Atom utf8_string_atom;
 
 bool is_spec_gwm_atom(Atom spec, GWM_atom_id id)
 {
@@ -29,6 +30,16 @@ void set_gwm_atoms(void)
 {
     for(int i=0; i<GWM_ATOM_N; i++)
         gwm_atoms[i]=XInternAtom(xinfo.display, gwm_atom_names[i], False);
+}
+
+void set_utf8_string_atom(void)
+{
+    utf8_string_atom=XInternAtom(xinfo.display, "UTF8_STRING", False);
+}
+
+Atom get_utf8_string_atom(void)
+{
+    return utf8_string_atom;
 }
 
 Window get_transient_for(Window win)
@@ -127,6 +138,23 @@ void replace_cardinal_prop(Window win, Atom prop, const long values[], int n)
         (unsigned char *)values, n);
 }
 
+/* UTF8_STRING需要特殊處理，因其是否屬於ICCCM尚存疑，詳見：
+ *     https://gitlab.freedesktop.org/xorg/doc/xorg-docs/-/issues/5 */
+void replace_utf8_prop(Window win, Atom prop, const void *strs, int n)
+{
+    int size=0; // 字符數組strs的總尺寸，包含每個字符串的終止符
+    const char *s=strs;
+
+    for(int i=0; i<n; i++)
+    {
+        size += strlen(s)+1;
+        s += size;
+    }
+
+    XChangeProperty(xinfo.display, win, prop, utf8_string_atom, 8,
+        PropModeReplace, (unsigned char *)strs, size);
+}
+
 void copy_prop(Window dest, Window src)
 {
     int i=0, n=0, fmt=0;
@@ -164,6 +192,11 @@ void request_layout_update(void)
 {
     long f=true;
     replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_UPDATE_LAYOUT], &f, 1);
+}
+
+void set_main_color_name(const char *name)
+{
+    replace_utf8_prop(xinfo.root_win, gwm_atoms[GWM_MAIN_COLOR_NAME], name, 1);
 }
 
 char *get_main_color_name(void)
