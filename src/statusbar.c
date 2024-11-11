@@ -34,7 +34,7 @@ Statusbar *statusbar_new(Widget *parent, int x, int y, int w, int h, const char 
 
 static void statusbar_ctor(Statusbar *statusbar, Widget *parent, int x, int y, int w, int h, const char *label)
 {
-    widget_ctor(WIDGET(statusbar), parent, STATUSBAR, x, y, w, h);
+    widget_ctor(WIDGET(statusbar), parent, WIDGET_TYPE_STATUSBAR, STATUSBAR, x, y, w, h);
     statusbar_set_method(WIDGET(statusbar));
     XSelectInput(xinfo.display, WIDGET_WIN(statusbar), ExposureMask);
     statusbar->label=copy_string(label);

@@ -40,7 +40,7 @@ Button *button_new(Widget *parent, Widget_id id, int x, int y, int w, int h, con
 
 static void button_ctor(Button *button, Widget *parent, Widget_id id, int x, int y, int w, int h, const char *label)
 {
-    widget_ctor(WIDGET(button), parent, id, x, y, w, h);
+    widget_ctor(WIDGET(button), parent, WIDGET_TYPE_BUTTON, id, x, y, w, h);
     button_set_method(WIDGET(button));
     button->image=NULL;
     button->icon_name=NULL;

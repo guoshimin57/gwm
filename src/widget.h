@@ -15,6 +15,22 @@
 #include <stdbool.h>
 #include "color.h"
 
+typedef enum // 構件類型
+{
+    WIDGET_TYPE_TOOLTIP,
+    WIDGET_TYPE_BUTTON,
+    WIDGET_TYPE_ENTRY,
+    WIDGET_TYPE_MENU,
+    WIDGET_TYPE_LISTVIEW,
+    WIDGET_TYPE_ICONBAR,
+    WIDGET_TYPE_STATUSBAR,
+    WIDGET_TYPE_TASKBAR,
+    WIDGET_TYPE_FRAME,
+    WIDGET_TYPE_TITLEBAR,
+    WIDGET_TYPE_CLIENT,
+    WIDGET_TYPE_UNKNOWN
+} Widget_type;
+
 typedef enum // 構件標識
 {
     ROOT_WIN, HINT_WIN, RUN_CMD_ENTRY, COLOR_ENTRY,
@@ -65,6 +81,7 @@ typedef struct _widget_tag Widget;
 
 struct _widget_tag
 {
+    Widget_type type;
     Widget_id id;
     Widget_state state;
     int x, y, w, h, border_w;
@@ -105,8 +122,8 @@ typedef struct rectangle_tag Rect;
 #define DESKTOP_BUTTON_N(n) (DESKTOP_BUTTON_BEGIN+n-1)
 
 Widget *widget_find(Window win);
-Widget *widget_new(Widget *parent, Widget_id id, int x, int y, int w, int h);
-void widget_ctor(Widget *widget, Widget *parent, Widget_id id, int x, int y, int w, int h);
+Widget *widget_new(Widget *parent, Widget_type type, Widget_id id, int x, int y, int w, int h);
+void widget_ctor(Widget *widget, Widget *parent, Widget_type type, Widget_id id, int x, int y, int w, int h);
 void widget_del(Widget *widget);
 void widget_set_state(Widget *widget, Widget_state state);
 void widget_set_border_width(Widget *widget, int width);
@@ -123,6 +140,7 @@ void widget_set_poppable(Widget *widget, bool poppable);
 bool widget_get_poppable(const Widget *widget);
 bool widget_is_viewable(const Widget *widget);
 Widget *get_popped_widget(void);
+void hide_popped_widget(const Widget *popped, const Widget *clicked);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
 void set_xic(Window win, XIC *ic);

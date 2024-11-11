@@ -77,20 +77,21 @@ Widget *widget_find(Window win)
     return NULL;
 }
 
-Widget *widget_new(Widget *parent, Widget_id id, int x, int y, int w, int h)
+Widget *widget_new(Widget *parent, Widget_type type, Widget_id id, int x, int y, int w, int h)
 {
     Widget *widget=Malloc(sizeof(Widget));
 
-    widget_ctor(widget, parent, id, x, y, w, h);
+    widget_ctor(widget, parent, type, id, x, y, w, h);
 
     return widget;
 }
 
-void widget_ctor(Widget *widget, Widget *parent, Widget_id id, int x, int y, int w, int h)
+void widget_ctor(Widget *widget, Widget *parent, Widget_type type, Widget_id id, int x, int y, int w, int h)
 {
     unsigned long bg;
     Window pwin = parent ? parent->win : xinfo.root_win;
 
+    widget->type=type;
     widget->id=id;
     widget->state=WIDGET_STATE_NORMAL;
     bg=get_widget_color(widget->state);
@@ -124,7 +125,7 @@ void widget_del(Widget *widget)
 
 static void widget_dtor(Widget *widget)
 {
-    if(widget->id != CLIENT_WIN)
+    if(widget->type != WIDGET_TYPE_CLIENT)
         XDestroyWindow(xinfo.display, widget->win);
     widget_unreg(widget);
 }
@@ -211,6 +212,12 @@ Widget *get_popped_widget(void)
         if(widget_get_poppable(p->widget) && widget_is_viewable(p->widget))
             return p->widget;
     return NULL;
+}
+
+void hide_popped_widget(const Widget *popped, const Widget *clicked)
+{
+    if(popped != clicked)
+        popped->hide(popped);
 }
 
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel)

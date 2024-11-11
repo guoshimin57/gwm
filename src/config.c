@@ -400,7 +400,7 @@ static void config_misc(void)
     cfg->wallpaper_paths="/usr/share/backgrounds/fedora-workstation:/usr/share/wallpapers";
     cfg->wallpaper_filename="/usr/share/backgrounds/gwm.png";
     cfg->cmd_entry_hint=_("請輸入命令，然後按回車執行");
-    cfg->color_entry_hint=_("請輸入颜色名，然後按回車執行");
+    cfg->color_entry_hint=_("請輸入系統界面主色調的顏色名（支持英文顏色名和十六进制顏色名），然後按回車執行");
     cfg->compositor="picom";
     cfg->keybind=keybind;
     cfg->buttonbind=buttonbind;

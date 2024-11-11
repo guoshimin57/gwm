@@ -40,7 +40,7 @@ static void listview_ctor(Listview *listview, Widget *parent, Widget_id id, int 
 {
     w = w>0 ? w : get_strings_width(texts);
     h = h>0 ? h : get_strings_height(texts);
-    widget_ctor(WIDGET(listview), parent, id, x, y, w, h);
+    widget_ctor(WIDGET(listview), parent, WIDGET_TYPE_LISTVIEW, id, x, y, w, h);
     listview->texts=texts;
     listview->nmax=INT_MAX;
     listview_set_method(WIDGET(listview));

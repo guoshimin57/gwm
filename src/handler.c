@@ -115,11 +115,11 @@ static void handle_button_press(WM *wm, XEvent *e)
     else if(clicked_widget)
     {
         exec_buttonbind_func(wm, e);
-        popped_widget->hide(popped_widget);
+        hide_popped_widget(popped_widget, clicked_widget);
     }
     else
     {
-        popped_widget->hide(popped_widget);
+        hide_popped_widget(popped_widget, clicked_widget);
         XUngrabPointer(xinfo.display, CurrentTime);
     }
 }
@@ -691,8 +691,8 @@ static void handle_wm_transient_for_notify(WM *wm, Window win)
 static void handle_selection_notify(WM *wm, XEvent *e)
 {
     UNUSED(wm);
-    Window win=e->xselection.requestor;
-    if( e->xselection.property == get_utf8_string_atom()
-        && win==WIDGET_WIN(cmd_entry))
-        entry_paste(cmd_entry);
+    Widget *widget=widget_find(e->xselection.requestor);
+    if(e->xselection.property==get_utf8_string_atom()
+        && widget && (widget->id==RUN_CMD_ENTRY || widget->id==COLOR_ENTRY))
+        entry_paste(ENTRY(widget));
 }

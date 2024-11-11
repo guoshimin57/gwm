@@ -51,7 +51,7 @@ static void taskbar_ctor(Taskbar *taskbar, Widget *parent, int x, int y, int w, 
 {
     Rect r;
 
-    widget_ctor(WIDGET(taskbar), parent, TASKBAR, x, y, w, h);
+    widget_ctor(WIDGET(taskbar), parent, WIDGET_TYPE_TASKBAR, TASKBAR, x, y, w, h);
     taskbar_set_method(WIDGET(taskbar));
     taskbar_buttons_new(taskbar);
 

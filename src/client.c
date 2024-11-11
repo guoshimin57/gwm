@@ -88,7 +88,7 @@ static Client *new_client(WM *wm, Window win)
 {
     Client *c=Malloc(sizeof(Client));
     memset(c, 0, sizeof(Client));
-    widget_ctor(WIDGET(c), NULL, CLIENT_WIN, 0, 0, 1, 1);
+    widget_ctor(WIDGET(c), NULL, WIDGET_TYPE_CLIENT, CLIENT_WIN, 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
     c->show_border=c->show_titlebar=true;
     c->map_n=++map_count;

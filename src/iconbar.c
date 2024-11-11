@@ -113,7 +113,7 @@ Iconbar *iconbar_new(Widget *parent, int x, int y, int w, int h)
 
 static void iconbar_ctor(Iconbar *iconbar, Widget *parent, int x, int y, int w, int h)
 {
-    widget_ctor(WIDGET(iconbar), parent, ICONBAR, x, y, w, h);
+    widget_ctor(WIDGET(iconbar), parent, WIDGET_TYPE_ICONBAR, ICONBAR, x, y, w, h);
     iconbar->cbuttons=Malloc(sizeof(Cbutton));
     list_init(&iconbar->cbuttons->list);
 }
