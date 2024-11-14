@@ -25,5 +25,6 @@ void iconbar_update(Iconbar *iconbar);
 void iconbar_update_by_state(Iconbar *iconbar, Window cwin);
 void iconbar_update_by_icon_name(Iconbar *iconbar, Window cwin, const char *icon_name);
 void iconbar_update_by_icon(Iconbar *iconbar, Window cwin, Imlib_Image image);
+void iconbar_update_bg(const Widget *widget);
 
 #endif

@@ -38,6 +38,7 @@ static void cbutton_dtor(Cbutton *cbutton);
 static void cbutton_set_icon(Cbutton *cbutton);
 static Cbutton *iconbar_find_cbutton(const Iconbar *iconbar, Window cwin);
 static void iconbar_ctor(Iconbar *iconbar, Widget *parent, int x, int y, int w, int h);
+static void iconbar_set_method(Widget *widget);
 static void iconbar_dtor(Iconbar *iconbar);
 static bool iconbar_has_similar_cbutton(Iconbar *iconbar, const Cbutton *cbutton);
 
@@ -108,6 +109,7 @@ Iconbar *iconbar_new(Widget *parent, int x, int y, int w, int h)
 {
     Iconbar *iconbar=Malloc(sizeof(Iconbar));
     iconbar_ctor(iconbar, parent, x, y, w, h);
+    iconbar_set_method(WIDGET(iconbar));
     return iconbar;
 }
 
@@ -116,6 +118,11 @@ static void iconbar_ctor(Iconbar *iconbar, Widget *parent, int x, int y, int w, 
     widget_ctor(WIDGET(iconbar), parent, WIDGET_TYPE_ICONBAR, ICONBAR, x, y, w, h);
     iconbar->cbuttons=Malloc(sizeof(Cbutton));
     list_init(&iconbar->cbuttons->list);
+}
+
+static void iconbar_set_method(Widget *widget)
+{
+    widget->update_bg=iconbar_update_bg;
 }
 
 void iconbar_del(Iconbar *iconbar)
@@ -228,4 +235,12 @@ void iconbar_update_by_icon(Iconbar *iconbar, Window cwin, Imlib_Image image)
 
     button_change_icon(cbutton->button, image, NULL, NULL);
     button_update_fg(WIDGET(cbutton->button));
+}
+
+void iconbar_update_bg(const Widget *widget)
+{
+    const Iconbar *iconbar=(const Iconbar *)widget;
+    widget_update_bg(WIDGET(iconbar));
+    list_for_each_entry(Cbutton, cb, &iconbar->cbuttons->list, list)
+        widget_update_bg(WIDGET(cb->button));
 }

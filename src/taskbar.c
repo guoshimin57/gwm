@@ -160,7 +160,7 @@ void taskbar_update_bg(const Widget *widget)
 {
     Taskbar *taskbar=(Taskbar *)widget;
     taskbar_buttons_update_bg(taskbar);
-    widget_update_bg(WIDGET(taskbar->iconbar));
+    iconbar_update_bg(WIDGET(taskbar->iconbar));
     /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
      * 雖然給iconbar->win發送了Expose事件，但實際上沒更新背景。也許當窗口沒有內容
      * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
