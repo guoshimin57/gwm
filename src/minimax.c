@@ -21,7 +21,7 @@ static Rect get_top_max_rect(const WM *wm);
 static Rect get_bottom_max_rect(const WM *wm);
 static Rect get_left_max_rect(const WM *wm);
 static Rect get_right_max_rect(const WM *wm);
-static Client *get_icon_client_head(WM *wm);
+static Client *get_icon_client_head(void);
 static void set_fullscreen(WM *wm, Client *c);
 
 void minimize(WM *wm, XEvent *e, Func_arg arg)
@@ -155,7 +155,7 @@ void iconify_client(WM *wm, Client *c)
     if(c->win_state.skip_taskbar)
         return;
 
-    move_client_node(wm, c, get_icon_client_head(wm), ANY_PLACE);
+    move_client_node(wm, c, get_icon_client_head(), ANY_PLACE);
 
     Client *ld=c->subgroup_leader;
     for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
@@ -173,12 +173,12 @@ void iconify_client(WM *wm, Client *c)
     request_layout_update();
 }
 
-static Client *get_icon_client_head(WM *wm)
+static Client *get_icon_client_head(void)
 {
-    list_for_each_entry(Client, c, &wm->clients->list, list)
+    clients_for_each(c)
         if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
-            return list_prev_entry(c, Client, list);
-    return list_last_entry(&wm->clients->list, Client, list);
+            return clients_prev(c);;
+    return clients_last();
 }
 
 void deiconify_client(WM *wm, Client *c)
@@ -203,14 +203,14 @@ void deiconify_client(WM *wm, Client *c)
 
 void iconify_all_clients(WM *wm)
 {
-    list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
+    clients_for_each_reverse(c)
         if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
             iconify_client(wm, c);
 }
 
 void deiconify_all_clients(WM *wm)
 {
-    list_for_each_entry_reverse(Client, c, &wm->clients->list, list)
+    clients_for_each_reverse(c)
         if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             deiconify_client(wm, c);
 }

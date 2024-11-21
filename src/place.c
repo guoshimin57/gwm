@@ -15,9 +15,9 @@
 #include "place.h"
 
 static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
-static bool is_valid_to_normal_layer_sec(WM *wm, Client *c);
+static bool is_valid_to_normal_layer_sec(Client *c);
 static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
-static int cmp_client_store_order(WM *wm, Client *c1, Client *c2);
+static int cmp_client_store_order(Client *c1, Client *c2);
 static void swap_clients(WM *wm, Client *a, Client *b);
 
 void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
@@ -26,14 +26,14 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
     Client *from=CUR_FOC_CLI(wm), *to;
 
     UNUSED(arg);
-    if( DESKTOP(wm)->cur_layout!=TILE || from==wm->clients
+    if( DESKTOP(wm)->cur_layout!=TILE || clients_is_head(from)
         || !get_valid_click(wm, CHANGE, e, &ev))
         return;
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
-    to=win_to_client(wm->clients, subw);
+    to=win_to_client(subw);
     if(ev.xbutton.x == 0)
         move_client(wm, from, NULL, TILE_LAYER_SECOND);
     else if(ev.xbutton.x == (long)xinfo.screen_width-1)
@@ -58,13 +58,13 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(arg);
     XEvent ev;
     Layout layout=DESKTOP(wm)->cur_layout;
-    Client *from=CUR_FOC_CLI(wm), *to=NULL, *head=wm->clients;
+    Client *from=CUR_FOC_CLI(wm), *to=NULL, *head=get_clients();
     if(layout!=TILE || from==head || !get_valid_click(wm, SWAP, e, &ev))
         return;
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
-    if((to=win_to_client(wm->clients, ev.xbutton.subwindow)))
+    if((to=win_to_client(ev.xbutton.subwindow)))
         swap_clients(wm, from, to);
 }
 
@@ -110,10 +110,10 @@ bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     Client *head=NULL;
     del_subgroup(from->subgroup_leader);
     if(to)
-        head = cmp_client_store_order(wm, from, to) < 0 ? to : list_prev_entry(to, Client, list);
+        head = cmp_client_store_order(from, to) < 0 ? to : list_prev_entry(to, Client, list);
     else
     {
-        head=get_head_client(wm->clients, type);
+        head=get_head_client(type);
         if(from->place_type==TILE_LAYER_MAIN && type==TILE_LAYER_SECOND)
             head=list_next_entry(head, Client, list);
     }
@@ -126,23 +126,23 @@ static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
     Layout l=DESKTOP(wm)->cur_layout;
     Place_type t = to ? to->place_type : type;
 
-    return from != wm->clients
+    return !clients_is_head(from)
         && (!to || from->subgroup_leader!=to->subgroup_leader)
-        && (t!=TILE_LAYER_SECOND || is_valid_to_normal_layer_sec(wm, from))
+        && (t!=TILE_LAYER_SECOND || is_valid_to_normal_layer_sec(from))
         && (l==TILE || !is_normal_layer(t));
 }
 
-static bool is_valid_to_normal_layer_sec(WM *wm, Client *c)
+static bool is_valid_to_normal_layer_sec(Client *c)
 {
     return c->place_type!=TILE_LAYER_MAIN
-        || get_clients_n(wm->clients, TILE_LAYER_SECOND, false, false, false);
+        || get_clients_n(TILE_LAYER_SECOND, false, false, false);
 }
 
-static int cmp_client_store_order(WM *wm, Client *c1, Client *c2)
+static int cmp_client_store_order(Client *c1, Client *c2)
 {
     if(c1 == c2)
         return 0;
-    list_for_each_entry_from(Client, c1, &wm->clients->list, list)
+    clients_for_each_from(c1)
         if(c1 == c2)
             return -1;
     return 1;
@@ -161,7 +161,7 @@ static void swap_clients(WM *wm, Client *a, Client *b)
 
     Client *tmp, *top, *a_begin, *b_begin, *a_prev, *a_leader, *b_leader, *oa=a;
 
-    if(cmp_client_store_order(wm, a, b) > 0)
+    if(cmp_client_store_order(a, b) > 0)
         tmp=a, a=b, b=tmp;
 
     a_leader=a->subgroup_leader, b_leader=b->subgroup_leader;

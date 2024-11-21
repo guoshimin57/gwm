@@ -39,9 +39,8 @@ static Image_node *create_image_node(const char *name, Imlib_Image image);
 static void free_image_node(Image_node *node);
 static void reg_image(const char *name, Imlib_Image image);
 static Imlib_Image search_icon_image(const char *name);
-static Imlib_Image create_icon_image(Window win, const char *name, int size, const char *theme);
-static Imlib_Image create_icon_image_from_hint(Window win);
-static Imlib_Image create_icon_image_from_prop(Window win);
+static Imlib_Image create_icon_image_from_hint(Window win, const char *name);
+static Imlib_Image create_icon_image_from_prop(Window win, const char *name);
 static Imlib_Image create_icon_image_from_file(const char *name, int size, const char *theme);
 static char *find_icon(const char *name, int size, int scale, const char *theme, const char *context_dir);
 static char *find_icon_helper(const char *name, int size, int scale, char *const *base_dirs, const char *theme, const char *context_dir);
@@ -94,6 +93,9 @@ static void free_image_node(Image_node *node)
 
 static void reg_image(const char *name, Imlib_Image image)
 {
+    if(!name || !image)
+        return;
+
     if(!image_list)
     {
         image_list=create_image_node(NULL, NULL);
@@ -120,16 +122,32 @@ void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
     imlib_render_image_on_drawable_at_size(x, y, w, h);
 }
 
-Imlib_Image get_icon_image(Window win, const char *name, int size, const char *theme)
+Imlib_Image get_win_icon_image(Window win)
 {
-    Imlib_Image image = name ? search_icon_image(name) : NULL;
+    XClassHint h;
+    Imlib_Image image=NULL;
 
-    return image ? image : create_icon_image(win, name, size, theme);
+    XGetClassHint(xinfo.display, win, &h);
+    char *name = h.res_class ? h.res_class : h.res_name;
+
+    if( (image=search_icon_image(h.res_class))
+        || (image=search_icon_image(h.res_name))
+        || (image=create_icon_image_from_hint(win, name))
+        || (image=create_icon_image_from_prop(win, name)))
+        return image;
+
+    return NULL;
+}
+
+Imlib_Image get_name_icon_image(const char *name, int size, const char *theme)
+{
+    Imlib_Image image=search_icon_image(name);
+    return image ? image : create_icon_image_from_file(name, size, theme);
 }
 
 static Imlib_Image search_icon_image(const char *name)
 {
-    if(!image_list)
+    if(!image_list || !name)
         return NULL;
 
     list_for_each_entry(Image_node, p, &image_list->list, list)
@@ -139,24 +157,11 @@ static Imlib_Image search_icon_image(const char *name)
     return NULL;
 }
 
-static Imlib_Image create_icon_image(Window win, const char *name, int size, const char *theme)
+static Imlib_Image create_icon_image_from_hint(Window win, const char *name)
 {
-    Imlib_Image image=NULL;
+    if(!win || !name)
+        return NULL;
 
-    /* 根據加載效率依次嘗試 */
-    if( (image=create_icon_image_from_prop(win))
-        || (image=create_icon_image_from_hint(win))
-        || (image=create_icon_image_from_file(name, size, theme)))
-    {
-        reg_image(name, image);
-        return image;
-    }
-
-    return NULL;
-}
-
-static Imlib_Image create_icon_image_from_hint(Window win)
-{
     XWMHints *hint=XGetWMHints(xinfo.display, win);
     if(!hint || !(hint->flags & IconPixmapHint))
         return NULL;
@@ -168,17 +173,22 @@ static Imlib_Image create_icon_image_from_hint(Window win)
         return NULL;
 
     /* Nautilus未正確設置icon_mask，需要繞過此缺陷 */
-    XClassHint class_hint;
-    if( XGetClassHint(xinfo.display, win, &class_hint)
-        && strcmp(class_hint.res_name, "org.gnome.Nautilus") == 0)
-        mask=None;
+    if(strcmp(name, "org.gnome.Nautilus") == 0)
+        return NULL;
 
     imlib_context_set_drawable(pixmap);   
-    return imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
+
+    Imlib_Image image=imlib_create_image_from_drawable(mask, 0, 0, w, h, 0);
+    reg_image(name, image);
+
+    return image;
 }
 
-static Imlib_Image create_icon_image_from_prop(Window win)
+static Imlib_Image create_icon_image_from_prop(Window win, const char *name)
 {
+    if(!win || !name)
+        return NULL;
+
     long *data=get_net_wm_icon(win);
     if(!data)
         return NULL;
@@ -199,6 +209,8 @@ static Imlib_Image create_icon_image_from_prop(Window win)
         }
     }
     Free(data);
+    reg_image(name, image);
+
     return image;
 }
 
@@ -208,7 +220,9 @@ static Imlib_Image create_icon_image_from_file(const char *name, int size, const
         return NULL;
 
     char *fn=find_icon(name, size, 1, theme, "apps");
-    return fn ? imlib_load_image(fn) : NULL;
+    Imlib_Image image = fn ? imlib_load_image(fn) : NULL;
+    reg_image(name, image);
+    return image;
 }
 
 /* 根據圖標名稱、尺寸、縮放比例和規範中context對應的目錄名來搜索圖標文件全名。

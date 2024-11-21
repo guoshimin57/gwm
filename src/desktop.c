@@ -54,12 +54,12 @@ void focus_desktop_n(WM *wm, unsigned int n)
     show_cur_desktop_clients(wm);
     focus_client(wm, n, CUR_FOC_CLI(wm));
     request_layout_update();
-    set_all_net_client_list(wm->clients);
+    set_all_net_client_list();
 }
 
 static void hide_cur_desktop_clients(WM *wm)
 {
-    list_for_each_entry(Client, c, &wm->clients->list, list)
+    clients_for_each(c)
     {
         if(is_on_cur_desktop(c->desktop_mask))
         {
@@ -73,7 +73,7 @@ static void hide_cur_desktop_clients(WM *wm)
 
 static void show_cur_desktop_clients(WM *wm)
 {
-    list_for_each_entry(Client, c, &wm->clients->list, list)
+    clients_for_each(c)
     {
         if(is_on_cur_desktop(c->desktop_mask))
         {
@@ -88,7 +88,7 @@ static void show_cur_desktop_clients(WM *wm)
 void move_to_desktop_n(WM *wm, Client *c, unsigned int n)
 {
     unsigned int cur_desktop=get_net_current_desktop();
-    if(n==~0U || n==cur_desktop || c==wm->clients)
+    if(n==~0U || n==cur_desktop || clients_is_head(c))
         return;
 
     ready_to_desktop_n(wm, c, n, MOVE_TO_N);
@@ -119,10 +119,10 @@ void all_move_to_desktop_n(WM *wm, unsigned int n)
 
     Client *pc=CUR_FOC_CLI(wm);
     unsigned int mask=get_desktop_mask(n);
-    list_for_each_entry(Client, c, &wm->clients->list, list)
+    clients_for_each(c)
         c->desktop_mask=mask;
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        focus_client(wm, i, i==n ? pc : wm->clients);
+        focus_client(wm, i, i==n ? pc : get_clients());
     focus_desktop_n(wm, get_net_current_desktop());
 }
 
@@ -140,23 +140,23 @@ void all_change_to_desktop_n(WM *wm, unsigned int n)
 
 void attach_to_desktop_n(WM *wm, Client *c, unsigned int n)
 {
-    if(n==~0U || n==get_net_current_desktop() || c==wm->clients)
+    if(n==~0U || n==get_net_current_desktop() || clients_is_head(c))
         return;
 
     ready_to_desktop_n(wm, c, n, ATTACH_TO_N);
-    set_all_net_client_list(wm->clients);
+    set_all_net_client_list();
 }
 
 void attach_to_desktop_all(WM *wm, Client *c)
 {
-    if(c == wm->clients)
+    if(clients_is_head(c))
         return;
 
     unsigned int cur_desktop=get_net_current_desktop();
     for(unsigned int i=0; i<DESKTOP_N; i++)
         if(i != cur_desktop)
             ready_to_desktop_n(wm, c, i, ATTACH_TO_ALL);
-    set_all_net_client_list(wm->clients);
+    set_all_net_client_list();
 }
 
 void all_attach_to_desktop_n(WM *wm, unsigned int n)
@@ -165,7 +165,7 @@ void all_attach_to_desktop_n(WM *wm, unsigned int n)
         return;
 
     unsigned int mask=get_desktop_mask(n);
-    list_for_each_entry(Client, c, &wm->clients->list, list)
+    clients_for_each(c)
         c->desktop_mask |= mask;
 
     unsigned int cur_desktop=get_net_current_desktop();
@@ -173,5 +173,5 @@ void all_attach_to_desktop_n(WM *wm, unsigned int n)
         focus_desktop_n(wm, cur_desktop);
     else
         focus_client(wm, n, wm->desktop[n]->cur_focus_client);
-    set_all_net_client_list(wm->clients);
+    set_all_net_client_list();
 }

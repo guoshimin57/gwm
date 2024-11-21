@@ -125,7 +125,6 @@ struct wm_tag // 窗口管理器相關信息
     Rect workarea; // 工作區坐標和尺寸
     Window wm_check_win; // WM檢測窗口
     Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
-    Client *clients; // 頭結點
     Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
     event_handler_type handle_event; // 事件處理器
 };

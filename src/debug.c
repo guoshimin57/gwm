@@ -26,7 +26,7 @@ void print_client_and_top_win(WM *wm)
         printf(_("以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"));
         for(unsigned int i=0; i<n; i++)
         {
-            if((c=win_to_client(wm->clients, child[i])))
+            if((c=win_to_client(child[i])))
                 printf("client frame: %lx\n", WIDGET_WIN(c->frame));
             else
                 for(unsigned int j=0; j<TOP_WIN_TYPE_N; j++)
@@ -108,10 +108,10 @@ void print_place_info(Client *c)
     printf("x=%d, y=%d, w=%d, h=%d, place_type=%d\n", WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c), c->place_type);
 }
 
-void print_all_client_win(WM *wm)
+void print_all_client_win(void)
 {
     printf(_("以下是自頂向底排列的客戶窗口列表：\n"));
-    list_for_each_entry(Client, c, &wm->clients->list, list)
+    clients_for_each(c)
         print_client_win(c);
 }
 

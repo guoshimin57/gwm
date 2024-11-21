@@ -17,6 +17,7 @@
 void free_all_images(void);
 void free_image(Imlib_Image image);
 void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h);
-Imlib_Image get_icon_image(Window win, const char *name, int size, const char *theme);
+Imlib_Image get_win_icon_image(Window win);
+Imlib_Image get_name_icon_image(const char *name, int size, const char *theme);
 
 #endif

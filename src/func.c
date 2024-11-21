@@ -90,7 +90,7 @@ void quit_wm(WM *wm, XEvent *e, Func_arg arg)
 
 void clear_wm(WM *wm)
 {
-    list_for_each_entry_safe(Client, c, &wm->clients->list, list)
+    clients_for_each_safe(c)
     {
         XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
         del_client(wm, c, true);
@@ -125,14 +125,14 @@ void close_client(WM *wm, XEvent *e, Func_arg arg)
     UNUSED(e), UNUSED(arg);
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
     Client *c=CUR_FOC_CLI(wm);
-    if(c != wm->clients)
+    if(!clients_is_head(c))
         close_win(WIDGET_WIN(c));
 }
 
 void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    list_for_each_entry(Client, c, &wm->clients->list, list)
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    clients_for_each(c)
         if(is_on_cur_desktop(c->desktop_mask))
             close_win(WIDGET_WIN(c));
 }
@@ -143,7 +143,7 @@ void next_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     unsigned int cur_desktop=get_net_current_desktop();
-    focus_client(wm, cur_desktop, get_prev_client(wm->clients, CUR_FOC_CLI(wm)));
+    focus_client(wm, cur_desktop, get_prev_client(CUR_FOC_CLI(wm)));
 }
 
 /* 取得存儲次序上在當前客戶（或其亞組長）之後的客戶。因使用頭插法存儲客戶，
@@ -152,7 +152,7 @@ void prev_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     unsigned int cur_desktop=get_net_current_desktop();
-    focus_client(wm, cur_desktop, get_next_client(wm->clients, CUR_FOC_CLI(wm)));
+    focus_client(wm, cur_desktop, get_next_client(CUR_FOC_CLI(wm)));
 }
 
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
@@ -301,7 +301,7 @@ void print_win(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    if(c != wm->clients)
+    if(!clients_is_head(c))
         print_area(WIDGET_WIN(c->frame), 0, 0, WIDGET_W(c), WIDGET_H(c));
 }
 

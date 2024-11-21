@@ -39,35 +39,62 @@ struct client_tag // 客戶窗口相關信息
     List list;
 };
 
+#define clients_is_empty() \
+    list_is_empty(&get_clients()->list)
+
+#define clients_is_head(c) (c == get_clients())
+
+#define clients_last() \
+    list_last_entry(&get_clients()->list, Client, list)
+
+#define clients_next(c) \
+    list_next_entry(c, Client, list)
+
+#define clients_prev(c) \
+    list_prev_entry(c, Client, list)
+
+#define clients_for_each(c) \
+    list_for_each_entry_safe(Client, c, &get_clients()->list, list)
+
+#define clients_for_each_safe(c) \
+    list_for_each_entry_safe(Client, c, &get_clients()->list, list)
+
+#define clients_for_each_from(c) \
+    list_for_each_entry_from(Client, c, &get_clients()->list, list)
+
+#define clients_for_each_reverse(c) \
+    list_for_each_entry_reverse(Client, c, &get_clients()->list, list)
+
+Client *get_clients(void);
 void add_client(WM *wm, Window win);
-void set_all_net_client_list(Client *clients);
+void set_all_net_client_list(void);
 void set_win_rect(Client *c);
 Rect get_title_area_rect(Client *c);
 void set_transient_win_rect(Client *c);
-int get_clients_n(Client *clients, Place_type type, bool count_icon, bool count_trans, bool count_all_desktop);
+int get_clients_n(Place_type type, bool count_icon, bool count_trans, bool count_all_desktop);
 bool is_iconic_client(Client *c);
-Client *win_to_client(Client *clients, Window win);
+Client *win_to_client(Window win);
 void del_client(WM *wm, Client *c, bool is_for_quit);
 void raise_client(WM *wm, Client *c);
-Client *get_next_client(Client *clients, Client *c);
-Client *get_prev_client(Client *clients, Client *c);
+Client *get_next_client(Client *c);
+Client *get_prev_client(Client *c);
 bool is_normal_layer(Place_type t);
-bool is_last_typed_client(Client *clients, Client *c, Place_type type);
-Client *get_head_client(Client *clients, Place_type type);
+bool is_last_typed_client(Client *c, Place_type type);
+Client *get_head_client(Place_type type);
 int get_subgroup_n(Client *c);
 Client *get_subgroup_leader(Client *c);
 Client *get_top_transient_client(Client *subgroup_leader, bool only_modal);
 void focus_client(WM *wm, unsigned int desktop_n, Client *c);
 void save_place_info_of_client(Client *c);
-void save_place_info_of_clients(Client *clients);
+void save_place_info_of_clients(void);
 void restore_place_info_of_client(Client *c);
-void restore_place_info_of_clients(Client *clients);
+void restore_place_info_of_clients(void);
 bool is_tile_client(Client *c);
 bool is_tiled_client(Client *c);
-Window *get_client_win_list(Client *clients, int *n);
-Window *get_client_win_list_stacking(Client *clients, int *n);
+Window *get_client_win_list(int *n);
+Window *get_client_win_list_stacking(int *n);
 void set_state_attent(Client *c, bool attent);
-bool is_wm_win(Client *clients, Window win, bool before_wm);
+bool is_wm_win(Window win, bool before_wm);
 void restack_win(WM *wm, Window win);
 void update_clients_bg(WM *wm);
 void update_client_bg(WM *wm, unsigned int desktop_n, Client *c);

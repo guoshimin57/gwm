@@ -81,8 +81,7 @@ static void cbutton_set_icon(Cbutton *cbutton)
     XClassHint class_hint={NULL, NULL};
 
     XGetClassHint(xinfo.display, cbutton->cwin, &class_hint);
-    Imlib_Image image=get_icon_image(cbutton->cwin, class_hint.res_name,
-        cfg->icon_image_size, cfg->cur_icon_theme);
+    Imlib_Image image=get_win_icon_image(cbutton->cwin);
 
     button_set_icon(cbutton->button, image, class_hint.res_name, NULL);
     vXFree(class_hint.res_name, class_hint.res_class);

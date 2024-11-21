@@ -115,9 +115,9 @@ typedef struct list_tag
  */
 #define list_for_each_entry_safe(type, entry, list, member) \
     for(type *entry=list_first_entry(list, type, member), \
-        *n=list_next_entry(entry, type, member); \
+        *_n=list_next_entry(entry, type, member); \
         !list_entry_is_head(entry, list, member); \
-        entry=n, n=list_next_entry(n, type, member))
+        entry=_n, _n=list_next_entry(_n, type, member))
 
 /* 功能：逆向遍歷鏈表項
  * type：容器結構體類型

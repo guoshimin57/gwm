@@ -129,7 +129,7 @@ static void exec_buttonbind_func(WM *wm, XEvent *e)
     Window win=e->xbutton.window;
     Widget *widget=widget_find(win);
     Widget_id id = widget ? widget->id : (win==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
-    Client *c=win_to_client(wm->clients, id==CLIENT_ICON ? iconbar_get_client_win(taskbar_get_iconbar(wm->taskbar), win) : win);
+    Client *c=win_to_client(id==CLIENT_ICON ? iconbar_get_client_win(taskbar_get_iconbar(wm->taskbar), win) : win);
     Client *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
 
     if(widget && widget->id!=TITLEBAR && widget->id!=CLIENT_FRAME)
@@ -174,7 +174,7 @@ static void handle_client_message(WM *wm, XEvent *e)
 {
     Window win=e->xclient.window;
     Atom type=e->xclient.message_type;
-    Client *c=win_to_client(wm->clients, win);
+    Client *c=win_to_client(win);
 
     if(is_spec_ewmh_atom(type, NET_CURRENT_DESKTOP))
         focus_desktop_n(wm, e->xclient.data.l[0]);
@@ -312,7 +312,7 @@ static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
 
 static void activate_win(WM *wm, Window win, unsigned long src)
 {
-    Client *c=win_to_client(wm->clients, win);
+    Client *c=win_to_client(win);
     if(!c)
         return;
 
@@ -329,9 +329,9 @@ static void activate_win(WM *wm, Window win, unsigned long src)
 
 static void change_desktop(WM *wm, Window win, unsigned int desktop)
 { 
-    Client *c=win_to_client(wm->clients, win);
+    Client *c=win_to_client(win);
 
-    if(!c || c==wm->clients)
+    if(!c || clients_is_head(c))
         return;
 
     if(desktop == ~0U)
@@ -342,8 +342,9 @@ static void change_desktop(WM *wm, Window win, unsigned int desktop)
 
 static void handle_config_request(WM *wm, XEvent *e)
 {
+    UNUSED(wm);
     XConfigureRequestEvent cr=e->xconfigurerequest;
-    Client *c=win_to_client(wm->clients, cr.window);
+    Client *c=win_to_client(cr.window);
 
     if(c)
         config_managed_client(c);
@@ -376,7 +377,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
 {
     int x=e->xcrossing.x_root, y=e->xcrossing.y_root;
     Window win=e->xcrossing.window;
-    Client *c=win_to_client(wm->clients, win);
+    Client *c=win_to_client(win);
     Pointer_act act=NO_OP;
     Move_info m={x, y, 0, 0};
     Widget *widget=widget_find(win);
@@ -384,7 +385,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     if(cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(wm, get_net_current_desktop(), c);
     if( is_layout_adjust_area(wm, win, x)
-        && get_clients_n(wm->clients, TILE_LAYER_MAIN, false, false, false))
+        && get_clients_n(TILE_LAYER_MAIN, false, false, false))
         set_cursor(win, ADJUST_LAYOUT_RATIO);
     if(widget == NULL)
         return;
@@ -461,7 +462,7 @@ static void handle_expose(WM *wm, XEvent *e)
 static void handle_focus_in(WM *wm, XEvent *e)
 {
     Window win=e->xfocus.window;
-    Client *c=win_to_client(wm->clients, e->xfocus.window);
+    Client *c=win_to_client(e->xfocus.window);
     if(!c)
         return;
 
@@ -476,7 +477,7 @@ static void handle_focus_in(WM *wm, XEvent *e)
 
 static void handle_focus_out(WM *wm, XEvent *e)
 {
-    Client *c=win_to_client(wm->clients, e->xfocus.window);
+    Client *c=win_to_client(e->xfocus.window);
     if(c && c->win_state.fullscreen && c->place_type==FULLSCREEN_LAYER)
         move_client(wm, c, NULL, c->old_place_type);
 }
@@ -543,7 +544,7 @@ static void handle_map_request(WM *wm, XEvent *e)
 {
     Window win=e->xmaprequest.window;
 
-    if(is_wm_win(wm->clients, win, false))
+    if(is_wm_win(win, false))
     {
         add_client(wm, win);
         DESKTOP(wm)->default_place_type=TILE_LAYER_MAIN;
@@ -568,7 +569,7 @@ static void handle_map_request(WM *wm, XEvent *e)
 static void handle_unmap_notify(WM *wm, XEvent *e)
 {
     XUnmapEvent *ue=&e->xunmap;
-    Client *c=win_to_client(wm->clients, ue->window);
+    Client *c=win_to_client(ue->window);
 
     if( c && ue->window==WIDGET_WIN(c)
         && (ue->send_event|| ue->event==WIDGET_WIN(c->frame) || ue->event==WIDGET_WIN(c)))
@@ -582,7 +583,7 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
 static void handle_property_notify(WM *wm, XEvent *e)
 {
     Window win=e->xproperty.window;
-    Client *c=win_to_client(wm->clients, win);
+    Client *c=win_to_client(win);
     Atom atom=e->xproperty.atom;
 
     if(c && cfg->set_frame_prop)
@@ -598,7 +599,7 @@ static void handle_property_notify(WM *wm, XEvent *e)
     else if(c && is_spec_ewmh_atom(atom, NET_WM_ICON))
     {
         free_image(c->image);
-        c->image=get_icon_image(win, c->class_hint.res_name, 0, NULL);
+        c->image=get_win_icon_image(win);
         if(c->show_titlebar)
             frame_change_logo(c->frame, c->image);
         if(is_iconic_client(c))
@@ -617,7 +618,7 @@ static void handle_property_notify(WM *wm, XEvent *e)
 
 static void handle_wm_hints_notify(WM *wm, Window win)
 {
-    Client *c=win_to_client(wm->clients, win);
+    Client *c=win_to_client(win);
     if(!c)
         return;
 
@@ -634,7 +635,7 @@ static void handle_wm_hints_notify(WM *wm, Window win)
 static void handle_wm_icon_name_notify(WM *wm, Window win, Atom atom)
 {
     char *s=NULL;
-    Client *c=win_to_client(wm->clients, win);
+    Client *c=win_to_client(win);
 
     if(!c || !is_iconic_client(c) || !(s=get_text_prop(win, atom)))
         return;
@@ -652,7 +653,7 @@ static void update_ui(WM *wm)
     Free(name);
     taskbar_update_bg(WIDGET(wm->taskbar));
     menu_update_bg(WIDGET(act_center));
-    list_for_each_entry(Client, c, &wm->clients->list, list)
+    clients_for_each(c)
         if(c->show_titlebar)
             menu_update_bg(WIDGET(frame_get_menu(c->frame)));
     entry_update_bg(WIDGET(cmd_entry));
@@ -665,7 +666,7 @@ static void update_ui(WM *wm)
 static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
 {
     char *s=get_text_prop(win, atom);
-    Client *c=win_to_client(wm->clients, win);
+    Client *c=win_to_client(win);
 
     if((win!=xinfo.root_win && !c) || !s)
         return;
@@ -683,9 +684,10 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
 
 static void handle_wm_transient_for_notify(WM *wm, Window win)
 {
-    Client *c=win_to_client(wm->clients, win);
+    UNUSED(wm);
+    Client *c=win_to_client(win);
     if(c)
-        c->owner=win_to_client(wm->clients, get_transient_for(win));
+        c->owner=win_to_client(get_transient_for(win));
 }
 
 static void handle_selection_notify(WM *wm, XEvent *e)
