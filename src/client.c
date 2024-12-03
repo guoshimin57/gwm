@@ -39,10 +39,10 @@ static void fix_win_pos_by_workarea(Client *c, const Rect *workarea);
 static void fix_dialog_win_rect(Client *c, const Rect *workarea);
 static void fix_win_rect_by_frame(Client *c);
 static Window get_top_win(WM *wm, Client *c);
-static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c);
-static bool is_map_client(unsigned int desktop_n, Client *c);
-static Client *get_prev_map_client(unsigned int desktop_n, Client *c);
-static Client *get_next_map_client(unsigned int desktop_n, Client *c);
+static void update_focus_client_pointer(WM *wm, Client *c);
+static bool is_map_client( Client *c);
+static Client *get_prev_map_client(Client *c);
+static Client *get_next_map_client(Client *c);
 static int cmp_map_order(const void *pclient1, const void *pclient2);
 static long map_count=0; // 所有客戶窗口的累計映射次數
 static Client *clients=NULL;
@@ -73,7 +73,7 @@ void add_client(WM *wm, Window win)
     widget_set_state(WIDGET(c->frame), WIDGET_STATE(c));
     request_layout_update();
     widget_show(WIDGET(c->frame));
-    focus_client(wm, get_net_current_desktop(), c);
+    focus_client(wm, c);
     set_net_wm_allowed_actions(WIDGET_WIN(c));
 }
 
@@ -318,7 +318,7 @@ int get_clients_n(Place_type type, bool count_icon, bool count_trans, bool count
     return n;
 }
 
-bool is_iconic_client(Client *c)
+bool is_iconic_client(const Client *c)
 {
     return WIDGET_WIN(c)!=xinfo.root_win && c->win_state.hidden;
 }
@@ -332,17 +332,12 @@ Client *win_to_client(Window win)
     return NULL;
 }
 
-void del_client(WM *wm, Client *c, bool is_for_quit)
+void del_client(Client *c, bool is_for_quit)
 {
     if(!c)
         return;
 
     list_del(&c->list);
-    if(!is_for_quit)
-        for(size_t i=0; i<DESKTOP_N; i++)
-            if(is_on_desktop_n(i, c->desktop_mask))
-                focus_client(wm, i, NULL);
-
     vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
     Free(c->title_text);
     frame_del(c->frame), c->frame=NULL;
@@ -496,73 +491,59 @@ Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
 /* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因（如移動到
  * 其他虛擬桌面、刪除、縮微）而未更新時，則應使用值爲NULL的c來調用本函數。這
  * 樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
-void focus_client(WM *wm, unsigned int desktop_n, Client *c)
+void focus_client(WM *wm, Client *c)
 {
-    update_focus_client_pointer(wm, desktop_n, c);
+    update_focus_client_pointer(wm, c);
 
-    Desktop *d=wm->desktop[desktop_n];
-    Client *pc=d->cur_focus_client, *pp=d->prev_focus_client;
+    Client *pc=CUR_FOC_CLI(wm), *pp=PREV_FOC_CLI(wm);
 
-    if(pc!=clients)
+    if(WIDGET_WIN(pc) == xinfo.root_win)
+        XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
+    else if(!is_iconic_client(pc))
+        set_input_focus(WIDGET_WIN(pc), pc->wm_hint);
+
+    if(pc != clients)
     {
-        if(pc->frame)
-            frame_set_state_unfocused(pc->frame, 0);
-        WIDGET_STATE(pc).unfocused=0;
+        client_set_state_unfocused(pc, 0);
+        update_client_bg(pc);
     }
+
     if(pp!=clients && pp!=pc)
     {
-        if(pp->frame)
-            frame_set_state_unfocused(pp->frame, 1);
-        WIDGET_STATE(pp).unfocused=1;
+        client_set_state_unfocused(pp, 1);
+        update_client_bg(pp);
     }
-
-    if(desktop_n == get_net_current_desktop())
-    {
-        if(WIDGET_WIN(pc) == xinfo.root_win)
-            XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
-        else if(!is_iconic_client(pc))
-            set_input_focus(WIDGET_WIN(pc), pc->wm_hint);
-    }
-
-    if(pc!=clients && pc->frame)
-        WIDGET_STATE(pc).unfocused=WIDGET_STATE(pc->frame).unfocused=0;
-    update_client_bg(wm, desktop_n, pc);
-
-    if(pp!=clients && pp->frame)
-        WIDGET_STATE(pp).unfocused=WIDGET_STATE(pp->frame).unfocused=1;
-    update_client_bg(wm, desktop_n, pp);
 
     raise_client(wm, pc);
     set_net_active_window(WIDGET_WIN(pc));
 }
 
-static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *c)
+static void update_focus_client_pointer(WM *wm, Client *c)
 {
-    Desktop *d=wm->desktop[desktop_n];
-    Client *p=NULL, **pp=&d->prev_focus_client, **pc=&d->cur_focus_client;
+    Client *p=NULL, **pp=&PREV_FOC_CLI(wm), **pc=&CUR_FOC_CLI(wm);
 
     if(!c)  // 當某個client在desktop_n中變得不可見時，即既有可能被刪除了，
     {       // 也可能是被縮微化了，還有可能是移動到其他虛擬桌面了。
-        if(!is_map_client(desktop_n, *pc)) // 非當前窗口被非wm手段關閉（如kill）
+        if(!is_map_client(*pc)) // 非當前窗口被非wm手段關閉（如kill）
         {
             p = (*pc)->owner ? (*pc)->owner : *pp;
-            if(is_map_client(desktop_n, p))
+            if(is_map_client(p))
                 *pc=p;
-            else if((p=get_prev_map_client(desktop_n, *pp)))
+            else if((p=get_prev_map_client(*pp)))
                 *pc=p;
-            else if((p=get_next_map_client(desktop_n, *pp)))
+            else if((p=get_next_map_client(*pp)))
                 *pc=p;
             else
                 *pc=clients;
         }
 
-        if(!is_map_client(desktop_n, *pp) || *pp==*pc)
+        if(!is_map_client(*pp) || *pp==*pc)
         {
-            if(is_map_client(desktop_n, (*pp)->owner))
+            if(is_map_client((*pp)->owner))
                 *pp=(*pp)->owner;
-            else if((p=get_prev_map_client(desktop_n, *pp)))
+            else if((p=get_prev_map_client(*pp)))
                 *pp=p;
-            else if((p=get_next_map_client(desktop_n, *pp)))
+            else if((p=get_next_map_client(*pp)))
                 *pp=p;
             else
                 *pp=clients;
@@ -577,9 +558,16 @@ static void update_focus_client_pointer(WM *wm, unsigned int desktop_n, Client *
         *pp=clients;
 }
 
-static bool is_map_client(unsigned int desktop_n, Client *c)
+void client_set_state_unfocused(Client *c, int value)
 {
-    if(c && !is_iconic_client(c) && is_on_desktop_n(desktop_n, c->desktop_mask))
+    WIDGET_STATE(c).unfocused=value;
+    if(c->frame)
+        frame_set_state_unfocused(c->frame, value);
+}
+
+static bool is_map_client(Client *c)
+{
+    if(c && !is_iconic_client(c) && is_on_cur_desktop(c->desktop_mask))
         list_for_each_entry(Client, p, &clients->list, list)
             if(p == c)
                 return true;
@@ -587,19 +575,19 @@ static bool is_map_client(unsigned int desktop_n, Client *c)
 }
 
 /* 取得存儲結構意義上的上一個處於映射狀態的客戶窗口 */
-static Client *get_prev_map_client(unsigned int desktop_n, Client *c)
+static Client *get_prev_map_client(Client *c)
 {
     list_for_each_entry_continue_reverse(Client, c, &clients->list, list)
-        if(!is_iconic_client(c) && is_on_desktop_n(desktop_n, c->desktop_mask))
+        if(!is_iconic_client(c) && is_on_cur_desktop(c->desktop_mask))
             return c;
     return NULL;
 }
 
 /* 取得存儲結構意義上的下一個處於映射狀態的客戶窗口 */
-static Client *get_next_map_client(unsigned int desktop_n, Client *c)
+static Client *get_next_map_client(Client *c)
 {
     list_for_each_entry_continue(Client, c, &clients->list, list)
-        if(!is_iconic_client(c) && is_on_desktop_n(desktop_n, c->desktop_mask))
+        if(!is_iconic_client(c) && is_on_cur_desktop(c->desktop_mask))
             return c;
     return NULL;
 }
@@ -738,20 +726,18 @@ void restack_win(WM *wm, Window win)
     XRestackWindows(xinfo.display, wins, 2);
 }
 
-void update_clients_bg(WM *wm)
+void update_clients_bg(void)
 {
-    unsigned int cur_desktop=get_net_current_desktop();
     list_for_each_entry(Client, c, &clients->list, list)
-        update_client_bg(wm, cur_desktop, c);
+        update_client_bg(c);
 }
 
-void update_client_bg(WM *wm, unsigned int desktop_n, Client *c)
+void update_client_bg(Client *c)
 {
     if(!c || c==clients)
         return;
 
-    Desktop *d=wm->desktop[desktop_n];
-    if(is_iconic_client(c) && d->cur_layout!=PREVIEW)
+    if(is_iconic_client(c) && get_gwm_current_layout()!=PREVIEW)
         c->win_state.focused=1, update_net_wm_state(WIDGET_WIN(c), c->win_state);
     else if(c->frame)
         frame_update_bg(c->frame);
@@ -819,4 +805,12 @@ void set_client_rect_by_frame(Client *c)
         w=WIDGET_W(c->frame),
         h=WIDGET_H(c->frame)-bh;
     widget_set_rect(WIDGET(c), x, y, w, h);
+}
+
+bool is_exist_client(Client *c)
+{
+    clients_for_each(p)
+        if(p == c)
+            return true;
+    return false;
 }

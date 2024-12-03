@@ -26,12 +26,12 @@ struct desktop_tag // 虛擬桌面相關信息
 void init_desktop(WM *wm);
 unsigned int get_desktop_n(XEvent *e, Func_arg arg);
 void focus_desktop_n(WM *wm, unsigned int n);
-void move_to_desktop_n(WM *wm, Client *c, unsigned int n);
+void move_to_desktop_n(WM *wm, unsigned int n);
 void all_move_to_desktop_n(WM *wm, unsigned int n);
-void change_to_desktop_n(WM *wm, Client *c, unsigned int n);
+void change_to_desktop_n(WM *wm, unsigned int n);
 void all_change_to_desktop_n(WM *wm, unsigned int n);
-void attach_to_desktop_n(WM *wm, Client *c, unsigned int n);
-void attach_to_desktop_all(WM *wm, Client *c);
-void all_attach_to_desktop_n(WM *wm, unsigned int n);
+void attach_to_desktop_n(WM *wm, unsigned int n);
+void attach_to_desktop_all(WM *wm);
+void all_attach_to_desktop_n(unsigned int n);
 
 #endif

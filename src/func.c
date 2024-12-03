@@ -93,7 +93,7 @@ void clear_wm(WM *wm)
     clients_for_each_safe(c)
     {
         XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
-        del_client(wm, c, true);
+        del_client(c, true);
     }
     free_all_images();
     XDestroyWindow(xinfo.display, xinfo.hint_win);
@@ -142,8 +142,7 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
 void next_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    unsigned int cur_desktop=get_net_current_desktop();
-    focus_client(wm, cur_desktop, get_prev_client(CUR_FOC_CLI(wm)));
+    focus_client(wm, get_prev_client(CUR_FOC_CLI(wm)));
 }
 
 /* 取得存儲次序上在當前客戶（或其亞組長）之後的客戶。因使用頭插法存儲客戶，
@@ -151,8 +150,7 @@ void next_client(WM *wm, XEvent *e, Func_arg arg)
 void prev_client(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    unsigned int cur_desktop=get_net_current_desktop();
-    focus_client(wm, cur_desktop, get_next_client(CUR_FOC_CLI(wm)));
+    focus_client(wm, get_next_client(CUR_FOC_CLI(wm)));
 }
 
 void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
@@ -225,7 +223,7 @@ void prev_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    move_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(e, arg));
+    move_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
 void all_move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
@@ -235,7 +233,7 @@ void all_move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    change_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(e, arg));
+    change_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
 void all_change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
@@ -245,18 +243,19 @@ void all_change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 
 void attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    attach_to_desktop_n(wm, CUR_FOC_CLI(wm), get_desktop_n(e, arg));
+    attach_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
 void attach_to_all_desktops(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    attach_to_desktop_all(wm, CUR_FOC_CLI(wm));
+    attach_to_desktop_all(wm);
 }
 
 void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
 {
-    all_attach_to_desktop_n(wm, get_desktop_n(e, arg));
+    UNUSED(wm);
+    all_attach_to_desktop_n(get_desktop_n(e, arg));
 }
 
 void run_cmd(WM *wm, XEvent *e, Func_arg arg)

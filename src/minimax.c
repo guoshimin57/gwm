@@ -165,7 +165,7 @@ void iconify_client(WM *wm, Client *c)
         widget_hide(WIDGET(p->frame));
         if(p == CUR_FOC_CLI(wm))
         {
-            focus_client(wm, get_net_current_desktop(), NULL);
+            focus_client(wm, NULL);
             frame_update_bg(p->frame);
         }
     }
@@ -195,7 +195,7 @@ void deiconify_client(WM *wm, Client *c)
             p->win_state.hidden=0;
             update_net_wm_state(WIDGET_WIN(p), p->win_state);
             widget_show(WIDGET(p->frame));
-            focus_client(wm, get_net_current_desktop(), p);
+            focus_client(wm, p);
         }
     }
     request_layout_update();

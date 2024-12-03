@@ -56,6 +56,7 @@
 
 #define DESKTOP(wm) (wm->desktop[get_net_current_desktop()])
 #define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client
+#define PREV_FOC_CLI(wm) DESKTOP(wm)->prev_focus_client
 
 typedef struct desktop_tag Desktop;
 typedef struct client_tag Client;

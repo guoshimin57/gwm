@@ -145,7 +145,7 @@ static void exec_buttonbind_func(WM *wm, XEvent *e)
             if(id == CLIENT_WIN)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
             if(c && c!=CUR_FOC_CLI(wm))
-                focus_client(wm, get_net_current_desktop(), c);
+                focus_client(wm, c);
             if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc || id==CLIENT_ICON) && b->func)
                 b->func(wm, e, b->arg);
         }
@@ -304,9 +304,9 @@ static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
     bool add=SHOULD_ADD_STATE(c, act, focused);
 
     if(add)
-        focus_client(wm, get_net_current_desktop(), c);
+        focus_client(wm, c);
     else
-        focus_client(wm, get_net_current_desktop(), NULL);
+        focus_client(wm, NULL);
     c->win_state.focused=add;
 }
 
@@ -319,7 +319,7 @@ static void activate_win(WM *wm, Window win, unsigned long src)
     if(src == 2) // 源自分頁器
     {
         if(is_on_cur_desktop(c->desktop_mask))
-            focus_client(wm, get_net_current_desktop(), c);
+            focus_client(wm, c);
         else
             set_urgency_hint(win, c->wm_hint, true);
     }
@@ -331,13 +331,13 @@ static void change_desktop(WM *wm, Window win, unsigned int desktop)
 { 
     Client *c=win_to_client(win);
 
-    if(!c || clients_is_head(c))
+    if(!c || clients_is_head(c) || c!=CUR_FOC_CLI(wm))
         return;
 
     if(desktop == ~0U)
-        attach_to_desktop_all(wm, c);
+        attach_to_desktop_all(wm);
     else
-        move_to_desktop_n(wm, c, desktop);
+        move_to_desktop_n(wm, desktop);
 }
 
 static void handle_config_request(WM *wm, XEvent *e)
@@ -383,7 +383,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     Widget *widget=widget_find(win);
 
     if(cfg->focus_mode==ENTER_FOCUS && c)
-        focus_client(wm, get_net_current_desktop(), c);
+        focus_client(wm, c);
     if( is_layout_adjust_area(wm, win, x)
         && get_clients_n(TILE_LAYER_MAIN, false, false, false))
         set_cursor(win, ADJUST_LAYOUT_RATIO);
@@ -574,7 +574,7 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
     if( c && ue->window==WIDGET_WIN(c)
         && (ue->send_event|| ue->event==WIDGET_WIN(c->frame) || ue->event==WIDGET_WIN(c)))
     {
-        del_client(wm, c, false);
+        del_client(c, false);
         if(is_iconic_client(c))
             taskbar_del_client(wm->taskbar, WIDGET_WIN(c));
     }
@@ -660,7 +660,7 @@ static void update_ui(WM *wm)
     entry_update_bg(WIDGET(color_entry));
     update_win_bg(xinfo.hint_win, get_widget_color(WIDGET_STATE_NORMAL), None);
     update_win_bg(xinfo.root_win, get_root_bg_color(), None);
-    update_clients_bg(wm);
+    update_clients_bg();
 }
 
 static void handle_wm_name_notify(WM *wm, Window win, Atom atom)
