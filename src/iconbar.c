@@ -162,7 +162,7 @@ void iconbar_del_cbutton(Iconbar *iconbar, Window cwin)
 
 void iconbar_update(Iconbar *iconbar)
 {
-    int x=0, w=0, h=WIDGET_H(iconbar), wi=h, wl=0;
+    int x=0, w=0, h=WIDGET_H(iconbar), wi=h, wl=0, pad=get_font_pad();
 
     list_for_each_entry(Cbutton, c, &iconbar->cbuttons->list, list)
     {
@@ -170,7 +170,7 @@ void iconbar_update(Iconbar *iconbar)
         if(iconbar_has_similar_cbutton(iconbar, c))
         {
             get_string_size(button_get_label(b), &wl, NULL);
-            w=MIN(wi+wl, cfg->icon_win_width_max);
+            w=MIN(wi+wl+2*pad, cfg->icon_win_width_max);
         }
         else
             w=wi;
@@ -185,22 +185,21 @@ static bool iconbar_has_similar_cbutton(Iconbar *iconbar, const Cbutton *cbutton
     if(!XGetClassHint(xinfo.display, cbutton->cwin, &ch))
         return false;
 
-    bool same=false;
     list_for_each_entry(Cbutton, p, &iconbar->cbuttons->list, list)
     {
         if(p!=cbutton && XGetClassHint(xinfo.display, p->cwin, &ph))
         {
-            same = (strcmp(ph.res_class, ch.res_class) == 0
-                && strcmp(ph.res_name, ch.res_name) == 0);
-            vXFree(ph.res_class, ph.res_name);
-            if(same)
-                break;
+            if(strcmp(ph.res_class, ch.res_class) == 0)
+            {
+                vXFree(ch.res_class, ch.res_name, ph.res_class, ph.res_name);
+                return true;
+            }
+            else
+                vXFree(ph.res_class, ph.res_name);
         }
     }
-    
-    vXFree(ch.res_class, ch.res_name);
 
-    return same;
+    return false;
 }
 
 void iconbar_update_by_state(Iconbar *iconbar, Window cwin)

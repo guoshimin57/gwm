@@ -112,7 +112,9 @@ void button_set_icon(Button *button, Imlib_Image image, const char *icon_name, c
 
 void button_change_icon(Button *button, Imlib_Image image, const char *icon_name, const char *symbol)
 {
-    if(icon_name && icon_name!=button->icon_name)
+    if(image && image!=button->image)
+        free_image(button->image);
+    else if(icon_name && icon_name!=button->icon_name)
         Free(button->icon_name);
     else if(symbol && symbol!=button->symbol)
         Free(button->symbol);
