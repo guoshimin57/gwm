@@ -20,6 +20,11 @@
 #include "prop.h"
 #include "client.h"
 
+#define subgroup_for_each(c, leader) \
+    for(Client *c=leader;\
+        leader && c->subgroup_leader==leader;\
+        c=list_prev_entry(c, Client, list))
+
 static Client *new_client(Window win);
 static bool should_hide_frame(Client *c);
 static void set_default_desktop_mask(Client *c);
@@ -355,8 +360,7 @@ void raise_client(WM *wm, Client *c)
     Window wins[n+1];
 
     wins[0]=get_top_win(wm, c);
-    Client *ld=c->subgroup_leader;
-    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
+    subgroup_for_each(p, c->subgroup_leader)
         wins[i--]=WIDGET_WIN(p->frame);
 
     XRestackWindows(xinfo.display, wins, n+1);
@@ -452,8 +456,8 @@ Client *get_head_client(Place_type type)
         if(c->place_type == type)
             return list_prev_entry(c, Client, list);
 
-    list_for_each_entry_reverse(Client, c, &clients->list, list)
-        if(c->place_type < type)
+    list_for_each_entry(Client, c, &clients->list, list)
+        if(c->place_type > type)
             return list_prev_entry(c, Client, list);
 
     return clients;
@@ -462,9 +466,8 @@ Client *get_head_client(Place_type type)
 int get_subgroup_n(Client *c)
 {
     int n=0;
-    Client *ld=c->subgroup_leader;
 
-    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
+    subgroup_for_each(p, c->subgroup_leader)
         n++;
 
     return n;
@@ -479,9 +482,9 @@ Client *get_subgroup_leader(Client *c)
 
 Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
 {
-    Client *result=NULL, *ld=subgroup_leader;
+    Client *result=NULL;
 
-    for(Client *c=ld; ld && c->subgroup_leader==ld; c=list_prev_entry(c, Client, list))
+    subgroup_for_each(c, subgroup_leader)
         if((only_modal && c->win_state.modal) || (!only_modal && c->owner))
             result=c;
 

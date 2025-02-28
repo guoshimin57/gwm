@@ -34,7 +34,7 @@ struct client_tag // 客戶窗口相關信息
     const char *class_name; // 客戶窗口的程序類型名
     XClassHint class_hint; // 客戶窗口的程序類型特性提示
     XWMHints *wm_hint; // 客戶窗口的窗口管理程序條件特性提示
-    // 分別爲前、後節點以及主窗口節點、亚組組長節點（同屬一個程序實例的客戶構成一個亞組）
+    // 分別爲主窗口節點、亚組組長節點（同屬一個程序實例的客戶構成一個亞組）
     struct client_tag *owner, *subgroup_leader;
     List list;
 };
