@@ -1,6 +1,6 @@
 /* *************************************************************************
  *     client.c：實現X client相關功能。
- *     版權 (C) 2020-2024 gsm <406643764@qq.com>
+ *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
  *     雖然基于使用目的而發布本程序，但不負任何擔保責任，亦不包含適銷性或特
@@ -716,13 +716,8 @@ void restack_win(WM *wm, Window win)
         wins[0]=wm->top_wins[DESKTOP_TOP];
     else if(type.dock)
         wins[0]=wm->top_wins[DOCK_TOP];
-    else if(c)
-    {
-        raise_client(wm, c);
-        return;
-    }
     else
-        wins[0]=wm->top_wins[NORMAL_TOP];
+        return;
     XRestackWindows(xinfo.display, wins, 2);
 }
 
@@ -773,7 +768,8 @@ void create_clients(WM *wm)
     {
         if(is_wm_win(child[i], true))
             add_client(wm, child[i]);
-        restack_win(wm, child[i]);
+        else
+            restack_win(wm, child[i]);
     }
     XFree(child);
 }
