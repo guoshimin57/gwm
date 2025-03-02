@@ -9,6 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+第2.11.0版：
+	* 支持通過WM_CHANGE_STATE特性來最小化窗口。
+
 第2.10.36版：
 	* 修復_NET_CLIENT_LIST和_NET_CLIENT_LIST_STACKING特性設置錯誤的缺陷。
 

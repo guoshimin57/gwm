@@ -182,7 +182,12 @@ static void handle_client_message(WM *wm, XEvent *e)
         toggle_showing_desktop_mode(wm, e->xclient.data.l[0]);
     else if(c)
     {
-        if(is_spec_ewmh_atom(type, NET_ACTIVE_WINDOW))
+        if(is_spec_icccm_atom(type, WM_CHANGE_STATE))
+        {
+            if(e->xclient.data.l[0] == IconicState)
+                iconify_client(wm, CUR_FOC_CLI(wm)); 
+        }
+        else if(is_spec_ewmh_atom(type, NET_ACTIVE_WINDOW))
             activate_win(wm, win, e->xclient.data.l[0]);
         if(is_spec_ewmh_atom(type, NET_CLOSE_WINDOW))
             close_win(win);
