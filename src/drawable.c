@@ -231,3 +231,17 @@ void init_root_win_background(void)
     if(pixmap && !have_compositor())
         XFreePixmap(xinfo.display, pixmap);
 }
+
+Window *query_win_list(unsigned int *n)
+{
+    Window root, parent, *child=NULL;
+    unsigned int m;
+
+    if(!XQueryTree(xinfo.display, xinfo.root_win, &root, &parent, &child, &m))
+        return NULL;
+
+    if(n)
+        *n=m;
+
+    return child;
+}

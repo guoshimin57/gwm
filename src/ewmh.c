@@ -88,20 +88,20 @@ static void set_net_client_list_by_order(const Window *wins, int n, bool stack)
 {
     Atom prop=ewmh_atoms[stack ? NET_CLIENT_LIST_STACKING : NET_CLIENT_LIST];
 
-    if(n == 0)
+    if(!wins || !n)
         XDeleteProperty(xinfo.display, xinfo.root_win, prop);
     else
         replace_window_prop(xinfo.root_win, prop, wins, n);
 }
 
-long *get_net_client_list(unsigned long *n)
+Window *get_net_client_list(unsigned long *n)
 {
-    return (long *)get_prop(xinfo.root_win, ewmh_atoms[NET_CLIENT_LIST], n);
+    return (Window *)get_prop(xinfo.root_win, ewmh_atoms[NET_CLIENT_LIST], n);
 }
 
-long *get_net_client_list_stacking(unsigned long *n)
+Window *get_net_client_list_stacking(unsigned long *n)
 {
-    return (long *)get_prop(xinfo.root_win, ewmh_atoms[NET_CLIENT_LIST_STACKING], n);
+    return (Window *)get_prop(xinfo.root_win, ewmh_atoms[NET_CLIENT_LIST_STACKING], n);
 }
 
 void set_net_number_of_desktops(int n)

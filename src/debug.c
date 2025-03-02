@@ -146,20 +146,20 @@ void print_widget_state(Widget_state state)
     printf("unfocused=%d\n", state.unfocused);
 }
 
-void print_client_win_list(void)
+void print_net_client_lists(void)
 {
-    int n=0;
+    unsigned long i=0, n=0;
     Window *wlist=NULL;
 
-    wlist=get_client_win_list(&n);
+    wlist=get_net_client_list(&n);
     puts("從早到晚排列的客戶窗口列表：");
-    for(int i=0; i<n; i++)
+    for(i=0; i<n; i++)
         printf("%lx%s", wlist[i], i<n-1 ? ", " : "\n");
     Free(wlist);
 
-    wlist=get_client_win_list_stacking(&n);
+    wlist=get_net_client_list_stacking(&n);
     puts("從下到上排列的客戶窗口列表：");
-    for(int i=0; i<n; i++)
+    for(i=0; i<n; i++)
         printf("%lx%s", wlist[i], i<n-1 ? ", " : "\n");
     Free(wlist);
 }

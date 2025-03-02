@@ -25,5 +25,6 @@ void set_pos_for_click(Window click, int *px, int *py, int pw, int ph);
 Pixmap create_pixmap_from_file(Window win, const char *filename);
 void set_visual_for_imlib(Drawable d);
 void init_root_win_background(void);
+Window *query_win_list(unsigned int *n);
 
 #endif

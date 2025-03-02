@@ -30,7 +30,6 @@ static bool should_hide_frame(Client *c);
 static void set_default_desktop_mask(Client *c);
 static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
-static Client *get_head_for_add_client(Client *c);
 static void set_default_place_type(Client *c);
 static void set_default_win_rect(Client *c);
 static void fix_win_rect_by_attr(Client *c);
@@ -48,8 +47,6 @@ static void update_focus_client_pointer(WM *wm, Client *c);
 static bool is_map_client( Client *c);
 static Client *get_prev_map_client(Client *c);
 static Client *get_next_map_client(Client *c);
-static int cmp_map_order(const void *pclient1, const void *pclient2);
-static long map_count=0; // 所有客戶窗口的累計映射次數
 static Client *clients=NULL;
 
 Client *get_clients(void)
@@ -64,7 +61,7 @@ void add_client(WM *wm, Window win)
     if(should_hide_frame(c))
         c->show_border=c->show_titlebar=false;
     apply_rules(c);
-    list_add(&c->list, &get_head_for_add_client(c)->list);
+    list_add(&c->list, &get_head_client(c->place_type)->list);
     grab_buttons(WIDGET_WIN(c));
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
@@ -87,13 +84,14 @@ void set_all_net_client_list(void)
     int n=0;
     Window *wlist=get_client_win_list(&n);
 
-    set_net_client_list(wlist, n);
-    Free(wlist);
+    if(wlist)
+        set_net_client_list(wlist, n), Free(wlist);
 
     wlist=get_client_win_list_stacking(&n);
-    set_net_client_list_stacking(wlist, n);
-    Free(wlist);
+    if(wlist)
+        set_net_client_list_stacking(wlist, n), Free(wlist);
 }
+
 
 static Client *new_client(Window win)
 {
@@ -102,7 +100,6 @@ static Client *new_client(Window win)
     widget_ctor(WIDGET(c), NULL, WIDGET_TYPE_CLIENT, CLIENT_WIN, 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
     c->show_border=c->show_titlebar=true;
-    c->map_n=++map_count;
     c->title_text=get_title_text(win, "");
     c->wm_hint=XGetWMHints(xinfo.display, win);
     c->win_type=get_net_wm_win_type(win);
@@ -170,19 +167,6 @@ static bool have_rule(const Rule *r, Client *c)
     return((!pc || !class || !strcmp(class, pc) || !strcmp(pc, "*"))
         && (!pn || !name  || !strcmp(name, pn)  || !strcmp(pn, "*"))
         && (!pt || !title || !strcmp(title, pt) || !strcmp(pt, "*")));
-}
-
-static Client *get_head_for_add_client(Client *c)
-{
-    Client *top=NULL, *head=NULL;
-    if(c->owner)
-    {
-        top=get_top_transient_client(c->subgroup_leader, false);
-        head = top ? list_prev_entry(top, Client, list) : list_prev_entry(c->owner, Client, list);
-    }
-    else
-        head=get_head_client(c->place_type);
-    return head;
 }
 
 static void set_default_place_type(Client *c)
@@ -635,48 +619,56 @@ bool is_tiled_client(Client *c)
 /* 獲取當前桌面按從早到遲的映射順序排列的客戶窗口列表 */
 Window *get_client_win_list(int *n)
 {
-    int i=0, count=get_clients_n(ANY_PLACE, true, true, false);
-
-    if(count == 0)
+    *n=get_clients_n(ANY_PLACE, true, true, true);
+    if(*n == 0)
         return NULL;
 
-    if(n)
-        *n=count;
+    unsigned long i=0, j=0, new_n=*n, old_n=0;
+    Window *old_list=get_net_client_list(&old_n);
+    Window *wlist=NULL;
 
-    Window *wlist=Malloc(count*sizeof(Window));
-    Client **clist=Malloc(count*sizeof(Client *));
-
-    list_for_each_entry_reverse(Client, c, &clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask))
-            clist[i++]=c;
-    qsort(clist, *n, sizeof(Client *), cmp_map_order);
-
-    for(i=0; i<count; i++)
-        wlist[i]=WIDGET_WIN(clist[i]);
-    Free(clist);
+    if(new_n > old_n) // 添加了客戶窗口
+    {
+        wlist=Malloc(new_n*sizeof(Window));
+        for(unsigned long i=0; i<old_n; i++)
+            wlist[i]=old_list[i];
+        clients_for_each(c)
+        {
+            for(i=0; i<old_n && WIDGET_WIN(c)!=old_list[i]; i++)
+                ;
+            if(i == old_n)
+                { wlist[old_n]=WIDGET_WIN(c); break; }
+        }
+    }
+    else if(new_n < old_n) // 刪除了客戶窗口
+    {
+        wlist=Malloc(--*n*sizeof(Window));
+        for(i=0, j=0; i<old_n; i++)
+            if(win_to_client(old_list[i]))
+                wlist[j++]=old_list[i];
+    }
 
     return wlist;
-}
-
-static int cmp_map_order(const void *pclient1, const void *pclient2)
-{
-    return (*(Client **)pclient1)->map_n - (*(Client **)pclient2)->map_n;
 }
 
 /* 獲取當前桌面按從下到上的疊次序排列的客戶窗口列表 */
 Window *get_client_win_list_stacking(int *n)
 {
-    int count=get_clients_n(ANY_PLACE, true, true, false);
-    if(count == 0)
+    *n=get_clients_n(ANY_PLACE, true, true, true);
+    if(*n == 0)
         return NULL;
 
-    if(n)
-        *n=count;
+    unsigned int tree_n=0;
+    Window *tree=query_win_list(&tree_n);
+    if(!tree)
+        return NULL;
 
-    Window *wlist=Malloc(count*sizeof(Window)), *w=wlist;
-    list_for_each_entry_reverse(Client, c, &clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask))
-            *w++=WIDGET_WIN(c);
+    Client *c=NULL;
+    Window *wlist=Malloc(*n*sizeof(Window));
+    for(unsigned int i=0, j=0; i<tree_n; i++)
+        if((c=win_to_client(tree[i])))
+            wlist[j++]=WIDGET_WIN(c);
+    Free(tree);
 
     return wlist;
 }
@@ -755,18 +747,18 @@ void move_resize_client(Client *c, const Delta_rect *d)
 /* 生成帶表頭結點的雙向循環鏈表 */
 void create_clients(WM *wm)
 {
-    Window root, parent, *child=NULL;
     unsigned int n;
-    Desktop **d=wm->desktop;
+    Window *child=query_win_list(&n);
+    if(!child)
+        exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
 
+    Desktop **d=wm->desktop;
     clients=Malloc(sizeof(Client));
     memset(clients, 0, sizeof(Client));
     list_init(&clients->list);
     for(size_t i=0; i<DESKTOP_N; i++)
         d[i]->cur_focus_client=d[i]->prev_focus_client=clients;
     WIDGET_WIN(clients)=xinfo.root_win;
-    if(!XQueryTree(xinfo.display, xinfo.root_win, &root, &parent, &child, &n))
-        exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
     for(size_t i=0; i<n; i++)
     {
         if(is_wm_win(child[i], true))

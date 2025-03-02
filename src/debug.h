@@ -24,6 +24,6 @@ void print_all_client_win(void);
 void print_client_win(Client *c);
 void show_top_win(WM *wm);
 void print_widget_state(Widget_state state);
-void print_client_win_list(void);
+void print_net_client_lists(void);
 
 #endif
