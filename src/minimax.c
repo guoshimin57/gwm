@@ -147,6 +147,7 @@ void restore_client(WM *wm, Client *c)
         c->win_state.rmax=0;
     if(c->win_state.fullscreen)
         c->win_state.fullscreen=0;
+
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 

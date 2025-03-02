@@ -83,7 +83,7 @@ static Rect compute_taskbar_rect(void)
 static void create_refer_wins(WM *wm)
 {
     Window w=xinfo.root_win;
-    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
+    for(int i=TOP_WIN_TYPE_N-1; i>=0; i--)
         wm->top_wins[i]=create_widget_win(w, -1, -1, 1, 1, 0, 0, 0);
     wm->wm_check_win=create_widget_win(w, -1, -1, 1, 1, 0, 0, 0);
 }

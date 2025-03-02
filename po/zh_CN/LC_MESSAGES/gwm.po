@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.34\n"
+"Project-Id-Version: gwm 2.10.35\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-02-28 13:06+0800\n"
+"POT-Creation-Date: 2025-03-02 12:52+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -257,8 +257,8 @@ msgid "請輸入系統界面主色調的顏色名（支持英文顏色名和十�
 msgstr "请输入系统界面主色调的颜色名（支持英文颜色名和十六进制颜色名），然后按回车执行"
 
 #: debug.c:26
-#, c-format
-msgid "以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"
+#, fuzzy, c-format
+msgid "以下是自頂向底排列的客戶窗口和分層參照窗口列表：\n"
 msgstr "以下是自底向顶排列的客户窗口和分层参照窗口列表：\n"
 
 #: debug.c:39
@@ -281,17 +281,17 @@ msgstr "无法查询%lx窗口的子窗口\n"
 msgid "以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"
 msgstr "以下是%lx窗口窗口类型(即_NET_WM_WINDOW_TYPE)：\n"
 
-#: debug.c:84
-#, c-format
-msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
+#: debug.c:82
+#, fuzzy
+msgid "以下是窗口狀態(即_NET_WM_STATE)："
 msgstr "以下是%lx窗口窗口状态(即_NET_WM_STATE)：\n"
 
-#: debug.c:106
+#: debug.c:104
 #, c-format
 msgid "以下是%lx窗口的位置信息：\n"
 msgstr "以下是%lx窗口的位置窗口：\n"
 
-#: debug.c:113
+#: debug.c:111
 #, c-format
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "以下是自底向顶排列的客户窗口列表：\n"

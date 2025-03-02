@@ -112,8 +112,14 @@ typedef struct rule_tag Rule;
 
 typedef enum // 窗口疊次序分層類型
 {
-    DESKTOP_TOP, BELOW_TOP, NORMAL_TOP, FLOAT_TOP, DOCK_TOP, ABOVE_TOP,
-    FULLSCREEN_TOP, TOP_WIN_TYPE_N
+    FULLSCREEN_TOP,
+    ABOVE_TOP,
+    DOCK_TOP,
+    FLOAT_TOP,
+    NORMAL_TOP,
+    BELOW_TOP,
+    DESKTOP_TOP,
+    TOP_WIN_TYPE_N
 } Top_win_type;
 
 typedef struct wm_tag WM;

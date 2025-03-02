@@ -23,7 +23,7 @@ void print_client_and_top_win(WM *wm)
     if(XQueryTree(xinfo.display, xinfo.root_win, &root, &parent, &child, &n))
     {
         Client *c=NULL;
-        printf(_("以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"));
+        printf(_("以下是自頂向底排列的客戶窗口和分層參照窗口列表：\n"));
         for(unsigned int i=0; i<n; i++)
         {
             if((c=win_to_client(child[i])))
@@ -77,11 +77,9 @@ void print_net_wm_win_type(Window win)
     printf("none: %d\n", type.none);
 }
 
-void print_net_wm_state(Window win)
+void print_net_wm_state(Net_wm_state state)
 {
-    Net_wm_state state=get_net_wm_state(win);
-
-    printf(_("以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"), win);
+    puts(_("以下是窗口狀態(即_NET_WM_STATE)："));
     printf("modal: %d\n", state.modal);
     printf("sticky: %d\n", state.sticky);
     printf("vmax: %d\n", state.vmax);
@@ -123,8 +121,8 @@ void print_client_win(Client *c)
 void show_top_win(WM *wm)
 {
     int h=cfg->font_size*2, w=10*h;
-    char *s[]={"DESKTOP_TOP", "BELOW_TOP", "NORMAL_TOP", "FLOAT_TOP",
-        "DOCK_TOP", "ABOVE_TOP", "FULLSCREEN_TOP"};
+    char *s[]={"FULLSCREEN_TOP", "ABOVE_TOP", "DOCK_TOP", "FLOAT_TOP", 
+        "NORMAL_TOP", "BELOW_TOP", "DESKTOP_TOP"};
     Str_fmt f={0, 0, w, h, CENTER_LEFT, false, false, 0xff0000,
         get_widget_fg(WIDGET_STATE_NORMAL)};
 
@@ -146,4 +144,22 @@ void print_widget_state(Widget_state state)
     printf("attent=%d\n", state.attent);
     printf("chosen=%d\n", state.chosen);
     printf("unfocused=%d\n", state.unfocused);
+}
+
+void print_client_win_list(void)
+{
+    int n=0;
+    Window *wlist=NULL;
+
+    wlist=get_client_win_list(&n);
+    puts("從早到晚排列的客戶窗口列表：");
+    for(int i=0; i<n; i++)
+        printf("%lx%s", wlist[i], i<n-1 ? ", " : "\n");
+    Free(wlist);
+
+    wlist=get_client_win_list_stacking(&n);
+    puts("從下到上排列的客戶窗口列表：");
+    for(int i=0; i<n; i++)
+        printf("%lx%s", wlist[i], i<n-1 ? ", " : "\n");
+    Free(wlist);
 }

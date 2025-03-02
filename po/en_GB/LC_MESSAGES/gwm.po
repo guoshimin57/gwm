@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.10.34\n"
+"Project-Id-Version: gwm 2.10.35\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-02-28 13:06+0800\n"
+"POT-Creation-Date: 2025-03-02 12:52+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -257,8 +257,8 @@ msgid "請輸入系統界面主色調的顏色名（支持英文顏色名和十�
 msgstr "Enter main color name of UI(English or hex color name), and then press enter"
 
 #: debug.c:26
-#, c-format
-msgid "以下是自底向頂排列的客戶窗口和分層參照窗口列表：\n"
+#, fuzzy, c-format
+msgid "以下是自頂向底排列的客戶窗口和分層參照窗口列表：\n"
 msgstr "The following is a list of client windows and layer reference windows arranged from bottom to top:\n"
 
 #: debug.c:39
@@ -281,17 +281,17 @@ msgstr "Unable to query child windows of %lx window:\n"
 msgid "以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"
 msgstr "The following are the window types of the %lx windows (i.e. _NET_WM_WINDOW_TYPE):\n"
 
-#: debug.c:84
-#, c-format
-msgid "以下是%lx窗口窗口狀態(即_NET_WM_STATE)：\n"
+#: debug.c:82
+#, fuzzy
+msgid "以下是窗口狀態(即_NET_WM_STATE)："
 msgstr "The following are the window states (i.e. _NET_WM_STATE) of the %lx window:\n"
 
-#: debug.c:106
+#: debug.c:104
 #, c-format
 msgid "以下是%lx窗口的位置信息：\n"
 msgstr "The following are place info of the %lx window:\n"
 
-#: debug.c:113
+#: debug.c:111
 #, c-format
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "The following is a list of client windows arranged from bottom to top:\n"

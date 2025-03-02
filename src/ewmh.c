@@ -319,7 +319,11 @@ void update_net_wm_state(Window win, Net_wm_state state)
     if(state.below)          states[n++]=a[NET_WM_STATE_BELOW];
     if(state.attent)         states[n++]=a[NET_WM_STATE_DEMANDS_ATTENTION];
     if(state.focused)        states[n++]=a[NET_WM_STATE_FOCUSED];
-    replace_atom_prop(win, prop, states, n);
+    
+    if(n == 0)
+        XDeleteProperty(xinfo.display, win, a[NET_WM_STATE]);
+    else
+        replace_atom_prop(win, prop, states, n);
 }
 
 void update_net_wm_state_for_no_max(Window win, Net_wm_state state)
