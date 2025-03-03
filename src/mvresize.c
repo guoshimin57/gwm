@@ -286,7 +286,7 @@ void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg)
 
 void toggle_shade_client_mode(Client *c, bool shade)
 {
-    if(!c->show_titlebar)
+    if(!c->decorative)
         return;
 
     int x=WIDGET_X(c->frame), y=WIDGET_Y(c->frame),

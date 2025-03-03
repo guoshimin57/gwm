@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.11.0\n"
+"Project-Id-Version: gwm 2.12.0\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-03-03 00:51+0800\n"
+"POT-Creation-Date: 2025-03-03 12:50+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: client.c:753
+#: client.c:750
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 
@@ -94,172 +94,163 @@ msgstr "增大主区容量"
 msgid "减小主區容量"
 msgstr "减小主区容量"
 
-#: config.c:315
-msgid "開關當前窗口標題欄"
-msgstr "开关当前窗口标题栏"
-
 #: config.c:316
-msgid "開關當前窗口邊框"
-msgstr "开关当前窗口边框"
-
-#: config.c:318
 msgid "關閉桌面所有窗口"
 msgstr "关闭桌面所有窗口"
 
-#: config.c:319
+#: config.c:317
 msgid "當前窗口截圖"
 msgstr "当前窗口截图"
 
-#: config.c:320
+#: config.c:318
 msgid "全屏截圖"
 msgstr "全屏截图"
 
-#: config.c:321
+#: config.c:319
 msgid "切換聚焦模式"
 msgstr "切换聚焦模式"
 
-#: config.c:323
+#: config.c:321
 msgid "開關合成器"
 msgstr "开关合成器"
 
-#: config.c:324
+#: config.c:322
 msgid "切換壁紙"
 msgstr "切换壁纸"
 
-#: config.c:325
+#: config.c:323
 msgid "设置顏色"
 msgstr "设置颜色"
 
-#: config.c:326
+#: config.c:324
 msgid "退出gwm"
 msgstr "退出gwm"
 
-#: config.c:328
+#: config.c:326
 msgid "注銷"
 msgstr "注销"
 
-#: config.c:329
+#: config.c:327
 msgid "重啓"
 msgstr "重启"
 
-#: config.c:330
+#: config.c:328
 msgid "關機"
 msgstr "关机"
 
-#: config.c:331
+#: config.c:329
 msgid "運行"
 msgstr "运行"
 
 #. 客戶窗口菜單項類型   圖標名 符號     標籤
-#: config.c:340
+#: config.c:338
 msgid "卷起/放下"
 msgstr "卷起/放下"
 
-#: config.c:341
+#: config.c:339
 msgid "縱向最大化"
 msgstr "纵向最大化"
 
-#: config.c:342
+#: config.c:340
 msgid "橫向最大化"
 msgstr "横向最大化"
 
-#: config.c:343
+#: config.c:341
 msgid "最大化至上半屏"
 msgstr "最大化至上半屏"
 
-#: config.c:344
+#: config.c:342
 msgid "最大化至下半屏"
 msgstr "最大化至下半屏"
 
-#: config.c:345
+#: config.c:343
 msgid "最大化至左半屏"
 msgstr "最大化至左半屏"
 
-#: config.c:346
+#: config.c:344
 msgid "最大化至右半屏"
 msgstr "最大化至右半屏"
 
-#: config.c:347
+#: config.c:345
 msgid "完全最大化"
 msgstr "完全最大化"
 
 #. 構件標識             構件功能提示文字
-#: config.c:359
+#: config.c:357
 msgid "切換到次要區域"
 msgstr "切换到次要区域"
 
-#: config.c:360
+#: config.c:358
 msgid "切換到主要區域"
 msgstr "切换到主要区域"
 
-#: config.c:361
+#: config.c:359
 msgid "切換到固定區域"
 msgstr "切换到固定区域"
 
-#: config.c:362
+#: config.c:360
 msgid "切換到懸浮層"
 msgstr "切换到悬浮层"
 
-#: config.c:363
+#: config.c:361
 msgid "切換到圖符區域"
 msgstr "切换到图符区域"
 
-#: config.c:364
+#: config.c:362
 msgid "最大化/還原窗口"
 msgstr "最大化/还原窗口"
 
-#: config.c:365
+#: config.c:363
 msgid "關閉窗口"
 msgstr "关闭窗口"
 
-#: config.c:366
+#: config.c:364
 msgid "切換到虛擬桌面1"
 msgstr "切换到虚拟桌面1"
 
-#: config.c:367
+#: config.c:365
 msgid "切換到虛擬桌面2"
 msgstr "切换到虚拟桌面2"
 
-#: config.c:368
+#: config.c:366
 msgid "切換到虛擬桌面3"
 msgstr "切换到虚拟桌面3"
 
-#: config.c:369
+#: config.c:367
 msgid "切換到預覽模式"
 msgstr "切换到预览模式"
 
-#: config.c:370
+#: config.c:368
 msgid "切換到堆疊模式"
 msgstr "切换到堆叠模式"
 
-#: config.c:371
+#: config.c:369
 msgid "切換到平鋪模式"
 msgstr "切换到平铺模式"
 
-#: config.c:372
+#: config.c:370
 msgid "顯示桌面"
 msgstr "显示桌面"
 
-#: config.c:373
+#: config.c:371
 msgid "打開操作中心"
 msgstr "打开操作中心"
 
-#: config.c:374
+#: config.c:372
 msgid "打開窗口菜單"
 msgstr "打开窗口菜单"
 
-#: config.c:402
+#: config.c:400
 msgid "請輸入命令，然後按回車執行"
 msgstr "请输入命令，然后按回车执行"
 
-#: config.c:403
+#: config.c:401
 msgid "請輸入系統界面主色調的顏色名（支持英文顏色名和十六进制顏色名），然後按回車執行"
 msgstr "请输入系统界面主色调的颜色名（支持英文颜色名和十六进制颜色名），然后按回车执行"
 
 #: debug.c:26
-#, fuzzy, c-format
 msgid "以下是自頂向底排列的客戶窗口和分層參照窗口列表：\n"
-msgstr "以下是自底向顶排列的客户窗口和分层参照窗口列表：\n"
+msgstr "以下是自顶向底排列的客户窗口和分层参照窗口列表：\n"
 
 #: debug.c:39
 #, c-format
@@ -282,9 +273,8 @@ msgid "以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"
 msgstr "以下是%lx窗口窗口类型(即_NET_WM_WINDOW_TYPE)：\n"
 
 #: debug.c:82
-#, fuzzy
 msgid "以下是窗口狀態(即_NET_WM_STATE)："
-msgstr "以下是%lx窗口窗口状态(即_NET_WM_STATE)：\n"
+msgstr "以下是窗口状态(即_NET_WM_STATE)："
 
 #: debug.c:104
 #, c-format
@@ -360,10 +350,3 @@ msgstr "错误：找不到指定的键符号相应的功能转换键！\n"
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "错误：指定的键符号不存在对应的键代码！\n"
-
-#, fuzzy
-#~ msgid "請輸入颜色名，然後按回車執行"
-#~ msgstr "请输入命令，然后按回车执行"
-
-#~ msgid "切換顏色主題"
-#~ msgstr "切换颜色主题"

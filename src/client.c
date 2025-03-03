@@ -26,7 +26,7 @@
         c=list_prev_entry(c, Client, list))
 
 static Client *new_client(Window win);
-static bool should_hide_frame(Client *c);
+static bool has_decoration(const Client *c);
 static void set_default_desktop_mask(Client *c);
 static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
@@ -58,8 +58,6 @@ void add_client(WM *wm, Window win)
 {
     Client *c=new_client(win);
 
-    if(should_hide_frame(c))
-        c->show_border=c->show_titlebar=false;
     apply_rules(c);
     list_add(&c->list, &get_head_client(c->place_type)->list);
     grab_buttons(WIDGET_WIN(c));
@@ -69,8 +67,8 @@ void add_client(WM *wm, Window win)
     save_place_info_of_client(c);
     c->frame=frame_new(WIDGET(c),
         WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c),
-        c->show_titlebar ? get_font_height_by_pad() : 0,
-        c->show_border ? cfg->border_width : 0,
+        c->decorative ? get_font_height_by_pad() : 0,
+        c->decorative ? cfg->border_width : 0,
         c->title_text, c->image);
     widget_set_state(WIDGET(c->frame), WIDGET_STATE(c));
     request_layout_update();
@@ -99,11 +97,11 @@ static Client *new_client(Window win)
     memset(c, 0, sizeof(Client));
     widget_ctor(WIDGET(c), NULL, WIDGET_TYPE_CLIENT, CLIENT_WIN, 0, 0, 1, 1);
     WIDGET_WIN(c)=win;
-    c->show_border=c->show_titlebar=true;
     c->title_text=get_title_text(win, "");
     c->wm_hint=XGetWMHints(xinfo.display, win);
     c->win_type=get_net_wm_win_type(win);
     c->win_state=get_net_wm_state(win);
+    c->decorative=has_decoration(c);
     c->owner=win_to_client(get_transient_for(WIDGET_WIN(c)));
     c->subgroup_leader=get_subgroup_leader(c);
     set_default_place_type(c);
@@ -115,10 +113,11 @@ static Client *new_client(Window win)
     return c;
 }
 
-static bool should_hide_frame(Client *c)
+static bool has_decoration(const Client *c)
 {
-    return (!c->win_type.none && !c->win_type.normal && !c->win_type.dialog)
-        || c->win_state.skip_pager || c->win_state.skip_taskbar;
+    return has_motif_decoration(WIDGET_WIN(c))
+        && (c->win_type.none || c->win_type.normal || c->win_type.dialog)
+        && !c->win_state.skip_pager && !c->win_state.skip_taskbar;
 }
 
 static void set_default_desktop_mask(Client *c)
@@ -148,8 +147,6 @@ static void apply_rules(Client *c)
         {
             if(r->place_type != ANY_PLACE)
                 c->place_type=r->place_type;
-            c->show_border=r->show_border;
-            c->show_titlebar=r->show_titlebar;
             if(r->desktop_mask)
                 c->desktop_mask=r->desktop_mask;
             if(r->class_alias)
@@ -288,8 +285,8 @@ static void fix_win_rect_by_frame(Client *c)
     if(c->frame)
         return;
 
-    int bw = c->show_border ? cfg->border_width : 0,
-        bh = c->show_titlebar ? get_font_height_by_pad() : 0;
+    int bw = c->decorative  ? cfg->border_width : 0,
+        bh = c->decorative ? get_font_height_by_pad() : 0;
     WIDGET_X(c) += bw;
     WIDGET_Y(c) += bw+bh;
     WIDGET_H(c) -= bh;

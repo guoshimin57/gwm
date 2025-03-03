@@ -180,26 +180,8 @@ void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
-    if(c->show_titlebar)
+    if(c->decorative)
         menu_show(WIDGET(frame_get_menu(c->frame)));
-}
-
-void toggle_border_visibility(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    Client *c=CUR_FOC_CLI(wm);
-    c->show_border = !c->show_border;
-    widget_set_border_width(WIDGET(c->frame), c->show_border ? cfg->border_width : 0);
-    request_layout_update();
-}
-
-void titlebar_toggle_visibility(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    Client *c=CUR_FOC_CLI(wm);
-    c->show_titlebar=!c->show_titlebar;
-    titlebar_toggle(c->frame, c->title_text, c->image);
-    request_layout_update();
 }
 
 void focus_desktop(WM *wm, XEvent *e, Func_arg arg)

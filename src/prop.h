@@ -27,6 +27,8 @@ void set_gwm_atoms(void);
 void set_utf8_string_atom(void);
 Atom get_utf8_string_atom(void);
 void replace_utf8_prop(Window win, Atom prop, const void *strs, int n);
+void set_motif_wm_hints_atom(void);
+bool has_motif_decoration(Window win);
 Window get_transient_for(Window win);
 unsigned char *get_prop(Window win, Atom prop, unsigned long *n);
 char *get_text_prop(Window win, Atom atom);

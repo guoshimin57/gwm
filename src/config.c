@@ -179,14 +179,14 @@ static const Buttonbind buttonbind[] =
  */
 static const Rule rule[] =
 {
-    /* 客戶程序類型        客戶程序名稱          標題   客戶程序的類型別名 窗口放置位置      是否顯示標題欄 是否顯示邊框 桌面掩碼 */
-    {"QQ",                 "qq",                 "*",          "QQ",       ANY_PLACE,        false,         false,        0},
-    {"QQ",                 "qq",                 "QQ",         "QQ",       TILE_LAYER_FIXED, false,         false,        0},
-    {"explorer.exe",       "explorer.exe",       "*",          NULL,       FLOAT_LAYER,      false,         false,        0},
-    {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       FLOAT_LAYER,      true,          true,         0},
-    {"firefox",            "Toolkit",            "*",          NULL,       TILE_LAYER_MAIN,  true,          true,         0},
-    {"Google-chrome",      "google-chrome",      "*",          "chrome",   ANY_PLACE,        true,          true,         0},
-    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "*",          "Nautilus", ANY_PLACE,        true,          true,         0},
+    /* 客戶程序類型        客戶程序名稱          標題   客戶程序的類型別名 窗口放置位置      桌面掩碼 */
+//    {"QQ",                 "qq",                 "*",          "QQ",       ANY_PLACE,         0},
+    {"QQ",                 "qq",                 "QQ",         "QQ",       TILE_LAYER_FIXED,  0},
+    {"explorer.exe",       "explorer.exe",       "*",          NULL,       FLOAT_LAYER,       0},
+    {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       FLOAT_LAYER,       0},
+    {"firefox",            "Toolkit",            "*",          NULL,       TILE_LAYER_MAIN,   0},
+    {"Google-chrome",      "google-chrome",      "*",          "chrome",   ANY_PLACE,         0},
+    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "*",          "Nautilus", ANY_PLACE,         0},
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 
@@ -312,8 +312,6 @@ static void config_act_center_item(void)
 
     SET_ACT_CENTER_MENU_ITEM(N_MAIN_UP_BUTTON,         NULL, "⬆️", _("增大主區容量"));
     SET_ACT_CENTER_MENU_ITEM(N_MAIN_DOWN_BUTTON,       NULL, "⬇️", _("减小主區容量"));
-    SET_ACT_CENTER_MENU_ITEM(TITLEBAR_TOGGLE_BUTTON,   NULL, "🗔", _("開關當前窗口標題欄"));
-    SET_ACT_CENTER_MENU_ITEM(CLI_BORDER_TOGGLE_BUTTON, NULL, "⬚", _("開關當前窗口邊框"));
     
     SET_ACT_CENTER_MENU_ITEM(CLOSE_ALL_CLIENTS_BUTTON, NULL, "❎", _("關閉桌面所有窗口"));
     SET_ACT_CENTER_MENU_ITEM(PRINT_WIN_BUTTON,         NULL, "✀",  _("當前窗口截圖"));

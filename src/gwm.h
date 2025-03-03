@@ -105,7 +105,6 @@ struct rule_tag // 窗口管理器的規則
     const char *app_class, *app_name, *title;
     const char *class_alias; // 客戶窗口的類型別名
     Place_type place_type; // 客戶窗口的位置類型
-    bool show_titlebar, show_border; // 是否顯示客戶窗口標題欄和邊框
     unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼
 };
 typedef struct rule_tag Rule;

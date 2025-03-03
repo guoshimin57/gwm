@@ -605,7 +605,7 @@ static void handle_property_notify(WM *wm, XEvent *e)
     {
         free_image(c->image);
         c->image=get_win_icon_image(win);
-        if(c->show_titlebar)
+        if(c->decorative)
             frame_change_logo(c->frame, c->image);
         if(is_iconic_client(c))
             iconbar_update_by_icon(taskbar_get_iconbar(wm->taskbar), win, c->image);
@@ -659,7 +659,7 @@ static void update_ui(WM *wm)
     taskbar_update_bg(WIDGET(wm->taskbar));
     menu_update_bg(WIDGET(act_center));
     clients_for_each(c)
-        if(c->show_titlebar)
+        if(c->decorative)
             menu_update_bg(WIDGET(frame_get_menu(c->frame)));
     entry_update_bg(WIDGET(cmd_entry));
     entry_update_bg(WIDGET(color_entry));

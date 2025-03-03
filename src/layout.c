@@ -158,7 +158,7 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
 static void update_titlebars_layout(void)
 {
     clients_for_each(c)
-        if(c->show_titlebar && is_on_cur_desktop(c->desktop_mask))
+        if(c->decorative  && is_on_cur_desktop(c->desktop_mask))
             titlebar_update_layout(c->frame);
 }
 

@@ -60,8 +60,6 @@
     {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=FLOAT_LAYER}},        \
     {N_MAIN_UP_BUTTON,          0, Button1,  adjust_n_main_max,          {.n=1}},                           \
     {N_MAIN_DOWN_BUTTON,        0, Button1,  adjust_n_main_max,          {.n=-1}},                          \
-    {TITLEBAR_TOGGLE_BUTTON,    0, Button1,  titlebar_toggle_visibility, {0}},                              \
-    {CLI_BORDER_TOGGLE_BUTTON,  0, Button1,  toggle_border_visibility,   {0}},                              \
     {CLOSE_ALL_CLIENTS_BUTTON,  0, Button1,  close_all_clients,          {0}},                              \
     {PRINT_WIN_BUTTON,          0, Button1,  print_win,                  {0}},                              \
     {PRINT_SCREEN_BUTTON,       0, Button1,  print_screen,               {0}},                              \

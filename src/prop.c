@@ -12,6 +12,16 @@
 #include "gwm.h"
 #include "prop.h"
 
+typedef struct {
+    unsigned long flags;
+    unsigned long functions;
+    unsigned long decorations;
+    long input_mode;
+    unsigned long status;
+} MotifWmHints;
+
+#define MWM_HINTS_DECORATIONS (1L << 1)
+
 static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 {
     "GWM_CURRENT_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE",
@@ -20,6 +30,7 @@ static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 
 static Atom gwm_atoms[GWM_ATOM_N];
 static Atom utf8_string_atom;
+static Atom motif_wm_hints_atom;
 
 bool is_spec_gwm_atom(Atom spec, GWM_atom_id id)
 {
@@ -40,6 +51,20 @@ void set_utf8_string_atom(void)
 Atom get_utf8_string_atom(void)
 {
     return utf8_string_atom;
+}
+
+void set_motif_wm_hints_atom(void)
+{
+    motif_wm_hints_atom=XInternAtom(xinfo.display, "_MOTIF_WM_HINTS", False);
+}
+
+bool has_motif_decoration(Window win)
+{
+    MotifWmHints *hints=(MotifWmHints *)get_prop(win, motif_wm_hints_atom, NULL);
+
+    return (!hints
+        || !(hints->flags & MWM_HINTS_DECORATIONS)
+        || hints->decorations);
 }
 
 Window get_transient_for(Window win)

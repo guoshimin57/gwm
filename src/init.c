@@ -144,6 +144,7 @@ static void set_atoms(void)
     set_icccm_atoms();
     set_ewmh_atoms();
     set_utf8_string_atom();
+    set_motif_wm_hints_atom();
     set_gwm_atoms();
 }
 

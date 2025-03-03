@@ -22,7 +22,7 @@ struct client_tag // 客戶窗口相關信息
 {
     Widget base;
     Frame *frame; // 客戶窗口裝飾
-    bool show_border, show_titlebar; // 是否顯示邊框、標題欄
+    bool decorative; // 是否裝飾，即顯示窗口標題欄和邊框
     int ox, oy, ow, oh; // 分别爲win原來的橫、縱坐標和寬、高
     unsigned int desktop_mask; // 所屬虚拟桌面的掩碼
     Place_type place_type, old_place_type; // 窗口現在的位置類型及原來的位置類型
