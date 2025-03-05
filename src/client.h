@@ -73,7 +73,7 @@ void set_transient_win_rect(Client *c);
 int get_clients_n(Place_type type, bool count_icon, bool count_trans, bool count_all_desktop);
 bool is_iconic_client(const Client *c);
 Client *win_to_client(Window win);
-void del_client(Client *c, bool is_for_quit);
+void del_client(WM *wm, Client *c, bool is_for_quit);
 void raise_client(WM *wm, Client *c);
 Client *get_next_client(Client *c);
 Client *get_prev_client(Client *c);

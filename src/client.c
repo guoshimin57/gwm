@@ -45,8 +45,8 @@ static void fix_win_rect_by_frame(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static void update_focus_client_pointer(WM *wm, Client *c);
 static bool is_map_client( Client *c);
-static Client *get_prev_map_client(Client *c);
-static Client *get_next_map_client(Client *c);
+static Client *get_first_map_client(void);
+static Client *get_first_map_diff_client(Client *key);
 static Client *clients=NULL;
 
 Client *get_clients(void)
@@ -318,12 +318,13 @@ Client *win_to_client(Window win)
     return NULL;
 }
 
-void del_client(Client *c, bool is_for_quit)
+void del_client(WM *wm, Client *c, bool is_for_quit)
 {
     if(!c)
         return;
 
     list_del(&c->list);
+    focus_client(wm, NULL);
     vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
     Free(c->title_text);
     frame_del(c->frame), c->frame=NULL;
@@ -504,42 +505,28 @@ void focus_client(WM *wm, Client *c)
 
 static void update_focus_client_pointer(WM *wm, Client *c)
 {
-    Client *p=NULL, **pp=&PREV_FOC_CLI(wm), **pc=&CUR_FOC_CLI(wm);
+    Client *p=NULL, **pp=&PREV_FOC_CLI(wm), **pc=&CUR_FOC_CLI(wm),
+           *po=(*pp)->owner, *co=(*pc)->owner;
 
-    if(!c)  // 當某個client在desktop_n中變得不可見時，即既有可能被刪除了，
-    {       // 也可能是被縮微化了，還有可能是移動到其他虛擬桌面了。
-        if(!is_map_client(*pc)) // 非當前窗口被非wm手段關閉（如kill）
-        {
-            p = (*pc)->owner ? (*pc)->owner : *pp;
-            if(is_map_client(p))
-                *pc=p;
-            else if((p=get_prev_map_client(*pp)))
-                *pc=p;
-            else if((p=get_next_map_client(*pp)))
-                *pc=p;
-            else
-                *pc=clients;
-        }
-
+    if(c == *pc)
+        return;
+    else if(!c) // 某個client可能被刪除、縮微化、移動到其他桌面、非wm手段關閉了
+    {
+        if(!is_map_client(*pc))
+            *pc=(is_map_client(p = co ? co : *pp) || (p=get_first_map_client()))
+                ? p : clients;
         if(!is_map_client(*pp) || *pp==*pc)
-        {
-            if(is_map_client((*pp)->owner))
-                *pp=(*pp)->owner;
-            else if((p=get_prev_map_client(*pp)))
-                *pp=p;
-            else if((p=get_next_map_client(*pp)))
-                *pp=p;
-            else
-                *pp=clients;
-        }
+            *pp=(is_map_client(p=po) || (p=get_first_map_diff_client(*pp)))
+                ? p : clients;
     }
-    else if(c != *pc)
+    else
     {
         p=get_top_transient_client(c->subgroup_leader, true);
         *pp=*pc, *pc=(p ? p : c);
     }
+
     if(*pp == *pc)
-        *pp=clients;
+        *pp = (p=get_first_map_diff_client(*pc)) ? p : clients;
 }
 
 void client_set_state_unfocused(Client *c, int value)
@@ -558,20 +545,18 @@ static bool is_map_client(Client *c)
     return false;
 }
 
-/* 取得存儲結構意義上的上一個處於映射狀態的客戶窗口 */
-static Client *get_prev_map_client(Client *c)
+static Client *get_first_map_client(void)
 {
-    list_for_each_entry_continue_reverse(Client, c, &clients->list, list)
-        if(!is_iconic_client(c) && is_on_cur_desktop(c->desktop_mask))
+    list_for_each_entry(Client, c, &clients->list, list)
+        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             return c;
     return NULL;
 }
 
-/* 取得存儲結構意義上的下一個處於映射狀態的客戶窗口 */
-static Client *get_next_map_client(Client *c)
+static Client *get_first_map_diff_client(Client *key)
 {
-    list_for_each_entry_continue(Client, c, &clients->list, list)
-        if(!is_iconic_client(c) && is_on_cur_desktop(c->desktop_mask))
+    list_for_each_entry(Client, c, &clients->list, list)
+        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c) && c!=key)
             return c;
     return NULL;
 }

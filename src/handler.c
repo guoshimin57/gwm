@@ -579,7 +579,7 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
     if( c && ue->window==WIDGET_WIN(c)
         && (ue->send_event|| ue->event==WIDGET_WIN(c->frame) || ue->event==WIDGET_WIN(c)))
     {
-        del_client(c, false);
+        del_client(wm, c, false);
         if(is_iconic_client(c))
             taskbar_del_client(wm->taskbar, WIDGET_WIN(c));
     }

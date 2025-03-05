@@ -41,8 +41,6 @@
 #define LIGHT_UP "light -A 5" // 調高屏幕亮度
 #define LOGOUT "pkill -9 'startgwm|gwm'" // 注銷
 
-#define SET_NULL(array, n) for(size_t i=0; i<n; i++) array[i]=NULL
-
 /* 功能：設置與虛擬桌面相關的按鍵功能綁定。
  * 說明：邏輯功能轉換鍵掩碼的定義詳見<X11/X.h>，用xmodmap(1)命令可查看與功能
  * 轉換鍵符號的對應關系，當功能轉換鍵爲0時，表示不綁定任何功能轉換鍵。下同。
@@ -180,7 +178,6 @@ static const Buttonbind buttonbind[] =
 static const Rule rule[] =
 {
     /* 客戶程序類型        客戶程序名稱          標題   客戶程序的類型別名 窗口放置位置      桌面掩碼 */
-//    {"QQ",                 "qq",                 "*",          "QQ",       ANY_PLACE,         0},
     {"QQ",                 "qq",                 "QQ",         "QQ",       TILE_LAYER_FIXED,  0},
     {"explorer.exe",       "explorer.exe",       "*",          NULL,       FLOAT_LAYER,       0},
     {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       FLOAT_LAYER,       0},
@@ -410,7 +407,8 @@ static void config_misc(void)
 void config(void)
 {
     cfg=Malloc(sizeof(Config));
-    SET_NULL(cfg->tooltip, WIDGET_N);
+    for(size_t i=0; i<WIDGET_N; i++)
+        cfg->tooltip[i]=NULL;
 
     config_misc();
     config_font();

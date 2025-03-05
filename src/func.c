@@ -93,7 +93,7 @@ void clear_wm(WM *wm)
     clients_for_each_safe(c)
     {
         XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
-        del_client(c, true);
+        del_client(wm, c, true);
     }
     free_all_images();
     XDestroyWindow(xinfo.display, xinfo.hint_win);
