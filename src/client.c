@@ -20,10 +20,6 @@
 #include "prop.h"
 #include "client.h"
 
-#define subgroup_for_each(c, leader) \
-    for(Client *c=leader;\
-        leader && c->subgroup_leader==leader;\
-        c=list_prev_entry(c, Client, list))
 
 static Client *new_client(Window win);
 static bool has_decoration(const Client *c);
@@ -366,20 +362,13 @@ static Window get_top_win(WM *wm, Client *c)
     return wm->top_wins[index[c->place_type]];
 }
 
-/* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過非模態窗口 */
+/* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過所有亞組窗口 */
 Client *get_next_client(Client *c)
 {
+    Client *ld=c->subgroup_leader;
     list_for_each_entry_continue(Client, c, &clients->list, list)
-    {
-        if(is_on_cur_desktop(c->desktop_mask))
-        {
-            Client *m=get_top_transient_client(c->subgroup_leader, true);
-            if(!m || c==m)
-                return c;
-            else
-                return list_next_entry(c->subgroup_leader, Client, list);
-        }
-    }
+        if(is_on_cur_desktop(c->desktop_mask) && (!ld || c->subgroup_leader!=ld))
+            return c;
     return clients;
 }
 

@@ -38,6 +38,11 @@ struct client_tag // 客戶窗口相關信息
     List list;
 };
 
+#define subgroup_for_each(c, leader) \
+    for(Client *c=leader;\
+        leader && c->subgroup_leader==leader;\
+        c=list_prev_entry(c, Client, list))
+
 #define clients_is_empty() \
     list_is_empty(&get_clients()->list)
 
