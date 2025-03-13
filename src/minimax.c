@@ -13,7 +13,8 @@
 #include "minimax.h"
 #include "client.h"
 
-static void maximize_client(WM *wm, Client *c, Max_way way);
+static void maximize(WM *wm, Max_way max_way);
+static void maximize_client(WM *wm, Client *c, Max_way max_way);
 static void set_max_rect(WM *wm, Client *c, Max_way max_way);
 static Rect get_vert_max_rect(const WM *wm, const Client *c);
 static Rect get_horz_max_rect(const WM *wm, const Client *c);
@@ -47,10 +48,51 @@ void max_restore(WM *wm, XEvent *e, Func_arg arg)
         maximize_client(wm, c, FULL_MAX);
 }
 
-void maximize(WM *wm, XEvent *e, Func_arg arg)
+void vert_maximize(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(e);
-    maximize_client(wm, CUR_FOC_CLI(wm), arg.max_way);
+    UNUSED(e), UNUSED(arg);
+    maximize(wm, VERT_MAX);
+}
+
+void horz_maximize(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize(wm, HORZ_MAX);
+}
+
+void top_maximize(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize(wm, TOP_MAX);
+}
+
+void bottom_maximize(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize(wm, BOTTOM_MAX);
+}
+
+void left_maximize(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize(wm, LEFT_MAX);
+}
+
+void right_maximize(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize(wm, RIGHT_MAX);
+}
+
+void full_maximize(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize(wm, FULL_MAX);
+}
+
+static void maximize(WM *wm, Max_way max_way)
+{
+    maximize_client(wm, CUR_FOC_CLI(wm), max_way);
 }
 
 static void maximize_client(WM *wm, Client *c, Max_way max_way)

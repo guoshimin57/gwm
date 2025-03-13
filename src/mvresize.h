@@ -14,9 +14,23 @@
 
 #include "gwm.h"
 
-void move_resize(WM *wm, XEvent *e, Func_arg arg);
+void key_move_up(WM *wm, XEvent *e, Func_arg arg);
+void key_move_down(WM *wm, XEvent *e, Func_arg arg);
+void key_move_left(WM *wm, XEvent *e, Func_arg arg);
+void key_move_right(WM *wm, XEvent *e, Func_arg arg);
+void key_resize_up2up(WM *wm, XEvent *e, Func_arg arg);
+void key_resize_up2down(WM *wm, XEvent *e, Func_arg arg);
+void key_resize_down2up(WM *wm, XEvent *e, Func_arg arg);
+void key_resize_down2down(WM *wm, XEvent *e, Func_arg arg);
+void key_resize_left2left(WM *wm, XEvent *e, Func_arg arg);
+void key_resize_left2right(WM *wm, XEvent *e, Func_arg arg);
+void key_resize_right2right(WM *wm, XEvent *e, Func_arg arg);
+void key_resize_right2left(WM *wm, XEvent *e, Func_arg arg);
+void pointer_move(WM *wm, XEvent *e, Func_arg arg);
+void pointer_resize(WM *wm, XEvent *e, Func_arg arg);
 Pointer_act get_resize_act(Client *c, const Move_info *m);
 void toggle_shade_client(WM *wm, XEvent *e, Func_arg arg);
 void toggle_shade_client_mode(Client *c, bool shade);
+
 
 #endif

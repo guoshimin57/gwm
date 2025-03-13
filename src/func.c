@@ -13,6 +13,7 @@
 #include "entry.h"
 #include "file.h"
 #include "font.h"
+#include "layout.h"
 #include "mvresize.h"
 #include "minimax.h"
 #include "menu.h"
@@ -24,11 +25,13 @@
 #include "func.h"
 
 static bool is_valid_click(XEvent *oe, XEvent *ne);
+static void adjust_n_main_max(WM *wm, int n);
 
 bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg))
 {
     return func == pointer_swap_clients
-        || func == move_resize
+        || func == pointer_move
+        || func == pointer_resize
         || func == pointer_change_place
         || func == adjust_layout_ratio;
 }
@@ -66,13 +69,14 @@ static bool is_valid_click(XEvent *oe, XEvent *ne)
 
 void choose_client(WM *wm, XEvent *e, Func_arg arg)
 {
+    UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
 
     if(is_iconic_client(c))
         deiconify_client(wm, c);
 
     if(DESKTOP(wm)->cur_layout == PREVIEW)
-        arg.layout=DESKTOP(wm)->prev_layout, change_layout(wm, e, arg);
+        change_layout(wm, DESKTOP(wm)->prev_layout);
 }
 
 void exec(WM *wm, XEvent *e, Func_arg arg)
@@ -149,13 +153,24 @@ void prev_client(WM *wm, XEvent *e, Func_arg arg)
     focus_client(wm, get_prev_client(CUR_FOC_CLI(wm)));
 }
 
-void adjust_n_main_max(WM *wm, XEvent *e, Func_arg arg)
+void increase_main_n(WM *wm, XEvent *e, Func_arg arg)
 {
     UNUSED(e), UNUSED(arg);
+    adjust_n_main_max(wm, 1);
+}
+
+void decrease_main_n(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    adjust_n_main_max(wm, -1);
+}
+
+static void adjust_n_main_max(WM *wm, int n)
+{
     if(DESKTOP(wm)->cur_layout == TILE)
     {
         int *m=&DESKTOP(wm)->n_main_max;
-        *m = *m+arg.n>=1 ? *m+arg.n : 1;
+        *m = *m+n>=1 ? *m+n : 1;
         request_layout_update();
     }
 }

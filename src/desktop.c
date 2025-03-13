@@ -32,7 +32,6 @@ void init_desktop(WM *wm)
         Desktop *d=wm->desktop[i]=Malloc(sizeof(Desktop));
         d->n_main_max=cfg->default_n_main_max;
         d->cur_layout=d->prev_layout=cfg->default_layout;
-        d->default_place_type=TILE_LAYER_MAIN;
         d->main_area_ratio=cfg->default_main_area_ratio;
         d->fixed_area_ratio=cfg->default_fixed_area_ratio;
     }

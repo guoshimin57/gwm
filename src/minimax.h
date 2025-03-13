@@ -17,7 +17,13 @@
 void minimize(WM *wm, XEvent *e, Func_arg arg);
 void deiconify(WM *wm, XEvent *e, Func_arg arg);
 void max_restore(WM *wm, XEvent *e, Func_arg arg);
-void maximize(WM *wm, XEvent *e, Func_arg arg);
+void vert_maximize(WM *wm, XEvent *e, Func_arg arg);
+void horz_maximize(WM *wm, XEvent *e, Func_arg arg);
+void top_maximize(WM *wm, XEvent *e, Func_arg arg);
+void bottom_maximize(WM *wm, XEvent *e, Func_arg arg);
+void left_maximize(WM *wm, XEvent *e, Func_arg arg);
+void right_maximize(WM *wm, XEvent *e, Func_arg arg);
+void full_maximize(WM *wm, XEvent *e, Func_arg arg);
 void restore_client(WM *wm, Client *c);
 void iconify_client(WM *wm, Client *c);
 void deiconify_client(WM *wm, Client *c);

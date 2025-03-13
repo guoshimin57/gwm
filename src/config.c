@@ -86,35 +86,35 @@ static const Keybind keybind[] =
     {SYS_KEY,       XK_l,         exec,                        SH_CMD(LOGOUT)},
     {SYS_KEY,       XK_p,         exec,                        SH_CMD("poweroff")},
     {SYS_KEY,       XK_r,         exec,                        SH_CMD("reboot")},
-    {WM_KEY,        XK_k,         move_resize,                 {.direction=UP}},
-    {WM_KEY,        XK_j,         move_resize,                 {.direction=DOWN}},
-    {WM_KEY,        XK_h,         move_resize,                 {.direction=LEFT}},
-    {WM_KEY,        XK_l,         move_resize,                 {.direction=RIGHT}},
-    {WM_KEY,        XK_Up,        move_resize,                 {.direction=UP2UP}},
-    {WM_SKEY,       XK_Up,        move_resize,                 {.direction=UP2DOWN}},
-    {WM_KEY,        XK_Down,      move_resize,                 {.direction=DOWN2DOWN}},
-    {WM_SKEY,       XK_Down,      move_resize,                 {.direction=DOWN2UP}},
-    {WM_KEY,        XK_Left,      move_resize,                 {.direction=LEFT2LEFT}},
-    {WM_SKEY,       XK_Left,      move_resize,                 {.direction=LEFT2RIGHT}},
-    {WM_KEY,        XK_Right,     move_resize,                 {.direction=RIGHT2RIGHT}},
-    {WM_SKEY,       XK_Right,     move_resize,                 {.direction=RIGHT2LEFT}},
-    {WM_KEY,        XK_F1,        change_place,                {.place_type=TILE_LAYER_MAIN}},
-    {WM_KEY,        XK_F2,        change_place,                {.place_type=TILE_LAYER_SECOND}},
-    {WM_KEY,        XK_F3,        change_place,                {.place_type=TILE_LAYER_FIXED}},
-    {WM_KEY,        XK_F4,        change_place,                {.place_type=FLOAT_LAYER}},
+    {WM_KEY,        XK_k,         key_move_up,                 {0}},
+    {WM_KEY,        XK_j,         key_move_down,               {0}},
+    {WM_KEY,        XK_h,         key_move_left,               {0}},
+    {WM_KEY,        XK_l,         key_move_right,              {0}},
+    {WM_KEY,        XK_Up,        key_resize_up2up,            {0}},
+    {WM_SKEY,       XK_Up,        key_resize_up2down,          {0}},
+    {WM_KEY,        XK_Down,      key_resize_down2down,        {0}},
+    {WM_SKEY,       XK_Down,      key_resize_down2up,          {0}},
+    {WM_KEY,        XK_Left,      key_resize_left2left,        {0}},
+    {WM_SKEY,       XK_Left,      key_resize_left2right,       {0}},
+    {WM_KEY,        XK_Right,     key_resize_right2right,      {0}},
+    {WM_SKEY,       XK_Right,     key_resize_right2left,       {0}},
+    {WM_KEY,        XK_F1,        change_to_main,              {0}},
+    {WM_KEY,        XK_F2,        change_to_second,            {0}},
+    {WM_KEY,        XK_F3,        change_to_fixed,             {0}},
+    {WM_KEY,        XK_F4,        change_to_float,             {0}},
     {WM_KEY,        XK_Return,    choose_client,               {0}},
     {WM_KEY,        XK_Tab,       next_client,                 {0}},
     {WM_SKEY,       XK_Tab,       prev_client,                 {0}},
     {WM_KEY,        XK_c,         close_client,                {0}},
-    {WM_KEY,        XK_p,         change_layout,               {.layout=PREVIEW}},
-    {WM_KEY,        XK_s,         change_layout,               {.layout=STACK}},
-    {WM_KEY,        XK_t,         change_layout,               {.layout=TILE}},
-    {WM_KEY,        XK_i,         adjust_n_main_max,           {.n=1}},
-    {WM_SKEY,       XK_i,         adjust_n_main_max,           {.n=-1}},
-    {WM_KEY,        XK_m,         adjust_main_area_ratio,      {.change_ratio=0.01}},
-    {WM_SKEY,       XK_m,         adjust_main_area_ratio,      {.change_ratio=-0.01}},
-    {WM_KEY,        XK_x,         adjust_fixed_area_ratio,     {.change_ratio=0.01}},
-    {WM_SKEY,       XK_x,         adjust_fixed_area_ratio,     {.change_ratio=-0.01}},
+    {WM_KEY,        XK_p,         change_to_preview,           {0}},
+    {WM_KEY,        XK_s,         change_to_stack,             {0}},
+    {WM_KEY,        XK_t,         change_to_tile,              {0}},
+    {WM_KEY,        XK_i,         increase_main_n,             {0}},
+    {WM_SKEY,       XK_i,         decrease_main_n,             {0}},
+    {WM_KEY,        XK_m,         key_increase_main_area,      {0}},
+    {WM_SKEY,       XK_m,         key_decrease_main_area,      {0}},
+    {WM_KEY,        XK_x,         key_increase_fixed_area,     {0}},
+    {WM_SKEY,       XK_x,         key_decrease_fixed_area,     {0}},
     {WM_KEY,        XK_Page_Down, next_desktop,                {0}},
     {WM_KEY,        XK_Page_Up,   prev_desktop,                {0}},
     {0,             XK_Print,     print_screen,                {0}},
@@ -154,8 +154,8 @@ static const Buttonbind buttonbind[] =
 
     /* 構件標識        功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數 */
     {DESKTOP_BUTTON,       WM_KEY, Button2,  close_all_clients,          {0}},
-    {CLIENT_WIN,           WM_KEY, Button1,  move_resize,                {.resize=false}},
-    {CLIENT_WIN,          WM_SKEY, Button1,  move_resize,                {.resize=true}},
+    {CLIENT_WIN,           WM_KEY, Button1,  pointer_move,               {0}},
+    {CLIENT_WIN,          WM_SKEY, Button1,  pointer_resize,             {0}},
     {CLIENT_WIN,           WM_KEY, Button2,  pointer_change_place,       {0}},
     {CLIENT_WIN,           WM_KEY, Button3,  pointer_swap_clients,       {0}},
     {CLIENT_WIN,                0, Button3,  choose_client,              {0}},
@@ -301,11 +301,6 @@ static void config_act_center_item(void)
     SET_ACT_CENTER_MENU_ITEM(VOLUME_UP_BUTTON,         NULL, "🔉", _("增大音量"));
     SET_ACT_CENTER_MENU_ITEM(VOLUME_MAX_BUTTON,        NULL, "🔊", _("最大音量"));
     SET_ACT_CENTER_MENU_ITEM(VOLUME_TOGGLE_BUTTON,     NULL, "🔇", _("靜音切換"));
-
-    SET_ACT_CENTER_MENU_ITEM(MAIN_NEW_BUTTON,          NULL, "▼", _("暫主區開窗"));
-    SET_ACT_CENTER_MENU_ITEM(SEC_NEW_BUTTON,           NULL, "◁", _("暫次區開窗"));
-    SET_ACT_CENTER_MENU_ITEM(FIX_NEW_BUTTON,           NULL, "▷", _("暫固定區開窗"));
-    SET_ACT_CENTER_MENU_ITEM(FLOAT_NEW_BUTTON,         NULL, "△", _("暫懸浮層開窗"));
 
     SET_ACT_CENTER_MENU_ITEM(N_MAIN_UP_BUTTON,         NULL, "⬆️", _("增大主區容量"));
     SET_ACT_CENTER_MENU_ITEM(N_MAIN_DOWN_BUTTON,       NULL, "⬇️", _("减小主區容量"));

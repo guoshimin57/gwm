@@ -18,5 +18,14 @@ void update_layout(WM *wm);
 bool is_main_sec_gap(WM *wm, int x);
 bool is_main_fix_gap(WM *wm, int x);
 bool is_layout_adjust_area(WM *wm, Window win, int x);
+void change_to_preview(WM *wm, XEvent *e, Func_arg arg);
+void change_to_stack(WM *wm, XEvent *e, Func_arg arg);
+void change_to_tile(WM *wm, XEvent *e, Func_arg arg);
+void change_layout(WM *wm, Layout layout);
+void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg);
+void key_increase_main_area(WM *wm, XEvent *e, Func_arg arg);
+void key_decrease_main_area(WM *wm, XEvent *e, Func_arg arg);
+void key_increase_fixed_area(WM *wm, XEvent *e, Func_arg arg);
+void key_decrease_fixed_area(WM *wm, XEvent *e, Func_arg arg);
 
 #endif

@@ -12,6 +12,8 @@
 #ifndef WM_CFG_H
 #define WM_CFG_H
 
+#include "layout.h"
+
 #define TOGGLE_PROCESS_STATE(process) /* 切換進程狀態 */ \
     "{ pid=$(ps -C '"process"' -o pid=); " \
     "ps -o stat= $pid | head -n1 | grep T > /dev/null ; } " \
@@ -37,9 +39,9 @@
  */
 #define WM_BUTTONBIND                                                                                       \
     /* 構件類型        功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數 */                      \
-    {PREVIEW_BUTTON,            0, Button1,  change_layout,              {.layout=PREVIEW}},                \
-    {STACK_BUTTON,              0, Button1,  change_layout,              {.layout=STACK}},                  \
-    {TILE_BUTTON,               0, Button1,  change_layout,              {.layout=TILE}},                   \
+    {PREVIEW_BUTTON,            0, Button1,  change_to_preview,          {0}},                              \
+    {STACK_BUTTON,              0, Button1,  change_to_stack,            {0}},                              \
+    {TILE_BUTTON,               0, Button1,  change_to_tile,             {0}},                              \
     {DESKTOP_BUTTON,            0, Button1,  show_desktop,               {0}},                              \
     {ACT_CENTER_ITEM,           0, Button1,  open_act_center,            {0}},                              \
     {HELP_BUTTON,               0, Button1,  exec,                       SH_CMD(HELP)},                     \
@@ -54,12 +56,8 @@
     {VOLUME_UP_BUTTON,          0, Button1,  exec,                       SH_CMD(VOLUME_UP)},                \
     {VOLUME_MAX_BUTTON,         0, Button1,  exec,                       SH_CMD(VOLUME_MAX)},               \
     {VOLUME_TOGGLE_BUTTON,      0, Button1,  exec,                       SH_CMD(VOLUME_TOGGLE)},            \
-    {MAIN_NEW_BUTTON,           0, Button1,  change_default_place_type,  {.place_type=TILE_LAYER_MAIN}},    \
-    {SEC_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=TILE_LAYER_SECOND}},  \
-    {FIX_NEW_BUTTON,            0, Button1,  change_default_place_type,  {.place_type=TILE_LAYER_FIXED}},   \
-    {FLOAT_NEW_BUTTON,          0, Button1,  change_default_place_type,  {.place_type=FLOAT_LAYER}},        \
-    {N_MAIN_UP_BUTTON,          0, Button1,  adjust_n_main_max,          {.n=1}},                           \
-    {N_MAIN_DOWN_BUTTON,        0, Button1,  adjust_n_main_max,          {.n=-1}},                          \
+    {N_MAIN_UP_BUTTON,          0, Button1,  increase_main_n,            {0}},                              \
+    {N_MAIN_DOWN_BUTTON,        0, Button1,  decrease_main_n,            {0}},                              \
     {CLOSE_ALL_CLIENTS_BUTTON,  0, Button1,  close_all_clients,          {0}},                              \
     {PRINT_WIN_BUTTON,          0, Button1,  print_win,                  {0}},                              \
     {PRINT_SCREEN_BUTTON,       0, Button1,  print_screen,               {0}},                              \
@@ -73,27 +71,27 @@
     {POWEROFF_BUTTON,           0, Button1,  exec,                       SH_CMD("poweroff")},               \
     {RUN_BUTTON,                0, Button1,  run_cmd,                    {0}},                              \
     {TITLE_LOGO,                0, Button1,  open_client_menu,           {0}},                              \
-    {VERT_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=VERT_MAX}},              \
-    {HORZ_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=HORZ_MAX}},              \
-    {TOP_MAX_BUTTON,            0, Button1,  maximize,                   {.max_way=TOP_MAX}},               \
-    {BOTTOM_MAX_BUTTON,         0, Button1,  maximize,                   {.max_way=BOTTOM_MAX}},            \
-    {LEFT_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=LEFT_MAX}},              \
-    {RIGHT_MAX_BUTTON,          0, Button1,  maximize,                   {.max_way=RIGHT_MAX}},             \
-    {FULL_MAX_BUTTON,           0, Button1,  maximize,                   {.max_way=FULL_MAX}},              \
+    {VERT_MAX_BUTTON,           0, Button1,  vert_maximize,              {0}},                              \
+    {HORZ_MAX_BUTTON,           0, Button1,  horz_maximize,              {0}},                              \
+    {TOP_MAX_BUTTON,            0, Button1,  top_maximize,               {0}},                              \
+    {BOTTOM_MAX_BUTTON,         0, Button1,  bottom_maximize,            {0}},                              \
+    {LEFT_MAX_BUTTON,           0, Button1,  left_maximize,              {0}},                              \
+    {RIGHT_MAX_BUTTON,          0, Button1,  right_maximize,             {0}},                              \
+    {FULL_MAX_BUTTON,           0, Button1,  full_maximize,              {0}},                              \
     {ROOT_WIN,                  0, Button1,  adjust_layout_ratio,        {0}},                              \
-    {MAIN_BUTTON,               0, Button1,  change_place,               {.place_type=TILE_LAYER_MAIN}},    \
-    {SECOND_BUTTON,             0, Button1,  change_place,               {.place_type=TILE_LAYER_SECOND}},  \
-    {FIXED_BUTTON,              0, Button1,  change_place,               {.place_type=TILE_LAYER_FIXED}},   \
-    {FLOAT_BUTTON,              0, Button1,  change_place,               {.place_type=FLOAT_LAYER}},        \
+    {MAIN_BUTTON,               0, Button1,  change_to_main,             {0}},                              \
+    {SECOND_BUTTON,             0, Button1,  change_to_second,           {0}},                              \
+    {FIXED_BUTTON,              0, Button1,  change_to_fixed,            {0}},                              \
+    {FLOAT_BUTTON,              0, Button1,  change_to_float,            {0}},                              \
     {ICON_BUTTON,               0, Button1,  minimize,                   {0}},                              \
     {MAX_BUTTON,                0, Button1,  max_restore,                {0}},                              \
     {SHADE_BUTTON,              0, Button1,  toggle_shade_client,        {0}},                              \
     {CLOSE_BUTTON,              0, Button1,  close_client,               {0}},                              \
-    {TITLEBAR,                  0, Button1,  move_resize,                {.resize=false}},                  \
+    {TITLEBAR,                  0, Button1,  pointer_move,               {0}},                              \
     {TITLEBAR,                  0, Button2,  pointer_change_place,       {0}},                              \
     {TITLEBAR,                  0, Button3,  pointer_swap_clients,       {0}},                              \
     {CLIENT_WIN,                0, Button1,  choose_client,              {0}},                              \
-    {CLIENT_FRAME,              0, Button1,  move_resize,                {.resize=true}},                   \
+    {CLIENT_FRAME,              0, Button1,  pointer_resize,             {0}},                              \
     {CLIENT_ICON,               0, Button1,  deiconify,                  {0}}
 
 #endif

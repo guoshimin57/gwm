@@ -18,7 +18,6 @@ struct desktop_tag // 虛擬桌面相關信息
 {
     int n_main_max; // 主區域可容納的客戶窗口數量
     Client *cur_focus_client, *prev_focus_client; // 分別爲當前聚焦結點、前一個聚焦結點
-    Place_type default_place_type; // 默認的窗口位置類型
     Layout cur_layout, prev_layout; // 分別爲當前布局模式和前一個布局模式
     double main_area_ratio, fixed_area_ratio; // 分別爲主要和固定區域與工作區寬度的比值
 };

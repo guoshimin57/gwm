@@ -14,10 +14,11 @@
 #include "prop.h"
 #include "place.h"
 
+static void key_change_place(WM *wm, Place_type type);
 static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
 static bool is_valid_to_normal_layer_sec(Client *c);
-static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
 static int cmp_client_store_order(Client *c1, Client *c2);
+static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
 static void swap_clients(WM *wm, Client *a, Client *b);
 
 void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
@@ -45,11 +46,34 @@ void pointer_change_place(WM *wm, XEvent *e, Func_arg arg)
     update_net_wm_state_for_no_max(WIDGET_WIN(from), from->win_state);
 }
 
-void change_place(WM *wm, XEvent *e, Func_arg arg)
+void change_to_main(WM *wm, XEvent *e, Func_arg arg)
 {
-    UNUSED(e);
+    UNUSED(e), UNUSED(arg);
+    key_change_place(wm, TILE_LAYER_MAIN);
+}
+
+void change_to_second(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_change_place(wm, TILE_LAYER_SECOND);
+}
+
+void change_to_fixed(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_change_place(wm, TILE_LAYER_FIXED);
+}
+
+void change_to_float(WM *wm, XEvent *e, Func_arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_change_place(wm, FLOAT_LAYER);
+}
+
+static void key_change_place(WM *wm, Place_type type)
+{
     Client *c=CUR_FOC_CLI(wm);
-    move_client(wm, c, NULL, arg.place_type);
+    move_client(wm, c, NULL, type);
     update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
@@ -66,12 +90,6 @@ void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg)
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
     if((to=win_to_client(ev.xbutton.subwindow)))
         swap_clients(wm, from, to);
-}
-
-void change_default_place_type(WM *wm, XEvent *e, Func_arg arg)
-{
-    UNUSED(e);
-    DESKTOP(wm)->default_place_type=arg.place_type;
 }
 
 void show_desktop(WM *wm, XEvent *e, Func_arg arg)

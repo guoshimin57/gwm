@@ -550,10 +550,7 @@ static void handle_map_request(WM *wm, XEvent *e)
     Window win=e->xmaprequest.window;
 
     if(is_wm_win(win, false))
-    {
         add_client(wm, win);
-        DESKTOP(wm)->default_place_type=TILE_LAYER_MAIN;
-    }
     else
         restack_win(wm, win);
     XMapWindow(xinfo.display, win);

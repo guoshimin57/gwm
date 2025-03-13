@@ -151,17 +151,8 @@ typedef enum max_way_tag Max_way;
 
 union func_arg_tag // 函數參數類型
 {
-    bool resize; // 是否調整窗口尺寸
-    bool focus; // 是否聚焦的標志
     char *const *cmd; // 命令字符串
-    Direction direction; // 方向
-    Layout layout; // 窗口布局模式
-    Pointer_act pointer_act; // 窗口操作類型
-    Max_way max_way; // 窗口最大化的方式
-    int n; // 表示數量
     unsigned int desktop_n; // 虛擬桌面編號，從0開始編號
-    Place_type place_type; // 窗口位置類型
-    double change_ratio; // 變化率
 };
 typedef union func_arg_tag Func_arg;
 

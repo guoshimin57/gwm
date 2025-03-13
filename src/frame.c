@@ -278,6 +278,8 @@ static int titlebar_get_button_n(void)
 
 void frame_change_title(const Frame *frame, const char *title)
 {
+    if(frame->titlebar == NULL)
+        return;
     Free(frame->titlebar->title);
     frame->titlebar->title=copy_string(title);
     tooltip_change_tip(TOOLTIP(WIDGET_TOOLTIP(frame->titlebar)), title);
