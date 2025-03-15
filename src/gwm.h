@@ -27,14 +27,10 @@
 #include <libintl.h>
 #include <math.h>
 #include <X11/cursorfont.h>
-#include <X11/keysymdef.h>
 #include <X11/Xatom.h>
-#include <X11/XF86keysym.h>
 #include <X11/Xft/Xft.h>
 #include <X11/Xproto.h>
-
 #include "misc.h"
-#include "widget.h"
 #include "taskbar.h"
 
 #define NET_WM_STATE_REMOVE 0
@@ -43,7 +39,6 @@
 
 #define SHOULD_ADD_STATE(c, act, flag) \
     (act==NET_WM_STATE_ADD || (act==NET_WM_STATE_TOGGLE && !c->win_state.flag))
-
 
 #define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
 #define FUNC_ARG(var, data) (Func_arg){.var=data}
@@ -59,7 +54,6 @@
 #define PREV_FOC_CLI(wm) DESKTOP(wm)->prev_focus_client
 
 typedef struct desktop_tag Desktop;
-typedef struct client_tag Client;
 
 typedef struct // 與X相關的信息
 {
@@ -122,9 +116,9 @@ typedef enum // 窗口疊次序分層類型
 } Top_win_type;
 
 typedef struct wm_tag WM;
-typedef void (*event_handler_type)(WM*, XEvent *); // 事件處理器類型
+typedef void (*Event_handler)(WM*, XEvent *); // 事件處理器類型
 
-struct wm_tag // 窗口管理器相關信息
+typedef struct wm_tag // 窗口管理器相關信息
 {
     Taskbar *taskbar; // 任務欄
     Desktop *desktop[DESKTOP_N]; // 虛擬桌面
@@ -132,8 +126,33 @@ struct wm_tag // 窗口管理器相關信息
     Window wm_check_win; // WM檢測窗口
     Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
     Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
-    event_handler_type handle_event; // 事件處理器
-};
+    Event_handler event_handler; // 事件處理器
+} WM;
+
+typedef union // 要綁定的函數的參數類型
+{
+    char *const *cmd; // 命令字符串
+    unsigned int desktop_n; // 虛擬桌面編號，從0開始編號
+} Arg;
+
+typedef void (*Func)(WM *, XEvent *, Arg); // 要綁定的函數類型
+
+typedef struct // 鍵盤按鍵功能綁定
+{
+	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵
+	KeySym keysym; // 要綁定的鍵盤功能轉換鍵
+	Func func; // 要綁定的函數
+    Arg arg; // 要綁定的函數的參數
+} Keybind;
+
+typedef struct // 定位器按鈕功能綁定
+{
+    Widget_id widget_id; // 要綁定的構件標識
+	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵 
+    unsigned int button; // 要綁定的定位器按鈕
+	Func func; // 要綁定的函數
+    Arg arg; // 要綁定的函數的參數
+} Buttonbind;
 
 enum direction_tag // 方向
 {
@@ -149,32 +168,6 @@ enum max_way_tag // 窗口最大化的方式
 };
 typedef enum max_way_tag Max_way;
 
-union func_arg_tag // 函數參數類型
-{
-    char *const *cmd; // 命令字符串
-    unsigned int desktop_n; // 虛擬桌面編號，從0開始編號
-};
-typedef union func_arg_tag Func_arg;
-
-struct keybind_tag // 鍵盤按鍵功能綁定
-{
-	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵
-	KeySym keysym; // 要綁定的鍵盤功能轉換鍵
-	void (*func)(WM *, XEvent *, Func_arg); // 要綁定的函數
-    Func_arg arg; // 要綁定的函數的參數
-};
-typedef struct keybind_tag Keybind;
-
-struct buttonbind_tag // 定位器按鈕功能綁定
-{
-    Widget_id widget_id; // 要綁定的構件標識
-	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵 
-    unsigned int button; // 要綁定的定位器按鈕
-	void (*func)(WM *, XEvent *, Func_arg); // 要綁定的函數
-    Func_arg arg; // 要綁定的函數的參數
-};
-typedef struct buttonbind_tag Buttonbind;
-
 struct move_info_tag /* 定位器所點擊的窗口位置每次合理移動或調整尺寸所對應的舊、新坐標信息 */
 {
     int ox, oy, nx, ny; /* 分別爲舊、新坐標 */
@@ -185,7 +178,6 @@ extern sig_atomic_t run_flag; // 程序運行標志
 extern Xinfo xinfo;
 
 
-#include "client.h"
 #include "desktop.h"
 
 #endif

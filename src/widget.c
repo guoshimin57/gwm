@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "config.h"
+#include "bind_cfg.h"
 #include "gwm.h"
 #include "font.h"
 #include "misc.h"
@@ -308,10 +309,10 @@ void grab_keys(void)
     unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     KeyCode code;
     XUngrabKey(xinfo.display, AnyKey, AnyModifier, xinfo.root_win);
-    for(const Keybind *kb=cfg->keybind; kb->func; kb++)
-        if((code=XKeysymToKeycode(xinfo.display, kb->keysym)))
+    for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++)
+        if((code=XKeysymToKeycode(xinfo.display, KEYBIND[i].keysym)))
             for(size_t j=0; j<ARRAY_NUM(masks); j++)
-                XGrabKey(xinfo.display, code, kb->modifier|masks[j],
+                XGrabKey(xinfo.display, code, KEYBIND[i].modifier|masks[j],
                     xinfo.root_win, True, GrabModeAsync, GrabModeAsync);
 }
 
@@ -334,14 +335,14 @@ void grab_buttons(Window win)
                  masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
 
     XUngrabButton(xinfo.display, AnyButton, AnyModifier, win);
-    for(const Buttonbind *b=cfg->buttonbind; b->func; b++)
+    for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++)
     {
-        if(b->widget_id == CLIENT_WIN)
+        if(BUTTONBIND[i].widget_id == CLIENT_WIN)
         {
-            int m=is_equal_modifier_mask(0, b->modifier) ?
+            int m=is_equal_modifier_mask(0, BUTTONBIND[i].modifier) ?
                 GrabModeSync : GrabModeAsync;
             for(size_t j=0; j<ARRAY_NUM(masks); j++)
-                XGrabButton(xinfo.display, b->button, b->modifier|masks[j],
+                XGrabButton(xinfo.display, BUTTONBIND[i].button, BUTTONBIND[i].modifier|masks[j],
                     win, False, BUTTON_MASK, m, m, None, None);
         }
     }

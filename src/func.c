@@ -27,7 +27,7 @@
 static bool is_valid_click(XEvent *oe, XEvent *ne);
 static void adjust_n_main_max(WM *wm, int n);
 
-bool is_drag_func(void (*func)(WM *, XEvent *, Func_arg))
+bool is_drag_func(void (*func)(WM *, XEvent *, Arg))
 {
     return func == pointer_swap_clients
         || func == pointer_move
@@ -54,7 +54,7 @@ bool get_valid_click(WM *wm, Pointer_act act, XEvent *oe, XEvent *ne)
     do
     {
         XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, p);
-        wm->handle_event(wm, p);
+        wm->event_handler(wm, p);
     }while(!is_match_button_release(oe, p));
     if(act != NO_OP)
         XUngrabPointer(xinfo.display, CurrentTime);
@@ -67,7 +67,7 @@ static bool is_valid_click(XEvent *oe, XEvent *ne)
         && is_pointer_on_win(ne->xbutton.window);
 }
 
-void choose_client(WM *wm, XEvent *e, Func_arg arg)
+void choose_client(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
@@ -79,13 +79,13 @@ void choose_client(WM *wm, XEvent *e, Func_arg arg)
         change_layout(wm, DESKTOP(wm)->prev_layout);
 }
 
-void exec(WM *wm, XEvent *e, Func_arg arg)
+void exec(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e);
     exec_cmd(arg.cmd);
 }
 
-void quit_wm(WM *wm, XEvent *e, Func_arg arg)
+void quit_wm(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     clear_wm(wm);
@@ -124,7 +124,7 @@ void clear_wm(WM *wm)
     Free(cfg);
 }
 
-void close_client(WM *wm, XEvent *e, Func_arg arg)
+void close_client(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
@@ -133,7 +133,7 @@ void close_client(WM *wm, XEvent *e, Func_arg arg)
         close_win(WIDGET_WIN(c));
 }
 
-void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
+void close_all_clients(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     clients_for_each(c)
@@ -141,25 +141,25 @@ void close_all_clients(WM *wm, XEvent *e, Func_arg arg)
             close_win(WIDGET_WIN(c));
 }
 
-void next_client(WM *wm, XEvent *e, Func_arg arg)
+void next_client(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     focus_client(wm, get_next_client(CUR_FOC_CLI(wm)));
 }
 
-void prev_client(WM *wm, XEvent *e, Func_arg arg)
+void prev_client(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     focus_client(wm, get_prev_client(CUR_FOC_CLI(wm)));
 }
 
-void increase_main_n(WM *wm, XEvent *e, Func_arg arg)
+void increase_main_n(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     adjust_n_main_max(wm, 1);
 }
 
-void decrease_main_n(WM *wm, XEvent *e, Func_arg arg)
+void decrease_main_n(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     adjust_n_main_max(wm, -1);
@@ -175,19 +175,19 @@ static void adjust_n_main_max(WM *wm, int n)
     }
 }
 
-void toggle_focus_mode(WM *wm, XEvent *e, Func_arg arg)
+void toggle_focus_mode(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     cfg->focus_mode = cfg->focus_mode==ENTER_FOCUS ? CLICK_FOCUS : ENTER_FOCUS;
 }
 
-void open_act_center(WM *wm, XEvent *e, Func_arg arg)
+void open_act_center(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     menu_show(WIDGET(act_center));
 }
 
-void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
+void open_client_menu(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
@@ -195,77 +195,77 @@ void open_client_menu(WM *wm, XEvent *e, Func_arg arg)
         menu_show(WIDGET(frame_get_menu(c->frame)));
 }
 
-void focus_desktop(WM *wm, XEvent *e, Func_arg arg)
+void focus_desktop(WM *wm, XEvent *e, Arg arg)
 {
     focus_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void next_desktop(WM *wm, XEvent *e, Func_arg arg)
+void next_desktop(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     unsigned int cur_desktop=get_net_current_desktop();
     focus_desktop_n(wm, cur_desktop+1<DESKTOP_N ? cur_desktop+1 : 1);
 }
 
-void prev_desktop(WM *wm, XEvent *e, Func_arg arg)
+void prev_desktop(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     unsigned int cur_desktop=get_net_current_desktop();
     focus_desktop_n(wm, cur_desktop>0 ? cur_desktop-1 : DESKTOP_N-1);
 }
 
-void move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
+void move_to_desktop(WM *wm, XEvent *e, Arg arg)
 {
     move_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void all_move_to_desktop(WM *wm, XEvent *e, Func_arg arg)
+void all_move_to_desktop(WM *wm, XEvent *e, Arg arg)
 {
     all_move_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
+void change_to_desktop(WM *wm, XEvent *e, Arg arg)
 {
     change_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void all_change_to_desktop(WM *wm, XEvent *e, Func_arg arg)
+void all_change_to_desktop(WM *wm, XEvent *e, Arg arg)
 {
     all_change_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
+void attach_to_desktop(WM *wm, XEvent *e, Arg arg)
 {
     attach_to_desktop_n(wm, get_desktop_n(e, arg));
 }
 
-void attach_to_all_desktops(WM *wm, XEvent *e, Func_arg arg)
+void attach_to_all_desktops(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     attach_to_desktop_all(wm);
 }
 
-void all_attach_to_desktop(WM *wm, XEvent *e, Func_arg arg)
+void all_attach_to_desktop(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm);
     all_attach_to_desktop_n(get_desktop_n(e, arg));
 }
 
-void run_cmd(WM *wm, XEvent *e, Func_arg arg)
+void run_cmd(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     entry_clear(cmd_entry);
     entry_show(WIDGET(cmd_entry));
 }
 
-void set_color(WM *wm, XEvent *e, Func_arg arg)
+void set_color(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     entry_clear(color_entry);
     entry_show(WIDGET(color_entry));
 }
 
-void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
+void switch_wallpaper(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     srand((unsigned int)time(NULL));
@@ -283,13 +283,13 @@ void switch_wallpaper(WM *wm, XEvent *e, Func_arg arg)
         XFreePixmap(xinfo.display, pixmap);
 }
 
-void print_screen(WM *wm, XEvent *e, Func_arg arg)
+void print_screen(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
     print_area(xinfo.root_win, 0, 0, xinfo.screen_width, xinfo.screen_height);
 }
 
-void print_win(WM *wm, XEvent *e, Func_arg arg)
+void print_win(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
@@ -297,7 +297,7 @@ void print_win(WM *wm, XEvent *e, Func_arg arg)
         print_area(WIDGET_WIN(c->frame), 0, 0, WIDGET_W(c), WIDGET_H(c));
 }
 
-void toggle_compositor(WM *wm, XEvent *e, Func_arg arg)
+void toggle_compositor(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Window win=get_compositor();
@@ -305,5 +305,5 @@ void toggle_compositor(WM *wm, XEvent *e, Func_arg arg)
     if(win)
         XKillClient(xinfo.display, win);
     else
-        exec(wm, e, (Func_arg)SH_CMD((char *)cfg->compositor));
+        exec(wm, e, (Arg)SH_CMD((char *)cfg->compositor));
 }

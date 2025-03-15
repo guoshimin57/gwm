@@ -13,6 +13,7 @@
 #define DESKTOP_H
 
 #include "gwm.h"
+#include "client.h"
 
 struct desktop_tag // 虛擬桌面相關信息
 {
@@ -23,7 +24,7 @@ struct desktop_tag // 虛擬桌面相關信息
 };
 
 void init_desktop(WM *wm);
-unsigned int get_desktop_n(XEvent *e, Func_arg arg);
+unsigned int get_desktop_n(XEvent *e, Arg arg);
 void focus_desktop_n(WM *wm, unsigned int n);
 void move_to_desktop_n(WM *wm, unsigned int n);
 void all_move_to_desktop_n(WM *wm, unsigned int n);

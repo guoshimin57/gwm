@@ -17,7 +17,8 @@
 
 typedef enum // 窗口聚焦模式
 {
-    ENTER_FOCUS, CLICK_FOCUS,
+    ENTER_FOCUS, // 進入窗口即聚焦的模式
+    CLICK_FOCUS, // 點擊窗口才聚焦的模式
 } Focus_mode;
 
 // 說明：尺寸單位均爲像素
@@ -75,8 +76,6 @@ typedef struct
     const char *cmd_entry_hint; // 運行輸入框的提示文字
     const char *color_entry_hint; // 颜色輸入框的提示文字
     const char *compositor; // 合成管理器命令
-    const Keybind *keybind; // 按鍵功能綁定。有的鍵盤同時按多個鍵會衝突，故組合鍵宜盡量少
-    const Buttonbind *buttonbind; // 定位器按鈕功能綁定。
     const Rule *rule; // 窗口管理器對窗口的管理規則
 } Config;
 

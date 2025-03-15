@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "button.h"
+#include "bind_cfg.h"
 #include "config.h"
 #include "client.h"
 #include "entry.h"
@@ -66,7 +67,7 @@ static void handle_wm_name_notify(WM *wm, Window win, Atom atom);
 static void handle_wm_transient_for_notify(WM *wm, Window win);
 static void handle_selection_notify(WM *wm, XEvent *e);
 
-static event_handler_type event_handlers[LASTEvent]; // 事件處理器數組
+static Event_handler event_handlers[LASTEvent]; // 事件處理器數組
 
 void handle_events(WM *wm)
 {
@@ -87,7 +88,7 @@ void reg_event_handlers(WM *wm)
 {
     for(int i=0; i<LASTEvent; i++)
         event_handlers[i]=NULL;
-    wm->handle_event=handle_event;
+    wm->event_handler=handle_event;
 
     event_handlers[ButtonPress]      = handle_button_press;
     event_handlers[ButtonRelease]    = handle_button_release;
@@ -137,17 +138,17 @@ static void exec_buttonbind_func(WM *wm, XEvent *e)
         widget->state.active=1;
         widget->update_bg(widget);
     }
-    for(const Buttonbind *b=cfg->buttonbind; b->func; b++)
+    for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++)
     {
-        if( is_func_click(id, b, e)
-            && (is_drag_func(b->func) || get_valid_click(wm, CHOOSE, e, NULL)))
+        if( is_func_click(id, &BUTTONBIND[i], e)
+            && (is_drag_func(BUTTONBIND[i].func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
             if(id == CLIENT_WIN)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
             if(c && c!=CUR_FOC_CLI(wm))
                 focus_client(wm, c);
-            if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc || id==CLIENT_ICON) && b->func)
-                b->func(wm, e, b->arg);
+            if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc || id==CLIENT_ICON) && BUTTONBIND[i].func)
+                BUTTONBIND[i].func(wm, e, BUTTONBIND[i].arg);
         }
     }
 }
@@ -499,11 +500,11 @@ static void handle_key_press(WM *wm, XEvent *e)
         int n;
         KeySym *ks=XGetKeyboardMapping(xinfo.display, e->xkey.keycode, 1, &n);
 
-        for(const Keybind *kb=cfg->keybind; kb->func; kb++)
-            if( *ks == kb->keysym
-                && is_equal_modifier_mask(kb->modifier, e->xkey.state)
-                && kb->func)
-                kb->func(wm, e, kb->arg);
+        for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++)
+            if( *ks == KEYBIND[i].keysym
+                && is_equal_modifier_mask(KEYBIND[i].modifier, e->xkey.state)
+                && KEYBIND[i].func)
+                KEYBIND[i].func(wm, e, KEYBIND[i].arg);
         XFree(ks);
     }
 }
@@ -515,7 +516,7 @@ static void key_run_cmd(WM *wm, XKeyEvent *e)
 
     char cmd[BUFSIZ]={0};
     wcstombs(cmd, entry_get_text(cmd_entry), BUFSIZ);
-    exec(wm, NULL, (Func_arg)SH_CMD(cmd));
+    exec(wm, NULL, (Arg)SH_CMD(cmd));
     entry_clear(cmd_entry);
 }
 

@@ -187,19 +187,19 @@ bool is_layout_adjust_area(WM *wm, Window win, int x)
         && (is_main_sec_gap(wm, x) || is_main_fix_gap(wm, x)));
 }
 
-void change_to_preview(WM *wm, XEvent *e, Func_arg arg)
+void change_to_preview(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     change_layout(wm, PREVIEW);
 }
 
-void change_to_stack(WM *wm, XEvent *e, Func_arg arg)
+void change_to_stack(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     change_layout(wm, STACK);
 }
 
-void change_to_tile(WM *wm, XEvent *e, Func_arg arg)
+void change_to_tile(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     change_layout(wm, TILE);
@@ -251,7 +251,7 @@ void change_layout(WM *wm, Layout layout)
     taskbar_buttons_update_bg(wm->taskbar);
 }
 
-void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
+void adjust_layout_ratio(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(arg);
     if( DESKTOP(wm)->cur_layout!=TILE
@@ -271,7 +271,7 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Func_arg arg)
                 request_layout_update(), ox=nx;
         }
         else
-            wm->handle_event(wm, &ev);
+            wm->event_handler(wm, &ev);
     }while(!is_match_button_release(e, &ev));
     XUngrabPointer(xinfo.display, CurrentTime);
 }
@@ -290,13 +290,13 @@ static bool change_layout_ratio(WM *wm, int ox, int nx)
     return true;
 }
 
-void key_increase_main_area(WM *wm, XEvent *e, Func_arg arg)
+void key_increase_main_area(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     adjust_main_area(wm, (double)cfg->resize_inc/wm->workarea.w);
 }
 
-void key_decrease_main_area(WM *wm, XEvent *e, Func_arg arg)
+void key_decrease_main_area(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     adjust_main_area(wm, -(double)cfg->resize_inc/wm->workarea.w);
@@ -319,13 +319,13 @@ static void adjust_main_area(WM *wm, double change_ratio)
     }
 }
 
-void key_increase_fixed_area(WM *wm, XEvent *e, Func_arg arg)
+void key_increase_fixed_area(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     adjust_fixed_area(wm, (double)cfg->resize_inc/wm->workarea.w);
 }
 
-void key_decrease_fixed_area(WM *wm, XEvent *e, Func_arg arg)
+void key_decrease_fixed_area(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     adjust_fixed_area(wm, -(double)cfg->resize_inc/wm->workarea.w);

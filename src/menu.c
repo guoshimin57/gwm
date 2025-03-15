@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "drawable.h"
 #include "button.h"
 #include "menu.h"
 

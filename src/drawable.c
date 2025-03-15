@@ -12,6 +12,7 @@
 #include "gwm.h"
 #include "config.h"
 #include "prop.h"
+#include "ewmh.h"
 #include "drawable.h"
 
 static Pixmap create_pixmap_with_color(Drawable d, unsigned long color);

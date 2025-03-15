@@ -12,6 +12,7 @@
 #include "prop.h"
 #include "minimax.h"
 #include "client.h"
+#include "place.h"
 
 static void maximize(WM *wm, Max_way max_way);
 static void maximize_client(WM *wm, Client *c, Max_way max_way);
@@ -25,19 +26,19 @@ static Rect get_right_max_rect(const WM *wm);
 static Client *get_icon_client_head(void);
 static void set_fullscreen(WM *wm, Client *c);
 
-void minimize(WM *wm, XEvent *e, Func_arg arg)
+void minimize(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     iconify_client(wm, CUR_FOC_CLI(wm)); 
 }
 
-void deiconify(WM *wm, XEvent *e, Func_arg arg)
+void deiconify(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     deiconify_client(wm, CUR_FOC_CLI(wm)); 
 }
 
-void max_restore(WM *wm, XEvent *e, Func_arg arg)
+void max_restore(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=CUR_FOC_CLI(wm);
@@ -48,43 +49,43 @@ void max_restore(WM *wm, XEvent *e, Func_arg arg)
         maximize_client(wm, c, FULL_MAX);
 }
 
-void vert_maximize(WM *wm, XEvent *e, Func_arg arg)
+void vert_maximize(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     maximize(wm, VERT_MAX);
 }
 
-void horz_maximize(WM *wm, XEvent *e, Func_arg arg)
+void horz_maximize(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     maximize(wm, HORZ_MAX);
 }
 
-void top_maximize(WM *wm, XEvent *e, Func_arg arg)
+void top_maximize(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     maximize(wm, TOP_MAX);
 }
 
-void bottom_maximize(WM *wm, XEvent *e, Func_arg arg)
+void bottom_maximize(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     maximize(wm, BOTTOM_MAX);
 }
 
-void left_maximize(WM *wm, XEvent *e, Func_arg arg)
+void left_maximize(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     maximize(wm, LEFT_MAX);
 }
 
-void right_maximize(WM *wm, XEvent *e, Func_arg arg)
+void right_maximize(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     maximize(wm, RIGHT_MAX);
 }
 
-void full_maximize(WM *wm, XEvent *e, Func_arg arg)
+void full_maximize(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     maximize(wm, FULL_MAX);

@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     config.c：用戶配置gwm。
+ *     config.c：gwm通用配置。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,161 +9,25 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "wm_cfg.h"
 #include "font.h"
-#include "func.h"
-#include "minimax.h"
-#include "misc.h"
-#include "mvresize.h"
 #include "config.h"
 
-#define WM_KEY Mod4Mask // 窗口管理器的基本功能轉換鍵
-#define WM_SKEY (WM_KEY|ShiftMask) // 與WM_KEY功能相關功能轉換鍵，通常表示相反
-#define CMD_KEY (WM_KEY|Mod1Mask) // 與系統命令相關功能的轉換鍵
-#define SYS_KEY (WM_KEY|ControlMask) // 與系統相關的功能轉換鍵
-                                     
-#define GAME "wesnoth || flatpak run org.wesnoth.Wesnoth" // 打開遊戲程序
-#define PLAY_START "mplayer -shuffle ~/music/*" // 打開影音播放程序
-#define PLAY_TOGGLE TOGGLE_PROCESS_STATE(PLAY_START) // 切換影音播放程序啓停狀態
-#define PLAY_QUIT "kill -KILL $(ps -C '"PLAY_START"' -o pid=)" // 退出影音播放程序
-#define HELP /* 打開gwm手冊 */ \
-    "lxterminal -e 'man gwm' || xfce4-terminal -e 'man gwm' || xterm -e 'man gwm'"
-#define FILE_MANAGER "xdg-open ~" // 打開偏好的文件管理器
-#define BROWSER "xdg-open http://bing.com" // 打開偏好的網絡瀏覽器
-#define TERMINAL /* 打開終端模擬器 */ \
-    "lxterminal || xfce4-terminal || gnome-terminal || konsole5 || xterm"
-#define VOLUME_DOWN "amixer -q sset Master 10%-" // 調低音量
-#define VOLUME_UP "amixer -q sset Master 10%+" // 調高音量
-#define VOLUME_MAX "amixer -q sset Master 100%" // 調至最大音量
-#define VOLUME_TOGGLE "amixer -q sset Master toggle" // 靜音切換
-// 對於臺式機顯示器，應使用“xrandr --output HDMI-0 --brightness 0.5”之類的命令代替以下亮度調節命令
-#define LIGHT_DOWN "light -U 5" // 調低屏幕亮度
-#define LIGHT_UP "light -A 5" // 調高屏幕亮度
-#define LOGOUT "pkill -9 'startgwm|gwm'" // 注銷
+#define SET_TITLE_BUTTON_TEXT(type, text) /* 設置標題按鈕文字 */ \
+    cfg->title_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
+#define SET_TASKBAR_BUTTON_TEXT(type, text) /* 設置任務欄按鈕文字 */ \
+    cfg->taskbar_button_text[WIDGET_INDEX(type, TASKBAR_BUTTON)]=text
 
-/* 功能：設置與虛擬桌面相關的按鍵功能綁定。
- * 說明：邏輯功能轉換鍵掩碼的定義詳見<X11/X.h>，用xmodmap(1)命令可查看與功能
- * 轉換鍵符號的對應關系，當功能轉換鍵爲0時，表示不綁定任何功能轉換鍵。下同。
- * 鍵符號的定義詳見<X11/keysymdef.h>和<X11/XF86keysym.h>。下同。
- * 可綁定的函數詳見func.h，相應的函數參數詳見gwm.h。下同。
- * n=~0表示所有虛擬桌面，僅適用於attach_to_all_desktops。
- * 格式：
- *     功能轉換鍵掩碼     鍵符號 要綁定的函數             函數的參數
- */
-#define DESKTOP_KEYBIND(key, n)                                            \
-    {WM_KEY|ShiftMask,      key, focus_desktop,           {.desktop_n=n}}, \
-    {WM_KEY,	            key, move_to_desktop,         {.desktop_n=n}}, \
-    {WM_KEY|Mod1Mask,	    key, all_move_to_desktop,     {.desktop_n=n}}, \
-    {ControlMask,           key, change_to_desktop,       {.desktop_n=n}}, \
-    {ControlMask|Mod1Mask,  key, all_change_to_desktop,   {.desktop_n=n}}, \
-    {Mod1Mask,              key, attach_to_desktop,       {.desktop_n=n}}, \
-    {Mod1Mask|ShiftMask,    key, all_attach_to_desktop,   {.desktop_n=n}}, \
-    {ShiftMask|ControlMask, key, attach_to_all_desktops,  {.desktop_n=n}}
+#define SET_ACT_CENTER_MENU_ITEM(id, icon, symbol, label) /* 設置操作中心菜單項圖標和標籤 */ \
+    cfg->act_center_item_icon[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=icon, \
+    cfg->act_center_item_symbol[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=symbol, \
+    cfg->act_center_item_label[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=label
+
+#define SET_CLIENT_MENU_ITEM(id, icon, symbol, label) /* 設置客戶窗口菜單項圖標和標籤 */ \
+    cfg->client_menu_item_icon[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=icon, \
+    cfg->client_menu_item_symbol[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=symbol, \
+    cfg->client_menu_item_label[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=label
 
 Config *cfg=NULL;
-
-/* 功能：設置按鍵功能綁定。
- * 說明：Keybind的定義詳見gwm.h。
- */
-static const Keybind keybind[] =
-{
-/*  功能轉換鍵掩碼  鍵符號        要綁定的函數                 函數的參數 */
-    {0,             XK_F1,        exec,                        SH_CMD(HELP)},
-    {0, XF86XK_MonBrightnessDown, exec,                        SH_CMD(LIGHT_DOWN)},
-    {0, XF86XK_MonBrightnessUp,   exec,                        SH_CMD(LIGHT_UP)},
-    {CMD_KEY,       XK_f,         exec,                        SH_CMD(FILE_MANAGER)},
-    {CMD_KEY,       XK_g,         exec,                        SH_CMD(GAME)},
-    {CMD_KEY,       XK_q,         exec,                        SH_CMD("qq")},
-    {CMD_KEY,       XK_t,         exec,                        SH_CMD(TERMINAL)},
-    {CMD_KEY,       XK_w,         exec,                        SH_CMD(BROWSER)},
-    {CMD_KEY,       XK_F1,        exec,                        SH_CMD(PLAY_START)},
-    {CMD_KEY,       XK_F2,        exec,                        SH_CMD(PLAY_TOGGLE)},
-    {CMD_KEY,       XK_F3,        exec,                        SH_CMD(PLAY_QUIT)},
-    {SYS_KEY,       XK_F1,        exec,                        SH_CMD(VOLUME_DOWN)},
-    {SYS_KEY,       XK_F2,        exec,                        SH_CMD(VOLUME_UP)},
-    {SYS_KEY,       XK_F3,        exec,                        SH_CMD(VOLUME_MAX)},
-    {SYS_KEY,       XK_F4,        exec,                        SH_CMD(VOLUME_TOGGLE)},
-    {SYS_KEY,       XK_l,         exec,                        SH_CMD(LOGOUT)},
-    {SYS_KEY,       XK_p,         exec,                        SH_CMD("poweroff")},
-    {SYS_KEY,       XK_r,         exec,                        SH_CMD("reboot")},
-    {WM_KEY,        XK_k,         key_move_up,                 {0}},
-    {WM_KEY,        XK_j,         key_move_down,               {0}},
-    {WM_KEY,        XK_h,         key_move_left,               {0}},
-    {WM_KEY,        XK_l,         key_move_right,              {0}},
-    {WM_KEY,        XK_Up,        key_resize_up2up,            {0}},
-    {WM_SKEY,       XK_Up,        key_resize_up2down,          {0}},
-    {WM_KEY,        XK_Down,      key_resize_down2down,        {0}},
-    {WM_SKEY,       XK_Down,      key_resize_down2up,          {0}},
-    {WM_KEY,        XK_Left,      key_resize_left2left,        {0}},
-    {WM_SKEY,       XK_Left,      key_resize_left2right,       {0}},
-    {WM_KEY,        XK_Right,     key_resize_right2right,      {0}},
-    {WM_SKEY,       XK_Right,     key_resize_right2left,       {0}},
-    {WM_KEY,        XK_F1,        change_to_main,              {0}},
-    {WM_KEY,        XK_F2,        change_to_second,            {0}},
-    {WM_KEY,        XK_F3,        change_to_fixed,             {0}},
-    {WM_KEY,        XK_F4,        change_to_float,             {0}},
-    {WM_KEY,        XK_Return,    choose_client,               {0}},
-    {WM_KEY,        XK_Tab,       next_client,                 {0}},
-    {WM_SKEY,       XK_Tab,       prev_client,                 {0}},
-    {WM_KEY,        XK_c,         close_client,                {0}},
-    {WM_KEY,        XK_p,         change_to_preview,           {0}},
-    {WM_KEY,        XK_s,         change_to_stack,             {0}},
-    {WM_KEY,        XK_t,         change_to_tile,              {0}},
-    {WM_KEY,        XK_i,         increase_main_n,             {0}},
-    {WM_SKEY,       XK_i,         decrease_main_n,             {0}},
-    {WM_KEY,        XK_m,         key_increase_main_area,      {0}},
-    {WM_SKEY,       XK_m,         key_decrease_main_area,      {0}},
-    {WM_KEY,        XK_x,         key_increase_fixed_area,     {0}},
-    {WM_SKEY,       XK_x,         key_decrease_fixed_area,     {0}},
-    {WM_KEY,        XK_Page_Down, next_desktop,                {0}},
-    {WM_KEY,        XK_Page_Up,   prev_desktop,                {0}},
-    {0,             XK_Print,     print_screen,                {0}},
-    {WM_KEY,        XK_Print,     print_win,                   {0}},
-    {WM_KEY,        XK_r,         run_cmd,                     {0}},
-    {WM_KEY,        XK_Delete,    quit_wm,                     {0}},
-    DESKTOP_KEYBIND(XK_0, ~0),
-    DESKTOP_KEYBIND(XK_1, 0), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */
-    DESKTOP_KEYBIND(XK_2, 1),
-    DESKTOP_KEYBIND(XK_3, 2),
-    {0} // 哨兵值，表示結束，切勿刪改之
-};
-
-/* 功能：設置與虛擬桌面相關的定位器按鈕功能綁定。
- * 說明：可以用xev(1)命令來檢測定位器按鈕。
- */
-#define DESKTOP_BUTTONBIND(n)                                                              \
-    /* 虛擬桌面n                    功能轉換鍵  定位器按鈕 要綁定的函數       函數的參數 */\
-    {DESKTOPN_BUTTON(n),                    0,    Button1, focus_desktop,          {0}},   \
-    {DESKTOPN_BUTTON(n),          ControlMask,    Button1, change_to_desktop,      {0}},   \
-    {DESKTOPN_BUTTON(n), Mod1Mask|ControlMask,    Button1, all_change_to_desktop,  {0}},   \
-    {DESKTOPN_BUTTON(n),                    0,    Button2, attach_to_desktop,      {0}},   \
-    {DESKTOPN_BUTTON(n),             Mod1Mask,    Button2, all_attach_to_desktop,  {0}},   \
-    {DESKTOPN_BUTTON(n),            ShiftMask,    Button2, attach_to_all_desktops, {0}},   \
-    {DESKTOPN_BUTTON(n),                    0,    Button3, move_to_desktop,        {0}},   \
-    {DESKTOPN_BUTTON(n),             Mod1Mask,    Button3, all_move_to_desktop,    {0}}
-
-/* 功能：設置定位器按鈕功能綁定。
- * 說明：Buttonbind的定義詳見gwm.h。
- */
-static const Buttonbind buttonbind[] =
-{
-    WM_BUTTONBIND,
-    DESKTOP_BUTTONBIND(0), 
-    DESKTOP_BUTTONBIND(1), 
-    DESKTOP_BUTTONBIND(2), 
-
-    /* 構件標識        功能轉換鍵 定位器按鈕 要綁定的函數                函數的參數 */
-    {DESKTOP_BUTTON,       WM_KEY, Button2,  close_all_clients,          {0}},
-    {CLIENT_WIN,           WM_KEY, Button1,  pointer_move,               {0}},
-    {CLIENT_WIN,          WM_SKEY, Button1,  pointer_resize,             {0}},
-    {CLIENT_WIN,           WM_KEY, Button2,  pointer_change_place,       {0}},
-    {CLIENT_WIN,           WM_KEY, Button3,  pointer_swap_clients,       {0}},
-    {CLIENT_WIN,                0, Button3,  choose_client,              {0}},
-    {CLIENT_ICON,               0, Button2,  pointer_change_place,       {0}},
-    {CLIENT_ICON,          WM_KEY, Button2,  close_client,               {0}},
-    {CLIENT_ICON,               0, Button3,  pointer_swap_clients,       {0}},
-    {0} // 哨兵值，表示結束，切勿刪改之
-};
 
 /* 功能：設置窗口管理器規則。
  * 說明：Rule的定義詳見gwm.h。可通過xprop命令查看客戶程序類型和客戶程序名稱、標題。其結果表示爲：
@@ -392,8 +256,6 @@ static void config_misc(void)
     cfg->cmd_entry_hint=_("請輸入命令，然後按回車執行");
     cfg->color_entry_hint=_("請輸入系統界面主色調的顏色名（支持英文顏色名和十六进制顏色名），然後按回車執行");
     cfg->compositor="picom";
-    cfg->keybind=keybind;
-    cfg->buttonbind=buttonbind;
     cfg->rule=rule;
 }
 

@@ -15,13 +15,13 @@
 #include "gwm.h"
 #include "client.h"
 
-void pointer_change_place(WM *wm, XEvent *e, Func_arg arg);
-void change_to_main(WM *wm, XEvent *e, Func_arg arg);
-void change_to_second(WM *wm, XEvent *e, Func_arg arg);
-void change_to_fixed(WM *wm, XEvent *e, Func_arg arg);
-void change_to_float(WM *wm, XEvent *e, Func_arg arg);
-void pointer_swap_clients(WM *wm, XEvent *e, Func_arg arg);
-void show_desktop(WM *wm, XEvent *e, Func_arg arg);
+void pointer_change_place(WM *wm, XEvent *e, Arg arg);
+void change_to_main(WM *wm, XEvent *e, Arg arg);
+void change_to_second(WM *wm, XEvent *e, Arg arg);
+void change_to_fixed(WM *wm, XEvent *e, Arg arg);
+void change_to_float(WM *wm, XEvent *e, Arg arg);
+void pointer_swap_clients(WM *wm, XEvent *e, Arg arg);
+void show_desktop(WM *wm, XEvent *e, Arg arg);
 void toggle_showing_desktop_mode(WM *wm, bool show);
 void move_client(WM *wm, Client *from, Client *to, Place_type type);
 bool move_client_node(WM *wm, Client *from, Client *to, Place_type type);

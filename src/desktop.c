@@ -37,7 +37,7 @@ void init_desktop(WM *wm)
     }
 }
 
-unsigned int get_desktop_n(XEvent *e, Func_arg arg)
+unsigned int get_desktop_n(XEvent *e, Arg arg)
 {
     if(e->type == KeyPress)
         return (arg.desktop_n<DESKTOP_N || arg.desktop_n==~0U) ? arg.desktop_n : 0;

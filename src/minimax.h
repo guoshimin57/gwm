@@ -13,17 +13,18 @@
 #define MINIMAX_H
 
 #include "gwm.h"
+#include "client.h"
 
-void minimize(WM *wm, XEvent *e, Func_arg arg);
-void deiconify(WM *wm, XEvent *e, Func_arg arg);
-void max_restore(WM *wm, XEvent *e, Func_arg arg);
-void vert_maximize(WM *wm, XEvent *e, Func_arg arg);
-void horz_maximize(WM *wm, XEvent *e, Func_arg arg);
-void top_maximize(WM *wm, XEvent *e, Func_arg arg);
-void bottom_maximize(WM *wm, XEvent *e, Func_arg arg);
-void left_maximize(WM *wm, XEvent *e, Func_arg arg);
-void right_maximize(WM *wm, XEvent *e, Func_arg arg);
-void full_maximize(WM *wm, XEvent *e, Func_arg arg);
+void minimize(WM *wm, XEvent *e, Arg arg);
+void deiconify(WM *wm, XEvent *e, Arg arg);
+void max_restore(WM *wm, XEvent *e, Arg arg);
+void vert_maximize(WM *wm, XEvent *e, Arg arg);
+void horz_maximize(WM *wm, XEvent *e, Arg arg);
+void top_maximize(WM *wm, XEvent *e, Arg arg);
+void bottom_maximize(WM *wm, XEvent *e, Arg arg);
+void left_maximize(WM *wm, XEvent *e, Arg arg);
+void right_maximize(WM *wm, XEvent *e, Arg arg);
+void full_maximize(WM *wm, XEvent *e, Arg arg);
 void restore_client(WM *wm, Client *c);
 void iconify_client(WM *wm, Client *c);
 void deiconify_client(WM *wm, Client *c);

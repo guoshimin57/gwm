@@ -16,9 +16,8 @@
 #include "ewmh.h"
 #include "frame.h"
 #include "list.h"
-#include "place.h"
 
-struct client_tag // 客戶窗口相關信息
+typedef struct client_tag // 客戶窗口相關信息
 {
     Widget base;
     Frame *frame; // 客戶窗口裝飾
@@ -36,7 +35,7 @@ struct client_tag // 客戶窗口相關信息
     // 分別爲主窗口節點、亚組組長節點（同屬一個程序實例的客戶構成一個亞組）
     struct client_tag *owner, *subgroup_leader;
     List list;
-};
+} Client;
 
 #define subgroup_for_each(c, leader) \
     for(Client *c=leader;\
