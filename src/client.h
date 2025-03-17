@@ -71,7 +71,6 @@ typedef struct client_tag // 客戶窗口相關信息
 Client *get_clients(void);
 void add_client(WM *wm, Window win);
 void set_all_net_client_list(void);
-void set_win_rect(Client *c);
 Rect get_title_area_rect(Client *c);
 void set_transient_win_rect(Client *c);
 int get_clients_n(Place_type type, bool count_icon, bool count_trans, bool count_all_desktop);
@@ -110,5 +109,7 @@ void set_client_rect_by_outline(Client *c, int x, int y, int w, int h);
 void set_client_rect_by_frame(Client *c);
 void set_frame_rect_by_client(Client *c);
 bool is_exist_client(Client *c);
+Client *get_new_client(void);
+bool is_new_client(Client *c);
 
 #endif

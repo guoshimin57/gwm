@@ -69,9 +69,7 @@ Frame *frame_new(Widget *parent, int x, int y, int w, int h, int titlebar_h, int
 
 static void frame_ctor(Frame *frame, Widget *parent, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
 {
-    int fx=x-border_w, fy=y-titlebar_h-border_w, fw=w, fh=h+titlebar_h;
-
-    widget_ctor(WIDGET(frame), NULL, WIDGET_TYPE_FRAME, CLIENT_FRAME, fx, fy, fw, fh);
+    widget_ctor(WIDGET(frame), NULL, WIDGET_TYPE_FRAME, CLIENT_FRAME, x, y, w, h);
     widget_set_border_width(WIDGET(frame), border_w);
     widget_set_border_color(WIDGET(frame), get_widget_color(WIDGET_STATE(frame)));
     frame->cwin=WIDGET_WIN(parent);

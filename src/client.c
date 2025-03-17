@@ -20,29 +20,18 @@
 #include "prop.h"
 #include "client.h"
 
-
 static Client *new_client(Window win);
 static bool has_decoration(const Client *c);
 static void set_default_desktop_mask(Client *c);
 static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static void set_default_place_type(Client *c);
-static void set_default_win_rect(Client *c);
-static void fix_win_rect_by_attr(Client *c);
-static void fix_transient_win_size(Client *c);
-static void fix_transient_win_pos(Client *c);
-static void fix_win_rect_by_hint(Client *c);
-static void fix_win_pos_by_hint(Client *c, const XSizeHints *hint);
-static void fix_win_rect_by_workarea(Client *c);
-static void fix_win_size_by_workarea(Client *c, const Rect *workarea);
-static void fix_win_pos_by_workarea(Client *c, const Rect *workarea);
-static void fix_dialog_win_rect(Client *c, const Rect *workarea);
-static void fix_win_rect_by_frame(Client *c);
 static Window get_top_win(WM *wm, Client *c);
 static void update_focus_client_pointer(WM *wm, Client *c);
 static bool is_map_client( Client *c);
 static Client *get_first_map_client(void);
 static Client *get_first_map_diff_client(Client *key);
+static void set_default_win_rect(Client *c);
 static Client *clients=NULL;
 
 Client *get_clients(void)
@@ -59,10 +48,9 @@ void add_client(WM *wm, Window win)
     grab_buttons(WIDGET_WIN(c));
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
-    set_win_rect(c);
     save_place_info_of_client(c);
-    c->frame=frame_new(WIDGET(c),
-        WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c),
+    set_default_win_rect(c);
+    c->frame=frame_new(WIDGET(c), 0, 0, 1, 1,
         c->decorative ? get_font_height_by_pad() : 0,
         c->decorative ? cfg->border_width : 0,
         c->title_text, c->image);
@@ -172,120 +160,6 @@ static void set_default_place_type(Client *c)
     else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
     else if(is_win_state_max(c->win_state)) c->place_type = FLOAT_LAYER;
     else                             c->place_type = TILE_LAYER_MAIN;  
-}
-
-void set_win_rect(Client *c)
-{
-    set_default_win_rect(c);
-    fix_win_rect_by_attr(c);
-    fix_transient_win_size(c);
-    fix_win_rect_by_hint(c);
-    fix_transient_win_pos(c);
-    fix_win_rect_by_workarea(c);
-    fix_win_rect_by_frame(c);
-}
-
-static void set_default_win_rect(Client *c)
-{
-    WIDGET_W(c)=xinfo.screen_width/4;
-    WIDGET_H(c)=xinfo.screen_height/4;
-    WIDGET_X(c)=(xinfo.screen_width-WIDGET_W(c))/2;
-    WIDGET_Y(c)=(xinfo.screen_height-WIDGET_H(c))/2;
-}
-
-static void fix_win_rect_by_attr(Client *c)
-{
-    XWindowAttributes a;
-    if(XGetWindowAttributes(xinfo.display, WIDGET_WIN(c), &a))
-        WIDGET_X(c)=a.x, WIDGET_Y(c)=a.y, WIDGET_W(c)=a.width, WIDGET_H(c)=a.height;
-}
-
-static void fix_transient_win_size(Client *c)
-{
-    if(c->owner)
-    {
-        WIDGET_W(c)=WIDGET_W(c->owner)/2;
-        WIDGET_H(c)=WIDGET_H(c->owner)/2;
-    }
-}
-
-static void fix_transient_win_pos(Client *c)
-{
-    if(c->owner)
-    {
-        WIDGET_X(c)=WIDGET_X(c->owner)+(WIDGET_W(c->owner)-WIDGET_W(c))/2;
-        WIDGET_Y(c)=WIDGET_Y(c->owner)+(WIDGET_H(c->owner)-WIDGET_H(c))/2;
-    }
-}
-
-static void fix_win_rect_by_hint(Client *c)
-{
-    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
-    fix_win_size_by_hint(&hint, &WIDGET_W(c), &WIDGET_H(c));
-    fix_win_pos_by_hint(c, &hint);
-}
-
-static void fix_win_pos_by_hint(Client *c, const XSizeHints *hint)
-{
-    if(!c->owner && ((hint->flags & USPosition) || (hint->flags & PPosition)))
-        WIDGET_X(c)=hint->x, WIDGET_Y(c)=hint->y;
-}
-
-static void fix_win_rect_by_workarea(Client *c)
-{
-    if(c->win_type.desktop || c->win_type.dock || c->win_state.fullscreen)
-        return;
-
-    Rect r;
-    get_net_workarea(&r.x, &r.y, &r.w, &r.h);
-    fix_win_size_by_workarea(c, &r);
-    fix_win_pos_by_workarea(c, &r);
-    fix_dialog_win_rect(c, &r);
-}
-
-static void fix_win_size_by_workarea(Client *c, const Rect *workarea)
-{
-    if(WIDGET_W(c) > workarea->w)
-        WIDGET_W(c)=workarea->w;
-    if(WIDGET_H(c) > workarea->h)
-        WIDGET_H(c)=workarea->h;
-}
-
-static void fix_win_pos_by_workarea(Client *c, const Rect *workarea)
-{
-    int w=WIDGET_W(c), h=WIDGET_H(c),
-        wx=workarea->x, wy=workarea->y, ww=workarea->w, wh=workarea->h;
-    if(WIDGET_X(c) >= wx+ww-w) // 窗口在工作區右邊出界
-        WIDGET_X(c)=wx+ww-w;
-    if(WIDGET_X(c) < wx) // 窗口在工作區左邊出界
-        WIDGET_X(c)=wx;
-    if(WIDGET_Y(c) >= wy+wh-h) // 窗口在工作區下邊出界
-        WIDGET_Y(c)=wy+wh-h;
-    if(WIDGET_Y(c) < wy) // 窗口在工作區上邊出界
-        WIDGET_Y(c)=wy;
-}
-
-static void fix_dialog_win_rect(Client *c, const Rect *workarea)
-{
-    if(!c->owner && c->win_type.dialog)
-    {
-        WIDGET_W(c)=workarea->w/2;
-        WIDGET_H(c)=workarea->h/2;
-        WIDGET_X(c)=workarea->x+(workarea->w-WIDGET_W(c))/2;
-        WIDGET_Y(c)=workarea->y+(workarea->h-WIDGET_H(c))/2;
-    }
-}
-
-static void fix_win_rect_by_frame(Client *c)
-{
-    if(c->frame)
-        return;
-
-    int bw = c->decorative  ? cfg->border_width : 0,
-        bh = c->decorative ? get_font_height_by_pad() : 0;
-    WIDGET_X(c) += bw;
-    WIDGET_Y(c) += bw+bh;
-    WIDGET_H(c) -= bh;
 }
 
 int get_clients_n(Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)
@@ -550,6 +424,17 @@ static Client *get_first_map_diff_client(Client *key)
     return NULL;
 }
 
+static void set_default_win_rect(Client *c)
+{
+    XWindowAttributes a;
+    if(XGetWindowAttributes(xinfo.display, WIDGET_WIN(c), &a))
+        WIDGET_X(c)=a.x, WIDGET_Y(c)=a.y,
+        WIDGET_W(c)=a.width, WIDGET_H(c)=a.height;
+    else
+        WIDGET_X(c)=xinfo.screen_width/4, WIDGET_Y(c)=xinfo.screen_height/4,
+        WIDGET_W(c)=xinfo.screen_width/2, WIDGET_H(c)=xinfo.screen_height/2;
+}
+
 void save_place_info_of_client(Client *c)
 {
     c->ox=WIDGET_X(c), c->oy=WIDGET_Y(c), c->ow=WIDGET_W(c), c->oh=WIDGET_H(c);
@@ -613,7 +498,7 @@ Window *get_client_win_list(int *n)
     }
     else if(new_n < old_n) // 刪除了客戶窗口
     {
-        wlist=Malloc(--*n*sizeof(Window));
+        wlist=Malloc(new_n*sizeof(Window));
         for(i=0, j=0; i<old_n; i++)
             if(win_to_client(old_list[i]))
                 wlist[j++]=old_list[i];
@@ -775,4 +660,17 @@ bool is_exist_client(Client *c)
         if(p == c)
             return true;
     return false;
+}
+
+Client *get_new_client(void)
+{
+    clients_for_each(c)
+        if(is_new_client(c))
+            return c;
+    return NULL;
+}
+
+bool is_new_client(Client *c)
+{
+    return WIDGET_W(c->frame)==1 && WIDGET_H(c->frame)==1;
 }

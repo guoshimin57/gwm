@@ -18,14 +18,24 @@
 #include "taskbar.h"
 
 static void set_preview_layout(WM *wm);
-static void set_rect_of_main_win_for_preview(WM *wm);
-static void set_stack_layout(void);
+static void set_stack_layout(WM *wm);
 static void set_tile_layout(WM *wm);
 static void fix_place_type_for_tile(WM *wm);
-static void set_rect_of_tile_win_for_tiling(WM *wm);
-static void set_rect_of_transient_win_for_tiling(void);
+static void set_wins_rect_for_tiling(WM *wm);
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh);
 static void update_titlebars_layout(void);
+static void fix_wins_rect(WM *wm);
+static void fix_win_rect(WM *wm, Client *c);
+static bool should_fix_win_rect(WM *wm, Client *c);
+static void fix_transient_win_size(Client *c);
+static void fix_transient_win_pos(Client *c);
+static void fix_win_rect_by_hint(Client *c);
+static void fix_win_pos_by_hint(Client *c, const XSizeHints *hint);
+static void fix_win_rect_by_workarea(Client *c);
+static void fix_win_size_by_workarea(Client *c, const Rect *workarea);
+static void fix_win_pos_by_workarea(Client *c, const Rect *workarea);
+static void fix_dialog_win_rect(Client *c, const Rect *workarea);
+static void fix_win_rect_by_frame(Client *c);
 static bool change_layout_ratio(WM *wm, int ox, int nx);
 static void adjust_main_area(WM *wm, double change_ratio);
 static void adjust_fixed_area(WM *wm, double change_ratio);
@@ -38,7 +48,7 @@ void update_layout(WM *wm)
     switch(DESKTOP(wm)->cur_layout)
     {
         case PREVIEW: set_preview_layout(wm); break;
-        case STACK: set_stack_layout(); break;
+        case STACK: set_stack_layout(wm); break;
         case TILE: set_tile_layout(wm); break;
     }
     clients_for_each(c)
@@ -47,12 +57,6 @@ void update_layout(WM *wm)
 }
 
 static void set_preview_layout(WM *wm)
-{
-    set_rect_of_main_win_for_preview(wm);
-    set_rect_of_transient_win_for_tiling();
-}
-
-static void set_rect_of_main_win_for_preview(WM *wm)
 {
     int n=get_clients_n(ANY_PLACE, true, false, false);
     if(n == 0)
@@ -70,20 +74,24 @@ static void set_rect_of_main_win_for_preview(WM *wm)
     clients_for_each_reverse(c)
         if(is_on_cur_desktop(c->desktop_mask) && !c->owner && (n--)>=0)
             set_client_rect_by_outline(c, wx+(n%cols)*w, wy+(n/cols)*h, w, h);
+
+    clients_for_each(c)
+        if(is_on_cur_desktop(c->desktop_mask) && c->owner)
+            fix_transient_win_pos(c);
+
+    fix_wins_rect(wm);
 }
 
-static void set_stack_layout(void)
+static void set_stack_layout(WM *wm)
 {
-    clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
-            set_win_rect(c);
+    fix_wins_rect(wm);
 }
 
 static void set_tile_layout(WM *wm)
 {
     fix_place_type_for_tile(wm);
-    set_rect_of_tile_win_for_tiling(wm);
-    set_rect_of_transient_win_for_tiling();
+    set_wins_rect_for_tiling(wm);
+    fix_wins_rect(wm);
 }
 
 static void fix_place_type_for_tile(WM *wm)
@@ -107,7 +115,7 @@ static void fix_place_type_for_tile(WM *wm)
  *        若任務欄在下方，則窗口間隔設置在前窗尾部，否則設置在前窗開頭；
  *     3、在次要區域內設置其與主區域的窗口間隔；
  *     4、在固定區域內設置其與主區域的窗口間隔。 */
-static void set_rect_of_tile_win_for_tiling(WM *wm)
+static void set_wins_rect_for_tiling(WM *wm)
 {
     int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=cfg->win_gap, 
         wx=wm->workarea.x, wy=wm->workarea.y, wh=wm->workarea.h;
@@ -118,7 +126,7 @@ static void set_rect_of_tile_win_for_tiling(WM *wm)
     {
         if(is_tile_client(c))
         {
-            int x, y, w, h;
+            int x=0, y=0, w=0, h=0;
             Place_type type=c->place_type;
             if(type == TILE_LAYER_FIXED)
                 x=wx+mw+sw+g, y=wy+i++*fh+y_offset, w=fw-g, h=fh-g;
@@ -131,14 +139,6 @@ static void set_rect_of_tile_win_for_tiling(WM *wm)
             set_client_rect_by_outline(c, x, y, w, h);
         }
     }
-}
-
-/* 平鋪布局模式的臨時窗口位於其主窗之上並居中 */
-static void set_rect_of_transient_win_for_tiling(void)
-{
-    clients_for_each_reverse(c)
-        if(is_on_cur_desktop(c->desktop_mask) && c->owner)
-            set_win_rect(c);
 }
 
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
@@ -162,6 +162,135 @@ static void update_titlebars_layout(void)
     clients_for_each(c)
         if(c->decorative  && is_on_cur_desktop(c->desktop_mask))
             titlebar_update_layout(c->frame);
+}
+
+static void fix_wins_rect(WM *wm)
+{
+    Client *nc=get_new_client();
+
+    if(nc)
+        fix_win_rect(wm, nc);
+    else
+        clients_for_each(c)
+            if(is_on_cur_desktop(c->desktop_mask))
+                fix_win_rect(wm, c);
+}
+
+static void fix_win_rect(WM *wm, Client *c)
+{
+    if(!should_fix_win_rect(wm, c))
+        return;
+
+    fix_transient_win_size(c);
+    fix_win_rect_by_hint(c);
+    fix_transient_win_pos(c);
+    fix_win_rect_by_workarea(c);
+    fix_win_rect_by_frame(c);
+}
+
+static bool should_fix_win_rect(WM *wm, Client *c)
+{
+    if(!is_new_client(c))
+        return false;
+
+    Place_type t=c->place_type;
+    switch(DESKTOP(wm)->cur_layout)
+    {
+        case PREVIEW: return false;
+        case STACK:   return t==ABOVE_LAYER || t==FLOAT_LAYER || t==BELOW_LAYER
+                      || is_normal_layer(t);
+        case TILE:    return t==ABOVE_LAYER || t==FLOAT_LAYER || t==BELOW_LAYER
+                      || c->owner;
+        default:      return false;
+    }
+}
+
+static void fix_transient_win_size(Client *c)
+{
+    if(c->owner)
+    {
+        WIDGET_W(c)=WIDGET_W(c->owner)/2;
+        WIDGET_H(c)=WIDGET_H(c->owner)/2;
+    }
+}
+
+static void fix_transient_win_pos(Client *c)
+{
+    if(c->owner)
+    {
+        WIDGET_X(c)=WIDGET_X(c->owner)+(WIDGET_W(c->owner)-WIDGET_W(c))/2;
+        WIDGET_Y(c)=WIDGET_Y(c->owner)+(WIDGET_H(c->owner)-WIDGET_H(c))/2;
+    }
+}
+
+static void fix_win_rect_by_hint(Client *c)
+{
+    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
+    fix_win_size_by_hint(&hint, &WIDGET_W(c), &WIDGET_H(c));
+    fix_win_pos_by_hint(c, &hint);
+}
+
+static void fix_win_pos_by_hint(Client *c, const XSizeHints *hint)
+{
+    if(!c->owner && ((hint->flags & USPosition) || (hint->flags & PPosition)))
+        WIDGET_X(c)=hint->x, WIDGET_Y(c)=hint->y;
+}
+
+static void fix_win_rect_by_workarea(Client *c)
+{
+    if(c->win_type.desktop || c->win_type.dock || c->win_state.fullscreen)
+        return;
+
+    Rect r;
+    get_net_workarea(&r.x, &r.y, &r.w, &r.h);
+    fix_win_size_by_workarea(c, &r);
+    fix_win_pos_by_workarea(c, &r);
+    fix_dialog_win_rect(c, &r);
+}
+
+static void fix_win_size_by_workarea(Client *c, const Rect *workarea)
+{
+    if(WIDGET_W(c) > workarea->w)
+        WIDGET_W(c)=workarea->w;
+    if(WIDGET_H(c) > workarea->h)
+        WIDGET_H(c)=workarea->h;
+}
+
+static void fix_win_pos_by_workarea(Client *c, const Rect *workarea)
+{
+    int w=WIDGET_W(c), h=WIDGET_H(c),
+        wx=workarea->x, wy=workarea->y, ww=workarea->w, wh=workarea->h;
+    if(WIDGET_X(c) >= wx+ww-w) // 窗口在工作區右邊出界
+        WIDGET_X(c)=wx+ww-w;
+    if(WIDGET_X(c) < wx) // 窗口在工作區左邊出界
+        WIDGET_X(c)=wx;
+    if(WIDGET_Y(c) >= wy+wh-h) // 窗口在工作區下邊出界
+        WIDGET_Y(c)=wy+wh-h;
+    if(WIDGET_Y(c) < wy) // 窗口在工作區上邊出界
+        WIDGET_Y(c)=wy;
+}
+
+static void fix_dialog_win_rect(Client *c, const Rect *workarea)
+{
+    if(!c->owner && c->win_type.dialog)
+    {
+        WIDGET_W(c)=workarea->w/2;
+        WIDGET_H(c)=workarea->h/2;
+        WIDGET_X(c)=workarea->x+(workarea->w-WIDGET_W(c))/2;
+        WIDGET_Y(c)=workarea->y+(workarea->h-WIDGET_H(c))/2;
+    }
+}
+
+static void fix_win_rect_by_frame(Client *c)
+{
+    if(c->frame)
+        return;
+
+    int bw = WIDGET_BORDER_W(c->frame),
+        th = frame_get_titlebar_height(c->frame);
+    WIDGET_X(c) += bw;
+    WIDGET_Y(c) += bw+th;
+    WIDGET_H(c) -= th;
 }
 
 bool is_main_sec_gap(WM *wm, int x)
