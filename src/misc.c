@@ -12,6 +12,7 @@
 #include "gwm.h"
 #include "prop.h"
 #include "icccm.h"
+#include "ewmh.h"
 #include "misc.h"
 
 void *Malloc(size_t size)

@@ -21,11 +21,13 @@
 #include "image.h"
 #include "place.h"
 #include "prop.h"
+#include "focus.h"
 #include "taskbar.h"
+#include "desktop.h"
 #include "func.h"
 
 static bool is_valid_click(XEvent *oe, XEvent *ne);
-static void adjust_n_main_max(WM *wm, int n);
+static void adjust_n_main_max(int n);
 
 bool is_drag_func(void (*func)(WM *, XEvent *, Arg))
 {
@@ -70,13 +72,13 @@ static bool is_valid_click(XEvent *oe, XEvent *ne)
 void choose_client(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    Client *c=CUR_FOC_CLI(wm);
+    Client *c=get_cur_focus_client();
 
     if(is_iconic_client(c))
-        deiconify_client(wm, c);
+        deiconify_client(c);
 
-    if(DESKTOP(wm)->cur_layout == PREVIEW)
-        change_layout(wm, DESKTOP(wm)->prev_layout);
+    if(get_cur_layout() == PREVIEW)
+        change_layout(wm, get_prev_layout());
 }
 
 void exec(WM *wm, XEvent *e, Arg arg)
@@ -97,7 +99,7 @@ void clear_wm(WM *wm)
     clients_for_each_safe(c)
     {
         XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
-        del_client(wm, c, true);
+        client_del(c, true);
     }
     free_all_images();
     XDestroyWindow(xinfo.display, xinfo.hint_win);
@@ -106,8 +108,7 @@ void clear_wm(WM *wm)
     entry_del(cmd_entry);
     entry_del(color_entry);
     menu_del(act_center);
-    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
-        XDestroyWindow(xinfo.display, wm->top_wins[i]);
+    del_refer_top_wins();
     XFreeModifiermap(xinfo.mod_map);
     free_cursors();
     XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
@@ -119,17 +120,16 @@ void clear_wm(WM *wm)
     XCloseDisplay(xinfo.display);
     clear_zombies(0);
     vfree_strings(wm->wallpapers);
-    for(size_t i=0; i<DESKTOP_N; i++)
-        Free(wm->desktop[i]);
+    free_desktop();
     Free(cfg);
 }
 
 void close_client(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
-    Client *c=CUR_FOC_CLI(wm);
-    if(!clients_is_head(c))
+    Client *c=get_cur_focus_client();
+    if(c)
         close_win(WIDGET_WIN(c));
 }
 
@@ -143,34 +143,34 @@ void close_all_clients(WM *wm, XEvent *e, Arg arg)
 
 void next_client(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    focus_client(wm, get_next_client(CUR_FOC_CLI(wm)));
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    focus_client(get_next_client(get_cur_focus_client()));
 }
 
 void prev_client(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    focus_client(wm, get_prev_client(CUR_FOC_CLI(wm)));
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    focus_client(get_prev_client(get_cur_focus_client()));
 }
 
 void increase_main_n(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    adjust_n_main_max(wm, 1);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    adjust_n_main_max(1);
 }
 
 void decrease_main_n(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    adjust_n_main_max(wm, -1);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    adjust_n_main_max(-1);
 }
 
-static void adjust_n_main_max(WM *wm, int n)
+static void adjust_n_main_max(int n)
 {
-    if(DESKTOP(wm)->cur_layout == TILE)
+    if(get_cur_layout() == TILE)
     {
-        int *m=&DESKTOP(wm)->n_main_max;
-        *m = *m+n>=1 ? *m+n : 1;
+        int m=get_n_main_max();
+        set_n_main_max(m+n>=1 ? m+n : 1);
         request_layout_update();
     }
 }
@@ -190,7 +190,7 @@ void open_act_center(WM *wm, XEvent *e, Arg arg)
 void open_client_menu(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    Client *c=CUR_FOC_CLI(wm);
+    Client *c=get_cur_focus_client();
     if(c->decorative)
         menu_show(WIDGET(frame_get_menu(c->frame)));
 }
@@ -291,9 +291,9 @@ void print_screen(WM *wm, XEvent *e, Arg arg)
 
 void print_win(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    Client *c=CUR_FOC_CLI(wm);
-    if(!clients_is_head(c))
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    Client *c=get_cur_focus_client();
+    if(c)
         print_area(WIDGET_WIN(c->frame), 0, 0, WIDGET_W(c), WIDGET_H(c));
 }
 

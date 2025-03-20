@@ -29,7 +29,7 @@ void taskbar_set_attention(Taskbar *taskbar, unsigned int desktop_mask);
 void taskbar_buttons_update_bg_by_chosen(Taskbar *taskbar);
 Iconbar *taskbar_get_iconbar(const Taskbar *taskbar);
 Statusbar *taskbar_get_statusbar(const Taskbar *taskbar);
-void taskbar_add_client(Taskbar *taskbar, Window cwin);
-void taskbar_del_client(Taskbar *taskbar, Window cwin);
+void taskbar_client_add(Taskbar *taskbar, Window cwin);
+void taskbar_client_del(Taskbar *taskbar, Window cwin);
 
 #endif

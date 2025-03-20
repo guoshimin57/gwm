@@ -11,7 +11,9 @@
 
 #include "config.h"
 #include "prop.h"
+#include "focus.h"
 #include "taskbar.h"
+#include "widget.h"
 #include "desktop.h"
 
 typedef enum op_type_tag { MOVE_TO_N, CHANGE_TO_N, ATTACH_TO_N, ATTACH_TO_ALL } Op_type;
@@ -20,21 +22,107 @@ static void hide_cur_desktop_clients(WM *wm);
 static void hide_client(WM *wm, const Client *c);
 static void show_cur_desktop_clients(WM *wm);
 static void show_client(WM *wm, const Client *c);
-static void fix_cur_desktop_clients_bg(WM *wm);
-static void fix_client_bg(WM *wm, Client *c);
+static void fix_cur_desktop_clients_bg(void);
+static void fix_client_bg(Client *c);
 static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op);
 
-void init_desktop(WM *wm)
+static Desktop *desktop[DESKTOP_N]; // 虛擬桌面
+
+void init_desktop(void)
 {
     set_net_current_desktop(cfg->default_cur_desktop);
     for(size_t i=0; i<DESKTOP_N; i++)
     {
-        Desktop *d=wm->desktop[i]=Malloc(sizeof(Desktop));
-        d->n_main_max=cfg->default_n_main_max;
-        d->cur_layout=d->prev_layout=cfg->default_layout;
-        d->main_area_ratio=cfg->default_main_area_ratio;
-        d->fixed_area_ratio=cfg->default_fixed_area_ratio;
+        desktop[i]=Malloc(sizeof(Desktop));
+        desktop[i]->n_main_max=cfg->default_n_main_max;
+        desktop[i]->cur_focus_client=NULL;
+        desktop[i]->prev_focus_client=NULL;
+        desktop[i]->cur_layout=cfg->default_layout;
+        desktop[i]->prev_layout=cfg->default_layout;
+        desktop[i]->main_area_ratio=cfg->default_main_area_ratio;
+        desktop[i]->fixed_area_ratio=cfg->default_fixed_area_ratio;
     }
+}
+
+void free_desktop(void)
+{
+    for(size_t i=0; i<DESKTOP_N; i++)
+        Free(desktop[i]);
+}
+
+Desktop *get_cur_desktop(void)
+{
+    return desktop[get_net_current_desktop()];
+}
+
+Client *get_cur_focus_client(void)
+{
+    return get_cur_desktop()->cur_focus_client;
+}
+
+void set_cur_focus_client(Client *c)
+{
+    desktop[get_net_current_desktop()]->cur_focus_client=c;
+}
+
+Client *get_prev_focus_client(void)
+{
+    return get_cur_desktop()->prev_focus_client;
+}
+
+void set_prev_focus_client(Client *c)
+{
+    desktop[get_net_current_desktop()]->prev_focus_client=c;
+}
+
+Layout get_cur_layout(void)
+{
+    return get_cur_desktop()->cur_layout;
+}
+
+void set_cur_layout(Layout layout)
+{
+    desktop[get_net_current_desktop()]->cur_layout=layout;
+}
+
+Layout get_prev_layout(void)
+{
+    return get_cur_desktop()->prev_layout;
+}
+
+void set_prev_layout(Layout layout)
+{
+    desktop[get_net_current_desktop()]->prev_layout=layout;
+}
+
+int get_n_main_max(void)
+{
+    return get_cur_desktop()->n_main_max;
+}
+
+void set_n_main_max(int n)
+{
+    desktop[get_net_current_desktop()]->n_main_max=n;
+}
+
+double get_main_area_ratio(void)
+{
+    return get_cur_desktop()->main_area_ratio;
+}
+
+void set_main_area_ratio(double ratio)
+{
+    desktop[get_net_current_desktop()]->main_area_ratio=ratio;
+}
+
+double get_fixed_area_ratio(void)
+{
+    return get_cur_desktop()->fixed_area_ratio;
+}
+
+void set_fixed_area_ratio(double ratio)
+{
+    desktop[get_net_current_desktop()]->fixed_area_ratio=ratio;
 }
 
 unsigned int get_desktop_n(XEvent *e, Arg arg)
@@ -55,9 +143,10 @@ void focus_desktop_n(WM *wm, unsigned int n)
     hide_cur_desktop_clients(wm);
     set_net_current_desktop(n);
     request_layout_update();
-    fix_cur_desktop_clients_bg(wm);
+    fix_cur_desktop_clients_bg();
     show_cur_desktop_clients(wm);
-    focus_client(wm, is_exist_client(CUR_FOC_CLI(wm)) ? CUR_FOC_CLI(wm) : NULL);
+    Client *c=get_cur_focus_client();
+    focus_client(is_exist_client(c) ? c : NULL);
     set_all_net_client_list();
 }
 
@@ -71,7 +160,7 @@ static void hide_cur_desktop_clients(WM *wm)
 static void hide_client(WM *wm, const Client *c)
 {
     if(is_iconic_client(c))
-        taskbar_del_client(wm->taskbar, WIDGET_WIN(c));
+        taskbar_client_del(wm->taskbar, WIDGET_WIN(c));
     else
         widget_hide(WIDGET(c->frame));
 }
@@ -86,21 +175,21 @@ static void show_cur_desktop_clients(WM *wm)
 static void show_client(WM *wm, const Client *c)
 {
     if(is_iconic_client(c))
-        taskbar_add_client(wm->taskbar, WIDGET_WIN(c));
+        taskbar_client_add(wm->taskbar, WIDGET_WIN(c));
     else
         widget_show(WIDGET(c->frame));
 }
 
-static void fix_cur_desktop_clients_bg(WM *wm)
+static void fix_cur_desktop_clients_bg(void)
 {
     clients_for_each(c)
         if(is_on_cur_desktop(c->desktop_mask))
-            fix_client_bg(wm, c);
+            fix_client_bg(c);
 }
 
-static void fix_client_bg(WM *wm, Client *c)
+static void fix_client_bg(Client *c)
 {
-    Client *fc=CUR_FOC_CLI(wm);
+    Client *fc=get_cur_focus_client();
     if(WIDGET_STATE(c).unfocused && c==fc)
     {
         client_set_state_unfocused(c, 0);
@@ -124,7 +213,7 @@ static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op)
         {
             case MOVE_TO_N:
                 p->desktop_mask=mask;
-                fix_client_bg(wm, c);
+                fix_client_bg(c);
                 hide_client(wm, p);
                 break;
             case CHANGE_TO_N:
@@ -139,12 +228,12 @@ static void ready_to_desktop_n(WM *wm, Client *c, unsigned int n, Op_type op)
 
 void move_to_desktop_n(WM *wm, unsigned int n)
 {
-    Client *c=CUR_FOC_CLI(wm);
-    if(n==~0U || n==get_net_current_desktop() || clients_is_head(c))
+    Client *c=get_cur_focus_client();
+    if(n==~0U || n==get_net_current_desktop() || !c)
         return;
 
     ready_to_desktop_n(wm, c, n, MOVE_TO_N);
-    focus_client(wm, NULL);
+    focus_client(NULL);
     request_layout_update();
 }
 
@@ -157,10 +246,9 @@ void all_move_to_desktop_n(WM *wm, unsigned int n)
         if(!is_on_desktop_n(n, c->desktop_mask))
             ready_to_desktop_n(wm, c, n, MOVE_TO_N);
 
-    Client *head=get_clients();
     for(unsigned int i=0; i<DESKTOP_N; i++)
         if(i != n)
-            wm->desktop[i]->prev_focus_client=wm->desktop[i]->cur_focus_client=head;
+            desktop[i]->prev_focus_client=desktop[i]->cur_focus_client=NULL;
 
     if(n == get_net_current_desktop())
         request_layout_update();
@@ -168,13 +256,13 @@ void all_move_to_desktop_n(WM *wm, unsigned int n)
 
 void change_to_desktop_n(WM *wm, unsigned int n)
 {
-    Client *c=CUR_FOC_CLI(wm);
-    if(n==~0U || n==get_net_current_desktop() || clients_is_head(c))
+    Client *c=get_cur_focus_client();
+    if(n==~0U || n==get_net_current_desktop() || !c)
         return;
 
     ready_to_desktop_n(wm, c, n, CHANGE_TO_N);
-    focus_client(wm, NULL);
-    wm->desktop[n]->cur_focus_client=c;
+    focus_client(NULL);
+    desktop[n]->cur_focus_client=c;
     focus_desktop_n(wm, n);
 }
 
@@ -189,8 +277,8 @@ void all_change_to_desktop_n(WM *wm, unsigned int n)
 
 void attach_to_desktop_n(WM *wm, unsigned int n)
 {
-    Client *c=CUR_FOC_CLI(wm);
-    if(n==~0U || n==get_net_current_desktop() || clients_is_head(c))
+    Client *c=get_cur_focus_client();
+    if(n==~0U || n==get_net_current_desktop() || !c)
         return;
 
     ready_to_desktop_n(wm, c, n, ATTACH_TO_N);
@@ -198,8 +286,8 @@ void attach_to_desktop_n(WM *wm, unsigned int n)
 
 void attach_to_desktop_all(WM *wm)
 {
-    Client *c=CUR_FOC_CLI(wm);
-    if(clients_is_head(c))
+    Client *c=get_cur_focus_client();
+    if(!c)
         return;
 
     unsigned int cur_desktop=get_net_current_desktop();

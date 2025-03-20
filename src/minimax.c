@@ -12,6 +12,7 @@
 #include "prop.h"
 #include "minimax.h"
 #include "client.h"
+#include "desktop.h"
 #include "place.h"
 
 static void maximize(WM *wm, Max_way max_way);
@@ -24,27 +25,27 @@ static Rect get_bottom_max_rect(const WM *wm);
 static Rect get_left_max_rect(const WM *wm);
 static Rect get_right_max_rect(const WM *wm);
 static Client *get_icon_client_head(void);
-static void set_fullscreen(WM *wm, Client *c);
+static void set_fullscreen(Client *c);
 
 void minimize(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    iconify_client(wm, CUR_FOC_CLI(wm)); 
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    iconify_client(get_cur_focus_client()); 
 }
 
 void deiconify(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    deiconify_client(wm, CUR_FOC_CLI(wm)); 
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    deiconify_client(get_cur_focus_client()); 
 }
 
 void max_restore(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    Client *c=CUR_FOC_CLI(wm);
+    Client *c=get_cur_focus_client();
 
     if(is_win_state_max(c->win_state))
-        restore_client(wm, c);
+        restore_client(c);
     else
         maximize_client(wm, c, FULL_MAX);
 }
@@ -93,7 +94,7 @@ void full_maximize(WM *wm, XEvent *e, Arg arg)
 
 static void maximize(WM *wm, Max_way max_way)
 {
-    maximize_client(wm, CUR_FOC_CLI(wm), max_way);
+    maximize_client(wm, get_cur_focus_client(), max_way);
 }
 
 static void maximize_client(WM *wm, Client *c, Max_way max_way)
@@ -102,7 +103,7 @@ static void maximize_client(WM *wm, Client *c, Max_way max_way)
         save_place_info_of_client(c);
     set_max_rect(wm, c, max_way);
     if(is_tiled_client(c))
-        move_client(wm, c, NULL, FLOAT_LAYER);
+        move_client(c, NULL, FLOAT_LAYER);
     move_resize_client(c, NULL);
     switch(max_way)
     {
@@ -172,10 +173,10 @@ static Rect get_right_max_rect(const WM *wm)
     return (Rect){w.x+w.w/2, w.y, w.w/2, w.h};
 }
 
-void restore_client(WM *wm, Client *c)
+void restore_client(Client *c)
 {
     restore_place_info_of_client(c);
-    move_client(wm, c, NULL, c->place_type);
+    move_client(c, NULL, c->place_type);
     if(c->win_state.vmax)
         c->win_state.vmax=0;
     if(c->win_state.hmax)
@@ -194,12 +195,12 @@ void restore_client(WM *wm, Client *c)
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
-void iconify_client(WM *wm, Client *c)
+void iconify_client(Client *c)
 {
     if(c->win_state.skip_taskbar)
         return;
 
-    move_client_node(wm, c, get_icon_client_head(), ANY_PLACE);
+    move_client_node(c, get_icon_client_head(), ANY_PLACE);
 
     Client *ld=c->subgroup_leader;
     for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
@@ -207,9 +208,9 @@ void iconify_client(WM *wm, Client *c)
         p->win_state.hidden=1;
         update_net_wm_state(WIDGET_WIN(p), p->win_state);
         widget_hide(WIDGET(p->frame));
-        if(p == CUR_FOC_CLI(wm))
+        if(p == get_cur_focus_client())
         {
-            focus_client(wm, NULL);
+            set_net_active_window(None);
             frame_update_bg(p->frame);
         }
     }
@@ -225,12 +226,12 @@ static Client *get_icon_client_head(void)
     return clients_last();
 }
 
-void deiconify_client(WM *wm, Client *c)
+void deiconify_client(Client *c)
 {
     if(!c)
         return;
 
-    move_client_node(wm, c, NULL, c->place_type);
+    move_client_node(c, NULL, c->place_type);
     Client *ld=c->subgroup_leader;
     for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
     {
@@ -239,24 +240,24 @@ void deiconify_client(WM *wm, Client *c)
             p->win_state.hidden=0;
             update_net_wm_state(WIDGET_WIN(p), p->win_state);
             widget_show(WIDGET(p->frame));
-            focus_client(wm, p);
+            set_net_active_window(WIDGET_WIN(p));
         }
     }
     request_layout_update();
 }
 
-void iconify_all_clients(WM *wm)
+void iconify_all_clients(void)
 {
     clients_for_each_reverse(c)
         if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
-            iconify_client(wm, c);
+            iconify_client(c);
 }
 
-void deiconify_all_clients(WM *wm)
+void deiconify_all_clients(void)
 {
     clients_for_each_reverse(c)
         if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
-            deiconify_client(wm, c);
+            deiconify_client(c);
 }
 
 void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
@@ -264,7 +265,7 @@ void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
     if(SHOULD_ADD_STATE(c, act, vmax))
         maximize_client(wm, c, VERT_MAX);
     else
-        restore_client(wm, c);
+        restore_client(c);
 }
 
 void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
@@ -272,7 +273,7 @@ void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
     if(SHOULD_ADD_STATE(c, act, hmax))
         maximize_client(wm, c, HORZ_MAX);
     else
-        restore_client(wm, c);
+        restore_client(c);
 }
 
 void change_net_wm_state_for_tmax(WM *wm, Client *c, long act)
@@ -280,7 +281,7 @@ void change_net_wm_state_for_tmax(WM *wm, Client *c, long act)
     if(SHOULD_ADD_STATE(c, act, tmax))
         maximize_client(wm, c, TOP_MAX);
     else
-        restore_client(wm, c);
+        restore_client(c);
 }
 
 void change_net_wm_state_for_bmax(WM *wm, Client *c, long act)
@@ -288,7 +289,7 @@ void change_net_wm_state_for_bmax(WM *wm, Client *c, long act)
     if(SHOULD_ADD_STATE(c, act, bmax))
         maximize_client(wm, c, BOTTOM_MAX);
     else
-        restore_client(wm, c);
+        restore_client(c);
 }
 
 void change_net_wm_state_for_lmax(WM *wm, Client *c, long act)
@@ -296,7 +297,7 @@ void change_net_wm_state_for_lmax(WM *wm, Client *c, long act)
     if(SHOULD_ADD_STATE(c, act, lmax))
         maximize_client(wm, c, LEFT_MAX);
     else
-        restore_client(wm, c);
+        restore_client(c);
 }
 
 void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
@@ -304,31 +305,31 @@ void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
     if(SHOULD_ADD_STATE(c, act, rmax))
         maximize_client(wm, c, RIGHT_MAX);
     else
-        restore_client(wm, c);
+        restore_client(c);
 }
 
-void change_net_wm_state_for_hidden(WM *wm, Client *c, long act)
+void change_net_wm_state_for_hidden(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, hidden))
-        iconify_client(wm, c);
+        iconify_client(c);
     else
-        deiconify_client(wm, is_iconic_client(c) ? c : NULL);
+        deiconify_client(is_iconic_client(c) ? c : NULL);
 }
 
-void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act)
+void change_net_wm_state_for_fullscreen(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, fullscreen))
-        set_fullscreen(wm, c);
+        set_fullscreen(c);
     else
-        restore_client(wm, c);
+        restore_client(c);
 }
 
-static void set_fullscreen(WM *wm, Client *c)
+static void set_fullscreen(Client *c)
 {
     save_place_info_of_client(c);
     WIDGET_X(c)=WIDGET_Y(c)=0;
     WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
-    move_client(wm, c, NULL, FULLSCREEN_LAYER);
+    move_client(c, NULL, FULLSCREEN_LAYER);
     c->win_state.fullscreen=1;
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }

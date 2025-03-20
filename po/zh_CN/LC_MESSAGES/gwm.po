@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.12.5\n"
+"Project-Id-Version: gwm 2.12.6\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-03-17 12:31+0800\n"
+"POT-Creation-Date: 2025-03-20 20:51+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: client.c:609
+#: client.c:544
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 
@@ -237,36 +237,36 @@ msgstr "请输入系统界面主色调的颜色名（支持英文颜色名和十
 msgid "以下是自頂向底排列的客戶窗口和分層參照窗口列表：\n"
 msgstr "以下是自顶向底排列的客户窗口和分层参照窗口列表：\n"
 
-#: debug.c:39
+#: debug.c:33
 #, c-format
 msgid "無法查詢根窗口的子窗口\n"
 msgstr "无法查询根窗口的子窗口\n"
 
-#: debug.c:49
+#: debug.c:43
 #, c-format
 msgid "以下是%lx窗口的子窗口：\n"
 msgstr "以下是%lx窗口的子窗口：\n"
 
-#: debug.c:55
+#: debug.c:49
 #, c-format
 msgid "無法查詢%lx窗口的子窗口\n"
 msgstr "无法查询%lx窗口的子窗口\n"
 
-#: debug.c:62
+#: debug.c:56
 #, c-format
 msgid "以下是%lx窗口窗口類型(即_NET_WM_WINDOW_TYPE)：\n"
 msgstr "以下是%lx窗口窗口类型(即_NET_WM_WINDOW_TYPE)：\n"
 
-#: debug.c:82
+#: debug.c:76
 msgid "以下是窗口狀態(即_NET_WM_STATE)："
 msgstr "以下是窗口状态(即_NET_WM_STATE)："
 
-#: debug.c:104
+#: debug.c:98
 #, c-format
 msgid "以下是%lx窗口的位置信息：\n"
 msgstr "以下是%lx窗口的位置窗口：\n"
 
-#: debug.c:111
+#: debug.c:105
 #, c-format
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "以下是自底向顶排列的客户窗口列表：\n"
@@ -303,20 +303,20 @@ msgstr "不能安装SIGQUIT信号处理函数"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 
-#: init.c:138
+#: init.c:140
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "错误： 不能设置输入法"
 
-#: misc.c:21
+#: misc.c:22
 msgid "錯誤：申請內存失敗"
 msgstr "错误：申请内存失败"
 
-#: misc.c:31
+#: misc.c:32
 msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "错误：已经有其他窗口管理器在运行！"
 
-#: misc.c:36
+#: misc.c:37
 #, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X错误：资源号=%#lx，请求量=%lu，错误码=%d，主请求码=%d，次请求码=%d\n"

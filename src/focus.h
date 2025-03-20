@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     place.h：與place.c相應的頭文件。
+ *     focus.h：與focus.c相應的頭文件。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,21 +9,15 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef PLACE_H
-#define PLACE_H
+#ifndef FOCUS_H
+#define FOCUS_H
 
 #include "gwm.h"
 #include "client.h"
 
-void pointer_change_place(WM *wm, XEvent *e, Arg arg);
-void change_to_main(WM *wm, XEvent *e, Arg arg);
-void change_to_second(WM *wm, XEvent *e, Arg arg);
-void change_to_fixed(WM *wm, XEvent *e, Arg arg);
-void change_to_float(WM *wm, XEvent *e, Arg arg);
-void pointer_swap_clients(WM *wm, XEvent *e, Arg arg);
-void show_desktop(WM *wm, XEvent *e, Arg arg);
-void toggle_showing_desktop_mode(bool show);
-void move_client(Client *from, Client *to, Place_type type);
-bool move_client_node(Client *from, Client *to, Place_type type);
+typedef struct client_tag Client;
+void focus_client(Client *c);
+void create_refer_top_wins(void);
+void del_refer_top_wins(void);
 
 #endif

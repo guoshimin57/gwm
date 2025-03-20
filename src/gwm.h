@@ -49,12 +49,6 @@
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     PropertyChangeMask|ButtonPressMask|CROSSING_MASK|ExposureMask|KeyPressMask)
 
-#define DESKTOP(wm) (wm->desktop[get_net_current_desktop()])
-#define CUR_FOC_CLI(wm) DESKTOP(wm)->cur_focus_client
-#define PREV_FOC_CLI(wm) DESKTOP(wm)->prev_focus_client
-
-typedef struct desktop_tag Desktop;
-
 typedef struct // 與X相關的信息
 {
     Display *display; // 顯示器
@@ -103,28 +97,15 @@ struct rule_tag // 窗口管理器的規則
 };
 typedef struct rule_tag Rule;
 
-typedef enum // 窗口疊次序分層類型
-{
-    FULLSCREEN_TOP,
-    ABOVE_TOP,
-    DOCK_TOP,
-    FLOAT_TOP,
-    NORMAL_TOP,
-    BELOW_TOP,
-    DESKTOP_TOP,
-    TOP_WIN_TYPE_N
-} Top_win_type;
-
+typedef struct _taskbar_tag Taskbar;
 typedef struct wm_tag WM;
 typedef void (*Event_handler)(WM*, XEvent *); // 事件處理器類型
 
 typedef struct wm_tag // 窗口管理器相關信息
 {
     Taskbar *taskbar; // 任務欄
-    Desktop *desktop[DESKTOP_N]; // 虛擬桌面
     Rect workarea; // 工作區坐標和尺寸
     Window wm_check_win; // WM檢測窗口
-    Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
     Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
     Event_handler event_handler; // 事件處理器
 } WM;
@@ -178,6 +159,5 @@ extern sig_atomic_t run_flag; // 程序運行標志
 extern Xinfo xinfo;
 
 
-#include "desktop.h"
 
 #endif

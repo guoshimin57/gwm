@@ -125,6 +125,16 @@ Atom get_atom_prop(Window win, Atom prop)
     return p ? *p : 0;
 }
 
+Window get_window_prop(Window win, Atom prop)
+{
+    Window result, *p=(Window *)get_prop(win, prop, NULL);
+
+    result = p ? *p : 0;
+    XFree(p);
+
+    return result;
+}
+
 /* 根據XChangeProperty手冊顯示，當format爲32時，data必須是long類型的數組。
  * 另外，手冊沒有解析當n爲0時會發生什麼，實測此時並非什麼也不幹，而是會有
  * 些不可預知的行爲。後同。 */

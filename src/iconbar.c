@@ -16,6 +16,7 @@
 #include "image.h"
 #include "misc.h"
 #include "list.h"
+#include "ewmh.h"
 #include "iconbar.h"
 
 typedef struct // 縮微窗口按鈕

@@ -167,6 +167,11 @@ void set_net_active_window(Window act_win)
     replace_window_prop(xinfo.root_win, prop, &act_win, 1);
 }
 
+Window get_net_active_window(void)
+{
+    return get_window_prop(xinfo.root_win, ewmh_atoms[NET_ACTIVE_WINDOW]);
+}
+
 void set_net_workarea(int x, int y, int w, int h, int ndesktop)
 {
     Atom prop=ewmh_atoms[NET_WORKAREA];

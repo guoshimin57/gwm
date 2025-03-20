@@ -15,14 +15,13 @@
 #include "gwm.h"
 #include "client.h"
 
-void print_client_and_top_win(WM *wm);
+void print_clients(void);
 void print_win_tree(Window win);
 void print_net_wm_win_type(Window win);
 void print_net_wm_state(Net_wm_state state);
 void print_place_info(Client *c);
 void print_all_client_win(void);
 void print_client_win(Client *c);
-void show_top_win(WM *wm);
 void print_widget_state(Widget_state state);
 void print_net_client_lists(void);
 

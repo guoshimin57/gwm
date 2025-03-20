@@ -25,18 +25,18 @@ void bottom_maximize(WM *wm, XEvent *e, Arg arg);
 void left_maximize(WM *wm, XEvent *e, Arg arg);
 void right_maximize(WM *wm, XEvent *e, Arg arg);
 void full_maximize(WM *wm, XEvent *e, Arg arg);
-void restore_client(WM *wm, Client *c);
-void iconify_client(WM *wm, Client *c);
-void deiconify_client(WM *wm, Client *c);
-void iconify_all_clients(WM *wm);
-void deiconify_all_clients(WM *wm);
+void restore_client(Client *c);
+void iconify_client(Client *c);
+void deiconify_client(Client *c);
+void iconify_all_clients(void);
+void deiconify_all_clients(void);
 void change_net_wm_state_for_vmax(WM *wm, Client *c, long act);
 void change_net_wm_state_for_hmax(WM *wm, Client *c, long act);
 void change_net_wm_state_for_tmax(WM *wm, Client *c, long act);
 void change_net_wm_state_for_bmax(WM *wm, Client *c, long act);
 void change_net_wm_state_for_lmax(WM *wm, Client *c, long act);
 void change_net_wm_state_for_rmax(WM *wm, Client *c, long act);
-void change_net_wm_state_for_hidden(WM *wm, Client *c, long act);
-void change_net_wm_state_for_fullscreen(WM *wm, Client *c, long act);
+void change_net_wm_state_for_hidden(Client *c, long act);
+void change_net_wm_state_for_fullscreen(Client *c, long act);
 
 #endif

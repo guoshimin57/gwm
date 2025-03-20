@@ -9,12 +9,14 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "client.h"
+#include "focus.h"
 #include "button.h"
 #include "bind_cfg.h"
 #include "config.h"
-#include "client.h"
 #include "entry.h"
 #include "func.h"
+#include "focus.h"
 #include "menu.h"
 #include "minimax.h"
 #include "mvresize.h"
@@ -25,6 +27,7 @@
 #include "image.h"
 #include "taskbar.h"
 #include "widget.h"
+#include "desktop.h"
 #include "handler.h"
 
 static void handle_event(WM *wm, XEvent *e);
@@ -37,13 +40,13 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act);
 static void change_net_wm_state_for_modal(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_sticky(WM *wm, Client *c, long act);
 static void change_net_wm_state_for_shaded(Client *c, long act);
-static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_above(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_below(WM *wm, Client *c, long act);
+static void change_net_wm_state_for_skip_taskbar(Client *c, long act);
+static void change_net_wm_state_for_skip_pager(Client *c, long act);
+static void change_net_wm_state_for_above(Client *c, long act);
+static void change_net_wm_state_for_below(Client *c, long act);
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act);
-static void change_net_wm_state_for_focused(WM *wm, Client *c, long act);
-static void activate_win(WM *wm, Window win, unsigned long src);
+static void change_net_wm_state_for_focused(Client *c, long act);
+static void activate_win(Window win, unsigned long src);
 static void change_desktop(WM *wm, Window win, unsigned int desktop);
 static void handle_config_request(WM *wm, XEvent *e);
 static void config_managed_client(Client *c);
@@ -138,6 +141,7 @@ static void exec_buttonbind_func(WM *wm, XEvent *e)
         widget->state.active=1;
         widget->update_bg(widget);
     }
+    
     for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++)
     {
         if( is_func_click(id, &BUTTONBIND[i], e)
@@ -145,9 +149,9 @@ static void exec_buttonbind_func(WM *wm, XEvent *e)
         {
             if(id == CLIENT_WIN)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
-            if(c && c!=CUR_FOC_CLI(wm))
-                focus_client(wm, c);
-            if((DESKTOP(wm)->cur_layout==PREVIEW || !c || !tmc || c==tmc || id==CLIENT_ICON) && BUTTONBIND[i].func)
+            if(c && c!=get_cur_focus_client())
+                focus_client(c);
+            if((get_cur_layout()==PREVIEW || !c || !tmc || c==tmc || id==CLIENT_ICON) && BUTTONBIND[i].func)
                 BUTTONBIND[i].func(wm, e, BUTTONBIND[i].arg);
         }
     }
@@ -180,16 +184,16 @@ static void handle_client_message(WM *wm, XEvent *e)
     if(is_spec_ewmh_atom(type, NET_CURRENT_DESKTOP))
         focus_desktop_n(wm, e->xclient.data.l[0]);
     else if(is_spec_ewmh_atom(type, NET_SHOWING_DESKTOP))
-        toggle_showing_desktop_mode(wm, e->xclient.data.l[0]);
+        toggle_showing_desktop_mode(e->xclient.data.l[0]);
     else if(c)
     {
         if(is_spec_icccm_atom(type, WM_CHANGE_STATE))
         {
             if(e->xclient.data.l[0] == IconicState)
-                iconify_client(wm, CUR_FOC_CLI(wm)); 
+                iconify_client(get_cur_focus_client()); 
         }
         else if(is_spec_ewmh_atom(type, NET_ACTIVE_WINDOW))
-            activate_win(wm, win, e->xclient.data.l[0]);
+            activate_win(win, e->xclient.data.l[0]);
         if(is_spec_ewmh_atom(type, NET_CLOSE_WINDOW))
             close_win(win);
         else if(is_spec_ewmh_atom(type, NET_WM_DESKTOP))
@@ -216,14 +220,14 @@ static void change_net_wm_state(WM *wm, Client *c, long *full_act)
     if(mask.lmax)           change_net_wm_state_for_lmax(wm, c, act);
     if(mask.rmax)           change_net_wm_state_for_rmax(wm, c, act);
     if(mask.shaded)         change_net_wm_state_for_shaded(c, act);
-    if(mask.skip_taskbar)   change_net_wm_state_for_skip_taskbar(wm, c, act);
-    if(mask.skip_pager)     change_net_wm_state_for_skip_pager(wm, c, act);
-    if(mask.hidden)         change_net_wm_state_for_hidden(wm, c, act);
-    if(mask.fullscreen)     change_net_wm_state_for_fullscreen(wm, c, act);
-    if(mask.above)          change_net_wm_state_for_above(wm, c, act);
-    if(mask.below)          change_net_wm_state_for_below(wm, c, act);
+    if(mask.skip_taskbar)   change_net_wm_state_for_skip_taskbar(c, act);
+    if(mask.skip_pager)     change_net_wm_state_for_skip_pager(c, act);
+    if(mask.hidden)         change_net_wm_state_for_hidden(c, act);
+    if(mask.fullscreen)     change_net_wm_state_for_fullscreen(c, act);
+    if(mask.above)          change_net_wm_state_for_above(c, act);
+    if(mask.below)          change_net_wm_state_for_below(c, act);
     if(mask.attent)         change_net_wm_state_for_attent(wm, c, act);
-    if(mask.focused)        change_net_wm_state_for_focused(wm, c, act);
+    if(mask.focused)        change_net_wm_state_for_focused(c, act);
 
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
@@ -252,23 +256,22 @@ static void change_net_wm_state_for_shaded(Client *c, long act)
     toggle_shade_client_mode(c, SHOULD_ADD_STATE(c, act, shaded));
 }
 
-static void change_net_wm_state_for_skip_taskbar(WM *wm, Client *c, long act)
+static void change_net_wm_state_for_skip_taskbar(Client *c, long act)
 {
     bool add=SHOULD_ADD_STATE(c, act, skip_taskbar);
 
     if(add && is_iconic_client(c))
-        deiconify_client(wm, c);
+        deiconify_client(c);
     c->win_state.skip_taskbar=add;
 }
 
 /* 暫未實現分頁器 */
-static void change_net_wm_state_for_skip_pager(WM *wm, Client *c, long act)
+static void change_net_wm_state_for_skip_pager(Client *c, long act)
 {
-    UNUSED(wm);
     c->win_state.skip_pager=SHOULD_ADD_STATE(c, act, skip_pager);
 }
 
-static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
+static void change_net_wm_state_for_above(Client *c, long act)
 {
     bool add=SHOULD_ADD_STATE(c, act, above);
 
@@ -276,14 +279,14 @@ static void change_net_wm_state_for_above(WM *wm, Client *c, long act)
     {
         if(c->place_type != ABOVE_LAYER)
             save_place_info_of_client(c);
-        move_client(wm, c, NULL, ABOVE_LAYER);
+        move_client(c, NULL, ABOVE_LAYER);
     }
     else
-        restore_client(wm, c);
+        restore_client(c);
     c->win_state.above=add;
 }
 
-static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
+static void change_net_wm_state_for_below(Client *c, long act)
 {
     bool add=SHOULD_ADD_STATE(c, act, below);
 
@@ -291,32 +294,28 @@ static void change_net_wm_state_for_below(WM *wm, Client *c, long act)
     {
         if(c->place_type != BELOW_LAYER)
             save_place_info_of_client(c);
-        move_client(wm, c, NULL, BELOW_LAYER);
+        move_client(c, NULL, BELOW_LAYER);
     }
     else
-        restore_client(wm, c), c->win_state.below=0;
+        restore_client(c), c->win_state.below=0;
     c->win_state.below=add;
 }
 
 static void change_net_wm_state_for_attent(WM *wm, Client *c, long act)
 {
-    UNUSED(wm);
     c->win_state.attent=SHOULD_ADD_STATE(c, act, attent);
     taskbar_set_attention(wm->taskbar, c->desktop_mask);
 }
 
-static void change_net_wm_state_for_focused(WM *wm, Client *c, long act)
+static void change_net_wm_state_for_focused(Client *c, long act)
 {
     bool add=SHOULD_ADD_STATE(c, act, focused);
 
-    if(add)
-        focus_client(wm, c);
-    else
-        focus_client(wm, NULL);
+    focus_client(add ? c : NULL);
     c->win_state.focused=add;
 }
 
-static void activate_win(WM *wm, Window win, unsigned long src)
+static void activate_win(Window win, unsigned long src)
 {
     Client *c=win_to_client(win);
     if(!c)
@@ -325,7 +324,7 @@ static void activate_win(WM *wm, Window win, unsigned long src)
     if(src == 2) // 源自分頁器
     {
         if(is_on_cur_desktop(c->desktop_mask))
-            focus_client(wm, c);
+            focus_client(c);
         else
             set_urgency_hint(win, c->wm_hint, true);
     }
@@ -337,7 +336,7 @@ static void change_desktop(WM *wm, Window win, unsigned int desktop)
 { 
     Client *c=win_to_client(win);
 
-    if(!c || clients_is_head(c) || c!=CUR_FOC_CLI(wm))
+    if(!c || c!=get_cur_focus_client())
         return;
 
     if(desktop == ~0U)
@@ -389,7 +388,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     Widget *widget=widget_find(win);
 
     if(cfg->focus_mode==ENTER_FOCUS && c)
-        focus_client(wm, c);
+        focus_client(c);
     if( is_layout_adjust_area(wm, win, x)
         && get_clients_n(TILE_LAYER_MAIN, false, false, false))
         set_cursor(win, ADJUST_LAYOUT_RATIO);
@@ -467,6 +466,7 @@ static void handle_expose(WM *wm, XEvent *e)
 
 static void handle_focus_in(WM *wm, XEvent *e)
 {
+    UNUSED(wm);
     Window win=e->xfocus.window;
     Client *c=win_to_client(e->xfocus.window);
     if(!c)
@@ -475,7 +475,7 @@ static void handle_focus_in(WM *wm, XEvent *e)
     if(c->win_state.fullscreen && c->place_type!=FULLSCREEN_LAYER)
     {
         WIDGET_X(c)=WIDGET_Y(c)=0, WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
-        move_client(wm, c, NULL, FULLSCREEN_LAYER);
+        move_client(c, NULL, FULLSCREEN_LAYER);
     }
     set_urgency_hint(win, c->wm_hint, false);
     set_state_attent(c, false);
@@ -483,9 +483,10 @@ static void handle_focus_in(WM *wm, XEvent *e)
 
 static void handle_focus_out(WM *wm, XEvent *e)
 {
+    UNUSED(wm);
     Client *c=win_to_client(e->xfocus.window);
     if(c && c->win_state.fullscreen && c->place_type==FULLSCREEN_LAYER)
-        move_client(wm, c, NULL, c->old_place_type);
+        move_client(c, NULL, c->old_place_type);
 }
 
 static void handle_key_press(WM *wm, XEvent *e)
@@ -548,12 +549,11 @@ static void handle_leave_notify(WM *wm, XEvent *e)
 
 static void handle_map_request(WM *wm, XEvent *e)
 {
+    UNUSED(wm);
     Window win=e->xmaprequest.window;
 
     if(is_wm_win(win, false))
-        add_client(wm, win);
-    else
-        restack_win(wm, win);
+        client_add(win);
     XMapWindow(xinfo.display, win);
 }
 
@@ -577,9 +577,9 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
     if( c && ue->window==WIDGET_WIN(c)
         && (ue->send_event|| ue->event==WIDGET_WIN(c->frame) || ue->event==WIDGET_WIN(c)))
     {
-        del_client(wm, c, false);
         if(is_iconic_client(c))
-            taskbar_del_client(wm->taskbar, WIDGET_WIN(c));
+            taskbar_client_del(wm->taskbar, WIDGET_WIN(c));
+        client_del(c, false);
     }
 }
 

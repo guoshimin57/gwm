@@ -17,7 +17,9 @@
 #include "handler.h"
 #include "prop.h"
 #include "icccm.h"
+#include "focus.h"
 #include "taskbar.h"
+#include "desktop.h"
 #include "init.h"
 
 static Rect compute_taskbar_rect(void);
@@ -51,7 +53,7 @@ void init_wm(WM *wm)
     init_imlib();
     if(cfg->wallpaper_paths)
         init_wallpaper_files(wm);
-    init_desktop(wm);
+    init_desktop();
     reg_event_handlers(wm);
     load_fonts();
     alloc_color(cfg->main_color_name);
@@ -60,7 +62,7 @@ void init_wm(WM *wm)
     set_cursor(xinfo.root_win, NO_OP);
     set_workarea(wm);
     set_ewmh(wm);
-    set_gwm_current_layout(DESKTOP(wm)->cur_layout);
+    set_gwm_current_layout(get_cur_layout());
     Rect r=compute_taskbar_rect();
     wm->taskbar=taskbar_new(NULL, r.x, r.y, r.w, r.h);
     if(cfg->show_taskbar)
@@ -68,7 +70,8 @@ void init_wm(WM *wm)
     cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
     color_entry=color_entry_new(COLOR_ENTRY);
     create_hint_win();
-    create_clients(wm);
+    reg_focus_func(focus_client);
+    create_clients();
     grab_keys();
     exec_autostart();
 }
@@ -83,9 +86,8 @@ static Rect compute_taskbar_rect(void)
 static void create_refer_wins(WM *wm)
 {
     Window w=xinfo.root_win;
-    for(int i=TOP_WIN_TYPE_N-1; i>=0; i--)
-        wm->top_wins[i]=create_widget_win(w, -1, -1, 1, 1, 0, 0, 0);
     wm->wm_check_win=create_widget_win(w, -1, -1, 1, 1, 0, 0, 0);
+    create_refer_top_wins();
 }
 
 static void set_visual_info(void)

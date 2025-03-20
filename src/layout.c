@@ -16,17 +16,18 @@
 #include "ewmh.h"
 #include "minimax.h"
 #include "taskbar.h"
+#include "desktop.h"
 
 static void set_preview_layout(WM *wm);
-static void set_stack_layout(WM *wm);
+static void set_stack_layout(void);
 static void set_tile_layout(WM *wm);
-static void fix_place_type_for_tile(WM *wm);
+static void fix_place_type_for_tile(void);
 static void set_wins_rect_for_tiling(WM *wm);
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh);
 static void update_titlebars_layout(void);
-static void fix_wins_rect(WM *wm);
-static void fix_win_rect(WM *wm, Client *c);
-static bool should_fix_win_rect(WM *wm, Client *c);
+static void fix_wins_rect(void);
+static void fix_win_rect(Client *c);
+static bool should_fix_win_rect(Client *c);
 static void fix_transient_win_size(Client *c);
 static void fix_transient_win_pos(Client *c);
 static void fix_win_rect_by_hint(Client *c);
@@ -45,10 +46,10 @@ void update_layout(WM *wm)
     if(clients_is_empty())
         return;
 
-    switch(DESKTOP(wm)->cur_layout)
+    switch(get_cur_layout())
     {
         case PREVIEW: set_preview_layout(wm); break;
-        case STACK: set_stack_layout(wm); break;
+        case STACK: set_stack_layout(); break;
         case TILE: set_tile_layout(wm); break;
     }
     clients_for_each(c)
@@ -79,24 +80,24 @@ static void set_preview_layout(WM *wm)
         if(is_on_cur_desktop(c->desktop_mask) && c->owner)
             fix_transient_win_pos(c);
 
-    fix_wins_rect(wm);
+    fix_wins_rect();
 }
 
-static void set_stack_layout(WM *wm)
+static void set_stack_layout(void)
 {
-    fix_wins_rect(wm);
+    fix_wins_rect();
 }
 
 static void set_tile_layout(WM *wm)
 {
-    fix_place_type_for_tile(wm);
+    fix_place_type_for_tile();
     set_wins_rect_for_tiling(wm);
-    fix_wins_rect(wm);
+    fix_wins_rect();
 }
 
-static void fix_place_type_for_tile(WM *wm)
+static void fix_place_type_for_tile(void)
 {
-    int n=0, m=DESKTOP(wm)->n_main_max;
+    int n=0, m=get_n_main_max();
     clients_for_each(c)
     {
         if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c) && !c->owner)
@@ -143,7 +144,7 @@ static void set_wins_rect_for_tiling(WM *wm)
 
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
 {
-    double mr=DESKTOP(wm)->main_area_ratio, fr=DESKTOP(wm)->fixed_area_ratio;
+    double mr=get_main_area_ratio(), fr=get_fixed_area_ratio();
     int n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
 
     n1=get_clients_n(TILE_LAYER_MAIN, false, false, false),
@@ -160,25 +161,25 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
 static void update_titlebars_layout(void)
 {
     clients_for_each(c)
-        if(c->decorative  && is_on_cur_desktop(c->desktop_mask))
+        if(c->decorative && is_on_cur_desktop(c->desktop_mask))
             titlebar_update_layout(c->frame);
 }
 
-static void fix_wins_rect(WM *wm)
+static void fix_wins_rect(void)
 {
     Client *nc=get_new_client();
 
     if(nc)
-        fix_win_rect(wm, nc);
+        fix_win_rect(nc);
     else
         clients_for_each(c)
             if(is_on_cur_desktop(c->desktop_mask))
-                fix_win_rect(wm, c);
+                fix_win_rect(c);
 }
 
-static void fix_win_rect(WM *wm, Client *c)
+static void fix_win_rect(Client *c)
 {
-    if(!should_fix_win_rect(wm, c))
+    if(!should_fix_win_rect(c))
         return;
 
     fix_transient_win_size(c);
@@ -188,13 +189,13 @@ static void fix_win_rect(WM *wm, Client *c)
     fix_win_rect_by_frame(c);
 }
 
-static bool should_fix_win_rect(WM *wm, Client *c)
+static bool should_fix_win_rect(Client *c)
 {
     if(!is_new_client(c))
         return false;
 
     Place_type t=c->place_type;
-    switch(DESKTOP(wm)->cur_layout)
+    switch(get_cur_layout())
     {
         case PREVIEW: return false;
         case STACK:   return t==ABOVE_LAYER || t==FLOAT_LAYER || t==BELOW_LAYER
@@ -283,7 +284,7 @@ static void fix_dialog_win_rect(Client *c, const Rect *workarea)
 
 static void fix_win_rect_by_frame(Client *c)
 {
-    if(c->frame)
+    if(!c->frame)
         return;
 
     int bw = WIDGET_BORDER_W(c->frame),
@@ -295,8 +296,7 @@ static void fix_win_rect_by_frame(Client *c)
 
 bool is_main_sec_gap(WM *wm, int x)
 {
-    Desktop *d=DESKTOP(wm);
-    long sw=wm->workarea.w*(1-d->main_area_ratio-d->fixed_area_ratio),
+    long sw=wm->workarea.w*(1-get_main_area_ratio()-get_fixed_area_ratio()),
          wx=wm->workarea.x,
          n=get_clients_n(TILE_LAYER_SECOND, false, false, false);
     return (n && x>=wx+sw-cfg->win_gap && x<wx+sw);
@@ -304,7 +304,7 @@ bool is_main_sec_gap(WM *wm, int x)
 
 bool is_main_fix_gap(WM *wm, int x)
 {
-    long smw=wm->workarea.w*(1-DESKTOP(wm)->fixed_area_ratio),
+    long smw=wm->workarea.w*(1-get_fixed_area_ratio()),
          wx=wm->workarea.x,
          n=get_clients_n(TILE_LAYER_FIXED, false, false, false);
     return (n && x>=wx+smw && x<wx+smw+cfg->win_gap);
@@ -312,7 +312,7 @@ bool is_main_fix_gap(WM *wm, int x)
 
 bool is_layout_adjust_area(WM *wm, Window win, int x)
 {
-    return (DESKTOP(wm)->cur_layout==TILE && win==xinfo.root_win
+    return (get_cur_layout()==TILE && win==xinfo.root_win
         && (is_main_sec_gap(wm, x) || is_main_fix_gap(wm, x)));
 }
 
@@ -336,17 +336,17 @@ void change_to_tile(WM *wm, XEvent *e, Arg arg)
 
 void change_layout(WM *wm, Layout layout)
 {
-    Layout *cl=&DESKTOP(wm)->cur_layout, *pl=&DESKTOP(wm)->prev_layout;
+    Layout cl=get_cur_layout();
 
-    if(layout == *cl)
+    if(layout == cl)
         return;
 
     if(layout == PREVIEW)
         save_place_info_of_clients();
-    if(*cl == PREVIEW)
+    if(cl == PREVIEW)
         restore_place_info_of_clients();
 
-    if(*cl == PREVIEW)
+    if(cl == PREVIEW)
         clients_for_each(c)
             if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             {
@@ -363,18 +363,19 @@ void change_layout(WM *wm, Layout layout)
                 widget_show(WIDGET(c->frame));
             }
 
-    if(*cl==TILE && layout==STACK)
+    if(cl==TILE && layout==STACK)
         clients_for_each(c)
             if(is_on_cur_desktop(c->desktop_mask) && is_normal_layer(c->place_type))
                 c->place_type=FLOAT_LAYER;
 
-    if(*cl==STACK && layout==TILE)
+    if(cl==STACK && layout==TILE)
         clients_for_each(c)
             if(is_on_cur_desktop(c->desktop_mask) && c->place_type==FLOAT_LAYER)
                 c->place_type=TILE_LAYER_MAIN;
 
-    *pl=*cl, *cl=layout;
-    set_gwm_current_layout(*cl);
+    set_prev_layout(cl);
+    set_cur_layout(layout);
+    set_gwm_current_layout(layout);
     request_layout_update();
     update_titlebars_layout();
     taskbar_buttons_update_bg(wm->taskbar);
@@ -383,7 +384,7 @@ void change_layout(WM *wm, Layout layout)
 void adjust_layout_ratio(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    if( DESKTOP(wm)->cur_layout!=TILE
+    if( get_cur_layout()!=TILE
         || !is_layout_adjust_area(wm, e->xbutton.window, e->xbutton.x_root)
         || !grab_pointer(xinfo.root_win, ADJUST_LAYOUT_RATIO))
         return;
@@ -407,13 +408,12 @@ void adjust_layout_ratio(WM *wm, XEvent *e, Arg arg)
 
 static bool change_layout_ratio(WM *wm, int ox, int nx)
 {
-    Desktop *d=DESKTOP(wm);
-    double dr;
+    double dr, m=get_main_area_ratio(), f=get_fixed_area_ratio();
     dr=1.0*(nx-ox)/wm->workarea.w;
     if(is_main_sec_gap(wm, ox))
-        d->main_area_ratio-=dr;
+        set_main_area_ratio(m-dr);
     else if(is_main_fix_gap(wm, ox))
-        d->main_area_ratio+=dr, d->fixed_area_ratio-=dr;
+        set_main_area_ratio(m+dr), set_fixed_area_ratio(f-dr);
     else
         return false;
     return true;
@@ -434,15 +434,14 @@ void key_decrease_main_area(WM *wm, XEvent *e, Arg arg)
 /* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
 static void adjust_main_area(WM *wm, double change_ratio)
 {
-    if( DESKTOP(wm)->cur_layout==TILE
+    if( get_cur_layout()==TILE
         && get_clients_n(TILE_LAYER_SECOND, false, false, false))
     {
-        Desktop *d=DESKTOP(wm);
-        double mr=d->main_area_ratio+change_ratio, fr=d->fixed_area_ratio;
+        double mr=get_main_area_ratio()+change_ratio, fr=get_fixed_area_ratio();
         long mw=mr*wm->workarea.w, sw=wm->workarea.w*(1-fr)-mw;
         if(sw>=cfg->resize_inc && mw>=cfg->resize_inc)
         {
-            d->main_area_ratio=mr;
+            set_main_area_ratio(mr);
             request_layout_update();
         }
     }
@@ -463,15 +462,14 @@ void key_decrease_fixed_area(WM *wm, XEvent *e, Arg arg)
 /* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
 static void adjust_fixed_area(WM *wm, double change_ratio)
 {
-    if( DESKTOP(wm)->cur_layout==TILE
+    if( get_cur_layout()==TILE
         && get_clients_n(TILE_LAYER_FIXED, false, false, false))
     {
-        Desktop *d=DESKTOP(wm);
-        double fr=d->fixed_area_ratio+change_ratio, mr=d->main_area_ratio;
+        double fr=get_fixed_area_ratio()+change_ratio, mr=get_main_area_ratio();
         long mw=wm->workarea.w*(mr-change_ratio), fw=wm->workarea.w*fr;
         if(mw>=cfg->resize_inc && fw>=cfg->resize_inc)
         {
-            d->main_area_ratio-=change_ratio, d->fixed_area_ratio=fr;
+            set_main_area_ratio(mr-change_ratio), set_fixed_area_ratio(fr);
             request_layout_update();
         }
     }

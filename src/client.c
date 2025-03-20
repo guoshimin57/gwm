@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     client.c：實現X client相關功能。
+ *     client.c：實現客戶窗口基本功能。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -12,53 +12,83 @@
 #include "config.h"
 #include "gwm.h"
 #include "font.h"
-#include "minimax.h"
 #include "misc.h"
 #include "list.h"
 #include "image.h"
 #include "icccm.h"
 #include "prop.h"
 #include "client.h"
+#include "desktop.h"
 
-static Client *new_client(Window win);
+static Client *client_new(Window win);
+static void client_ctor(Client *c, Window win);
 static bool has_decoration(const Client *c);
 static void set_default_desktop_mask(Client *c);
 static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static void set_default_place_type(Client *c);
-static Window get_top_win(WM *wm, Client *c);
-static void update_focus_client_pointer(WM *wm, Client *c);
-static bool is_map_client( Client *c);
-static Client *get_first_map_client(void);
-static Client *get_first_map_diff_client(Client *key);
+static void client_dtor(Client *c);
 static void set_default_win_rect(Client *c);
+
 static Client *clients=NULL;
+
+// 指向聚焦客戶窗口的函數，目的是爲與與focus模塊解耦
+static void (*focus)(Client *)=NULL;
+
+void reg_focus_func(void (*func)(Client *))
+{
+    focus=func;
+}
 
 Client *get_clients(void)
 {
     return clients;
 }
 
-void add_client(WM *wm, Window win)
+void client_add(Window win)
 {
-    Client *c=new_client(win);
-
-    apply_rules(c);
+    Client *c=client_new(win);
     list_add(&c->list, &get_head_client(c->place_type)->list);
     grab_buttons(WIDGET_WIN(c));
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
+    request_layout_update();
+    widget_show(WIDGET(c->frame));
+    focus(c);
+    set_net_wm_allowed_actions(WIDGET_WIN(c));
+}
+
+static Client *client_new(Window win)
+{
+    Client *c=Malloc(sizeof(Client));
+    client_ctor(c, win);
+    return c;
+}
+
+static void client_ctor(Client *c, Window win)
+{
+    widget_ctor(WIDGET(c), NULL, WIDGET_TYPE_CLIENT, CLIENT_WIN, 0, 0, 1, 1);
+    WIDGET_WIN(c)=win;
+    c->title_text=get_title_text(win, "");
+    c->wm_hint=XGetWMHints(xinfo.display, win);
+    c->win_type=get_net_wm_win_type(win);
+    c->win_state=get_net_wm_state(win);
+    c->decorative=has_decoration(c);
+    c->owner=win_to_client(get_transient_for(WIDGET_WIN(c)));
+    c->subgroup_leader=get_subgroup_leader(c);
+    set_default_place_type(c);
     save_place_info_of_client(c);
+    c->class_name="?";
+    XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint);
+    c->image=get_win_icon_image(win);
+    set_default_desktop_mask(c);
+    apply_rules(c);
     set_default_win_rect(c);
     c->frame=frame_new(WIDGET(c), 0, 0, 1, 1,
         c->decorative ? get_font_height_by_pad() : 0,
         c->decorative ? cfg->border_width : 0,
         c->title_text, c->image);
     widget_set_state(WIDGET(c->frame), WIDGET_STATE(c));
-    request_layout_update();
-    widget_show(WIDGET(c->frame));
-    focus_client(wm, c);
-    set_net_wm_allowed_actions(WIDGET_WIN(c));
 }
 
 void set_all_net_client_list(void)
@@ -72,29 +102,6 @@ void set_all_net_client_list(void)
     wlist=get_client_win_list_stacking(&n);
     if(wlist)
         set_net_client_list_stacking(wlist, n), Free(wlist);
-}
-
-
-static Client *new_client(Window win)
-{
-    Client *c=Malloc(sizeof(Client));
-    memset(c, 0, sizeof(Client));
-    widget_ctor(WIDGET(c), NULL, WIDGET_TYPE_CLIENT, CLIENT_WIN, 0, 0, 1, 1);
-    WIDGET_WIN(c)=win;
-    c->title_text=get_title_text(win, "");
-    c->wm_hint=XGetWMHints(xinfo.display, win);
-    c->win_type=get_net_wm_win_type(win);
-    c->win_state=get_net_wm_state(win);
-    c->decorative=has_decoration(c);
-    c->owner=win_to_client(get_transient_for(WIDGET_WIN(c)));
-    c->subgroup_leader=get_subgroup_leader(c);
-    set_default_place_type(c);
-    c->class_name="?";
-    XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint);
-    c->image=get_win_icon_image(win);
-    set_default_desktop_mask(c);
-
-    return c;
 }
 
 static bool has_decoration(const Client *c)
@@ -188,72 +195,50 @@ Client *win_to_client(Window win)
     return NULL;
 }
 
-void del_client(WM *wm, Client *c, bool is_for_quit)
+void client_del(Client *c, bool is_for_quit)
 {
-    if(!c)
-        return;
-
     list_del(&c->list);
-    focus_client(wm, NULL);
-    vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
-    Free(c->title_text);
-    frame_del(c->frame), c->frame=NULL;
+    focus(NULL);
+    client_dtor(c);
     widget_del(WIDGET(c));
-
     if(!is_for_quit)
         request_layout_update();
     set_all_net_client_list();
 }
 
-/* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
-void raise_client(WM *wm, Client *c)
+static void client_dtor(Client *c)
 {
-    int n=get_subgroup_n(c), i=n;
-    Window wins[n+1];
-
-    wins[0]=get_top_win(wm, c);
-    subgroup_for_each(p, c->subgroup_leader)
-        wins[i--]=WIDGET_WIN(p->frame);
-
-    XRestackWindows(xinfo.display, wins, n+1);
-    set_all_net_client_list();
-}
-
-static Window get_top_win(WM *wm, Client *c)
-{
-    size_t index[]=
-    {
-        [FULLSCREEN_LAYER]=FULLSCREEN_TOP,
-        [ABOVE_LAYER]=ABOVE_TOP,
-        [DOCK_LAYER]=DOCK_TOP,
-        [FLOAT_LAYER]=FLOAT_TOP,
-        [TILE_LAYER_MAIN]=NORMAL_TOP,
-        [TILE_LAYER_SECOND]=NORMAL_TOP,
-        [TILE_LAYER_FIXED]=NORMAL_TOP,
-        [BELOW_LAYER]=BELOW_TOP,
-        [DESKTOP_LAYER]=DESKTOP_TOP,
-    };
-    return wm->top_wins[index[c->place_type]];
+    vXFree(c->class_hint.res_class, c->class_hint.res_name, c->wm_hint);
+    Free(c->title_text);
+    frame_del(c->frame), c->frame=NULL;
 }
 
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過所有亞組窗口 */
 Client *get_next_client(Client *c)
 {
+    if(!c)
+        return NULL;
+
     Client *ld=c->subgroup_leader;
     list_for_each_entry_continue(Client, c, &clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask) && (!ld || c->subgroup_leader!=ld))
             return c;
-    return clients;
+
+    return NULL;
 }
 
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過非模態窗口 */
 Client *get_prev_client(Client *c)
 {
+    if(!c)
+        return NULL;
+
     Client *m=NULL;
     list_for_each_entry_continue_reverse(Client, c, &clients->list, list)
         if(is_on_cur_desktop(c->desktop_mask))
             return (m=get_top_transient_client(c->subgroup_leader, true)) ? m : c;
-    return clients;
+
+    return NULL;
 }
 
 bool is_normal_layer(Place_type t)
@@ -336,92 +321,11 @@ Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
     return result;
 }
 
-/* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因（如移動到
- * 其他虛擬桌面、刪除、縮微）而未更新時，則應使用值爲NULL的c來調用本函數。這
- * 樣會自動推斷出合適的規則來取消原聚焦和聚焦新的client。*/
-void focus_client(WM *wm, Client *c)
-{
-    update_focus_client_pointer(wm, c);
-
-    Client *pc=CUR_FOC_CLI(wm), *pp=PREV_FOC_CLI(wm);
-
-    if(WIDGET_WIN(pc) == xinfo.root_win)
-        XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
-    else if(!is_iconic_client(pc))
-        set_input_focus(WIDGET_WIN(pc), pc->wm_hint);
-
-    if(pc != clients)
-    {
-        client_set_state_unfocused(pc, 0);
-        update_client_bg(pc);
-    }
-
-    if(pp!=clients && pp!=pc)
-    {
-        client_set_state_unfocused(pp, 1);
-        update_client_bg(pp);
-    }
-
-    raise_client(wm, pc);
-    set_net_active_window(WIDGET_WIN(pc));
-}
-
-static void update_focus_client_pointer(WM *wm, Client *c)
-{
-    Client *p=NULL, **pp=&PREV_FOC_CLI(wm), **pc=&CUR_FOC_CLI(wm),
-           *po=(*pp)->owner, *co=(*pc)->owner;
-
-    if(c == *pc)
-        return;
-    else if(!c) // 某個client可能被刪除、縮微化、移動到其他桌面、非wm手段關閉了
-    {
-        if(!is_map_client(*pc))
-            *pc=(is_map_client(p = co ? co : *pp) || (p=get_first_map_client()))
-                ? p : clients;
-        if(!is_map_client(*pp) || *pp==*pc)
-            *pp=(is_map_client(p=po) || (p=get_first_map_diff_client(*pp)))
-                ? p : clients;
-    }
-    else
-    {
-        p=get_top_transient_client(c->subgroup_leader, true);
-        *pp=*pc, *pc=(p ? p : c);
-    }
-
-    if(*pp == *pc)
-        *pp = (p=get_first_map_diff_client(*pc)) ? p : clients;
-}
-
 void client_set_state_unfocused(Client *c, int value)
 {
     WIDGET_STATE(c).unfocused=value;
     if(c->frame)
         frame_set_state_unfocused(c->frame, value);
-}
-
-static bool is_map_client(Client *c)
-{
-    if(c && !is_iconic_client(c) && is_on_cur_desktop(c->desktop_mask))
-        list_for_each_entry(Client, p, &clients->list, list)
-            if(p == c)
-                return true;
-    return false;
-}
-
-static Client *get_first_map_client(void)
-{
-    list_for_each_entry(Client, c, &clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
-            return c;
-    return NULL;
-}
-
-static Client *get_first_map_diff_client(Client *key)
-{
-    list_for_each_entry(Client, c, &clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c) && c!=key)
-            return c;
-    return NULL;
 }
 
 static void set_default_win_rect(Client *c)
@@ -553,25 +457,6 @@ bool is_wm_win(Window win, bool before_wm)
     return is_iconic_state(win) || a.map_state==IsViewable;
 }
 
-void restack_win(WM *wm, Window win)
-{
-    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
-        if(win==wm->top_wins[i])
-            return;
-
-    Client *c=win_to_client(win);
-    Net_wm_win_type type=get_net_wm_win_type(win);
-    Window wins[2]={None, c ? WIDGET_WIN(c->frame) : win};
-
-    if(type.desktop)
-        wins[0]=wm->top_wins[DESKTOP_TOP];
-    else if(type.dock)
-        wins[0]=wm->top_wins[DOCK_TOP];
-    else
-        return;
-    XRestackWindows(xinfo.display, wins, 2);
-}
-
 void update_clients_bg(void)
 {
     list_for_each_entry(Client, c, &clients->list, list)
@@ -598,31 +483,6 @@ void move_resize_client(Client *c, const Delta_rect *d)
 
     int bh=frame_get_titlebar_height(c->frame);
     XMoveResizeWindow(xinfo.display, WIDGET_WIN(c), 0, bh, WIDGET_W(c), WIDGET_H(c));
-}
-
-/* 生成帶表頭結點的雙向循環鏈表 */
-void create_clients(WM *wm)
-{
-    unsigned int n;
-    Window *child=query_win_list(&n);
-    if(!child)
-        exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
-
-    Desktop **d=wm->desktop;
-    clients=Malloc(sizeof(Client));
-    memset(clients, 0, sizeof(Client));
-    list_init(&clients->list);
-    for(size_t i=0; i<DESKTOP_N; i++)
-        d[i]->cur_focus_client=d[i]->prev_focus_client=clients;
-    WIDGET_WIN(clients)=xinfo.root_win;
-    for(size_t i=0; i<n; i++)
-    {
-        if(is_wm_win(child[i], true))
-            add_client(wm, child[i]);
-        else
-            restack_win(wm, child[i]);
-    }
-    XFree(child);
 }
 
 void set_client_rect_by_outline(Client *c, int x, int y, int w, int h)
@@ -673,4 +533,22 @@ Client *get_new_client(void)
 bool is_new_client(Client *c)
 {
     return WIDGET_W(c->frame)==1 && WIDGET_H(c->frame)==1;
+}
+
+/* 生成帶表頭結點的雙向循環鏈表 */
+void create_clients(void)
+{
+    unsigned int n;
+    Window *child=query_win_list(&n);
+    if(!child)
+        exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
+
+    clients=Malloc(sizeof(Client));
+    memset(clients, 0, sizeof(Client));
+    list_init(&clients->list);
+    WIDGET_WIN(clients)=xinfo.root_win;
+    for(size_t i=0; i<n; i++)
+        if(is_wm_win(child[i], true))
+            client_add(child[i]);
+    XFree(child);
 }

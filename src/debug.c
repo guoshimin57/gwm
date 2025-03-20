@@ -15,7 +15,7 @@
 #include "taskbar.h"
 #include "debug.h"
 
-void print_client_and_top_win(WM *wm)
+void print_clients(void)
 {
     unsigned int n;
     Window root, parent, *child=NULL;
@@ -25,14 +25,8 @@ void print_client_and_top_win(WM *wm)
         Client *c=NULL;
         printf(_("以下是自頂向底排列的客戶窗口和分層參照窗口列表：\n"));
         for(unsigned int i=0; i<n; i++)
-        {
             if((c=win_to_client(child[i])))
                 printf("client frame: %lx\n", WIDGET_WIN(c->frame));
-            else
-                for(unsigned int j=0; j<TOP_WIN_TYPE_N; j++)
-                    if(wm->top_wins[j] == child[i])
-                        printf("top win: %lx\n", child[i]);
-        }
         XFree(child);
     }
     else
@@ -116,22 +110,6 @@ void print_all_client_win(void)
 void print_client_win(Client *c)
 {
     printf("win=%lx (frame=%lx)\n", WIDGET_WIN(c), WIDGET_WIN(c->frame));
-}
-
-void show_top_win(WM *wm)
-{
-    int h=cfg->font_size*2, w=10*h;
-    char *s[]={"FULLSCREEN_TOP", "ABOVE_TOP", "DOCK_TOP", "FLOAT_TOP", 
-        "NORMAL_TOP", "BELOW_TOP", "DESKTOP_TOP"};
-    Str_fmt f={0, 0, w, h, CENTER_LEFT, false, false, 0xff0000,
-        get_widget_fg(WIDGET_STATE_NORMAL)};
-
-    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
-    {
-        XMoveResizeWindow(xinfo.display, wm->top_wins[i], i*w/2, WIDGET_Y(wm->taskbar)-h, w, h);
-        XMapWindow(xinfo.display, wm->top_wins[i]);
-        draw_string(wm->top_wins[i], s[i], &f);
-    }
 }
 
 void print_widget_state(Widget_state state)

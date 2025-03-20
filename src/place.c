@@ -12,23 +12,23 @@
 #include "func.h"
 #include "minimax.h"
 #include "prop.h"
+#include "desktop.h"
 #include "place.h"
 
-static void key_change_place(WM *wm, Place_type type);
-static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type);
+static void key_change_place(Place_type type);
+static bool is_valid_move(Client *from, Client *to, Place_type type);
 static bool is_valid_to_normal_layer_sec(Client *c);
 static int cmp_client_store_order(Client *c1, Client *c2);
 static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
-static void swap_clients(WM *wm, Client *a, Client *b);
+static void swap_clients(Client *a, Client *b);
 
 void pointer_change_place(WM *wm, XEvent *e, Arg arg)
 {
     XEvent ev;
-    Client *from=CUR_FOC_CLI(wm), *to;
+    Client *from=get_cur_focus_client(), *to;
 
     UNUSED(arg);
-    if( DESKTOP(wm)->cur_layout!=TILE || clients_is_head(from)
-        || !get_valid_click(wm, CHANGE, e, &ev))
+    if(get_cur_layout()!=TILE || !from || !get_valid_click(wm, CHANGE, e, &ev))
         return;
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
@@ -36,44 +36,44 @@ void pointer_change_place(WM *wm, XEvent *e, Arg arg)
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(subw);
     if(ev.xbutton.x == 0)
-        move_client(wm, from, NULL, TILE_LAYER_SECOND);
+        move_client(from, NULL, TILE_LAYER_SECOND);
     else if(ev.xbutton.x == (long)xinfo.screen_width-1)
-        move_client(wm, from, NULL, TILE_LAYER_FIXED);
+        move_client(from, NULL, TILE_LAYER_FIXED);
     else if(win==xinfo.root_win && subw==None)
-        move_client(wm, from, NULL, TILE_LAYER_MAIN);
+        move_client(from, NULL, TILE_LAYER_MAIN);
     else if(to)
-        move_client(wm, from, to, ANY_PLACE);
+        move_client(from, to, ANY_PLACE);
     update_net_wm_state_for_no_max(WIDGET_WIN(from), from->win_state);
 }
 
 void change_to_main(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    key_change_place(wm, TILE_LAYER_MAIN);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    key_change_place(TILE_LAYER_MAIN);
 }
 
 void change_to_second(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    key_change_place(wm, TILE_LAYER_SECOND);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    key_change_place(TILE_LAYER_SECOND);
 }
 
 void change_to_fixed(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    key_change_place(wm, TILE_LAYER_FIXED);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    key_change_place(TILE_LAYER_FIXED);
 }
 
 void change_to_float(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
-    key_change_place(wm, FLOAT_LAYER);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    key_change_place(FLOAT_LAYER);
 }
 
-static void key_change_place(WM *wm, Place_type type)
+static void key_change_place(Place_type type)
 {
-    Client *c=CUR_FOC_CLI(wm);
-    move_client(wm, c, NULL, type);
+    Client *c=get_cur_focus_client();
+    move_client(c, NULL, type);
     update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
@@ -81,48 +81,47 @@ void pointer_swap_clients(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(arg);
     XEvent ev;
-    Layout layout=DESKTOP(wm)->cur_layout;
-    Client *from=CUR_FOC_CLI(wm), *to=NULL, *head=get_clients();
-    if(layout!=TILE || from==head || !get_valid_click(wm, SWAP, e, &ev))
+    Layout layout=get_cur_layout();
+    Client *from=get_cur_focus_client(), *to=NULL;
+    if(layout!=TILE || !from || !get_valid_click(wm, SWAP, e, &ev))
         return;
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
      * 定位器所在的窗口的外邊。因此，接收事件的是根窗口。 */
     if((to=win_to_client(ev.xbutton.subwindow)))
-        swap_clients(wm, from, to);
+        swap_clients(from, to);
 }
 
 void show_desktop(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
     static bool show=false;
 
-    toggle_showing_desktop_mode(wm, show=!show);
+    toggle_showing_desktop_mode(show=!show);
 }
 
-void toggle_showing_desktop_mode(WM *wm, bool show)
+void toggle_showing_desktop_mode(bool show)
 {
     if(show)
-        iconify_all_clients(wm);
+        iconify_all_clients();
     else
-        deiconify_all_clients(wm);
+        deiconify_all_clients();
     set_net_showing_desktop(show);
 }
 
-void move_client(WM *wm, Client *from, Client *to, Place_type type)
+void move_client(Client *from, Client *to, Place_type type)
 {
-    if(move_client_node(wm, from, to, type))
+    if(move_client_node(from, to, type))
     {
         set_place_type_for_subgroup(from->subgroup_leader,
             to ? to->place_type : type);
         request_layout_update();
-        raise_client(wm, from);
     }
 }
 
-bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
+bool move_client_node(Client *from, Client *to, Place_type type)
 {
-    if(!is_valid_move(wm, from, to, type))
+    if(!is_valid_move(from, to, type))
         return false;
 
     Client *head=NULL;
@@ -139,12 +138,12 @@ bool move_client_node(WM *wm, Client *from, Client *to, Place_type type)
     return true;
 }
 
-static bool is_valid_move(WM *wm, Client *from, Client *to, Place_type type)
+static bool is_valid_move(Client *from, Client *to, Place_type type)
 {
-    Layout l=DESKTOP(wm)->cur_layout;
+    Layout l=get_cur_layout();
     Place_type t = to ? to->place_type : type;
 
-    return !clients_is_head(from)
+    return from
         && (!to || from->subgroup_leader!=to->subgroup_leader)
         && (t!=TILE_LAYER_SECOND || is_valid_to_normal_layer_sec(from))
         && (l==TILE || !is_normal_layer(t));
@@ -172,12 +171,12 @@ static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type
         c->place_type=type;
 }
 
-static void swap_clients(WM *wm, Client *a, Client *b)
+static void swap_clients(Client *a, Client *b)
 {
     if(a->subgroup_leader == b->subgroup_leader)
         return;
 
-    Client *tmp, *top, *a_begin, *b_begin, *a_prev, *a_leader, *b_leader, *oa=a;
+    Client *tmp, *top, *a_begin, *b_begin, *a_prev, *a_leader, *b_leader;
 
     if(cmp_client_store_order(a, b) > 0)
         tmp=a, a=b, b=tmp;
@@ -196,6 +195,5 @@ static void swap_clients(WM *wm, Client *a, Client *b)
     if(list_next_entry(a_leader, Client, list) != b_begin) //不相邻
         del_subgroup(b_leader), add_subgroup(a_prev, b_leader);
 
-    raise_client(wm, oa);
     request_layout_update();
 }
