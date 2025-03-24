@@ -91,7 +91,7 @@ void listview_update_fg(const Widget *widget)
     int w=WIDGET_W(listview), h=get_font_height_by_pad(),
         i=0, nmax=listview->nmax;
     Str_fmt fmt={0, 0, w, h, CENTER_LEFT, true, false, 0,
-        get_widget_fg(WIDGET_STATE(listview))};
+        get_text_color(widget)};
 
     list_for_each_entry(Strings, s, &listview->texts->list, list)
     {

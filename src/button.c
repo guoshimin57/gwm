@@ -71,7 +71,7 @@ static void button_dtor(Button *button)
 void button_update_fg(const Widget *widget)
 {
     Button *button=BUTTON(widget);
-    XftColor fg=get_widget_fg(WIDGET_STATE(button));
+    XftColor fg=get_text_color(widget);
     int xi=0, y=0, h=WIDGET_H(button), wi=h, xl=wi, wl=WIDGET_H(button)-wi;
 
     if(button->image)

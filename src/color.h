@@ -14,23 +14,23 @@
 
 #include <X11/Xft/Xft.h>
 
-#define WIDGET_STATE_NORMAL ((Widget_state){0})
-
-typedef struct // 構件狀態。全0表示普通狀態，即以上狀態以外的狀態。
+typedef enum // 顏色號
 {
-    unsigned int disable : 1;   // 禁用狀態，即此時構件禁止使用
-    unsigned int active : 1;    // 激活狀態，即鼠標在構件上按下
-    unsigned int warn : 1;      // 警告狀態，即鼠標懸浮於重要構件之上
-    unsigned int hot : 1;       // 可用狀態，即鼠標懸浮於構件之上
-    unsigned int urgent : 1;    // 緊急狀態，即構件有緊急消息
-    unsigned int attent : 1;    // 關注狀態，即構件有需要關注的消息
-    unsigned int chosen : 1;    // 選中狀態，即選中了此構件所表示的功能
-    unsigned int unfocused : 1; // 失去焦點狀態，即可接收輸入的構件失去了輸入焦點
-} Widget_state;
+    COLOR_NORMAL, 
+    COLOR_ACTIVE, 
+    COLOR_WARN, 
+    COLOR_HOT, 
+    COLOR_URGENT, 
+    COLOR_ATTENT, 
+    COLOR_CHOSEN, 
+    COLOR_UNFOCUSED, 
+    COLOR_HOT_CHOSEN,
+    COLOR_LAST=COLOR_HOT_CHOSEN
+} Color_id;
 
+unsigned long get_root_color(void);
+unsigned long find_widget_color(Color_id cid);
 void alloc_color(const char *main_color_name);
-unsigned long get_widget_color(Widget_state state);
-XftColor get_widget_fg(Widget_state state);
-unsigned long get_root_bg_color(void);
+XftColor find_text_color(Color_id cid);
 
 #endif

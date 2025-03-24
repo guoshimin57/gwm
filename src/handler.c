@@ -661,8 +661,8 @@ static void update_ui(WM *wm)
             menu_update_bg(WIDGET(frame_get_menu(c->frame)));
     entry_update_bg(WIDGET(cmd_entry));
     entry_update_bg(WIDGET(color_entry));
-    update_win_bg(xinfo.hint_win, get_widget_color(WIDGET_STATE_NORMAL), None);
-    update_win_bg(xinfo.root_win, get_root_bg_color(), None);
+    update_win_bg(xinfo.hint_win, get_widget_color(NULL), None);
+    update_win_bg(xinfo.root_win, get_root_color(), None);
     update_clients_bg();
 }
 

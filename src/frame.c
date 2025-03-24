@@ -43,9 +43,10 @@ static void titlebar_set_method(Widget *widget);
 static void frame_dtor(Frame *frame);
 static void titlebar_del(Titlebar *titlebar);
 static void titlebar_dtor(Titlebar *titlebar);
+static void titlebar_buttons_show(Titlebar *titlebar);
+static int titlebar_get_button_n(void);
 static Rect titlebar_get_button_rect(const Titlebar *titlebar, size_t index);
 static Rect titlebar_get_title_rect(const Titlebar *titlebar);
-static int titlebar_get_button_n(void);
 
 Frame *frame_new(Widget *parent, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image)
 {
@@ -71,7 +72,7 @@ static void frame_ctor(Frame *frame, Widget *parent, int x, int y, int w, int h,
 {
     widget_ctor(WIDGET(frame), NULL, WIDGET_TYPE_FRAME, CLIENT_FRAME, x, y, w, h);
     widget_set_border_width(WIDGET(frame), border_w);
-    widget_set_border_color(WIDGET(frame), get_widget_color(WIDGET_STATE(frame)));
+    widget_set_border_color(WIDGET(frame), get_widget_color(WIDGET(frame)));
     frame->cwin=WIDGET_WIN(parent);
     frame->titlebar=NULL;
     if(cfg->set_frame_prop)
@@ -85,7 +86,7 @@ static Titlebar *titlebar_new(Widget *parent, int x, int y, int w, int h, const 
     Titlebar *titlebar=Malloc(sizeof(Titlebar));
 
     titlebar_ctor(titlebar, parent, x, y, w, h, title, image);
-    widget_show(WIDGET(titlebar));
+    titlebar_show(WIDGET(titlebar));
 
     return titlebar;
 }
@@ -120,6 +121,7 @@ static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int 
 
 static void titlebar_set_method(Widget *widget)
 {
+    widget->show=titlebar_show;
     widget->update_fg=titlebar_update_fg;
 }
 
@@ -208,7 +210,7 @@ void frame_update_bg(const Frame *frame)
 {
     if(frame->base.border_w)
         widget_set_border_color(WIDGET(frame),
-            get_widget_color(WIDGET_STATE(frame)));
+            get_widget_color(WIDGET(frame)));
     if(frame->titlebar)
     {
         widget_update_bg(WIDGET(frame->titlebar));
@@ -240,12 +242,36 @@ void titlebar_toggle(Frame *frame, const char *title, Imlib_Image image)
     }
 }
 
+void titlebar_show(Widget *widget)
+{
+    titlebar_buttons_show((Titlebar *)widget);
+    XMapWindow(xinfo.display, WIDGET_WIN(widget));
+}
+
+static void titlebar_buttons_show(Titlebar *titlebar)
+{
+    int n=titlebar_get_button_n();
+    for(int i=0; i<TITLE_BUTTON_N; i++)
+    {
+        if(i<TITLE_BUTTON_N-n)
+            widget_hide(WIDGET(titlebar->buttons[i]));
+        else
+            widget_show(WIDGET(titlebar->buttons[i]));
+    }
+}
+
+static int titlebar_get_button_n(void)
+{
+    int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7};
+    return buttons_n[get_gwm_current_layout()];
+}
+
 void titlebar_update_fg(const Widget *widget)
 {
     Titlebar *titlebar=(Titlebar *)widget;
     Rect r=titlebar_get_title_rect(titlebar);
     Str_fmt f={r.x, r.y, r.w, r.h, CENTER, true, false, 0,
-        get_widget_fg(WIDGET_STATE(titlebar))};
+        get_text_color(widget)};
     draw_string(WIDGET_WIN(titlebar), titlebar->title, &f);
 }
 
@@ -257,21 +283,8 @@ static Rect titlebar_get_title_rect(const Titlebar *titlebar)
 
 void titlebar_update_layout(const Frame *frame)
 {
-    int n=titlebar_get_button_n();
-    for(int i=0; i<TITLE_BUTTON_N; i++)
-    {
-        if(i<TITLE_BUTTON_N-n)
-            widget_hide(WIDGET(frame->titlebar->buttons[i]));
-        else
-            widget_show(WIDGET(frame->titlebar->buttons[i]));
-    }
+    titlebar_buttons_show(frame->titlebar);
     titlebar_update_fg(WIDGET(frame->titlebar));
-}
-
-static int titlebar_get_button_n(void)
-{
-    int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7};
-    return buttons_n[get_gwm_current_layout()];
 }
 
 void frame_change_title(const Frame *frame, const char *title)

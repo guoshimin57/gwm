@@ -92,6 +92,6 @@ void tooltip_show(Widget *widget)
 void tooltip_update_fg(const Widget *widget)
 {
     Str_fmt f={0, 0, WIDGET_W(widget), WIDGET_H(widget), CENTER, true, false, 0,
-        get_widget_fg(WIDGET_STATE(widget))};
+        get_text_color(widget)};
     draw_string(WIDGET_WIN(widget), TOOLTIP(widget)->tip, &f);
 }

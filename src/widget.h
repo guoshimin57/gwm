@@ -76,6 +76,18 @@ typedef enum // 定位器操作類型
     BOTTOM_RIGHT_RESIZE, ADJUST_LAYOUT_RATIO, POINTER_ACT_N
 } Pointer_act;
 
+typedef struct // 構件狀態。全0表示普通狀態，即以下狀態以外的狀態。
+{
+    unsigned int disable : 1;   // 禁用狀態，即此時構件禁止使用
+    unsigned int active : 1;    // 激活狀態，即鼠標在構件上按下
+    unsigned int warn : 1;      // 警告狀態，即鼠標懸浮於重要構件之上
+    unsigned int hot : 1;       // 可用狀態，即鼠標懸浮於構件之上
+    unsigned int urgent : 1;    // 緊急狀態，即構件有緊急消息
+    unsigned int attent : 1;    // 關注狀態，即構件有需要關注的消息
+    unsigned int chosen : 1;    // 選中狀態，即選中了此構件所表示的功能
+    unsigned int unfocused : 1; // 失去焦點狀態，即可接收輸入的構件失去了輸入焦點
+} Widget_state;
+
 typedef struct _widget_tag Widget;
 
 struct _widget_tag
@@ -152,5 +164,7 @@ void grab_keys(void);
 void grab_buttons(Window win);
 bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
 bool grab_pointer(Window win, Pointer_act act);
+unsigned long get_widget_color(const Widget *widget);
+XftColor get_text_color(const Widget *widget);
 
 #endif

@@ -17,6 +17,8 @@
 #include "list.h"
 #include "widget.h"
 
+#define WIDGET_STATE_NORMAL ((Widget_state){0})
+
 typedef struct widget_node_tag
 {
     List list;
@@ -33,6 +35,7 @@ static unsigned int get_num_lock_mask(void);
 static unsigned int get_valid_mask(unsigned int mask);
 static unsigned int get_modifier_mask(KeySym key_sym);
 static Cursor cursors[POINTER_ACT_N]; // 光標
+static Color_id state_to_color_id(Widget_state state);
 
 static Widget_node *widget_list=NULL;
 
@@ -95,7 +98,7 @@ void widget_ctor(Widget *widget, Widget *parent, Widget_type type, Widget_id id,
     widget->type=type;
     widget->id=id;
     widget->state=WIDGET_STATE_NORMAL;
-    bg=get_widget_color(widget->state);
+    bg=get_widget_color(widget);
     if(widget->id != CLIENT_WIN)
         widget->win=create_widget_win(pwin, x, y, w, h, 0, 0, bg);
     widget->x=x, widget->y=y, widget->w=w, widget->h=h, widget->border_w=0;
@@ -172,7 +175,7 @@ void widget_move_resize(Widget *widget, int x, int y, int w, int h)
 
 void widget_update_bg(const Widget *widget)
 {
-    update_win_bg(widget->win, get_widget_color(widget->state), None);
+    update_win_bg(widget->win, get_widget_color(widget), None);
 }
 
 void widget_update_fg(const Widget *widget)
@@ -250,7 +253,7 @@ void update_hint_win_for_info(const Widget *widget, const char *info)
     XMoveResizeWindow(xinfo.display, xinfo.hint_win, x, y, w, h);
     XMapRaised(xinfo.display, xinfo.hint_win);
     Str_fmt f={0, 0, w, h, CENTER, true, false, 0,
-        get_widget_fg(WIDGET_STATE_NORMAL)};
+        get_text_color(NULL)};
     draw_string(xinfo.hint_win, info, &f);
 }
 
@@ -282,7 +285,7 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
 void create_hint_win(void)
 {
     xinfo.hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
-        get_widget_color(WIDGET_STATE_NORMAL));
+        get_widget_color(NULL));
     XSelectInput(xinfo.display, xinfo.hint_win, ExposureMask);
 }
 
@@ -379,4 +382,28 @@ bool grab_pointer(Window win, Pointer_act act)
     return XGrabPointer(xinfo.display, win, False, POINTER_MASK,
         GrabModeAsync, GrabModeAsync, None, cursors[act], CurrentTime)
         == GrabSuccess;
+}
+
+unsigned long get_widget_color(const Widget *widget)
+{
+    Color_id cid = widget ? state_to_color_id(widget->state) : COLOR_NORMAL;
+    return find_widget_color(cid);
+}
+
+XftColor get_text_color(const Widget *widget)
+{
+    Color_id cid = widget ? state_to_color_id(widget->state) : COLOR_NORMAL;
+    return find_text_color(cid);
+}
+
+static Color_id state_to_color_id(Widget_state state)
+{
+    if(state.active)  return COLOR_ACTIVE; 
+    if(state.warn)    return COLOR_WARN; 
+    if(state.hot)     return state.chosen ? COLOR_HOT_CHOSEN : COLOR_HOT; 
+    if(state.urgent)  return COLOR_URGENT; 
+    if(state.attent)  return COLOR_ATTENT; 
+    if(state.chosen)  return COLOR_CHOSEN; 
+    if(state.unfocused) return COLOR_UNFOCUSED; 
+    return COLOR_NORMAL;
 }

@@ -58,21 +58,7 @@
 #include "gwm.h"
 #include "color.h"
 
-enum color_index // *[COLOR_N]數組下標索引，它與構件狀態相關
-{
-    STATE_NORMAL, 
-    STATE_ACTIVE, 
-    STATE_WARN, 
-    STATE_HOT, 
-    STATE_URGENT, 
-    STATE_ATTENT, 
-    STATE_CHOSEN, 
-    STATE_UNFOCUSED, 
-    STATE_HOT_CHOSEN,
-    STATE_LAST=STATE_HOT_CHOSEN
-};
-
-#define COLOR_N (STATE_LAST+1)
+#define COLOR_N (COLOR_LAST+1)
 
 typedef enum // 顏色主題
 {
@@ -118,19 +104,18 @@ static float get_neutral_saturation(float brightness);
 static void alloc_root_bg_color(HSB hsb);
 static HSB get_root_bg_hsb(HSB hsb);
 static void alloc_widget_colors(HSB hsb);
-static void alloc_widget_color(Widget_state state, HSB hsb);
-static RGB get_widget_rgb(Widget_state state, HSB hsb);
-static RGB get_widget_rgb_on_color(Widget_state state, HSB hsb);
-static RGB get_widget_rgb_on_neutral(Widget_state state, HSB hsb);
-static RGB get_widget_rgb_on_grey(Widget_state state, HSB hsb);
+static void alloc_widget_color(Color_id cid, HSB hsb);
+static RGB get_widget_rgb(Color_id cid, HSB hsb);
+static RGB get_widget_rgb_on_color(Color_id cid, HSB hsb);
+static RGB get_widget_rgb_on_neutral(Color_id cid, HSB hsb);
+static RGB get_widget_rgb_on_grey(Color_id cid, HSB hsb);
 static float get_cozy_s(HSB hsb);
 static float get_cozy_b(HSB hsb);
 static bool is_light_color(HSB hsb);
 static XColor alloc_xcolor_by_rgb(RGB rgb);
 static XftColor alloc_xftcolor_by_rgb(RGB rgb);
-static size_t state_to_index(Widget_state state);
 static Color_theme get_color_theme(HSB hsb);
-static RGB get_text_rgb(Widget_state state, RGB rgb);
+static RGB get_text_rgb(Color_id, RGB rgb);
 static float get_valid_dh(float h, float dh);
 static bool is_valid_hue(float h);
 static RGB xcolor_to_rgb(XColor xcolor);
@@ -139,15 +124,15 @@ static float rgb_to_luminance(RGB rgb);
 static HSB rgb_to_hsb(RGB rgb);
 static RGB hsb_to_rgb(HSB hsb);
 
-unsigned long get_root_bg_color(void)
+unsigned long get_root_color(void)
 {
     return root_bg_color;
 }
 
-unsigned long get_widget_color(Widget_state state)
+unsigned long find_widget_color(Color_id cid)
 {
     unsigned long alpha=0xff*cfg->widget_opacity;
-    unsigned long rgb=widget_color[state_to_index(state)];
+    unsigned long rgb=widget_color[cid];
 
     return (rgb & 0x00ffffff) | alpha<<24;
 }
@@ -242,105 +227,91 @@ static HSB get_root_bg_hsb(HSB hsb)
 
 static void alloc_widget_colors(HSB hsb)
 {
-    Widget_state state[]=
-    {
-        [STATE_NORMAL]            = {0},
-        [STATE_ACTIVE]            = {.active=1},
-        [STATE_WARN]              = {.warn=1},
-        [STATE_HOT]               = {.hot=1},
-        [STATE_URGENT]            = {.urgent=1},
-        [STATE_ATTENT]            = {.attent=1},
-        [STATE_CHOSEN]            = {.chosen=1},
-        [STATE_UNFOCUSED]         = {.unfocused=1},
-        [STATE_HOT_CHOSEN]        = {.hot=1, .chosen=1},
-    };
-
-    for(int i=0; i<COLOR_N; i++)
-        alloc_widget_color(state[i], hsb);
+    for(Color_id i=0; i<COLOR_N; i++)
+        alloc_widget_color(i, hsb);
 }
 
-static void alloc_widget_color(Widget_state state, HSB hsb)
+static void alloc_widget_color(Color_id cid, HSB hsb)
 {
-    int i=state_to_index(state);
-    RGB rgb=get_widget_rgb(state, hsb);
-    widget_color[i]=alloc_xcolor_by_rgb(rgb).pixel;
-    rgb=get_text_rgb(state, rgb);
-    text_color[i]=alloc_xftcolor_by_rgb(rgb);
+    RGB rgb=get_widget_rgb(cid, hsb);
+    widget_color[cid]=alloc_xcolor_by_rgb(rgb).pixel;
+    rgb=get_text_rgb(cid, rgb);
+    text_color[cid]=alloc_xftcolor_by_rgb(rgb);
 }
 
-static RGB get_widget_rgb(Widget_state state, HSB hsb)
+static RGB get_widget_rgb(Color_id cid, HSB hsb)
 {
     switch(get_color_theme(hsb))
     {
         case DARK_COLOR_THEME:
-        case LIGHT_COLOR_THEME: return get_widget_rgb_on_color(state, hsb);
+        case LIGHT_COLOR_THEME: return get_widget_rgb_on_color(cid, hsb);
         case DARK_NEUTRAL_THEME:
-        case LIGHT_NEUTRAL_THEME: return get_widget_rgb_on_neutral(state, hsb);
+        case LIGHT_NEUTRAL_THEME: return get_widget_rgb_on_neutral(cid, hsb);
         case DARK_GREY_THEME:
-        case LIGHT_GREY_THEME: return get_widget_rgb_on_grey(state, hsb);
+        case LIGHT_GREY_THEME: return get_widget_rgb_on_grey(cid, hsb);
         default: return RGB(0, 0, 0);
     }
 }
 
-static RGB get_widget_rgb_on_color(Widget_state state, HSB hsb)
+static RGB get_widget_rgb_on_color(Color_id cid, HSB hsb)
 {
     float h=hsb.h, s=hsb.s, b=hsb.b;
     float dh=get_valid_dh(h, -60)/3, db=fminf((1-b)/2, 0.2);
     HSB table[COLOR_N] =
     {
-        [STATE_NORMAL]            = {h,      s,   b}, 
-        [STATE_ACTIVE]            = {h,      s,   1},   
-        [STATE_WARN]              = {0,      1,   0.9}, // 紅色
-        [STATE_HOT]               = {h,      s,   b+db},
-        [STATE_URGENT]            = {h+dh*2, s,   b},   
-        [STATE_ATTENT]            = {h+dh,   s,   b},   
-        [STATE_CHOSEN]            = {h+dh*3, s,   b},   
-        [STATE_UNFOCUSED]         = {h,      s/2, b/2},   
-        [STATE_HOT_CHOSEN]        = {h+dh*3, s,   b+db},
+        [COLOR_NORMAL]            = {h,      s,   b}, 
+        [COLOR_ACTIVE]            = {h,      s,   1},   
+        [COLOR_WARN]              = {0,      1,   0.9}, // 紅色
+        [COLOR_HOT]               = {h,      s,   b+db},
+        [COLOR_URGENT]            = {h+dh*2, s,   b},   
+        [COLOR_ATTENT]            = {h+dh,   s,   b},   
+        [COLOR_CHOSEN]            = {h+dh*3, s,   b},   
+        [COLOR_UNFOCUSED]         = {h,      s/2, b/2},   
+        [COLOR_HOT_CHOSEN]        = {h+dh*3, s,   b+db},
     };
 
-    return hsb_to_rgb(table[state_to_index(state)]);
+    return hsb_to_rgb(table[cid]);
 }
 
-static RGB get_widget_rgb_on_neutral(Widget_state state, HSB hsb)
+static RGB get_widget_rgb_on_neutral(Color_id cid, HSB hsb)
 {
     float h=hsb.h, s=hsb.s, b=hsb.b;
     float dh=get_valid_dh(h, 60)/3, db=fmin((1-b)/2, 0.2);
     float cs=get_cozy_s(hsb), cb=get_cozy_b(hsb);
     HSB table[COLOR_N] =
     {
-        [STATE_NORMAL]            = {h,      s,   b}, 
-        [STATE_ACTIVE]            = {h,      s,   1}, 
-        [STATE_WARN]              = {0,      1,   0.9}, // 紅色
-        [STATE_HOT]               = {h,      s,   b+db},
-        [STATE_URGENT]            = {h+dh*2, cs,  cb}, 
-        [STATE_ATTENT]            = {h+dh,   cs,  cb}, 
-        [STATE_CHOSEN]            = {h+dh*3, cs,  cb},
-        [STATE_UNFOCUSED]         = {h,      s/2, b/2},   
-        [STATE_HOT_CHOSEN]        = {h+dh*3, cs,  1}, 
+        [COLOR_NORMAL]            = {h,      s,   b}, 
+        [COLOR_ACTIVE]            = {h,      s,   1}, 
+        [COLOR_WARN]              = {0,      1,   0.9}, // 紅色
+        [COLOR_HOT]               = {h,      s,   b+db},
+        [COLOR_URGENT]            = {h+dh*2, cs,  cb}, 
+        [COLOR_ATTENT]            = {h+dh,   cs,  cb}, 
+        [COLOR_CHOSEN]            = {h+dh*3, cs,  cb},
+        [COLOR_UNFOCUSED]         = {h,      s/2, b/2},   
+        [COLOR_HOT_CHOSEN]        = {h+dh*3, cs,  1}, 
     };
 
-    return hsb_to_rgb(table[state_to_index(state)]);
+    return hsb_to_rgb(table[cid]);
 }
 
-static RGB get_widget_rgb_on_grey(Widget_state state, HSB hsb)
+static RGB get_widget_rgb_on_grey(Color_id cid, HSB hsb)
 {
     float h=hsb.h, s=hsb.s, b=hsb.b, db=fmin((1-b)/2, 0.2);
     float cs=get_cozy_s(hsb), cb=get_cozy_b(hsb);
     HSB table[COLOR_N] =
     {
-        [STATE_NORMAL]            = {h,   s,   b}, 
-        [STATE_ACTIVE]            = {h,   s,   1}, 
-        [STATE_WARN]              = {0,   1,   0.9}, // 紅色
-        [STATE_HOT]               = {h,   s,   b+db},
-        [STATE_URGENT]            = {175, cs,  cb}, 
-        [STATE_ATTENT]            = {155, cs,  cb}, 
-        [STATE_CHOSEN]            = {195, cs,  cb},
-        [STATE_UNFOCUSED]         = {h,   s/2, b/2},   
-        [STATE_HOT_CHOSEN]        = {195, cs,  1}, 
+        [COLOR_NORMAL]            = {h,   s,   b}, 
+        [COLOR_ACTIVE]            = {h,   s,   1}, 
+        [COLOR_WARN]              = {0,   1,   0.9}, // 紅色
+        [COLOR_HOT]               = {h,   s,   b+db},
+        [COLOR_URGENT]            = {175, cs,  cb}, 
+        [COLOR_ATTENT]            = {155, cs,  cb}, 
+        [COLOR_CHOSEN]            = {195, cs,  cb},
+        [COLOR_UNFOCUSED]         = {h,   s/2, b/2},   
+        [COLOR_HOT_CHOSEN]        = {195, cs,  1}, 
     };
 
-    return hsb_to_rgb(table[state_to_index(state)]);
+    return hsb_to_rgb(table[cid]);
 }
 
 static float get_cozy_s(HSB hsb)
@@ -377,18 +348,6 @@ static XftColor alloc_xftcolor_by_rgb(RGB rgb)
     return xc;
 }
 
-static size_t state_to_index(Widget_state state)
-{
-    if(state.active)  return STATE_ACTIVE; 
-    if(state.warn)    return STATE_WARN; 
-    if(state.hot)     return state.chosen ? STATE_HOT_CHOSEN : STATE_HOT; 
-    if(state.urgent)  return STATE_URGENT; 
-    if(state.attent)  return STATE_ATTENT; 
-    if(state.chosen)  return STATE_CHOSEN; 
-    if(state.unfocused) return STATE_UNFOCUSED; 
-    return STATE_NORMAL;
-}
-
 static Color_theme get_color_theme(HSB hsb)
 {
     bool light=is_light_color(hsb);
@@ -399,21 +358,21 @@ static Color_theme get_color_theme(HSB hsb)
     return light ? LIGHT_COLOR_THEME : DARK_COLOR_THEME;    // 彩色
 }
 
-static RGB get_text_rgb(Widget_state state, RGB rgb)
+static RGB get_text_rgb(Color_id cid, RGB rgb)
 {
     float dark_b[COLOR_N]= // 深色主題的顏色亮度列表
     {
-        [STATE_NORMAL]            = 0.0,
-        [STATE_ACTIVE]            = 0.0,
-        [STATE_WARN]              = 0.0,
-        [STATE_HOT]               = 0.1,
-        [STATE_URGENT]            = 0.2,
-        [STATE_ATTENT]            = 0.2,
-        [STATE_CHOSEN]            = 0.2,
-        [STATE_UNFOCUSED]         = 0.3,
-        [STATE_HOT_CHOSEN]        = 0.1,
+        [COLOR_NORMAL]            = 0.0,
+        [COLOR_ACTIVE]            = 0.0,
+        [COLOR_WARN]              = 0.0,
+        [COLOR_HOT]               = 0.1,
+        [COLOR_URGENT]            = 0.2,
+        [COLOR_ATTENT]            = 0.2,
+        [COLOR_CHOSEN]            = 0.2,
+        [COLOR_UNFOCUSED]         = 0.3,
+        [COLOR_HOT_CHOSEN]        = 0.1,
     };
-    float b=dark_b[state_to_index(state)];
+    float b=dark_b[cid];
     HSB hsb=rgb_to_hsb(rgb);
 
     hsb.b = isgreater(rgb_to_luminance(rgb), 255/2.0) ? 0 : 1;
@@ -434,9 +393,9 @@ static bool is_valid_hue(float h)
     return isgreaterequal(h, 0) && islessequal(h, 360);
 }
 
-XftColor get_widget_fg(Widget_state state)
+XftColor find_text_color(Color_id cid)
 {
-    return text_color[state_to_index(state)];
+    return text_color[cid];
 }
 
 /* XColor的顏色分量均爲16位整數，其高8位表示真正的RGB分量值 */

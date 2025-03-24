@@ -112,7 +112,7 @@ void entry_hide(const Widget *widget)
 void entry_update_bg(const Widget *widget)
 {
     widget_update_bg(widget);
-    widget_set_border_color(widget, get_widget_color(WIDGET_STATE(widget)));
+    widget_set_border_color(widget, get_widget_color(widget));
 }
 
 void entry_update_fg(const Widget *widget)
@@ -120,7 +120,7 @@ void entry_update_fg(const Widget *widget)
     Entry *entry=ENTRY(widget);
     int x=entry_get_cursor_x(entry);
     Str_fmt fmt={0, 0, WIDGET_W(entry), WIDGET_H(entry), CENTER_LEFT, true, false, 0,
-        get_widget_fg(WIDGET_STATE(entry))};
+        get_text_color(widget)};
 
     if(wcslen(entry->text) == 0)
         draw_string(WIDGET_WIN(entry), entry->hint, &fmt);

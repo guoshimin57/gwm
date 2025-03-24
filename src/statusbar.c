@@ -59,7 +59,7 @@ static void statusbar_dtor(Statusbar *statusbar)
 static void statusbar_update_fg(const Widget *widget)
 {
     const Statusbar *statusbar=(const Statusbar *)widget;
-    XftColor fg=get_widget_fg(WIDGET_STATE(statusbar));
+    XftColor fg=get_text_color(widget);
     if(statusbar->label)
     {
         Str_fmt fmt={0, 0, WIDGET_W(statusbar),

@@ -29,6 +29,7 @@ void frame_update_bg(const Frame *frame);
 Menu *frame_get_menu(const Frame *frame);
 int frame_get_titlebar_height(const Frame *frame);
 void titlebar_toggle(Frame *frame, const char *title, Imlib_Image image);
+void titlebar_show(Widget *widget);
 void titlebar_update_fg(const Widget *widget);
 void titlebar_update_layout(const Frame *frame);
 void frame_change_title(const Frame *frame, const char *title);
