@@ -158,6 +158,4 @@ typedef struct move_info_tag Move_info;
 extern sig_atomic_t run_flag; // 程序運行標志
 extern Xinfo xinfo;
 
-
-
 #endif

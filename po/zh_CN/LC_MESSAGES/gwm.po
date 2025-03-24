@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.12.6\n"
+"Project-Id-Version: gwm 2.12.7\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-03-20 20:51+0800\n"
+"POT-Creation-Date: 2025-03-24 11:44+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: client.c:544
+#: client.c:54
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 
@@ -283,23 +283,23 @@ msgstr "命令执行错误"
 msgid "未能成功地爲命令創建新進程"
 msgstr "未能成功地为命令创建新进程"
 
-#: gwm.c:41
+#: gwm.c:43
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "不能安装SIGCHLD信号处理函数"
 
-#: gwm.c:43
+#: gwm.c:45
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "不能安装SIGINT信号处理函数"
 
-#: gwm.c:45
+#: gwm.c:47
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "不能安装SIGTERM信号处理函数"
 
-#: gwm.c:47
+#: gwm.c:49
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "不能安装SIGQUIT信号处理函数"
 
-#: gwm.c:49
+#: gwm.c:51
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 

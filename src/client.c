@@ -40,6 +40,25 @@ void reg_focus_func(void (*func)(Client *))
     focus=func;
 }
 
+void init_client_list(void)
+{
+    clients=Malloc(sizeof(Client));
+    list_init(&clients->list);
+}
+
+void manage_exsit_clients(void)
+{
+    unsigned int n;
+    Window *child=query_win_list(&n);
+    if(!child)
+        exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
+
+    for(size_t i=0; i<n; i++)
+        if(is_wm_win(child[i], true))
+            client_add(child[i]);
+    XFree(child);
+}
+
 Client *get_clients(void)
 {
     return clients;
@@ -76,18 +95,18 @@ static void client_ctor(Client *c, Window win)
     c->decorative=has_decoration(c);
     c->owner=win_to_client(get_transient_for(WIDGET_WIN(c)));
     c->subgroup_leader=get_subgroup_leader(c);
-    set_default_place_type(c);
-    save_place_info_of_client(c);
     c->class_name="?";
-    XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint);
     c->image=get_win_icon_image(win);
-    set_default_desktop_mask(c);
-    apply_rules(c);
-    set_default_win_rect(c);
     c->frame=frame_new(WIDGET(c), 0, 0, 1, 1,
         c->decorative ? get_font_height_by_pad() : 0,
         c->decorative ? cfg->border_width : 0,
         c->title_text, c->image);
+    XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint);
+    set_default_place_type(c);
+    set_default_win_rect(c);
+    set_default_desktop_mask(c);
+    apply_rules(c);
+    save_place_info_of_client(c);
     widget_set_state(WIDGET(c->frame), WIDGET_STATE(c));
 }
 
@@ -533,22 +552,4 @@ Client *get_new_client(void)
 bool is_new_client(Client *c)
 {
     return WIDGET_W(c->frame)==1 && WIDGET_H(c->frame)==1;
-}
-
-/* 生成帶表頭結點的雙向循環鏈表 */
-void create_clients(void)
-{
-    unsigned int n;
-    Window *child=query_win_list(&n);
-    if(!child)
-        exit_with_msg(_("錯誤：查詢窗口清單失敗！"));
-
-    clients=Malloc(sizeof(Client));
-    memset(clients, 0, sizeof(Client));
-    list_init(&clients->list);
-    WIDGET_WIN(clients)=xinfo.root_win;
-    for(size_t i=0; i<n; i++)
-        if(is_wm_win(child[i], true))
-            client_add(child[i]);
-    XFree(child);
 }

@@ -71,7 +71,7 @@ void init_wm(WM *wm)
     color_entry=color_entry_new(COLOR_ENTRY);
     create_hint_win();
     reg_focus_func(focus_client);
-    create_clients();
+    init_client_list();
     grab_keys();
     exec_autostart();
 }

@@ -12,7 +12,8 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
-#include "gwm.h"
+#include <Imlib2.h>
+#include "widget.h"
 #include "font.h"
 
 typedef struct _button_tag Button;

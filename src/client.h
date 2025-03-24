@@ -68,6 +68,8 @@ typedef struct client_tag // 客戶窗口相關信息
     list_for_each_entry_reverse(Client, c, &get_clients()->list, list)
 
 void reg_focus_func(void (*func)(Client *));
+void init_client_list(void);
+void manage_exsit_clients(void);
 Client *get_clients(void);
 void client_add(Window win);
 void set_all_net_client_list(void);

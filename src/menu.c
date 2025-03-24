@@ -9,6 +9,8 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "gwm.h"
+#include "misc.h"
 #include "drawable.h"
 #include "button.h"
 #include "menu.h"

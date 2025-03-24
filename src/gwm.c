@@ -12,6 +12,7 @@
 #include "misc.h"
 #include "gwm.h"
 #include "config.h"
+#include "client.h"
 #include "handler.h"
 #include "init.h"
 
@@ -31,6 +32,7 @@ int main(void)
     XSetScreenSaver(xinfo.display, cfg->screen_saver_time_out,
         cfg->screen_saver_interval, PreferBlanking, AllowExposures);
     set_signals();
+    manage_exsit_clients();
     handle_events(&wm);
     return EXIT_SUCCESS;
 }

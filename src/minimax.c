@@ -11,6 +11,7 @@
 
 #include "prop.h"
 #include "minimax.h"
+#include "focus.h"
 #include "client.h"
 #include "desktop.h"
 #include "place.h"
@@ -210,7 +211,7 @@ void iconify_client(Client *c)
         widget_hide(WIDGET(p->frame));
         if(p == get_cur_focus_client())
         {
-            set_net_active_window(None);
+            focus_client(NULL);
             frame_update_bg(p->frame);
         }
     }
@@ -240,7 +241,7 @@ void deiconify_client(Client *c)
             p->win_state.hidden=0;
             update_net_wm_state(WIDGET_WIN(p), p->win_state);
             widget_show(WIDGET(p->frame));
-            set_net_active_window(WIDGET_WIN(p));
+            focus_client(p);
         }
     }
     request_layout_update();
