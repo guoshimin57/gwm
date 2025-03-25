@@ -12,6 +12,7 @@
 #include "icccm.h"
 #include "mvresize.h"
 #include "desktop.h"
+#include "focus.h"
 #include "place.h"
 
 static void key_move_resize_client(WM *wm, XEvent *e, Direction dir);

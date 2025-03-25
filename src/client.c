@@ -110,24 +110,30 @@ static void client_ctor(Client *c, Window win)
     widget_set_state(WIDGET(c->frame), WIDGET_STATE(c));
 }
 
-void set_all_net_client_list(void)
-{
-    int n=0;
-    Window *wlist=get_client_win_list(&n);
-
-    if(wlist)
-        set_net_client_list(wlist, n), Free(wlist);
-
-    wlist=get_client_win_list_stacking(&n);
-    if(wlist)
-        set_net_client_list_stacking(wlist, n), Free(wlist);
-}
-
 static bool has_decoration(const Client *c)
 {
     return has_motif_decoration(WIDGET_WIN(c))
         && (c->win_type.none || c->win_type.normal || c->win_type.dialog)
         && !c->win_state.skip_pager && !c->win_state.skip_taskbar;
+}
+
+Client *get_subgroup_leader(Client *c)
+{
+    for(; c && c->owner; c=c->owner)
+        ;
+    return c;
+}
+
+static void set_default_place_type(Client *c)
+{
+    if(c->owner)                     c->place_type = c->owner->place_type;
+    else if(c->win_type.desktop)     c->place_type = DESKTOP_LAYER;
+    else if(c->win_state.below)      c->place_type = BELOW_LAYER;
+    else if(c->win_type.dock)        c->place_type = DOCK_LAYER;
+    else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
+    else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
+    else if(is_win_state_max(c->win_state)) c->place_type = FLOAT_LAYER;
+    else                             c->place_type = TILE_LAYER_MAIN;  
 }
 
 static void set_default_desktop_mask(Client *c)
@@ -176,18 +182,6 @@ static bool have_rule(const Rule *r, Client *c)
         && (!pt || !title || !strcmp(title, pt) || !strcmp(pt, "*")));
 }
 
-static void set_default_place_type(Client *c)
-{
-    if(c->owner)                     c->place_type = c->owner->place_type;
-    else if(c->win_type.desktop)     c->place_type = DESKTOP_LAYER;
-    else if(c->win_state.below)      c->place_type = BELOW_LAYER;
-    else if(c->win_type.dock)        c->place_type = DOCK_LAYER;
-    else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
-    else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
-    else if(is_win_state_max(c->win_state)) c->place_type = FLOAT_LAYER;
-    else                             c->place_type = TILE_LAYER_MAIN;  
-}
-
 int get_clients_n(Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)
 {
     int n=0;
@@ -222,7 +216,6 @@ void client_del(Client *c, bool is_for_quit)
     widget_del(WIDGET(c));
     if(!is_for_quit)
         request_layout_update();
-    set_all_net_client_list();
 }
 
 static void client_dtor(Client *c)
@@ -322,13 +315,6 @@ int get_subgroup_n(Client *c)
     return n;
 }
 
-Client *get_subgroup_leader(Client *c)
-{
-    for(; c && c->owner; c=c->owner)
-        ;
-    return c;
-}
-
 Client *get_top_transient_client(Client *subgroup_leader, bool only_modal)
 {
     Client *result=NULL;
@@ -393,63 +379,6 @@ bool is_tile_client(Client *c)
 bool is_tiled_client(Client *c)
 {
     return get_gwm_current_layout()==TILE && is_tile_client(c);
-}
-
-/* 獲取當前桌面按從早到遲的映射順序排列的客戶窗口列表 */
-Window *get_client_win_list(int *n)
-{
-    *n=get_clients_n(ANY_PLACE, true, true, true);
-    if(*n == 0)
-        return NULL;
-
-    unsigned long i=0, j=0, new_n=*n, old_n=0;
-    Window *old_list=get_net_client_list(&old_n);
-    Window *wlist=NULL;
-
-    if(new_n > old_n) // 添加了客戶窗口
-    {
-        wlist=Malloc(new_n*sizeof(Window));
-        for(unsigned long i=0; i<old_n; i++)
-            wlist[i]=old_list[i];
-        clients_for_each(c)
-        {
-            for(i=0; i<old_n && WIDGET_WIN(c)!=old_list[i]; i++)
-                ;
-            if(i == old_n)
-                { wlist[old_n]=WIDGET_WIN(c); break; }
-        }
-    }
-    else if(new_n < old_n) // 刪除了客戶窗口
-    {
-        wlist=Malloc(new_n*sizeof(Window));
-        for(i=0, j=0; i<old_n; i++)
-            if(win_to_client(old_list[i]))
-                wlist[j++]=old_list[i];
-    }
-
-    return wlist;
-}
-
-/* 獲取當前桌面按從下到上的疊次序排列的客戶窗口列表 */
-Window *get_client_win_list_stacking(int *n)
-{
-    *n=get_clients_n(ANY_PLACE, true, true, true);
-    if(*n == 0)
-        return NULL;
-
-    unsigned int tree_n=0;
-    Window *tree=query_win_list(&tree_n);
-    if(!tree)
-        return NULL;
-
-    Client *c=NULL;
-    Window *wlist=Malloc(*n*sizeof(Window));
-    for(unsigned int i=0, j=0; i<tree_n; i++)
-        if((c=win_to_client(tree[i])))
-            wlist[j++]=WIDGET_WIN(c);
-    Free(tree);
-
-    return wlist;
 }
 
 void set_state_attent(Client *c, bool attent)

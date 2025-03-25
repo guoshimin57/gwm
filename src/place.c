@@ -13,6 +13,7 @@
 #include "minimax.h"
 #include "prop.h"
 #include "desktop.h"
+#include "focus.h"
 #include "place.h"
 
 static void key_change_place(Place_type type);

@@ -35,8 +35,6 @@ void init_desktop(void)
     {
         desktop[i]=Malloc(sizeof(Desktop));
         desktop[i]->n_main_max=cfg->default_n_main_max;
-        desktop[i]->cur_focus_client=NULL;
-        desktop[i]->prev_focus_client=NULL;
         desktop[i]->cur_layout=cfg->default_layout;
         desktop[i]->prev_layout=cfg->default_layout;
         desktop[i]->main_area_ratio=cfg->default_main_area_ratio;
@@ -53,26 +51,6 @@ void free_desktop(void)
 Desktop *get_cur_desktop(void)
 {
     return desktop[get_net_current_desktop()];
-}
-
-Client *get_cur_focus_client(void)
-{
-    return get_cur_desktop()->cur_focus_client;
-}
-
-void set_cur_focus_client(Client *c)
-{
-    desktop[get_net_current_desktop()]->cur_focus_client=c;
-}
-
-Client *get_prev_focus_client(void)
-{
-    return get_cur_desktop()->prev_focus_client;
-}
-
-void set_prev_focus_client(Client *c)
-{
-    desktop[get_net_current_desktop()]->prev_focus_client=c;
 }
 
 Layout get_cur_layout(void)
@@ -147,7 +125,6 @@ void focus_desktop_n(WM *wm, unsigned int n)
     show_cur_desktop_clients(wm);
     Client *c=get_cur_focus_client();
     focus_client(is_exist_client(c) ? c : NULL);
-    set_all_net_client_list();
 }
 
 static void hide_cur_desktop_clients(WM *wm)
@@ -248,7 +225,7 @@ void all_move_to_desktop_n(WM *wm, unsigned int n)
 
     for(unsigned int i=0; i<DESKTOP_N; i++)
         if(i != n)
-            desktop[i]->prev_focus_client=desktop[i]->cur_focus_client=NULL;
+            set_prev_focus_client(NULL), set_cur_focus_client(NULL);
 
     if(n == get_net_current_desktop())
         request_layout_update();
@@ -262,7 +239,7 @@ void change_to_desktop_n(WM *wm, unsigned int n)
 
     ready_to_desktop_n(wm, c, n, CHANGE_TO_N);
     focus_client(NULL);
-    desktop[n]->cur_focus_client=c;
+    set_cur_focus_client(c);
     focus_desktop_n(wm, n);
 }
 

@@ -10,7 +10,7 @@
  * ************************************************************************/
 
 #include "icccm.h"
-#include "desktop.h"
+//#include "desktop.h"
 #include "focus.h"
 
 typedef enum // 窗口疊次序分層類型
@@ -31,6 +31,13 @@ static Client *get_first_map_client(void);
 static Client *get_first_map_diff_client(Client *key);
 static void raise_client(Client *c);
 static Window get_top_win(Client *c);
+static void set_all_net_client_list(void);
+static Window *get_client_win_list(int *n);
+static Window *get_client_win_list_stacking(int *n);
+
+// 分別爲各桌面的當前聚焦結點、前一個聚焦結點数组
+static Client *cur_focus_client[DESKTOP_N]={NULL};
+static Client *prev_focus_client[DESKTOP_N]={NULL};
 
 Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
 
@@ -62,6 +69,27 @@ void focus_client(Client *c)
     }
 
     set_net_active_window(pc ? WIDGET_WIN(pc) : None);
+    set_all_net_client_list();
+}
+
+void set_cur_focus_client(Client *c)
+{
+    cur_focus_client[get_net_current_desktop()]=c;
+}
+
+Client *get_cur_focus_client(void)
+{
+    return cur_focus_client[get_net_current_desktop()];
+}
+
+void set_prev_focus_client(Client *c)
+{
+    prev_focus_client[get_net_current_desktop()]=c;
+}
+
+Client *get_prev_focus_client(void)
+{
+    return prev_focus_client[get_net_current_desktop()];
 }
 
 static void update_focus_client_pointer(Client *c)
@@ -126,7 +154,6 @@ static void raise_client(Client *c)
         wins[i--]=WIDGET_WIN(p->frame);
 
     XRestackWindows(xinfo.display, wins, n+1);
-    set_all_net_client_list();
 }
 
 static Window get_top_win(Client *c)
@@ -156,4 +183,74 @@ void del_refer_top_wins(void)
 {
     for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
         XDestroyWindow(xinfo.display, top_wins[i]);
+}
+
+static void set_all_net_client_list(void)
+{
+    int n=0;
+    Window *wlist=get_client_win_list(&n);
+
+    if(wlist)
+        set_net_client_list(wlist, n), Free(wlist);
+
+    wlist=get_client_win_list_stacking(&n);
+    if(wlist)
+        set_net_client_list_stacking(wlist, n), Free(wlist);
+}
+
+/* 獲取當前桌面按從早到遲的映射順序排列的客戶窗口列表 */
+static Window *get_client_win_list(int *n)
+{
+    *n=get_clients_n(ANY_PLACE, true, true, true);
+    if(*n == 0)
+        return NULL;
+
+    unsigned long i=0, j=0, new_n=*n, old_n=0;
+    Window *old_list=get_net_client_list(&old_n);
+    Window *wlist=NULL;
+
+    if(new_n > old_n) // 添加了客戶窗口
+    {
+        wlist=Malloc(new_n*sizeof(Window));
+        for(unsigned long i=0; i<old_n; i++)
+            wlist[i]=old_list[i];
+        clients_for_each(c)
+        {
+            for(i=0; i<old_n && WIDGET_WIN(c)!=old_list[i]; i++)
+                ;
+            if(i == old_n)
+                { wlist[old_n]=WIDGET_WIN(c); break; }
+        }
+    }
+    else if(new_n < old_n) // 刪除了客戶窗口
+    {
+        wlist=Malloc(new_n*sizeof(Window));
+        for(i=0, j=0; i<old_n; i++)
+            if(win_to_client(old_list[i]))
+                wlist[j++]=old_list[i];
+    }
+
+    return wlist;
+}
+
+/* 獲取當前桌面按從下到上的疊次序排列的客戶窗口列表 */
+static Window *get_client_win_list_stacking(int *n)
+{
+    *n=get_clients_n(ANY_PLACE, true, true, true);
+    if(*n == 0)
+        return NULL;
+
+    unsigned int tree_n=0;
+    Window *tree=query_win_list(&tree_n);
+    if(!tree)
+        return NULL;
+
+    Client *c=NULL;
+    Window *wlist=Malloc(*n*sizeof(Window));
+    for(unsigned int i=0, j=0; i<tree_n; i++)
+        if((c=win_to_client(tree[i])))
+            wlist[j++]=WIDGET_WIN(c);
+    Free(tree);
+
+    return wlist;
 }

@@ -15,8 +15,11 @@
 #include "gwm.h"
 #include "client.h"
 
-typedef struct client_tag Client;
 void focus_client(Client *c);
+void set_cur_focus_client(Client *c);
+Client *get_cur_focus_client(void);
+void set_prev_focus_client(Client *c);
+Client *get_prev_focus_client(void);
 void create_refer_top_wins(void);
 void del_refer_top_wins(void);
 
