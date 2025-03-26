@@ -12,7 +12,7 @@
 #include "func.h"
 #include "minimax.h"
 #include "prop.h"
-#include "desktop.h"
+#include "layout.h"
 #include "focus.h"
 #include "place.h"
 
@@ -29,7 +29,7 @@ void pointer_change_place(WM *wm, XEvent *e, Arg arg)
     Client *from=get_cur_focus_client(), *to;
 
     UNUSED(arg);
-    if(get_cur_layout()!=TILE || !from || !get_valid_click(wm, CHANGE, e, &ev))
+    if(!is_spec_layout(TILE) || !from || !get_valid_click(wm, CHANGE, e, &ev))
         return;
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
@@ -82,9 +82,8 @@ void pointer_swap_clients(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(arg);
     XEvent ev;
-    Layout layout=get_cur_layout();
     Client *from=get_cur_focus_client(), *to=NULL;
-    if(layout!=TILE || !from || !get_valid_click(wm, SWAP, e, &ev))
+    if(!is_spec_layout(TILE) || !from || !get_valid_click(wm, SWAP, e, &ev))
         return;
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
@@ -141,13 +140,12 @@ bool move_client_node(Client *from, Client *to, Place_type type)
 
 static bool is_valid_move(Client *from, Client *to, Place_type type)
 {
-    Layout l=get_cur_layout();
     Place_type t = to ? to->place_type : type;
 
     return from
         && (!to || from->subgroup_leader!=to->subgroup_leader)
         && (t!=TILE_LAYER_SECOND || is_valid_to_normal_layer_sec(from))
-        && (l==TILE || !is_normal_layer(t));
+        && (is_spec_layout(TILE) || !is_normal_layer(t));
 }
 
 static bool is_valid_to_normal_layer_sec(Client *c)

@@ -19,7 +19,7 @@
 #include "icccm.h"
 #include "focus.h"
 #include "taskbar.h"
-#include "desktop.h"
+#include "layout.h"
 #include "init.h"
 
 static Rect compute_taskbar_rect(void);
@@ -53,7 +53,7 @@ void init_wm(WM *wm)
     init_imlib();
     if(cfg->wallpaper_paths)
         init_wallpaper_files(wm);
-    init_desktop();
+    set_net_current_desktop(cfg->default_cur_desktop);
     reg_event_handlers(wm);
     load_fonts();
     alloc_color(cfg->main_color_name);
@@ -62,7 +62,7 @@ void init_wm(WM *wm)
     set_cursor(xinfo.root_win, NO_OP);
     set_workarea(wm);
     set_ewmh(wm);
-    set_gwm_current_layout(get_cur_layout());
+    init_layout();
     Rect r=compute_taskbar_rect();
     wm->taskbar=taskbar_new(NULL, r.x, r.y, r.w, r.h);
     if(cfg->show_taskbar)

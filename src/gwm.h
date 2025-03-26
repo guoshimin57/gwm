@@ -30,6 +30,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xft/Xft.h>
 #include <X11/Xproto.h>
+#include "gwm.h"
 #include "misc.h"
 #include "taskbar.h"
 
@@ -62,31 +63,28 @@ typedef struct // 與X相關的信息
     Window hint_win; // 提示窗口
 } Xinfo;
 
-enum place_type_tag // 窗口的位置類型
+typedef enum // 窗口的位置類型
 {
     FULLSCREEN_LAYER, ABOVE_LAYER, DOCK_LAYER, FLOAT_LAYER,
     TILE_LAYER_MAIN, TILE_LAYER_SECOND, TILE_LAYER_FIXED,
     BELOW_LAYER, DESKTOP_LAYER, ANY_PLACE, PLACE_TYPE_N=ANY_PLACE
-};
-typedef enum place_type_tag Place_type;
+} Place_type;
 
-struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
+typedef struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 {
     int x, y; // 坐標
     int w, h; // 尺寸
-};
-typedef struct rectangle_tag Rect;
+} Rect;
 
 typedef struct /* 調整窗口尺寸的信息 */
 {
     int dx, dy, dw, dh; /* 分別爲窗口坐標和尺寸的變化量 */
 } Delta_rect;
 
-enum layout_tag // 窗口管理器的布局模式
+typedef enum // 窗口管理器的布局模式
 {
     PREVIEW, STACK, TILE,
-};
-typedef enum layout_tag Layout;
+} Layout;
 
 struct rule_tag // 窗口管理器的規則
 {// 分別爲客戶窗口的程序類型和程序名稱、標題，NULL或*表示匹配任何字符串

@@ -27,5 +27,9 @@ void key_increase_main_area(WM *wm, XEvent *e, Arg arg);
 void key_decrease_main_area(WM *wm, XEvent *e, Arg arg);
 void key_increase_fixed_area(WM *wm, XEvent *e, Arg arg);
 void key_decrease_fixed_area(WM *wm, XEvent *e, Arg arg);
+void init_layout(void);
+void adjust_main_area_n(int n);
+bool is_spec_layout(Layout layout);
+void restore_prev_layout(WM *wm);
 
 #endif

@@ -151,7 +151,7 @@ static void exec_buttonbind_func(WM *wm, XEvent *e)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
             if(c && c!=get_cur_focus_client())
                 focus_client(c);
-            if((get_cur_layout()==PREVIEW || !c || !tmc || c==tmc || id==CLIENT_ICON) && BUTTONBIND[i].func)
+            if((is_spec_layout(PREVIEW) || !c || !tmc || c==tmc || id==CLIENT_ICON) && BUTTONBIND[i].func)
                 BUTTONBIND[i].func(wm, e, BUTTONBIND[i].arg);
         }
     }

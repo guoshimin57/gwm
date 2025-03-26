@@ -27,7 +27,6 @@
 #include "func.h"
 
 static bool is_valid_click(XEvent *oe, XEvent *ne);
-static void adjust_n_main_max(int n);
 
 bool is_drag_func(void (*func)(WM *, XEvent *, Arg))
 {
@@ -77,8 +76,8 @@ void choose_client(WM *wm, XEvent *e, Arg arg)
     if(is_iconic_client(c))
         deiconify_client(c);
 
-    if(get_cur_layout() == PREVIEW)
-        change_layout(wm, get_prev_layout());
+    if(is_spec_layout(PREVIEW))
+        restore_prev_layout(wm);
 }
 
 void exec(WM *wm, XEvent *e, Arg arg)
@@ -120,7 +119,6 @@ void clear_wm(WM *wm)
     XCloseDisplay(xinfo.display);
     clear_zombies(0);
     vfree_strings(wm->wallpapers);
-    free_desktop();
     Free(cfg);
 }
 
@@ -156,23 +154,13 @@ void prev_client(WM *wm, XEvent *e, Arg arg)
 void increase_main_n(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    adjust_n_main_max(1);
+    adjust_main_area_n(1);
 }
 
 void decrease_main_n(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    adjust_n_main_max(-1);
-}
-
-static void adjust_n_main_max(int n)
-{
-    if(get_cur_layout() == TILE)
-    {
-        int m=get_n_main_max();
-        set_n_main_max(m+n>=1 ? m+n : 1);
-        request_layout_update();
-    }
+    adjust_main_area_n(-1);
 }
 
 void toggle_focus_mode(WM *wm, XEvent *e, Arg arg)

@@ -38,8 +38,22 @@ static void fix_win_pos_by_workarea(Client *c, const Rect *workarea);
 static void fix_dialog_win_rect(Client *c, const Rect *workarea);
 static void fix_win_rect_by_frame(Client *c);
 static bool change_layout_ratio(WM *wm, int ox, int nx);
+static Layout get_cur_layout(void);
+static void set_cur_layout(Layout layout);
+static Layout get_prev_layout(void);
+static void set_prev_layout(Layout layout);
+static int get_n_main_max(void);
+static void set_n_main_max(int n);
 static void adjust_main_area(WM *wm, double change_ratio);
 static void adjust_fixed_area(WM *wm, double change_ratio);
+static double get_main_area_ratio(void);
+static void set_main_area_ratio(double ratio);
+static double get_fixed_area_ratio(void);
+static void set_fixed_area_ratio(double ratio);
+
+static int n_main_max[DESKTOP_N]; // 主區域可容納的客戶窗口數量
+static Layout cur_layout[DESKTOP_N], prev_layout[DESKTOP_N]; // 分別爲當前布局模式和前一個布局模式
+static double main_area_ratio[DESKTOP_N], fixed_area_ratio[DESKTOP_N]; // 分別爲主要和固定區域與工作區寬度的比值
 
 void update_layout(WM *wm)
 {
@@ -473,4 +487,87 @@ static void adjust_fixed_area(WM *wm, double change_ratio)
             request_layout_update();
         }
     }
+}
+
+void init_layout(void)
+{
+    for(size_t i=0; i<DESKTOP_N; i++)
+    {
+        n_main_max[i]=cfg->default_n_main_max;
+        cur_layout[i]=cfg->default_layout;
+        prev_layout[i]=cfg->default_layout;
+        main_area_ratio[i]=cfg->default_main_area_ratio;
+        fixed_area_ratio[i]=cfg->default_fixed_area_ratio;
+    }
+    set_gwm_current_layout(get_cur_layout());
+}
+
+static Layout get_cur_layout(void)
+{
+    return cur_layout[get_net_current_desktop()];
+}
+
+static void set_cur_layout(Layout layout)
+{
+    cur_layout[get_net_current_desktop()]=layout;
+}
+
+static Layout get_prev_layout(void)
+{
+    return prev_layout[get_net_current_desktop()];
+}
+
+static void set_prev_layout(Layout layout)
+{
+    prev_layout[get_net_current_desktop()]=layout;
+}
+
+static int get_n_main_max(void)
+{
+    return n_main_max[get_net_current_desktop()];
+}
+
+static void set_n_main_max(int n)
+{
+    n_main_max[get_net_current_desktop()]=n;
+}
+
+static double get_main_area_ratio(void)
+{
+    return main_area_ratio[get_net_current_desktop()];
+}
+
+static void set_main_area_ratio(double ratio)
+{
+    main_area_ratio[get_net_current_desktop()]=ratio;
+}
+
+static double get_fixed_area_ratio(void)
+{
+    return fixed_area_ratio[get_net_current_desktop()];
+}
+
+static void set_fixed_area_ratio(double ratio)
+{
+    fixed_area_ratio[get_net_current_desktop()]=ratio;
+}
+
+void adjust_main_area_n(int n)
+{
+    if(get_cur_layout() == TILE)
+    {
+        int m=get_n_main_max();
+        set_n_main_max(m+n>=1 ? m+n : 1);
+        request_layout_update();
+    }
+}
+
+bool is_spec_layout(Layout layout)
+{
+    return layout == get_cur_layout();
+}
+
+void restore_prev_layout(WM *wm)
+{
+    change_layout(wm, get_prev_layout());
 }

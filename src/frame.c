@@ -244,8 +244,8 @@ void titlebar_toggle(Frame *frame, const char *title, Imlib_Image image)
 
 void titlebar_show(Widget *widget)
 {
+    widget_show(widget);
     titlebar_buttons_show((Titlebar *)widget);
-    XMapWindow(xinfo.display, WIDGET_WIN(widget));
 }
 
 static void titlebar_buttons_show(Titlebar *titlebar)

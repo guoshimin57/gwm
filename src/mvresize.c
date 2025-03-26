@@ -11,7 +11,7 @@
 
 #include "icccm.h"
 #include "mvresize.h"
-#include "desktop.h"
+#include "layout.h"
 #include "focus.h"
 #include "place.h"
 
@@ -115,7 +115,7 @@ void pointer_resize(WM *wm, XEvent *e, Arg arg)
 
 static void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
 {
-    if(get_cur_layout() == PREVIEW)
+    if(is_spec_layout(PREVIEW))
         return;
 
     Client *c=get_cur_focus_client();
@@ -185,12 +185,11 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
 
 static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
 {
-    Layout layout=get_cur_layout();
     Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
     Client *c=get_cur_focus_client();
     Pointer_act act=(resize ? get_resize_act(c, &m) : MOVE);
 
-    if(layout==PREVIEW || !grab_pointer(xinfo.root_win, act))
+    if(is_spec_layout(PREVIEW) || !grab_pointer(xinfo.root_win, act))
         return;
 
     XSizeHints hint=get_size_hint(WIDGET_WIN(c));
