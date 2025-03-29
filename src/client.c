@@ -185,7 +185,7 @@ static bool have_rule(const Rule *r, Client *c)
 int get_clients_n(Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)
 {
     int n=0;
-    list_for_each_entry(Client, c, &clients->list, list)
+    clients_for_each(c)
         if( (type==ANY_PLACE || c->place_type==type)
             && (count_icon || !is_iconic_client(c))
             && (count_trans || !c->owner)
@@ -202,7 +202,7 @@ bool is_iconic_client(const Client *c)
 Client *win_to_client(Window win)
 {
     // 當隱藏標題欄時，標題區和按鈕的窗口ID爲0。故win爲0時，不應視爲找到
-    list_for_each_entry(Client, c, &clients->list, list)
+    clients_for_each(c)
         if(win==WIDGET_WIN(c) || frame_has_win(c->frame, win))
             return c;
     return NULL;
@@ -278,7 +278,7 @@ void del_subgroup(Client *subgroup_leader)
 
 bool is_last_typed_client(Client *c, Place_type type)
 {
-    list_for_each_entry_reverse(Client, p, &clients->list, list)
+    clients_for_each_reverse(p)
     {
         if(p == c)
             break;
@@ -290,15 +290,15 @@ bool is_last_typed_client(Client *c, Place_type type)
 
 Client *get_head_client(Place_type type)
 {
-    list_for_each_entry(Client, c, &clients->list, list)
+    clients_for_each(c)
         if(is_on_cur_desktop(c->desktop_mask) && c->place_type==type)
             return list_prev_entry(c, Client, list);
 
-    list_for_each_entry(Client, c, &clients->list, list)
+    clients_for_each(c)
         if(c->place_type == type)
             return list_prev_entry(c, Client, list);
 
-    list_for_each_entry(Client, c, &clients->list, list)
+    clients_for_each(c)
         if(c->place_type > type)
             return list_prev_entry(c, Client, list);
 
@@ -352,7 +352,7 @@ void save_place_info_of_client(Client *c)
 
 void save_place_info_of_clients(void)
 {
-    list_for_each_entry_reverse(Client, c, &clients->list, list)
+    clients_for_each_reverse(c)
         if(is_on_cur_desktop(c->desktop_mask))
             save_place_info_of_client(c);
 }
@@ -365,7 +365,7 @@ void restore_place_info_of_client(Client *c)
 
 void restore_place_info_of_clients(void)
 {
-    list_for_each_entry(Client, c, &clients->list, list)
+    clients_for_each(c)
         if(is_on_cur_desktop(c->desktop_mask))
             restore_place_info_of_client(c);
 }
@@ -407,7 +407,7 @@ bool is_wm_win(Window win, bool before_wm)
 
 void update_clients_bg(void)
 {
-    list_for_each_entry(Client, c, &clients->list, list)
+    clients_for_each(c)
         update_client_bg(c);
 }
 

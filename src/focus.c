@@ -66,6 +66,7 @@ void focus_client(Client *c)
     {
         client_set_state_unfocused(pp, 1);
         update_client_bg(pp);
+        raise_client(pp);
     }
 
     set_net_active_window(pc ? WIDGET_WIN(pc) : None);
@@ -146,14 +147,19 @@ static Client *get_first_map_diff_client(Client *key)
 /* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
 static void raise_client(Client *c)
 {
-    int n=get_subgroup_n(c), i=n;
-    Window wins[n+1];
+    if(c == get_cur_focus_client())
+        XRaiseWindow(xinfo.display, WIDGET_WIN(c->frame));
+    else
+    {
+        int n=get_subgroup_n(c), i=n;
+        Window wins[n+1];
 
-    wins[0]=get_top_win(c);
-    subgroup_for_each(p, c->subgroup_leader)
-        wins[i--]=WIDGET_WIN(p->frame);
+        wins[0]=get_top_win(c);
+        subgroup_for_each(p, c->subgroup_leader)
+            wins[i--]=WIDGET_WIN(p->frame);
 
-    XRestackWindows(xinfo.display, wins, n+1);
+        XRestackWindows(xinfo.display, wins, n+1);
+    }
 }
 
 static Window get_top_win(Client *c)
