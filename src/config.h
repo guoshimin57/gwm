@@ -30,7 +30,7 @@ typedef struct
     Layout default_layout; // 默認的窗口布局模式
 
     /* 屏幕保護程序的行爲取決於X服務器，可能顯示移動的圖像，可能只是黑屏。*/
-    int screen_saver_time_out; // 激活內置屏幕之前的空閒時間，單位爲秒。當值爲0時表示禁用屏保，爲-1時恢復缺省值。
+    int screen_saver_time_out; // 激活內置屏保之前的空閒時間，單位爲秒。當值爲0時表示禁用屏保，爲-1時恢復缺省值。
     int screen_saver_interval; // 內置屏保周期性變化的時間間隔，單位爲秒。當值爲0時表示禁止周期性變化。
 
     int default_n_main_max; // 默認的主區域最大窗口數量

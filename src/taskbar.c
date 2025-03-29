@@ -131,7 +131,7 @@ static void taskbar_buttons_del(Taskbar *taskbar)
 
 static bool taskbar_button_is_chosen(Widget_id id)
 {
-    unsigned int n=get_net_current_desktop(), lay=get_gwm_current_layout();
+    unsigned int n=get_net_current_desktop(), lay=get_gwm_layout();
 
     return (id==DESKTOP_BUTTON_BEGIN+n || id==LAYOUT_BUTTON_BEGIN+lay);
 }

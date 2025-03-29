@@ -378,7 +378,7 @@ bool is_tile_client(Client *c)
 
 bool is_tiled_client(Client *c)
 {
-    return get_gwm_current_layout()==TILE && is_tile_client(c);
+    return get_gwm_layout()==TILE && is_tile_client(c);
 }
 
 void set_state_attent(Client *c, bool attent)
@@ -416,7 +416,7 @@ void update_client_bg(Client *c)
     if(!c || c==clients)
         return;
 
-    if(is_iconic_client(c) && get_gwm_current_layout()!=PREVIEW)
+    if(is_iconic_client(c))
         c->win_state.focused=1, update_net_wm_state(WIDGET_WIN(c), c->win_state);
     else if(c->frame)
         frame_update_bg(c->frame);

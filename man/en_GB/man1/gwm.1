@@ -12,7 +12,7 @@
 ./" program. Otherwise, see <http://www.gnu.org/licenses/>.
 ./" ************************************************* ***************************/
 
-.TH gwm 1 March 2025 "gwm 2.12.11" gwm
+.TH gwm 1 March 2025 "gwm 2.12.12" gwm
 .
 .SH NAME
 .B
@@ -27,7 +27,7 @@ gwm (gsm's window manager), is an X11-based dynamic window manager written in C 
 .PP
 The child windows of the X Window System are always located above the parent window in screen space, and the window opened later is always located above the brother window opened first in screen space; the newly opened window is always located on top of the screen space. This window order is called window stacking order. The stacking order can be adjusted.
 .PP
-gwm virtualizes the physical screen into multiple logical screens, the so-called virtual desktops. Logically, for each virtual desktop, the screen space above root window is divided into the following seven layers from bottom to top: desktop layer, below layer, tile layer, dock layer, above layer, full screen window layer; The screen is divided into taskbar and workarea from the plane. Among them, the workarea of the tile layer is divided into main area, second area, and fixed area. This is just a logical layering, the purpose is to achieve visual layering. In fact, gwm achieves the layering effect by adjusting the stacking order of the windows, not by resetting the parent window for layering. A window on the upper layer will always block the window on the lower layer. gwm supports four window layout modes: tiling, stacking, and preview, which can be dynamically switched at runtime. The taskbar is consists of buttons on the left, a icon bar in the middle, and a status bar on the right. Buttons are used to achieve specific functions, and the text of each button from left to right is: 1, 2, 3, ▦, ▣, ▥, ■, ^. The icon bar is used to display the iconified window, click the iconified window to deiconify window. The status bar shows the name of the root window.
+gwm virtualizes the physical screen into multiple logical screens, the so-called virtual desktops. Logically, for each virtual desktop, the screen space above root window is divided into the following seven layers from bottom to top: desktop layer, below layer, tile layer, dock layer, above layer, full screen window layer; The screen is divided into taskbar and workarea from the plane. Among them, the workarea of the tile layer is divided into main area, second area, and fixed area. This is just a logical layering, the purpose is to achieve visual layering. In fact, gwm achieves the layering effect by adjusting the stacking order of the windows, not by resetting the parent window for layering. A window on the upper layer will always block the window on the lower layer. gwm supports two window layout modes: tiling, stacking, which can be dynamically switched at runtime. The taskbar is consists of buttons on the left, a icon bar in the middle, and a status bar on the right. Buttons are used to achieve specific functions, and the text of each button from left to right is: 1, 2, 3, ▦, ▣, ▥, ■, ^. The icon bar is used to display the iconified window, click the iconified window to deiconify window. The status bar shows the name of the root window.
 .PP
 The windows mentioned below, unless otherwise specified, refer to the windows managed by this window manager. The current window mentioned below, unless otherwise specified, refer to the window under the current virtual desktop that is located at the top of the layer to which the window belongs and has the keyboard input focus. The following instructions or commands, unless otherwise specified, are limited to the current virtual desktop.
 .PP
@@ -37,7 +37,7 @@ Stacking mode is a layout mode in which windows can be stacked, and all normal w
 .PP
 Preview mode is a layout mode in which all windows equally distribute workarea space. If a window is selected in this mode, it will switch to the previous layout mode, the selected window will become the current window, and other windows will remain in the previous layout mode. If the previous layout mode is tiling mode, the selected window will be moved to the top of the main area.
 .PP
-gwm resets the parent window for all windows, the parent window also includes the border, the title bar, both of which are collectively called the window frame. The original window range before reparenting is called the non-frame area. Among them, the title bar sets the logo button, title area and other buttons sequentially from left to right. The logo button is used to provide drop-down menu. The title area is used to display the title of the window and provide the function of moving the window. Other buttons are used to implement specific functions, and the number of buttons varies with the basic window layout mode. In tiling mode, the text of each button from left to right is: ◁, ▼, ▷, △, —, ◲, 🗙. In stacking mode, ◁, ▼, ▷, △ buttons are not displayed. In preview mode, only the 🗙 button is displayed.
+gwm resets the parent window for all windows, the parent window also includes the border, the title bar, both of which are collectively called the window frame. The original window range before reparenting is called the non-frame area. Among them, the title bar sets the logo button, title area and other buttons sequentially from left to right. The logo button is used to provide drop-down menu. The title area is used to display the title of the window and provide the function of moving the window. Other buttons are used to implement specific functions, and the number of buttons varies with the basic window layout mode. In tiling mode, the text of each button from left to right is: ◁, ▼, ▷, △, —, ◲, 🗙. In stacking mode, ◁, ▼, ▷, △ buttons are not displayed.
 .
 .SH OPTIONS
 none.
@@ -207,7 +207,7 @@ Move the current window to the top of the flaot layer.
 .
 .TP
 .B Mod4+Return
-If the current window is a iconified window, the window will be deiconified; if the current window is in preview mode, it will also switch to the previous layout mode.
+If the current window is a iconified window, the window will be deiconified.
 .
 .TP
 .B Mod4+Tab
@@ -220,10 +220,6 @@ Switch to the previous window.
 .TP
 .B Mod4+c
 Close the current window.
-.
-.TP
-.B Mod4+p
-Switch to preview mode.
 .
 .TP
 .B Mod4+s
@@ -335,7 +331,7 @@ Some "pointer button1 click" commands, which can be understood directly accordin
         Pointer button 1 - click      Focus window,
         Pointer button 1 - move       Adjusts the window size;
     Window non-frame area:
-        Pointer button 1            - click     Focus the window, if preview mode now, switch to the previous layout mode, and if the window is a iconified window, then deiconify the window,
+        Pointer button 1            - click     Focus the window,
         Mod4+pointer button 1       - move      Move the window,
         Mod4+Shift+pointer button 1 - move      Resize the window,
         Mod4+pointer button 2       - move      Change place,

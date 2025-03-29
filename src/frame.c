@@ -262,8 +262,8 @@ static void titlebar_buttons_show(Titlebar *titlebar)
 
 static int titlebar_get_button_n(void)
 {
-    int buttons_n[]={[PREVIEW]=1, [STACK]=3, [TILE]=7};
-    return buttons_n[get_gwm_current_layout()];
+    int buttons_n[]={[STACK]=3, [TILE]=7};
+    return buttons_n[get_gwm_layout()];
 }
 
 void titlebar_update_fg(const Widget *widget)

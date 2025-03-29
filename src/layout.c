@@ -18,7 +18,6 @@
 #include "taskbar.h"
 #include "desktop.h"
 
-static void set_preview_layout(WM *wm);
 static void set_stack_layout(void);
 static void set_tile_layout(WM *wm);
 static void fix_place_type_for_tile(void);
@@ -38,10 +37,8 @@ static void fix_win_pos_by_workarea(Client *c, const Rect *workarea);
 static void fix_dialog_win_rect(Client *c, const Rect *workarea);
 static void fix_win_rect_by_frame(Client *c);
 static bool change_layout_ratio(WM *wm, int ox, int nx);
-static Layout get_cur_layout(void);
-static void set_cur_layout(Layout layout);
-static Layout get_prev_layout(void);
-static void set_prev_layout(Layout layout);
+static Layout get_layout(void);
+static void set_layout(Layout layout);
 static int get_n_main_max(void);
 static void set_n_main_max(int n);
 static void adjust_main_area(WM *wm, double change_ratio);
@@ -52,7 +49,7 @@ static double get_fixed_area_ratio(void);
 static void set_fixed_area_ratio(double ratio);
 
 static int n_main_max[DESKTOP_N]; // 主區域可容納的客戶窗口數量
-static Layout cur_layout[DESKTOP_N], prev_layout[DESKTOP_N]; // 分別爲當前布局模式和前一個布局模式
+static Layout layouts[DESKTOP_N]; // 爲當前布局模式
 static double main_area_ratio[DESKTOP_N], fixed_area_ratio[DESKTOP_N]; // 分別爲主要和固定區域與工作區寬度的比值
 
 void update_layout(WM *wm)
@@ -60,41 +57,14 @@ void update_layout(WM *wm)
     if(clients_is_empty())
         return;
 
-    switch(get_cur_layout())
+    switch(get_layout())
     {
-        case PREVIEW: set_preview_layout(wm); break;
         case STACK: set_stack_layout(); break;
         case TILE: set_tile_layout(wm); break;
     }
     clients_for_each(c)
         if(is_on_cur_desktop(c->desktop_mask))
             move_resize_client(c, NULL);
-}
-
-static void set_preview_layout(WM *wm)
-{
-    int n=get_clients_n(ANY_PLACE, true, false, false);
-    if(n == 0)
-        return;
-
-    int rows, cols, w, h, wx=wm->workarea.x, wy=wm->workarea.y,
-        ww=wm->workarea.w, wh=wm->workarea.h;
-
-    /* 行、列数量尽量相近，以保证窗口比例基本不变 */
-    for(cols=1; cols<=n && cols*cols<n; cols++)
-        ;
-    rows = (cols-1)*cols>=n ? cols-1 : cols;
-    w=ww/cols, h=wh/rows;
-
-    clients_for_each_reverse(c)
-        if(is_on_cur_desktop(c->desktop_mask) && !c->owner && (n--)>=0)
-            set_client_rect_by_outline(c, wx+(n%cols)*w, wy+(n/cols)*h, w, h);
-
-    clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && c->owner)
-            fix_transient_win_pos(c);
-
-    fix_wins_rect();
 }
 
 static void set_stack_layout(void)
@@ -209,9 +179,8 @@ static bool should_fix_win_rect(Client *c)
         return false;
 
     Place_type t=c->place_type;
-    switch(get_cur_layout())
+    switch(get_layout())
     {
-        case PREVIEW: return false;
         case STACK:   return t==ABOVE_LAYER || t==FLOAT_LAYER || t==BELOW_LAYER
                       || is_normal_layer(t);
         case TILE:    return t==ABOVE_LAYER || t==FLOAT_LAYER || t==BELOW_LAYER
@@ -326,14 +295,8 @@ bool is_main_fix_gap(WM *wm, int x)
 
 bool is_layout_adjust_area(WM *wm, Window win, int x)
 {
-    return (get_cur_layout()==TILE && win==xinfo.root_win
+    return (get_layout()==TILE && win==xinfo.root_win
         && (is_main_sec_gap(wm, x) || is_main_fix_gap(wm, x)));
-}
-
-void change_to_preview(WM *wm, XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    change_layout(wm, PREVIEW);
 }
 
 void change_to_stack(WM *wm, XEvent *e, Arg arg)
@@ -350,32 +313,10 @@ void change_to_tile(WM *wm, XEvent *e, Arg arg)
 
 void change_layout(WM *wm, Layout layout)
 {
-    Layout cl=get_cur_layout();
+    Layout cl=get_layout();
 
     if(layout == cl)
         return;
-
-    if(layout == PREVIEW)
-        save_place_info_of_clients();
-    if(cl == PREVIEW)
-        restore_place_info_of_clients();
-
-    if(cl == PREVIEW)
-        clients_for_each(c)
-            if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
-            {
-                update_net_wm_state(WIDGET_WIN(c), c->win_state);
-                widget_hide(WIDGET(c->frame));
-            }
-    if(layout == PREVIEW)
-        clients_for_each(c)
-            if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
-            {
-                c->win_state.hidden=0;
-                update_net_wm_state(WIDGET_WIN(c), c->win_state);
-                c->win_state.hidden=1;
-                widget_show(WIDGET(c->frame));
-            }
 
     if(cl==TILE && layout==STACK)
         clients_for_each(c)
@@ -387,9 +328,8 @@ void change_layout(WM *wm, Layout layout)
             if(is_on_cur_desktop(c->desktop_mask) && c->place_type==FLOAT_LAYER)
                 c->place_type=TILE_LAYER_MAIN;
 
-    set_prev_layout(cl);
-    set_cur_layout(layout);
-    set_gwm_current_layout(layout);
+    set_layout(layout);
+    set_gwm_layout(layout);
     request_layout_update();
     update_titlebars_layout();
     taskbar_buttons_update_bg(wm->taskbar);
@@ -398,7 +338,7 @@ void change_layout(WM *wm, Layout layout)
 void adjust_layout_ratio(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    if( get_cur_layout()!=TILE
+    if( get_layout()!=TILE
         || !is_layout_adjust_area(wm, e->xbutton.window, e->xbutton.x_root)
         || !grab_pointer(xinfo.root_win, ADJUST_LAYOUT_RATIO))
         return;
@@ -448,7 +388,7 @@ void key_decrease_main_area(WM *wm, XEvent *e, Arg arg)
 /* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
 static void adjust_main_area(WM *wm, double change_ratio)
 {
-    if( get_cur_layout()==TILE
+    if( get_layout()==TILE
         && get_clients_n(TILE_LAYER_SECOND, false, false, false))
     {
         double mr=get_main_area_ratio()+change_ratio, fr=get_fixed_area_ratio();
@@ -476,7 +416,7 @@ void key_decrease_fixed_area(WM *wm, XEvent *e, Arg arg)
 /* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
 static void adjust_fixed_area(WM *wm, double change_ratio)
 {
-    if( get_cur_layout()==TILE
+    if( get_layout()==TILE
         && get_clients_n(TILE_LAYER_FIXED, false, false, false))
     {
         double fr=get_fixed_area_ratio()+change_ratio, mr=get_main_area_ratio();
@@ -494,32 +434,21 @@ void init_layout(void)
     for(size_t i=0; i<DESKTOP_N; i++)
     {
         n_main_max[i]=cfg->default_n_main_max;
-        cur_layout[i]=cfg->default_layout;
-        prev_layout[i]=cfg->default_layout;
+        layouts[i]=cfg->default_layout;
         main_area_ratio[i]=cfg->default_main_area_ratio;
         fixed_area_ratio[i]=cfg->default_fixed_area_ratio;
     }
-    set_gwm_current_layout(get_cur_layout());
+    set_gwm_layout(get_layout());
 }
 
-static Layout get_cur_layout(void)
+static Layout get_layout(void)
 {
-    return cur_layout[get_net_current_desktop()];
+    return layouts[get_net_current_desktop()];
 }
 
-static void set_cur_layout(Layout layout)
+static void set_layout(Layout layout)
 {
-    cur_layout[get_net_current_desktop()]=layout;
-}
-
-static Layout get_prev_layout(void)
-{
-    return prev_layout[get_net_current_desktop()];
-}
-
-static void set_prev_layout(Layout layout)
-{
-    prev_layout[get_net_current_desktop()]=layout;
+    layouts[get_net_current_desktop()]=layout;
 }
 
 static int get_n_main_max(void)
@@ -554,7 +483,7 @@ static void set_fixed_area_ratio(double ratio)
 
 void adjust_main_area_n(int n)
 {
-    if(get_cur_layout() == TILE)
+    if(get_layout() == TILE)
     {
         int m=get_n_main_max();
         set_n_main_max(m+n>=1 ? m+n : 1);
@@ -564,10 +493,5 @@ void adjust_main_area_n(int n)
 
 bool is_spec_layout(Layout layout)
 {
-    return layout == get_cur_layout();
-}
-
-void restore_prev_layout(WM *wm)
-{
-    change_layout(wm, get_prev_layout());
+    return layout == get_layout();
 }

@@ -70,14 +70,11 @@ static bool is_valid_click(XEvent *oe, XEvent *ne)
 
 void choose_client(WM *wm, XEvent *e, Arg arg)
 {
-    UNUSED(e), UNUSED(arg);
+    UNUSED(wm), UNUSED(e), UNUSED(arg);
     Client *c=get_cur_focus_client();
 
     if(is_iconic_client(c))
         deiconify_client(c);
-
-    if(is_spec_layout(PREVIEW))
-        restore_prev_layout(wm);
 }
 
 void exec(WM *wm, XEvent *e, Arg arg)

@@ -83,7 +83,7 @@ typedef struct /* 調整窗口尺寸的信息 */
 
 typedef enum // 窗口管理器的布局模式
 {
-    PREVIEW, STACK, TILE,
+    STACK, TILE,
 } Layout;
 
 struct rule_tag // 窗口管理器的規則

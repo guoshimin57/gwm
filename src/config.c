@@ -138,7 +138,6 @@ static void config_taskbar_button_text(void)
     SET_TASKBAR_BUTTON_TEXT(DESKTOP0_BUTTON, "1");
     SET_TASKBAR_BUTTON_TEXT(DESKTOP1_BUTTON, "2");
     SET_TASKBAR_BUTTON_TEXT(DESKTOP2_BUTTON, "3");
-    SET_TASKBAR_BUTTON_TEXT(PREVIEW_BUTTON,  "▦");
     SET_TASKBAR_BUTTON_TEXT(STACK_BUTTON,    "▣");
     SET_TASKBAR_BUTTON_TEXT(TILE_BUTTON,     "▥");
     SET_TASKBAR_BUTTON_TEXT(DESKTOP_BUTTON,  "■");
@@ -220,7 +219,6 @@ static void config_tooltip(void)
     tooltip[DESKTOP0_BUTTON] = _("切換到虛擬桌面1");
     tooltip[DESKTOP1_BUTTON] = _("切換到虛擬桌面2");
     tooltip[DESKTOP2_BUTTON] = _("切換到虛擬桌面3");
-    tooltip[PREVIEW_BUTTON]  = _("切換到預覽模式");
     tooltip[STACK_BUTTON]    = _("切換到堆疊模式");
     tooltip[TILE_BUTTON]     = _("切換到平鋪模式");
     tooltip[DESKTOP_BUTTON]  = _("顯示桌面");
@@ -238,8 +236,8 @@ static void config_misc(void)
     cfg->taskbar_on_top=false;
     cfg->focus_mode=CLICK_FOCUS;
     cfg->default_layout=TILE;
-    cfg->screen_saver_time_out=600;
-    cfg->screen_saver_interval=600;
+    cfg->screen_saver_time_out=1800;
+    cfg->screen_saver_interval=1800;
     cfg->hover_time=300;
     cfg->default_cur_desktop=0;
     cfg->default_n_main_max=1;

@@ -24,7 +24,7 @@ typedef struct {
 
 static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
 {
-    "GWM_CURRENT_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE",
+    "GWM_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE",
     "GWM_MAIN_COLOR_NAME"
 };
 
@@ -213,14 +213,14 @@ void copy_prop(Window dest, Window src)
     XFree(props);
 }
 
-void set_gwm_current_layout(long cur_layout)
+void set_gwm_layout(long layout)
 {
-    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], &cur_layout, 1);
+    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_LAYOUT], &layout, 1);
 }
 
-int get_gwm_current_layout(void)
+int get_gwm_layout(void)
 {
-    return get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_CURRENT_LAYOUT], 0);
+    return get_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_LAYOUT], 0);
 }
 
 void request_layout_update(void)

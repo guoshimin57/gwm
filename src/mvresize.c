@@ -115,9 +115,6 @@ void pointer_resize(WM *wm, XEvent *e, Arg arg)
 
 static void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
 {
-    if(is_spec_layout(PREVIEW))
-        return;
-
     Client *c=get_cur_focus_client();
     bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
     Delta_rect d=get_key_delta_rect(c, dir);
@@ -189,7 +186,7 @@ static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
     Client *c=get_cur_focus_client();
     Pointer_act act=(resize ? get_resize_act(c, &m) : MOVE);
 
-    if(is_spec_layout(PREVIEW) || !grab_pointer(xinfo.root_win, act))
+    if(!grab_pointer(xinfo.root_win, act))
         return;
 
     XSizeHints hint=get_size_hint(WIDGET_WIN(c));

@@ -110,7 +110,6 @@
     {WM_KEY,        XK_Tab,       next_client,             {0}},                    \
     {WM_SKEY,       XK_Tab,       prev_client,             {0}},                    \
     {WM_KEY,        XK_c,         close_client,            {0}},                    \
-    {WM_KEY,        XK_p,         change_to_preview,       {0}},                    \
     {WM_KEY,        XK_s,         change_to_stack,         {0}},                    \
     {WM_KEY,        XK_t,         change_to_tile,          {0}},                    \
     {WM_KEY,        XK_i,         increase_main_n,         {0}},                    \
@@ -158,7 +157,6 @@
     {CLIENT_ICON,               0, Button2,  pointer_change_place, {0}},                   \
     {CLIENT_ICON,          WM_KEY, Button2,  close_client,         {0}},                   \
     {CLIENT_ICON,               0, Button3,  pointer_swap_clients, {0}},                   \
-    {PREVIEW_BUTTON,            0, Button1,  change_to_preview,    {0}},                   \
     {STACK_BUTTON,              0, Button1,  change_to_stack,      {0}},                   \
     {TILE_BUTTON,               0, Button1,  change_to_tile,       {0}},                   \
     {DESKTOP_BUTTON,            0, Button1,  show_desktop,         {0}},                   \
