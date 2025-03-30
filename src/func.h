@@ -31,7 +31,7 @@ void adjust_main_area_ratio(WM *wm, XEvent *e, Arg arg);
 void adjust_fixed_area_ratio(WM *wm, XEvent *e, Arg arg);
 void show_desktop(WM *wm, XEvent *e, Arg arg);
 void toggle_showing_desktop_mode(bool show);
-void change_default_place_type(WM *wm, XEvent *e, Arg arg);
+void change_default_place(WM *wm, XEvent *e, Arg arg);
 void toggle_focus_mode(WM *wm, XEvent *e, Arg arg);
 void open_act_center(WM *wm, XEvent *e, Arg arg);
 void open_client_menu(WM *wm, XEvent *e, Arg arg);

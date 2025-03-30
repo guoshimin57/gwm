@@ -96,8 +96,8 @@ void print_net_wm_state(Net_wm_state state)
 void print_place_info(Client *c)
 {
     printf(_("以下是%lx窗口的位置信息：\n"), WIDGET_WIN(c));
-    printf("ox=%d, oy=%d, ow=%d, oh=%d, old_place_type=%d\n", c->ox, c->oy, c->ow, c->oh, c->old_place_type);
-    printf("x=%d, y=%d, w=%d, h=%d, place_type=%d\n", WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c), c->place_type);
+    printf("ox=%d, oy=%d, ow=%d, oh=%d, old_place=%d\n", c->ox, c->oy, c->ow, c->oh, c->old_place);
+    printf("x=%d, y=%d, w=%d, h=%d, place=%d\n", WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c), c->place);
 }
 
 void print_all_client_win(void)

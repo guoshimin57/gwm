@@ -120,7 +120,7 @@ static void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
     Delta_rect d=get_key_delta_rect(c, dir);
 
     if(is_tiled_client(c))
-        move_client(c, NULL, FLOAT_LAYER);
+        move_client(c, NULL, ABOVE_LAYER);
     if(get_move_resize_delta_rect(c, &d, is_move))
     {
         move_resize_client(c, &d);
@@ -200,7 +200,7 @@ static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
             if(ev.type == MotionNotify)
             {
                 if(is_tiled_client(c))
-                    move_client(c, NULL, FLOAT_LAYER);
+                    move_client(c, NULL, ABOVE_LAYER);
                 /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
                 m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
                 do_valid_pointer_move_resize(c, &m, act);

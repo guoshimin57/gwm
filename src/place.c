@@ -16,11 +16,11 @@
 #include "focus.h"
 #include "place.h"
 
-static void key_change_place(Place_type type);
-static bool is_valid_move(Client *from, Client *to, Place_type type);
+static void key_change_place(Place type);
+static bool is_valid_move(Client *from, Client *to, Place type);
 static bool is_valid_to_normal_layer_sec(Client *c);
 static int cmp_client_store_order(Client *c1, Client *c2);
-static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type);
+static void set_place_for_subgroup(Client *subgroup_leader, Place type);
 static void swap_clients(Client *a, Client *b);
 
 void pointer_change_place(WM *wm, XEvent *e, Arg arg)
@@ -37,11 +37,11 @@ void pointer_change_place(WM *wm, XEvent *e, Arg arg)
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(subw);
     if(ev.xbutton.x == 0)
-        move_client(from, NULL, TILE_LAYER_SECOND);
+        move_client(from, NULL, SECOND_AREA);
     else if(ev.xbutton.x == (long)xinfo.screen_width-1)
-        move_client(from, NULL, TILE_LAYER_FIXED);
+        move_client(from, NULL, FIXED_AREA);
     else if(win==xinfo.root_win && subw==None)
-        move_client(from, NULL, TILE_LAYER_MAIN);
+        move_client(from, NULL, MAIN_AREA);
     else if(to)
         move_client(from, to, ANY_PLACE);
     update_net_wm_state_for_no_max(WIDGET_WIN(from), from->win_state);
@@ -50,28 +50,28 @@ void pointer_change_place(WM *wm, XEvent *e, Arg arg)
 void change_to_main(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    key_change_place(TILE_LAYER_MAIN);
+    key_change_place(MAIN_AREA);
 }
 
 void change_to_second(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    key_change_place(TILE_LAYER_SECOND);
+    key_change_place(SECOND_AREA);
 }
 
 void change_to_fixed(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    key_change_place(TILE_LAYER_FIXED);
+    key_change_place(FIXED_AREA);
 }
 
 void change_to_float(WM *wm, XEvent *e, Arg arg)
 {
     UNUSED(wm), UNUSED(e), UNUSED(arg);
-    key_change_place(FLOAT_LAYER);
+    key_change_place(ABOVE_LAYER);
 }
 
-static void key_change_place(Place_type type)
+static void key_change_place(Place type)
 {
     Client *c=get_cur_focus_client();
     move_client(c, NULL, type);
@@ -109,17 +109,17 @@ void toggle_showing_desktop_mode(bool show)
     set_net_showing_desktop(show);
 }
 
-void move_client(Client *from, Client *to, Place_type type)
+void move_client(Client *from, Client *to, Place type)
 {
     if(move_client_node(from, to, type))
     {
-        set_place_type_for_subgroup(from->subgroup_leader,
-            to ? to->place_type : type);
+        set_place_for_subgroup(from->subgroup_leader,
+            to ? to->place : type);
         request_layout_update();
     }
 }
 
-bool move_client_node(Client *from, Client *to, Place_type type)
+bool move_client_node(Client *from, Client *to, Place type)
 {
     if(!is_valid_move(from, to, type))
         return false;
@@ -131,27 +131,27 @@ bool move_client_node(Client *from, Client *to, Place_type type)
     else
     {
         head=get_head_client(type);
-        if(from->place_type==TILE_LAYER_MAIN && type==TILE_LAYER_SECOND)
+        if(from->place==MAIN_AREA && type==SECOND_AREA)
             head=list_next_entry(head, Client, list);
     }
     add_subgroup(head, from->subgroup_leader);
     return true;
 }
 
-static bool is_valid_move(Client *from, Client *to, Place_type type)
+static bool is_valid_move(Client *from, Client *to, Place type)
 {
-    Place_type t = to ? to->place_type : type;
+    Place t = to ? to->place : type;
 
     return from
         && (!to || from->subgroup_leader!=to->subgroup_leader)
-        && (t!=TILE_LAYER_SECOND || is_valid_to_normal_layer_sec(from))
+        && (t!=SECOND_AREA || is_valid_to_normal_layer_sec(from))
         && (is_spec_layout(TILE) || !is_normal_layer(t));
 }
 
 static bool is_valid_to_normal_layer_sec(Client *c)
 {
-    return c->place_type!=TILE_LAYER_MAIN
-        || get_clients_n(TILE_LAYER_SECOND, false, false, false);
+    return c->place!=MAIN_AREA
+        || get_clients_n(SECOND_AREA, false, false, false);
 }
 
 static int cmp_client_store_order(Client *c1, Client *c2)
@@ -164,10 +164,10 @@ static int cmp_client_store_order(Client *c1, Client *c2)
     return 1;
 }
 
-static void set_place_type_for_subgroup(Client *subgroup_leader, Place_type type)
+static void set_place_for_subgroup(Client *subgroup_leader, Place type)
 {
     for(Client *ld=subgroup_leader, *c=ld; ld && c->subgroup_leader==ld; c=list_prev_entry(c, Client, list))
-        c->place_type=type;
+        c->place=type;
 }
 
 static void swap_clients(Client *a, Client *b)

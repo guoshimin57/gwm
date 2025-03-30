@@ -26,7 +26,7 @@ static bool has_decoration(const Client *c);
 static void set_default_desktop_mask(Client *c);
 static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
-static void set_default_place_type(Client *c);
+static void set_default_place(Client *c);
 static void client_dtor(Client *c);
 static void set_default_win_rect(Client *c);
 
@@ -67,7 +67,7 @@ Client *get_clients(void)
 void client_add(Window win)
 {
     Client *c=client_new(win);
-    list_add(&c->list, &get_head_client(c->place_type)->list);
+    list_add(&c->list, &get_head_client(c->place)->list);
     grab_buttons(WIDGET_WIN(c));
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
@@ -102,7 +102,7 @@ static void client_ctor(Client *c, Window win)
         c->decorative ? cfg->border_width : 0,
         c->title_text, c->image);
     XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint);
-    set_default_place_type(c);
+    set_default_place(c);
     set_default_win_rect(c);
     set_default_desktop_mask(c);
     apply_rules(c);
@@ -124,16 +124,17 @@ Client *get_subgroup_leader(Client *c)
     return c;
 }
 
-static void set_default_place_type(Client *c)
+static void set_default_place(Client *c)
 {
-    if(c->owner)                     c->place_type = c->owner->place_type;
-    else if(c->win_type.desktop)     c->place_type = DESKTOP_LAYER;
-    else if(c->win_state.below)      c->place_type = BELOW_LAYER;
-    else if(c->win_type.dock)        c->place_type = DOCK_LAYER;
-    else if(c->win_state.above)      c->place_type = ABOVE_LAYER;
-    else if(c->win_state.fullscreen) c->place_type = FULLSCREEN_LAYER;
-    else if(is_win_state_max(c->win_state)) c->place_type = FLOAT_LAYER;
-    else                             c->place_type = TILE_LAYER_MAIN;  
+    if(c->owner)                     c->place = c->owner->place;
+    else if(c->win_type.desktop)     c->place = DESKTOP_LAYER;
+    else if(c->win_state.below)      c->place = BELOW_LAYER;
+    else if(c->win_state.above
+            || (get_gwm_layout()==TILE && is_win_state_max(c->win_state)))
+                                     c->place = ABOVE_LAYER;
+    else if(c->win_type.dock)        c->place = DOCK_LAYER;
+    else if(c->win_state.fullscreen) c->place = FULLSCREEN_LAYER;
+    else                             c->place = MAIN_AREA;  
 }
 
 static void set_default_desktop_mask(Client *c)
@@ -161,8 +162,8 @@ static void apply_rules(Client *c)
     {
         if(have_rule(r, c))
         {
-            if(r->place_type != ANY_PLACE)
-                c->place_type=r->place_type;
+            if(r->place != ANY_PLACE)
+                c->place=r->place;
             if(r->desktop_mask)
                 c->desktop_mask=r->desktop_mask;
             if(r->class_alias)
@@ -182,11 +183,11 @@ static bool have_rule(const Rule *r, Client *c)
         && (!pt || !title || !strcmp(title, pt) || !strcmp(pt, "*")));
 }
 
-int get_clients_n(Place_type type, bool count_icon, bool count_trans, bool count_all_desktop)
+int get_clients_n(Place type, bool count_icon, bool count_trans, bool count_all_desktop)
 {
     int n=0;
     clients_for_each(c)
-        if( (type==ANY_PLACE || c->place_type==type)
+        if( (type==ANY_PLACE || c->place==type)
             && (count_icon || !is_iconic_client(c))
             && (count_trans || !c->owner)
             && (count_all_desktop || is_on_cur_desktop(c->desktop_mask)))
@@ -253,9 +254,9 @@ Client *get_prev_client(Client *c)
     return NULL;
 }
 
-bool is_normal_layer(Place_type t)
+bool is_normal_layer(Place t)
 {
-    return t==TILE_LAYER_MAIN || t==TILE_LAYER_SECOND || t==TILE_LAYER_FIXED;
+    return t==MAIN_AREA || t==SECOND_AREA || t==FIXED_AREA;
 }
 
 void add_subgroup(Client *head, Client *subgroup_leader)
@@ -276,30 +277,26 @@ void del_subgroup(Client *subgroup_leader)
     list_bulk_del(&first->list, &last->list);
 }
 
-bool is_last_typed_client(Client *c, Place_type type)
+bool is_spec_place_last_client(Client *c, Place place)
 {
     clients_for_each_reverse(p)
     {
         if(p == c)
             break;
-        if(is_on_cur_desktop(WIDGET_WIN(p)) && p->place_type==type)
+        if(is_on_cur_desktop(WIDGET_WIN(p)) && p->place==place)
             return false;
     }
     return true;
 }
 
-Client *get_head_client(Place_type type)
+Client *get_head_client(Place place)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && c->place_type==type)
+        if(is_on_cur_desktop(c->desktop_mask) && c->place==place)
             return list_prev_entry(c, Client, list);
 
     clients_for_each(c)
-        if(c->place_type == type)
-            return list_prev_entry(c, Client, list);
-
-    clients_for_each(c)
-        if(c->place_type > type)
+        if(is_on_cur_desktop(c->desktop_mask) && c->place > place)
             return list_prev_entry(c, Client, list);
 
     return clients;
@@ -347,7 +344,7 @@ static void set_default_win_rect(Client *c)
 void save_place_info_of_client(Client *c)
 {
     c->ox=WIDGET_X(c), c->oy=WIDGET_Y(c), c->ow=WIDGET_W(c), c->oh=WIDGET_H(c);
-    c->old_place_type=c->place_type;
+    c->old_place=c->place;
 }
 
 void save_place_info_of_clients(void)
@@ -360,7 +357,7 @@ void save_place_info_of_clients(void)
 void restore_place_info_of_client(Client *c)
 {
     WIDGET_X(c)=c->ox, WIDGET_Y(c)=c->oy, WIDGET_W(c)=c->ow, WIDGET_H(c)=c->oh;
-    c->place_type=c->old_place_type;
+    c->place=c->old_place;
 }
 
 void restore_place_info_of_clients(void)
@@ -373,7 +370,7 @@ void restore_place_info_of_clients(void)
 bool is_tile_client(Client *c)
 {
     return is_on_cur_desktop(c->desktop_mask) && !c->owner && !is_iconic_client(c)
-        && is_normal_layer(c->place_type);
+        && is_normal_layer(c->place);
 }
 
 bool is_tiled_client(Client *c)

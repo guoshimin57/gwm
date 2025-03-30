@@ -41,13 +41,13 @@ Config *cfg=NULL;
  */
 static const Rule rule[] =
 {
-    /* 客戶程序類型        客戶程序名稱          標題   客戶程序的類型別名 窗口放置位置      桌面掩碼 */
-    {"QQ",                 "qq",                 "QQ",         "QQ",       TILE_LAYER_FIXED,  0},
-    {"explorer.exe",       "explorer.exe",       "*",          NULL,       FLOAT_LAYER,       0},
-    {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       FLOAT_LAYER,       0},
-    {"firefox",            "Toolkit",            "*",          NULL,       TILE_LAYER_MAIN,   0},
-    {"Google-chrome",      "google-chrome",      "*",          "chrome",   ANY_PLACE,         0},
-    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "*",          "Nautilus", ANY_PLACE,         0},
+    /* 客戶程序類型        客戶程序名稱          標題   客戶程序的類型別名 窗口放置位置  桌面掩碼 */
+    {"QQ",                 "qq",                 "QQ",         "QQ",       FIXED_AREA,      0},
+    {"explorer.exe",       "explorer.exe",       "*",          NULL,       ABOVE_LAYER,     0},
+    {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       ABOVE_LAYER,     0},
+    {"firefox",            "Toolkit",            "*",          NULL,       MAIN_AREA,       0},
+    {"Google-chrome",      "google-chrome",      "*",          "chrome",   ANY_PLACE,       0},
+    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "*",          "Nautilus", ANY_PLACE,       0},
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 
@@ -240,7 +240,7 @@ static void config_misc(void)
     cfg->screen_saver_interval=1800;
     cfg->hover_time=300;
     cfg->default_cur_desktop=0;
-    cfg->default_n_main_max=1;
+    cfg->default_main_area_n=1;
     cfg->act_center_col=4;
     cfg->font_pad_ratio=0.25;
     cfg->default_main_area_ratio=0.533;

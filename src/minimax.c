@@ -104,7 +104,7 @@ static void maximize_client(WM *wm, Client *c, Max_way max_way)
         save_place_info_of_client(c);
     set_max_rect(wm, c, max_way);
     if(is_tiled_client(c))
-        move_client(c, NULL, FLOAT_LAYER);
+        move_client(c, NULL, ABOVE_LAYER);
     move_resize_client(c, NULL);
     switch(max_way)
     {
@@ -177,7 +177,7 @@ static Rect get_right_max_rect(const WM *wm)
 void restore_client(Client *c)
 {
     restore_place_info_of_client(c);
-    move_client(c, NULL, c->place_type);
+    move_client(c, NULL, c->place);
     if(c->win_state.vmax)
         c->win_state.vmax=0;
     if(c->win_state.hmax)
@@ -232,7 +232,7 @@ void deiconify_client(Client *c)
     if(!c)
         return;
 
-    move_client_node(c, NULL, c->place_type);
+    move_client_node(c, NULL, c->place);
     Client *ld=c->subgroup_leader;
     for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
     {

@@ -20,7 +20,7 @@
 
 static void set_stack_layout(void);
 static void set_tile_layout(WM *wm);
-static void fix_place_type_for_tile(void);
+static void fix_place_for_tile(void);
 static void set_wins_rect_for_tiling(WM *wm);
 static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, int *fh);
 static void update_titlebars_layout(void);
@@ -39,8 +39,8 @@ static void fix_win_rect_by_frame(Client *c);
 static bool change_layout_ratio(WM *wm, int ox, int nx);
 static Layout get_layout(void);
 static void set_layout(Layout layout);
-static int get_n_main_max(void);
-static void set_n_main_max(int n);
+static int get_main_area_n(void);
+static void set_main_area_n(int n);
 static void adjust_main_area(WM *wm, double change_ratio);
 static void adjust_fixed_area(WM *wm, double change_ratio);
 static double get_main_area_ratio(void);
@@ -48,9 +48,9 @@ static void set_main_area_ratio(double ratio);
 static double get_fixed_area_ratio(void);
 static void set_fixed_area_ratio(double ratio);
 
-static int n_main_max[DESKTOP_N]; // 主區域可容納的客戶窗口數量
+static int main_area_ns[DESKTOP_N]; // 主區域可容納的客戶窗口數量
 static Layout layouts[DESKTOP_N]; // 爲當前布局模式
-static double main_area_ratio[DESKTOP_N], fixed_area_ratio[DESKTOP_N]; // 分別爲主要和固定區域與工作區寬度的比值
+static double main_area_ratios[DESKTOP_N], fixed_area_ratios[DESKTOP_N]; // 分別爲主要和固定區域與工作區寬度的比值
 
 void update_layout(WM *wm)
 {
@@ -74,22 +74,22 @@ static void set_stack_layout(void)
 
 static void set_tile_layout(WM *wm)
 {
-    fix_place_type_for_tile();
+    fix_place_for_tile();
     set_wins_rect_for_tiling(wm);
     fix_wins_rect();
 }
 
-static void fix_place_type_for_tile(void)
+static void fix_place_for_tile(void)
 {
-    int n=0, m=get_n_main_max();
+    int n=0, m=get_main_area_n();
     clients_for_each(c)
     {
         if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c) && !c->owner)
         {
-            if(c->place_type==TILE_LAYER_MAIN && ++n>m)
-                c->place_type=TILE_LAYER_SECOND;
-            else if(c->place_type==TILE_LAYER_SECOND && n<m)
-                c->place_type=TILE_LAYER_MAIN, n++;
+            if(c->place==MAIN_AREA && ++n>m)
+                c->place=SECOND_AREA;
+            else if(c->place==SECOND_AREA && n<m)
+                c->place=MAIN_AREA, n++;
         }
     }
 }
@@ -112,14 +112,14 @@ static void set_wins_rect_for_tiling(WM *wm)
         if(is_tile_client(c))
         {
             int x=0, y=0, w=0, h=0;
-            Place_type type=c->place_type;
-            if(type == TILE_LAYER_FIXED)
+            Place place=c->place;
+            if(place == FIXED_AREA)
                 x=wx+mw+sw+g, y=wy+i++*fh+y_offset, w=fw-g, h=fh-g;
-            else if(type == TILE_LAYER_MAIN)
+            else if(place == MAIN_AREA)
                 x=wx+sw, y=wy+j++*mh+y_offset, w=mw, h=mh-g;
-            else if(type == TILE_LAYER_SECOND)
+            else if(place == SECOND_AREA)
                 x=wx, y=wy+k++*sh+y_offset, w=sw-g, h=sh-g;
-            if(is_last_typed_client(c, type)) // 區末窗口取餘量
+            if(is_spec_place_last_client(c, place)) // 區末窗口取餘量
                 h+=wh%(h+g);
             set_client_rect_by_outline(c, x, y, w, h);
         }
@@ -131,9 +131,9 @@ static void get_area_size(WM *wm, int *mw, int *mh, int *sw, int *sh, int *fw, i
     double mr=get_main_area_ratio(), fr=get_fixed_area_ratio();
     int n1, n2, n3, ww=wm->workarea.w, wh=wm->workarea.h;
 
-    n1=get_clients_n(TILE_LAYER_MAIN, false, false, false),
-    n2=get_clients_n(TILE_LAYER_SECOND, false, false, false),
-    n3=get_clients_n(TILE_LAYER_FIXED, false, false, false),
+    n1=get_clients_n(MAIN_AREA, false, false, false),
+    n2=get_clients_n(SECOND_AREA, false, false, false),
+    n3=get_clients_n(FIXED_AREA, false, false, false),
     *mw=mr*ww, *fw=ww*fr, *sw=ww-*fw-*mw;
     *mh = n1 ? wh/n1 : wh, *fh = n3 ? wh/n3 : wh, *sh = n2 ? wh/n2 : wh;
     if(n3 == 0)
@@ -178,14 +178,12 @@ static bool should_fix_win_rect(Client *c)
     if(!is_new_client(c))
         return false;
 
-    Place_type t=c->place_type;
+    Place p=c->place;
     switch(get_layout())
     {
-        case STACK:   return t==ABOVE_LAYER || t==FLOAT_LAYER || t==BELOW_LAYER
-                      || is_normal_layer(t);
-        case TILE:    return t==ABOVE_LAYER || t==FLOAT_LAYER || t==BELOW_LAYER
-                      || c->owner;
-        default:      return false;
+        case STACK: return p==ABOVE_LAYER || p==BELOW_LAYER || p==NORMAL_LAYER;
+        case TILE:  return p==ABOVE_LAYER || p==BELOW_LAYER || c->owner;
+        default:    return false;
     }
 }
 
@@ -281,7 +279,7 @@ bool is_main_sec_gap(WM *wm, int x)
 {
     long sw=wm->workarea.w*(1-get_main_area_ratio()-get_fixed_area_ratio()),
          wx=wm->workarea.x,
-         n=get_clients_n(TILE_LAYER_SECOND, false, false, false);
+         n=get_clients_n(SECOND_AREA, false, false, false);
     return (n && x>=wx+sw-cfg->win_gap && x<wx+sw);
 }
 
@@ -289,7 +287,7 @@ bool is_main_fix_gap(WM *wm, int x)
 {
     long smw=wm->workarea.w*(1-get_fixed_area_ratio()),
          wx=wm->workarea.x,
-         n=get_clients_n(TILE_LAYER_FIXED, false, false, false);
+         n=get_clients_n(FIXED_AREA, false, false, false);
     return (n && x>=wx+smw && x<wx+smw+cfg->win_gap);
 }
 
@@ -320,13 +318,13 @@ void change_layout(WM *wm, Layout layout)
 
     if(cl==TILE && layout==STACK)
         clients_for_each(c)
-            if(is_on_cur_desktop(c->desktop_mask) && is_normal_layer(c->place_type))
-                c->place_type=FLOAT_LAYER;
+            if(is_on_cur_desktop(c->desktop_mask) && is_normal_layer(c->place))
+                c->place=NORMAL_LAYER;
 
     if(cl==STACK && layout==TILE)
         clients_for_each(c)
-            if(is_on_cur_desktop(c->desktop_mask) && c->place_type==FLOAT_LAYER)
-                c->place_type=TILE_LAYER_MAIN;
+            if(is_on_cur_desktop(c->desktop_mask) && c->place==NORMAL_LAYER)
+                c->place=MAIN_AREA;
 
     set_layout(layout);
     set_gwm_layout(layout);
@@ -389,7 +387,7 @@ void key_decrease_main_area(WM *wm, XEvent *e, Arg arg)
 static void adjust_main_area(WM *wm, double change_ratio)
 {
     if( get_layout()==TILE
-        && get_clients_n(TILE_LAYER_SECOND, false, false, false))
+        && get_clients_n(SECOND_AREA, false, false, false))
     {
         double mr=get_main_area_ratio()+change_ratio, fr=get_fixed_area_ratio();
         long mw=mr*wm->workarea.w, sw=wm->workarea.w*(1-fr)-mw;
@@ -417,7 +415,7 @@ void key_decrease_fixed_area(WM *wm, XEvent *e, Arg arg)
 static void adjust_fixed_area(WM *wm, double change_ratio)
 {
     if( get_layout()==TILE
-        && get_clients_n(TILE_LAYER_FIXED, false, false, false))
+        && get_clients_n(FIXED_AREA, false, false, false))
     {
         double fr=get_fixed_area_ratio()+change_ratio, mr=get_main_area_ratio();
         long mw=wm->workarea.w*(mr-change_ratio), fw=wm->workarea.w*fr;
@@ -433,10 +431,10 @@ void init_layout(void)
 {
     for(size_t i=0; i<DESKTOP_N; i++)
     {
-        n_main_max[i]=cfg->default_n_main_max;
+        main_area_ns[i]=cfg->default_main_area_n;
         layouts[i]=cfg->default_layout;
-        main_area_ratio[i]=cfg->default_main_area_ratio;
-        fixed_area_ratio[i]=cfg->default_fixed_area_ratio;
+        main_area_ratios[i]=cfg->default_main_area_ratio;
+        fixed_area_ratios[i]=cfg->default_fixed_area_ratio;
     }
     set_gwm_layout(get_layout());
 }
@@ -451,42 +449,42 @@ static void set_layout(Layout layout)
     layouts[get_net_current_desktop()]=layout;
 }
 
-static int get_n_main_max(void)
+static int get_main_area_n(void)
 {
-    return n_main_max[get_net_current_desktop()];
+    return main_area_ns[get_net_current_desktop()];
 }
 
-static void set_n_main_max(int n)
+static void set_main_area_n(int n)
 {
-    n_main_max[get_net_current_desktop()]=n;
+    main_area_ns[get_net_current_desktop()]=n;
 }
 
 static double get_main_area_ratio(void)
 {
-    return main_area_ratio[get_net_current_desktop()];
+    return main_area_ratios[get_net_current_desktop()];
 }
 
 static void set_main_area_ratio(double ratio)
 {
-    main_area_ratio[get_net_current_desktop()]=ratio;
+    main_area_ratios[get_net_current_desktop()]=ratio;
 }
 
 static double get_fixed_area_ratio(void)
 {
-    return fixed_area_ratio[get_net_current_desktop()];
+    return fixed_area_ratios[get_net_current_desktop()];
 }
 
 static void set_fixed_area_ratio(double ratio)
 {
-    fixed_area_ratio[get_net_current_desktop()]=ratio;
+    fixed_area_ratios[get_net_current_desktop()]=ratio;
 }
 
 void adjust_main_area_n(int n)
 {
     if(get_layout() == TILE)
     {
-        int m=get_n_main_max();
-        set_n_main_max(m+n>=1 ? m+n : 1);
+        int m=get_main_area_n();
+        set_main_area_n(m+n>=1 ? m+n : 1);
         request_layout_update();
     }
 }

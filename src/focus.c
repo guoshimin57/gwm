@@ -10,27 +10,14 @@
  * ************************************************************************/
 
 #include "icccm.h"
-//#include "desktop.h"
 #include "focus.h"
-
-typedef enum // 窗口疊次序分層類型
-{
-    FULLSCREEN_TOP,
-    ABOVE_TOP,
-    DOCK_TOP,
-    FLOAT_TOP,
-    NORMAL_TOP,
-    BELOW_TOP,
-    DESKTOP_TOP,
-    TOP_WIN_TYPE_N
-} Top_win_type;
 
 static void update_focus_client_pointer(Client *c);
 static bool is_map_client(Client *c);
 static Client *get_first_map_client(void);
 static Client *get_first_map_diff_client(Client *key);
 static void raise_client(Client *c);
-static Window get_top_win(Client *c);
+static Window get_top_win(const Client *c);
 static void set_all_net_client_list(void);
 static Window *get_client_win_list(int *n);
 static Window *get_client_win_list_stacking(int *n);
@@ -39,7 +26,7 @@ static Window *get_client_win_list_stacking(int *n);
 static Client *cur_focus_client[DESKTOP_N]={NULL};
 static Client *prev_focus_client[DESKTOP_N]={NULL};
 
-Window top_wins[TOP_WIN_TYPE_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
+Window top_wins[LAYER_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
 
 /* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因（如移動到
  * 其他虛擬桌面、刪除、縮微）而未更新時，則應使用值爲NULL的c來調用本函數。這
@@ -162,32 +149,20 @@ static void raise_client(Client *c)
     }
 }
 
-static Window get_top_win(Client *c)
+static Window get_top_win(const Client *c)
 {
-    size_t index[]=
-    {
-        [FULLSCREEN_LAYER]=FULLSCREEN_TOP,
-        [ABOVE_LAYER]=ABOVE_TOP,
-        [DOCK_LAYER]=DOCK_TOP,
-        [FLOAT_LAYER]=FLOAT_TOP,
-        [TILE_LAYER_MAIN]=NORMAL_TOP,
-        [TILE_LAYER_SECOND]=NORMAL_TOP,
-        [TILE_LAYER_FIXED]=NORMAL_TOP,
-        [BELOW_LAYER]=BELOW_TOP,
-        [DESKTOP_LAYER]=DESKTOP_TOP,
-    };
-    return top_wins[index[c->place_type]];
+    return top_wins[is_normal_layer(c->place) ? NORMAL_LAYER : c->place];
 }
 
 void create_refer_top_wins(void)
 {
-    for(int i=TOP_WIN_TYPE_N-1; i>=0; i--)
+    for(int i=LAYER_N-1; i>=0; i--)
         top_wins[i]=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
 }
 
 void del_refer_top_wins(void)
 {
-    for(size_t i=0; i<TOP_WIN_TYPE_N; i++)
+    for(size_t i=0; i<LAYER_N; i++)
         XDestroyWindow(xinfo.display, top_wins[i]);
 }
 

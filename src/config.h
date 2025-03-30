@@ -33,7 +33,7 @@ typedef struct
     int screen_saver_time_out; // 激活內置屏保之前的空閒時間，單位爲秒。當值爲0時表示禁用屏保，爲-1時恢復缺省值。
     int screen_saver_interval; // 內置屏保周期性變化的時間間隔，單位爲秒。當值爲0時表示禁止周期性變化。
 
-    int default_n_main_max; // 默認的主區域最大窗口數量
+    int default_main_area_n; // 默認的主區域最大窗口數量
     int act_center_col; // 操作中心按鈕列數
 
     int font_size; // 字體尺寸

@@ -277,7 +277,7 @@ static void change_net_wm_state_for_above(Client *c, long act)
 
     if(add)
     {
-        if(c->place_type != ABOVE_LAYER)
+        if(c->place != ABOVE_LAYER)
             save_place_info_of_client(c);
         move_client(c, NULL, ABOVE_LAYER);
     }
@@ -292,7 +292,7 @@ static void change_net_wm_state_for_below(Client *c, long act)
 
     if(add)
     {
-        if(c->place_type != BELOW_LAYER)
+        if(c->place != BELOW_LAYER)
             save_place_info_of_client(c);
         move_client(c, NULL, BELOW_LAYER);
     }
@@ -390,7 +390,7 @@ static void handle_enter_notify(WM *wm, XEvent *e)
     if(cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(c);
     if( is_layout_adjust_area(wm, win, x)
-        && get_clients_n(TILE_LAYER_MAIN, false, false, false))
+        && get_clients_n(MAIN_AREA, false, false, false))
         set_cursor(win, ADJUST_LAYOUT_RATIO);
     if(widget == NULL)
         return;
@@ -472,7 +472,7 @@ static void handle_focus_in(WM *wm, XEvent *e)
     if(!c)
         return;
 
-    if(c->win_state.fullscreen && c->place_type!=FULLSCREEN_LAYER)
+    if(c->win_state.fullscreen && c->place!=FULLSCREEN_LAYER)
     {
         WIDGET_X(c)=WIDGET_Y(c)=0, WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
         move_client(c, NULL, FULLSCREEN_LAYER);
@@ -485,8 +485,8 @@ static void handle_focus_out(WM *wm, XEvent *e)
 {
     UNUSED(wm);
     Client *c=win_to_client(e->xfocus.window);
-    if(c && c->win_state.fullscreen && c->place_type==FULLSCREEN_LAYER)
-        move_client(c, NULL, c->old_place_type);
+    if(c && c->win_state.fullscreen && c->place==FULLSCREEN_LAYER)
+        move_client(c, NULL, c->old_place);
 }
 
 static void handle_key_press(WM *wm, XEvent *e)
