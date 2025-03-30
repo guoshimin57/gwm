@@ -36,6 +36,7 @@ static unsigned int get_valid_mask(unsigned int mask);
 static unsigned int get_modifier_mask(KeySym key_sym);
 static Cursor cursors[POINTER_ACT_N]; // 光標
 static Color_id state_to_color_id(Widget_state state);
+static int get_pointer_x(void);
 
 static Widget_node *widget_list=NULL;
 
@@ -247,7 +248,7 @@ void update_hint_win_for_info(const Widget *widget, const char *info)
     get_string_size(info, &w, NULL);
     w+=pad*2;
     if(widget)
-        set_pos_for_click(widget->win, &x, &y, w, h);
+        set_pos_for_click(widget, &x, &y, w, h);
     else
         x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
     XMoveResizeWindow(xinfo.display, xinfo.hint_win, x, y, w, h);
@@ -255,6 +256,34 @@ void update_hint_win_for_info(const Widget *widget, const char *info)
     Str_fmt f={0, 0, w, h, CENTER, true, false, 0,
         get_text_color(NULL)};
     draw_string(xinfo.hint_win, info, &f);
+}
+
+/* 坐標均相對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
+void set_pos_for_click(const Widget *click, int *px, int *py, int pw, int ph)
+{
+    int x=0, y=0, w=0, h=0, bw=0, sw=xinfo.screen_width, sh=xinfo.screen_height;
+    Window child, root=xinfo.root_win, cwin=WIDGET_WIN(click);
+
+    XTranslateCoordinates(xinfo.display, cwin, root, 0, 0, &x, &y, &child);
+    get_geometry(cwin, NULL, NULL, &w, &h, &bw, NULL);
+
+    *px = click->type==WIDGET_TYPE_BUTTON ? WIDGET_X(click) : get_pointer_x();
+    // 優先考慮右邊顯示彈窗；若不夠位置，則考慮左邊顯示；再不濟則從屏幕左邊開始顯示
+    *px = *px+pw<sw ? *px : (*px-pw>0 ? *px-pw : 0);
+    /* 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示。
+       並且彈出窗口與點擊窗口錯開一個像素，以便從視覺上有所區分。*/
+    *py = y+(h+bw+ph)<sh ? y+h+bw+1: (y-bw-ph>0 ? y-bw-ph-1 : 0);
+}
+
+static int get_pointer_x(void)
+{
+    Window win=xinfo.root_win, root, child;
+    int rx=0, ry, x, y;
+    unsigned int mask;
+
+    XQueryPointer(xinfo.display, win, &root, &child, &rx, &ry, &x, &y, &mask);
+
+    return rx;
 }
 
 void set_xic(Window win, XIC *ic)

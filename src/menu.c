@@ -102,7 +102,7 @@ void menu_show(Widget *widget)
 {
     Menu *menu=MENU(widget);
 
-    set_pos_for_click(WIDGET_WIN(menu->owner),
+    set_pos_for_click(menu->owner,
         &WIDGET_X(menu), &WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
     widget_move_resize(WIDGET(menu), WIDGET_X(menu), WIDGET_Y(menu), WIDGET_W(menu), WIDGET_H(menu));
     XRaiseWindow(xinfo.display, WIDGET_WIN(menu));

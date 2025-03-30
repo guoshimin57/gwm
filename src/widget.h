@@ -154,6 +154,7 @@ Widget *get_popped_widget(void);
 void hide_popped_widget(const Widget *popped, const Widget *clicked);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
 void update_hint_win_for_info(const Widget *widget, const char *info);
+void set_pos_for_click(const Widget *click, int *px, int *py, int pw, int ph);
 void set_xic(Window win, XIC *ic);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
 void create_hint_win(void);

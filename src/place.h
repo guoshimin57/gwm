@@ -21,9 +21,5 @@ void change_to_second(WM *wm, XEvent *e, Arg arg);
 void change_to_fixed(WM *wm, XEvent *e, Arg arg);
 void change_to_float(WM *wm, XEvent *e, Arg arg);
 void pointer_swap_clients(WM *wm, XEvent *e, Arg arg);
-void show_desktop(WM *wm, XEvent *e, Arg arg);
-void toggle_showing_desktop_mode(bool show);
-void move_client(Client *from, Client *to, Place type);
-bool move_client_node(Client *from, Client *to, Place type);
 
 #endif

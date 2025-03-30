@@ -11,9 +11,7 @@
 
 #include "icccm.h"
 #include "mvresize.h"
-#include "layout.h"
 #include "focus.h"
-#include "place.h"
 
 static void key_move_resize_client(WM *wm, XEvent *e, Direction dir);
 static bool fix_first_move_resize(Client *c, Delta_rect *d);

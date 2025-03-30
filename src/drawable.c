@@ -17,7 +17,6 @@
 
 static Pixmap create_pixmap_with_color(Drawable d, unsigned long color);
 static void change_prop_for_root_bg(Pixmap pixmap);
-static int get_pointer_x(void);
 
 bool is_pointer_on_win(Window win)
 {
@@ -168,33 +167,6 @@ bool get_geometry(Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigne
     return XGetGeometry(xinfo.display, drw, &r, x ? x : &xt, y ? y : &yt,
         w ? (unsigned int *)w : &wt, h ? (unsigned int *)h : &ht,
         bw ? (unsigned int *)bw : &bwt, depth ? depth : &dt);
-}
-
-/* 坐標均相對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
-void set_pos_for_click(Window click, int *px, int *py, int pw, int ph)
-{
-    int x=0, y=0, w=0, h=0, bw=0, sw=xinfo.screen_width, sh=xinfo.screen_height;
-    int cx=get_pointer_x();
-    Window child, root=xinfo.root_win;
-
-    XTranslateCoordinates(xinfo.display, click, root, 0, 0, &x, &y, &child);
-    get_geometry(click, NULL, NULL, &w, &h, &bw, NULL);
-    // 優先考慮右邊顯示彈窗；若不夠位置，則考慮左邊顯示；再不濟則從屏幕左邊開始顯示
-    *px = cx+pw<sw ? cx : (cx-pw>0 ? cx-pw : 0);
-    /* 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示。
-       並且彈出窗口與點擊窗口錯開一個像素，以便從視覺上有所區分。*/
-    *py = y+(h+bw+ph)<sh ? y+h+bw+1: (y-bw-ph>0 ? y-bw-ph-1 : 0);
-}
-
-static int get_pointer_x(void)
-{
-    Window win=xinfo.root_win, root, child;
-    int rx=0, ry, x, y;
-    unsigned int mask;
-
-    XQueryPointer(xinfo.display, win, &root, &child, &rx, &ry, &x, &y, &mask);
-
-    return rx;
 }
 
 Pixmap create_pixmap_from_file(Window win, const char *filename)
