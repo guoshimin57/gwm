@@ -33,11 +33,14 @@ static bool is_valid_move(Client *from, Client *to, Place type);
 static bool is_valid_to_normal_layer_sec(Client *c);
 static int cmp_client_store_order(Client *c1, Client *c2);
 static void set_place_for_subgroup(Client *subgroup_leader, Place type);
-static Client *get_icon_client_head(void);
 static bool move_client_node(Client *from, Client *to, Place type);
 static void set_frame_rect_by_client(Client *c);
 static void add_subgroup(Client *head, Client *subgroup_leader);
 static void del_subgroup(Client *subgroup_leader);
+static Client *get_head_client(const Client *c, Place place);
+static Client *get_same_place_owner(const Client *c);
+static Client *get_first_same_place_client(Place place);
+static Client *get_first_next_place_client(Place place);
 
 static Client *clients=NULL;
 
@@ -76,7 +79,7 @@ Client *get_clients(void)
 void client_add(Window win)
 {
     Client *c=client_new(win);
-    list_add(&c->list, &get_head_client(c->place)->list);
+    list_add(&c->list, &get_head_client(c, ANY_PLACE)->list);
     grab_buttons(WIDGET_WIN(c));
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
@@ -103,7 +106,7 @@ static void client_ctor(Client *c, Window win)
     c->win_state=get_net_wm_state(win);
     c->decorative=has_decoration(c);
     c->owner=win_to_client(get_transient_for(WIDGET_WIN(c)));
-    c->subgroup_leader=get_subgroup_leader(c);
+    c->subgroup_leader = c->owner ? c->owner->subgroup_leader : c;
     c->class_name="?";
     c->image=get_win_icon_image(win);
     c->frame=frame_new(WIDGET(c), 0, 0, 1, 1,
@@ -124,13 +127,6 @@ static bool has_decoration(const Client *c)
     return has_motif_decoration(WIDGET_WIN(c))
         && (c->win_type.none || c->win_type.normal || c->win_type.dialog)
         && !c->win_state.skip_pager && !c->win_state.skip_taskbar;
-}
-
-Client *get_subgroup_leader(Client *c)
-{
-    for(; c && c->owner; c=c->owner)
-        ;
-    return c;
 }
 
 static void set_default_place(Client *c)
@@ -238,29 +234,15 @@ static void client_dtor(Client *c)
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過所有亞組窗口 */
 Client *get_next_client(Client *c)
 {
-    if(!c)
-        return NULL;
-
-    Client *ld=c->subgroup_leader;
-    list_for_each_entry_continue(Client, c, &clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask) && (!ld || c->subgroup_leader!=ld))
-            return c;
-
-    return NULL;
+    Client *next=clients_next(c->win_state.modal ? c->subgroup_leader : c);
+    return next==clients ? clients_next(clients) : next;
 }
 
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過非模態窗口 */
 Client *get_prev_client(Client *c)
 {
-    if(!c)
-        return NULL;
-
-    Client *m=NULL;
-    list_for_each_entry_continue_reverse(Client, c, &clients->list, list)
-        if(is_on_cur_desktop(c->desktop_mask))
-            return (m=get_top_transient_client(c->subgroup_leader, true)) ? m : c;
-
-    return NULL;
+    Client *prev=clients_prev(c->win_state.modal ? c->subgroup_leader : c);
+    return prev==clients ? clients_prev(clients) : prev;
 }
 
 bool is_normal_layer(Place t)
@@ -289,26 +271,45 @@ static void del_subgroup(Client *subgroup_leader)
 bool is_spec_place_last_client(Client *c, Place place)
 {
     clients_for_each_reverse(p)
-    {
-        if(p == c)
-            break;
-        if(is_on_cur_desktop(WIDGET_WIN(p)) && p->place==place)
-            return false;
-    }
-    return true;
+        if(is_on_cur_desktop(WIDGET_WIN(p)) && p==c && p->place==place)
+            return true;
+    return false;
 }
 
-Client *get_head_client(Place place)
+static Client *get_head_client(const Client *c, Place place)
+{
+    Client *p=NULL;
+    if(c)
+        place=c->place;
+    if((p=get_same_place_owner(c)) || (p=get_first_same_place_client(place)))
+        p=get_first_next_place_client(place);
+
+    return p ? list_prev_entry(p, Client, list) : clients;
+}
+
+static Client *get_same_place_owner(const Client *c)
+{
+    if(c)
+        clients_for_each(p)
+            if(is_on_cur_desktop(p->desktop_mask) && p->place==c->place && p->owner==c->owner)
+                return p;
+    return NULL;
+}
+
+static Client *get_first_same_place_client(Place place)
 {
     clients_for_each(c)
         if(is_on_cur_desktop(c->desktop_mask) && c->place==place)
-            return list_prev_entry(c, Client, list);
+            return c;
+    return NULL;
+}
 
+static Client *get_first_next_place_client(Place place)
+{
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && c->place > place)
-            return list_prev_entry(c, Client, list);
-
-    return clients;
+        if(is_on_cur_desktop(c->desktop_mask) && c->place<place)
+            return c;
+    return NULL;
 }
 
 int get_subgroup_n(Client *c)
@@ -497,7 +498,7 @@ static bool move_client_node(Client *from, Client *to, Place type)
         head = cmp_client_store_order(from, to) < 0 ? to : list_prev_entry(to, Client, list);
     else
     {
-        head=get_head_client(type);
+        head=get_head_client(NULL, type);
         if(from->place==MAIN_AREA && type==SECOND_AREA)
             head=list_next_entry(head, Client, list);
     }
@@ -533,7 +534,7 @@ static int cmp_client_store_order(Client *c1, Client *c2)
 
 static void set_place_for_subgroup(Client *subgroup_leader, Place type)
 {
-    for(Client *ld=subgroup_leader, *c=ld; ld && c->subgroup_leader==ld; c=list_prev_entry(c, Client, list))
+    subgroup_for_each(c, subgroup_leader)
         c->place=type;
 }
 
@@ -551,14 +552,14 @@ void swap_clients(Client *a, Client *b)
 
     top=get_top_transient_client(a_leader, false);
     a_begin=(top ? top : a_leader);
-    a_prev=list_prev_entry(a_begin, Client, list);
+    a_prev=clients_prev(a_begin);
 
     top=get_top_transient_client(b_leader, false);
     b_begin=(top ? top : b_leader);
 
     del_subgroup(a_leader);
     add_subgroup(b_leader, a_leader);
-    if(list_next_entry(a_leader, Client, list) != b_begin) //不相邻
+    if(clients_next(a_leader) != b_begin) //不相邻
         del_subgroup(b_leader), add_subgroup(a_prev, b_leader);
 
     request_layout_update();
@@ -591,10 +592,7 @@ void iconify_client(Client *c)
     if(c->win_state.skip_taskbar)
         return;
 
-    move_client_node(c, get_icon_client_head(), ANY_PLACE);
-
-    Client *ld=c->subgroup_leader;
-    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
+    subgroup_for_each(p, c->subgroup_leader)
     {
         p->win_state.hidden=1;
         update_net_wm_state(WIDGET_WIN(p), p->win_state);
@@ -605,16 +603,7 @@ void iconify_client(Client *c)
             frame_update_bg(p->frame);
         }
     }
-
     request_layout_update();
-}
-
-static Client *get_icon_client_head(void)
-{
-    clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
-            return clients_prev(c);;
-    return clients_last();
 }
 
 void deiconify_client(Client *c)
@@ -622,9 +611,7 @@ void deiconify_client(Client *c)
     if(!c)
         return;
 
-    move_client_node(c, NULL, c->place);
-    Client *ld=c->subgroup_leader;
-    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
+    subgroup_for_each(p, c->subgroup_leader)
     {
         if(is_iconic_client(p))
         {

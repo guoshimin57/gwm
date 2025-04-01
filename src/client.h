@@ -40,7 +40,7 @@ typedef struct client_tag // 客戶窗口相關信息
 
 #define subgroup_for_each(c, leader) \
     for(Client *c=leader;\
-        leader && c->subgroup_leader==leader;\
+        c->subgroup_leader==leader;\
         c=list_prev_entry(c, Client, list))
 
 #define clients_is_empty() \
@@ -80,7 +80,6 @@ Client *get_next_client(Client *c);
 Client *get_prev_client(Client *c);
 bool is_normal_layer(Place t);
 bool is_spec_place_last_client(Client *c, Place type);
-Client *get_head_client(Place place);
 int get_subgroup_n(Client *c);
 Client *get_subgroup_leader(Client *c);
 Client *get_top_transient_client(Client *subgroup_leader, bool only_modal);

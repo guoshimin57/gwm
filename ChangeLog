@@ -9,6 +9,14 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2025年 04月 01日 星期二 12:37:12 HKT	gsm <406643764@qq.com>
+	* 發布第2.12.15版；
+	* 修正get_head_client函數的邏輯錯誤，並修改獲取插入點的規則；
+	* 修正get_next_client和get_prev_client函數的邏輯錯誤；
+	* 修正is_spec_place_last_client函數的邏輯錯誤；
+	* 縮微化和去縮微化時不再修改place；
+	* 代碼重構。
+
 2025年 03月 30日 星期日 20:32:24 HKT	gsm <406643764@qq.com>
 	* 發布第2.12.14版；
 	* 爲解耦client、minimax、mvresize、place模塊而重構代碼；
