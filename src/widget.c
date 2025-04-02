@@ -240,17 +240,13 @@ Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w
     return win;
 }
 
-void update_hint_win_for_info(const Widget *widget, const char *info)
+void update_hint_win_for_info(const char *info)
 {
-    int x, y, pad=get_font_pad(),
-        w=0, h=get_font_height_by_pad();
+    int x, y, pad=get_font_pad(), w=0, h=get_font_height_by_pad();
 
     get_string_size(info, &w, NULL);
     w+=pad*2;
-    if(widget)
-        set_pos_for_click(widget, &x, &y, w, h);
-    else
-        x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
+    x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
     XMoveResizeWindow(xinfo.display, xinfo.hint_win, x, y, w, h);
     XMapRaised(xinfo.display, xinfo.hint_win);
     Str_fmt f={0, 0, w, h, CENTER, true, false, 0,
@@ -259,20 +255,21 @@ void update_hint_win_for_info(const Widget *widget, const char *info)
 }
 
 /* 坐標均相對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
-void set_pos_for_click(const Widget *click, int *px, int *py, int pw, int ph)
+void set_popup_pos(const Widget *widget, bool near_pointer, int *px, int *py, int pw, int ph)
 {
-    int x=0, y=0, w=0, h=0, bw=0, sw=xinfo.screen_width, sh=xinfo.screen_height;
-    Window child, root=xinfo.root_win, cwin=WIDGET_WIN(click);
+    int h=0, bw=0, sw=xinfo.screen_width, sh=xinfo.screen_height;
+    Window child, root=xinfo.root_win, win=WIDGET_WIN(widget);
 
-    XTranslateCoordinates(xinfo.display, cwin, root, 0, 0, &x, &y, &child);
-    get_geometry(cwin, NULL, NULL, &w, &h, &bw, NULL);
+    get_geometry(win, NULL, NULL, NULL, &h, &bw, NULL);
+    XTranslateCoordinates(xinfo.display, win, root, 0, 0, px, py, &child);
+    if(near_pointer)
+        *px=get_pointer_x();
 
-    *px = click->type==WIDGET_TYPE_BUTTON ? WIDGET_X(click) : get_pointer_x();
     // 優先考慮右邊顯示彈窗；若不夠位置，則考慮左邊顯示；再不濟則從屏幕左邊開始顯示
     *px = *px+pw<sw ? *px : (*px-pw>0 ? *px-pw : 0);
     /* 優先考慮下邊顯示彈窗；若不夠位置，則考慮上邊顯示；再不濟則從屏幕上邊開始顯示。
        並且彈出窗口與點擊窗口錯開一個像素，以便從視覺上有所區分。*/
-    *py = y+(h+bw+ph)<sh ? y+h+bw+1: (y-bw-ph>0 ? y-bw-ph-1 : 0);
+    *py = *py+(h+bw+ph)<sh ? *py+h+bw+1: (*py-bw-ph>0 ? *py-bw-ph-1 : 0);
 }
 
 static int get_pointer_x(void)

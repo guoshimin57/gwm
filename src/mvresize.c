@@ -318,7 +318,7 @@ static void update_hint_win_for_move_resize(Client *c)
          row=get_win_row(WIDGET_H(c), &hint);
 
     sprintf(str, "(%d, %d) %ldx%ld", WIDGET_X(c), WIDGET_Y(c), col, row);
-    update_hint_win_for_info(None, str);
+    update_hint_win_for_info(str);
 }
 
 Pointer_act get_resize_act(Client *c, const Move_info *m)

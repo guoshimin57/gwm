@@ -151,14 +151,9 @@ static void update_titlebars_layout(void)
 
 static void fix_wins_rect(void)
 {
-    Client *nc=get_new_client();
-
-    if(nc)
-        fix_win_rect(nc);
-    else
-        clients_for_each(c)
-            if(is_on_cur_desktop(c->desktop_mask))
-                fix_win_rect(c);
+    clients_for_each(c)
+        if(is_on_cur_desktop(c->desktop_mask))
+            fix_win_rect(c);
 }
 
 static void fix_win_rect(Client *c)
@@ -175,14 +170,14 @@ static void fix_win_rect(Client *c)
 
 static bool should_fix_win_rect(Client *c)
 {
-    if(!is_new_client(c))
+    Place p=c->place;
+    if(p==FULLSCREEN_LAYER || p==DOCK_LAYER || p==DESKTOP_LAYER)
         return false;
 
-    Place p=c->place;
     switch(get_layout())
     {
-        case STACK: return p==ABOVE_LAYER || p==BELOW_LAYER || p==NORMAL_LAYER;
-        case TILE:  return p==ABOVE_LAYER || p==BELOW_LAYER || c->owner;
+        case STACK: return is_new_client(c);
+        case TILE:  return c->owner || (is_new_client(c) && !is_normal_layer(p));
         default:    return false;
     }
 }

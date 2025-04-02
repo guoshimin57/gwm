@@ -452,14 +452,6 @@ bool is_exist_client(Client *c)
     return false;
 }
 
-Client *get_new_client(void)
-{
-    clients_for_each(c)
-        if(is_new_client(c))
-            return c;
-    return NULL;
-}
-
 bool is_new_client(Client *c)
 {
     return WIDGET_W(c->frame)==1 && WIDGET_H(c->frame)==1;

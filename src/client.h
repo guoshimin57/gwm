@@ -94,7 +94,6 @@ void update_clients_bg(void);
 void update_client_bg(Client *c);
 void set_client_rect_by_outline(Client *c, int x, int y, int w, int h);
 bool is_exist_client(Client *c);
-Client *get_new_client(void);
 bool is_new_client(Client *c);
 void create_clients(void);
 void move_resize_client(Client *c, const Delta_rect *d);

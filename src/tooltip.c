@@ -83,7 +83,7 @@ void tooltip_show(Widget *widget)
 {
     Tooltip *t=TOOLTIP(widget);
     int *px=&WIDGET_X(t), *py=&WIDGET_Y(t), w=WIDGET_W(t), h=WIDGET_H(t);
-    set_pos_for_click(t->owner, px, py, w, h);
+    set_popup_pos(t->owner, true, px, py, w, h);
     XMoveWindow(xinfo.display, WIDGET_WIN(t), *px, *py);
     XRaiseWindow(xinfo.display, WIDGET_WIN(t));
     widget_show(widget);
