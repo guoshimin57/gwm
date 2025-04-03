@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "config.h"
+#include "clientop.h"
 #include "entry.h"
 #include "file.h"
 #include "font.h"
@@ -95,7 +96,7 @@ void clear_wm(WM *wm)
     clients_for_each_safe(c)
     {
         XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
-        client_del(c, true);
+        remove_client(c, true);
     }
     free_all_images();
     XDestroyWindow(xinfo.display, xinfo.hint_win);

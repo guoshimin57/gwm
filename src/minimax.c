@@ -12,7 +12,7 @@
 #include "prop.h"
 #include "minimax.h"
 #include "focus.h"
-#include "client.h"
+#include "clientop.h"
 
 static void maximize(WM *wm, Max_way max_way);
 static void maximize_client(WM *wm, Client *c, Max_way max_way);

@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "config.h"
+#include "clientop.h"
 #include "layout.h"
 #include "prop.h"
 #include "icccm.h"

@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "clientop.h"
 #include "func.h"
 #include "prop.h"
 #include "focus.h"

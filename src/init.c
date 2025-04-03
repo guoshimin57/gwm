@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "clientop.h"
 #include "misc.h"
 #include "config.h"
 #include "entry.h"
@@ -70,7 +71,6 @@ void init_wm(WM *wm)
     cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
     color_entry=color_entry_new(COLOR_ENTRY);
     create_hint_win();
-    reg_focus_func(focus_client);
     init_client_list();
     grab_keys();
     exec_autostart();

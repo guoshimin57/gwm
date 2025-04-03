@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "clientop.h"
 #include "icccm.h"
 #include "mvresize.h"
 #include "focus.h"

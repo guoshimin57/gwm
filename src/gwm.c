@@ -12,7 +12,7 @@
 #include "misc.h"
 #include "gwm.h"
 #include "config.h"
-#include "client.h"
+#include "clientop.h"
 #include "handler.h"
 #include "init.h"
 

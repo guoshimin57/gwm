@@ -9,7 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "client.h"
+#include "clientop.h"
 #include "focus.h"
 #include "button.h"
 #include "bind_cfg.h"
@@ -553,7 +553,7 @@ static void handle_map_request(WM *wm, XEvent *e)
     Window win=e->xmaprequest.window;
 
     if(is_wm_win(win, false))
-        client_add(win);
+        add_client(win);
     XMapWindow(xinfo.display, win);
 }
 
@@ -578,8 +578,8 @@ static void handle_unmap_notify(WM *wm, XEvent *e)
         && (ue->send_event|| ue->event==WIDGET_WIN(c->frame) || ue->event==WIDGET_WIN(c)))
     {
         if(is_iconic_client(c))
-            taskbar_client_del(wm->taskbar, WIDGET_WIN(c));
-        client_del(c, false);
+            taskbar_remove_client(wm->taskbar, WIDGET_WIN(c));
+        remove_client(c, false);
     }
 }
 

@@ -210,12 +210,12 @@ Statusbar *taskbar_get_statusbar(const Taskbar *taskbar)
     return taskbar->statusbar;
 }
 
-void taskbar_client_add(Taskbar *taskbar, Window cwin)
+void taskbar_add_client(Taskbar *taskbar, Window cwin)
 {
     iconbar_add_cbutton(taskbar->iconbar, cwin);
 }
 
-void taskbar_client_del(Taskbar *taskbar, Window cwin)
+void taskbar_remove_client(Taskbar *taskbar, Window cwin)
 {
     iconbar_del_cbutton(taskbar->iconbar, cwin);
 }

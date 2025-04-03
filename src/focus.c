@@ -13,7 +13,7 @@
 #include "focus.h"
 
 static void update_focus_client_pointer(Client *c);
-static bool is_map_client(Client *c);
+static bool is_viewable_client(const Client *c);
 static Client *get_first_map_client(void);
 static Client *get_first_map_diff_client(Client *key);
 static void raise_client(Client *c);
@@ -89,9 +89,9 @@ static void update_focus_client_pointer(Client *c)
         return;
     else if(!c) // 某個client可能被刪除、縮微化、移動到其他桌面、非wm手段關閉了
     {
-        if(!is_map_client(cf) && !is_map_client(cf = co ? co : pf))
+        if(!is_viewable_client(cf) && !is_viewable_client(cf = co ? co : pf))
             cf=get_first_map_client();
-        if((!is_map_client(pf) || pf==cf) && !is_map_client(pf=po))
+        if((!is_viewable_client(pf) || pf==cf) && !is_viewable_client(pf=po))
             pf=get_first_map_diff_client(pf);
     }
     else
@@ -106,13 +106,12 @@ static void update_focus_client_pointer(Client *c)
     set_cur_focus_client(cf);
 }
 
-static bool is_map_client(Client *c)
+static bool is_viewable_client(const Client *c)
 {
-    if(c && !is_iconic_client(c) && is_on_cur_desktop(c->desktop_mask))
-        clients_for_each(p)
-            if(p == c)
-                return true;
-    return false;
+    XWindowAttributes a;
+
+    return c && XGetWindowAttributes(xinfo.display, WIDGET_WIN(c), &a)
+        && a.map_state==IsViewable;
 }
 
 static Client *get_first_map_client(void)

@@ -67,15 +67,13 @@ typedef struct client_tag // 客戶窗口相關信息
 #define clients_for_each_reverse(c) \
     list_for_each_entry_reverse(Client, c, &get_clients()->list, list)
 
-void reg_focus_func(void (*func)(Client *));
 void init_client_list(void);
-void manage_exsit_clients(void);
 Client *get_clients(void);
-void client_add(Window win);
+Client *client_new(Window win);
+void client_del(Client *c);
 int get_clients_n(Place type, bool count_icon, bool count_trans, bool count_all_desktop);
 bool is_iconic_client(const Client *c);
 Client *win_to_client(Window win);
-void client_del(Client *c, bool is_for_quit);
 Client *get_next_client(Client *c);
 Client *get_prev_client(Client *c);
 bool is_normal_layer(Place t);
@@ -95,14 +93,6 @@ void update_client_bg(Client *c);
 void set_client_rect_by_outline(Client *c, int x, int y, int w, int h);
 bool is_exist_client(Client *c);
 bool is_new_client(Client *c);
-void create_clients(void);
-void move_resize_client(Client *c, const Delta_rect *d);
-void move_client(Client *from, Client *to, Place type);
-void swap_clients(Client *a, Client *b);
-void restore_client(Client *c);
-void iconify_client(Client *c);
-void deiconify_client(Client *c);
-void iconify_all_clients(void);
-void deiconify_all_clients(void);
+Client *get_head_client(const Client *c, Place place);
 
 #endif
