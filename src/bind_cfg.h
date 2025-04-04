@@ -128,6 +128,7 @@
     DESKTOP_KEYBIND(XK_1, 0), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */   \
     DESKTOP_KEYBIND(XK_2, 1),                                                       \
     DESKTOP_KEYBIND(XK_3, 2),                                                       \
+    {0}                                                                             \
 }
 
 /* 功能：設置與虛擬桌面相關的定位器按鈕功能綁定。
@@ -213,6 +214,7 @@
     DESKTOP_BUTTONBIND(0),                                                                 \
     DESKTOP_BUTTONBIND(1),                                                                 \
     DESKTOP_BUTTONBIND(2),                                                                 \
+    {0}                                                                                    \
 }
 
 #endif

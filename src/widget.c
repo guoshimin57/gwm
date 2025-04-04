@@ -10,11 +10,11 @@
  * ************************************************************************/
 
 #include "config.h"
-#include "bind_cfg.h"
 #include "gwm.h"
 #include "font.h"
 #include "misc.h"
 #include "list.h"
+#include "drawable.h"
 #include "widget.h"
 
 #define WIDGET_STATE_NORMAL ((Widget_state){0})
@@ -39,6 +39,8 @@ static Color_id state_to_color_id(Widget_state state);
 static int get_pointer_x(void);
 
 static Widget_node *widget_list=NULL;
+static const Keybind *keybinds=NULL;
+static const Buttonbind *buttonbinds=NULL;
 
 static void widget_reg(Widget *widget)
 {
@@ -87,6 +89,7 @@ Widget *widget_new(Widget *parent, Widget_type type, Widget_id id, int x, int y,
     Widget *widget=Malloc(sizeof(Widget));
 
     widget_ctor(widget, parent, type, id, x, y, w, h);
+    grab_buttons(widget);
 
     return widget;
 }
@@ -100,7 +103,9 @@ void widget_ctor(Widget *widget, Widget *parent, Widget_type type, Widget_id id,
     widget->id=id;
     widget->state=WIDGET_STATE_NORMAL;
     bg=get_widget_color(widget);
-    if(widget->id != CLIENT_WIN)
+    if(widget->id==CLIENT_WIN || widget->id==ROOT_WIN)
+        widget->win=None;
+    else
         widget->win=create_widget_win(pwin, x, y, w, h, 0, 0, bg);
     widget->x=x, widget->y=y, widget->w=w, widget->h=h, widget->border_w=0;
     widget->poppable=false;
@@ -332,16 +337,21 @@ void free_cursors(void)
         XFreeCursor(xinfo.display, cursors[i]);
 }
 
+void reg_bind(const Keybind *kb, const Buttonbind *bb)
+{
+    keybinds=kb, buttonbinds=bb;
+}
+
 void grab_keys(void)
 {
     unsigned int num_lock_mask=get_num_lock_mask();
     unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
     KeyCode code;
     XUngrabKey(xinfo.display, AnyKey, AnyModifier, xinfo.root_win);
-    for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++)
-        if((code=XKeysymToKeycode(xinfo.display, KEYBIND[i].keysym)))
-            for(size_t j=0; j<ARRAY_NUM(masks); j++)
-                XGrabKey(xinfo.display, code, KEYBIND[i].modifier|masks[j],
+    for(const Keybind *p=keybinds; p && p->func; p++)
+        if((code=XKeysymToKeycode(xinfo.display, p->keysym)))
+            for(size_t i=0; i<ARRAY_NUM(masks); i++)
+                XGrabKey(xinfo.display, code, p->modifier|masks[i],
                     xinfo.root_win, True, GrabModeAsync, GrabModeAsync);
 }
 
@@ -358,21 +368,21 @@ static unsigned int get_num_lock_mask(void)
     return 0;
 }
     
-void grab_buttons(Window win)
+void grab_buttons(const Widget *widget)
 {
     unsigned int num_lock_mask=get_num_lock_mask(),
                  masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
 
-    XUngrabButton(xinfo.display, AnyButton, AnyModifier, win);
-    for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++)
+    XUngrabButton(xinfo.display, AnyButton, AnyModifier, WIDGET_WIN(widget));
+    for(const Buttonbind *p=buttonbinds; p && p->func; p++)
     {
-        if(BUTTONBIND[i].widget_id == CLIENT_WIN)
+        if(p->widget_id == widget->id)
         {
-            int m=is_equal_modifier_mask(0, BUTTONBIND[i].modifier) ?
+            int m=is_equal_modifier_mask(0, p->modifier) ?
                 GrabModeSync : GrabModeAsync;
-            for(size_t j=0; j<ARRAY_NUM(masks); j++)
-                XGrabButton(xinfo.display, BUTTONBIND[i].button, BUTTONBIND[i].modifier|masks[j],
-                    win, False, BUTTON_MASK, m, m, None, None);
+            for(size_t i=0; i<ARRAY_NUM(masks); i++)
+                XGrabButton(xinfo.display, p->button, p->modifier|masks[i],
+                    WIDGET_WIN(widget), False, BUTTON_MASK, m, m, None, None);
         }
     }
 }

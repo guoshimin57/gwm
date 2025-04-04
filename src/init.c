@@ -20,6 +20,8 @@
 #include "icccm.h"
 #include "focus.h"
 #include "taskbar.h"
+#include "widget.h"
+#include "bind_cfg.h"
 #include "layout.h"
 #include "init.h"
 
@@ -64,6 +66,7 @@ void init_wm(WM *wm)
     set_workarea(wm);
     set_ewmh(wm);
     init_layout();
+    reg_bind(KEYBIND, BUTTONBIND);
     Rect r=compute_taskbar_rect();
     wm->taskbar=taskbar_new(NULL, r.x, r.y, r.w, r.h);
     if(cfg->show_taskbar)

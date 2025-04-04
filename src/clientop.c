@@ -38,7 +38,6 @@ void manage_exsit_clients(void)
 void add_client(Window win)
 {
     Client *c=client_new(win);
-    grab_buttons(WIDGET_WIN(c));
     XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
     request_layout_update();

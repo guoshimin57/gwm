@@ -111,31 +111,6 @@ typedef struct wm_tag // 窗口管理器相關信息
     Event_handler event_handler; // 事件處理器
 } WM;
 
-typedef union // 要綁定的函數的參數類型
-{
-    char *const *cmd; // 命令字符串
-    unsigned int desktop_n; // 虛擬桌面編號，從0開始編號
-} Arg;
-
-typedef void (*Func)(WM *, XEvent *, Arg); // 要綁定的函數類型
-
-typedef struct // 鍵盤按鍵功能綁定
-{
-	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵
-	KeySym keysym; // 要綁定的鍵盤功能轉換鍵
-	Func func; // 要綁定的函數
-    Arg arg; // 要綁定的函數的參數
-} Keybind;
-
-typedef struct // 定位器按鈕功能綁定
-{
-    Widget_id widget_id; // 要綁定的構件標識
-	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵 
-    unsigned int button; // 要綁定的定位器按鈕
-	Func func; // 要綁定的函數
-    Arg arg; // 要綁定的函數的參數
-} Buttonbind;
-
 enum direction_tag // 方向
 {
     UP, DOWN, LEFT, RIGHT, LEFT2LEFT, LEFT2RIGHT, RIGHT2LEFT, RIGHT2RIGHT,
