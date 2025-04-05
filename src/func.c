@@ -99,7 +99,6 @@ void clear_wm(WM *wm)
         remove_client(c, true);
     }
     free_all_images();
-    XDestroyWindow(xinfo.display, xinfo.hint_win);
     XDestroyWindow(xinfo.display, wm->wm_check_win);
     taskbar_del(wm->taskbar);
     entry_del(cmd_entry);

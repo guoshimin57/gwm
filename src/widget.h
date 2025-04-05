@@ -28,6 +28,7 @@ typedef enum // 構件類型
     WIDGET_TYPE_FRAME,
     WIDGET_TYPE_TITLEBAR,
     WIDGET_TYPE_CLIENT,
+    WIDGET_TYPE_SIZE_HINT_WIN,
     WIDGET_TYPE_UNKNOWN
 } Widget_type;
 
@@ -179,11 +180,9 @@ bool widget_is_viewable(const Widget *widget);
 Widget *get_popped_widget(void);
 void hide_popped_widget(const Widget *popped, const Widget *clicked);
 Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w, unsigned long border_pixel, unsigned long bg_pixel);
-void update_hint_win_for_info(const char *info);
 void set_popup_pos(const Widget *widget, bool near_pointer, int *px, int *py, int pw, int ph);
 void set_xic(Window win, XIC *ic);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
-void create_hint_win(void);
 void create_cursors(void);
 void set_cursor(Window win, Pointer_act act);
 void free_cursors(void);

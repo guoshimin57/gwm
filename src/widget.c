@@ -245,20 +245,6 @@ Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w
     return win;
 }
 
-void update_hint_win_for_info(const char *info)
-{
-    int x, y, pad=get_font_pad(), w=0, h=get_font_height_by_pad();
-
-    get_string_size(info, &w, NULL);
-    w+=pad*2;
-    x=(xinfo.screen_width-w)/2, y=(xinfo.screen_height-h)/2;
-    XMoveResizeWindow(xinfo.display, xinfo.hint_win, x, y, w, h);
-    XMapRaised(xinfo.display, xinfo.hint_win);
-    Str_fmt f={0, 0, w, h, CENTER, true, false, 0,
-        get_text_color(NULL)};
-    draw_string(xinfo.hint_win, info, &f);
-}
-
 /* 坐標均相對於根窗口, 後四個參數是將要彈出的窗口的坐標和尺寸 */
 void set_popup_pos(const Widget *widget, bool near_pointer, int *px, int *py, int pw, int ph)
 {
@@ -311,13 +297,6 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
         mbstowcs(keyname, kn, n);
     }
     return ks;
-}
-
-void create_hint_win(void)
-{
-    xinfo.hint_win=create_widget_win(xinfo.root_win, 0, 0, 1, 1, 0, 0,
-        get_widget_color(NULL));
-    XSelectInput(xinfo.display, xinfo.hint_win, ExposureMask);
 }
 
 void create_cursors(void)

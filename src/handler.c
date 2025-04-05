@@ -142,17 +142,17 @@ static void exec_buttonbind_func(WM *wm, XEvent *e)
         widget->update_bg(widget);
     }
     
-    for(size_t i=0; i<ARRAY_NUM(BUTTONBIND); i++)
+    for(const Buttonbind *p=buttonbind; p->func; p++)
     {
-        if( is_func_click(id, &BUTTONBIND[i], e)
-            && (is_drag_func(BUTTONBIND[i].func) || get_valid_click(wm, CHOOSE, e, NULL)))
+        if( is_func_click(id, p, e)
+            && (is_drag_func(p->func) || get_valid_click(wm, CHOOSE, e, NULL)))
         {
             if(id == CLIENT_WIN)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
             if(c && c!=get_cur_focus_client())
                 focus_client(c);
-            if((!c || !tmc || c==tmc || id==CLIENT_ICON) && BUTTONBIND[i].func)
-                BUTTONBIND[i].func(wm, e, BUTTONBIND[i].arg);
+            if((!c || !tmc || c==tmc || id==CLIENT_ICON))
+                p->func(wm, e, p->arg);
         }
     }
 }
@@ -501,11 +501,9 @@ static void handle_key_press(WM *wm, XEvent *e)
         int n;
         KeySym *ks=XGetKeyboardMapping(xinfo.display, e->xkey.keycode, 1, &n);
 
-        for(size_t i=0; i<ARRAY_NUM(KEYBIND); i++)
-            if( *ks == KEYBIND[i].keysym
-                && is_equal_modifier_mask(KEYBIND[i].modifier, e->xkey.state)
-                && KEYBIND[i].func)
-                KEYBIND[i].func(wm, e, KEYBIND[i].arg);
+        for(const Keybind *p=keybind; p->func; p++)
+            if(*ks == p->keysym && is_equal_modifier_mask(p->modifier, e->xkey.state))
+                p->func(wm, e, p->arg);
         XFree(ks);
     }
 }
@@ -661,7 +659,6 @@ static void update_ui(WM *wm)
             menu_update_bg(WIDGET(frame_get_menu(c->frame)));
     entry_update_bg(WIDGET(cmd_entry));
     entry_update_bg(WIDGET(color_entry));
-    update_win_bg(xinfo.hint_win, get_widget_color(NULL), None);
     update_win_bg(xinfo.root_win, get_root_color(), None);
     update_clients_bg();
 }

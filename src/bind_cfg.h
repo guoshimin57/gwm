@@ -69,67 +69,67 @@
     {ShiftMask|ControlMask, key, attach_to_all_desktops,  {.desktop_n=n}}
 
 /* 功能：設置按鍵功能綁定。 */
-#define KEYBIND (Keybind []) \
-{                                                                                   \
-/*  功能轉換鍵掩碼  鍵符號        要綁定的函數              函數的參數 */           \
-    {0,             XK_F1,        exec,                    SH_CMD(HELP)},           \
-    {0, XF86XK_MonBrightnessDown, exec,                    SH_CMD(LIGHT_DOWN)},     \
-    {0, XF86XK_MonBrightnessUp,   exec,                    SH_CMD(LIGHT_UP)},       \
-    {CMD_KEY,       XK_f,         exec,                    SH_CMD(FILE_MANAGER)},   \
-    {CMD_KEY,       XK_g,         exec,                    SH_CMD(GAME)},           \
-    {CMD_KEY,       XK_q,         exec,                    SH_CMD("qq")},           \
-    {CMD_KEY,       XK_t,         exec,                    SH_CMD(TERMINAL)},       \
-    {CMD_KEY,       XK_w,         exec,                    SH_CMD(BROWSER)},        \
-    {CMD_KEY,       XK_F1,        exec,                    SH_CMD(PLAY_START)},     \
-    {CMD_KEY,       XK_F2,        exec,                    SH_CMD(PLAY_TOGGLE)},    \
-    {CMD_KEY,       XK_F3,        exec,                    SH_CMD(PLAY_QUIT)},      \
-    {SYS_KEY,       XK_F1,        exec,                    SH_CMD(VOLUME_DOWN)},    \
-    {SYS_KEY,       XK_F2,        exec,                    SH_CMD(VOLUME_UP)},      \
-    {SYS_KEY,       XK_F3,        exec,                    SH_CMD(VOLUME_MAX)},     \
-    {SYS_KEY,       XK_F4,        exec,                    SH_CMD(VOLUME_TOGGLE)},  \
-    {SYS_KEY,       XK_l,         exec,                    SH_CMD(LOGOUT)},         \
-    {SYS_KEY,       XK_p,         exec,                    SH_CMD("poweroff")},     \
-    {SYS_KEY,       XK_r,         exec,                    SH_CMD("reboot")},       \
-    {WM_KEY,        XK_k,         key_move_up,             {0}},                    \
-    {WM_KEY,        XK_j,         key_move_down,           {0}},                    \
-    {WM_KEY,        XK_h,         key_move_left,           {0}},                    \
-    {WM_KEY,        XK_l,         key_move_right,          {0}},                    \
-    {WM_KEY,        XK_Up,        key_resize_up2up,        {0}},                    \
-    {WM_SKEY,       XK_Up,        key_resize_up2down,      {0}},                    \
-    {WM_KEY,        XK_Down,      key_resize_down2down,    {0}},                    \
-    {WM_SKEY,       XK_Down,      key_resize_down2up,      {0}},                    \
-    {WM_KEY,        XK_Left,      key_resize_left2left,    {0}},                    \
-    {WM_SKEY,       XK_Left,      key_resize_left2right,   {0}},                    \
-    {WM_KEY,        XK_Right,     key_resize_right2right,  {0}},                    \
-    {WM_SKEY,       XK_Right,     key_resize_right2left,   {0}},                    \
-    {WM_KEY,        XK_F1,        change_to_main,          {0}},                    \
-    {WM_KEY,        XK_F2,        change_to_second,        {0}},                    \
-    {WM_KEY,        XK_F3,        change_to_fixed,         {0}},                    \
-    {WM_KEY,        XK_F4,        change_to_float,         {0}},                    \
-    {WM_KEY,        XK_Return,    choose_client,           {0}},                    \
-    {WM_KEY,        XK_Tab,       next_client,             {0}},                    \
-    {WM_SKEY,       XK_Tab,       prev_client,             {0}},                    \
-    {WM_KEY,        XK_c,         close_client,            {0}},                    \
-    {WM_KEY,        XK_s,         change_to_stack,         {0}},                    \
-    {WM_KEY,        XK_t,         change_to_tile,          {0}},                    \
-    {WM_KEY,        XK_i,         increase_main_n,         {0}},                    \
-    {WM_SKEY,       XK_i,         decrease_main_n,         {0}},                    \
-    {WM_KEY,        XK_m,         key_increase_main_area,  {0}},                    \
-    {WM_SKEY,       XK_m,         key_decrease_main_area,  {0}},                    \
-    {WM_KEY,        XK_x,         key_increase_fixed_area, {0}},                    \
-    {WM_SKEY,       XK_x,         key_decrease_fixed_area, {0}},                    \
-    {WM_KEY,        XK_Page_Down, next_desktop,            {0}},                    \
-    {WM_KEY,        XK_Page_Up,   prev_desktop,            {0}},                    \
-    {0,             XK_Print,     print_screen,            {0}},                    \
-    {WM_KEY,        XK_Print,     print_win,               {0}},                    \
-    {WM_KEY,        XK_r,         run_cmd,                 {0}},                    \
-    {WM_KEY,        XK_Delete,    quit_wm,                 {0}},                    \
-    DESKTOP_KEYBIND(XK_0, ~0),                                                      \
-    DESKTOP_KEYBIND(XK_1, 0), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */   \
-    DESKTOP_KEYBIND(XK_2, 1),                                                       \
-    DESKTOP_KEYBIND(XK_3, 2),                                                       \
-    {0}                                                                             \
-}
+static const Keybind keybind[] =
+{
+/*  功能轉換鍵掩碼  鍵符號        要綁定的函數              函數的參數 */         
+    {0,             XK_F1,        exec,                    SH_CMD(HELP)},         
+    {0, XF86XK_MonBrightnessDown, exec,                    SH_CMD(LIGHT_DOWN)},   
+    {0, XF86XK_MonBrightnessUp,   exec,                    SH_CMD(LIGHT_UP)},     
+    {CMD_KEY,       XK_f,         exec,                    SH_CMD(FILE_MANAGER)}, 
+    {CMD_KEY,       XK_g,         exec,                    SH_CMD(GAME)},         
+    {CMD_KEY,       XK_q,         exec,                    SH_CMD("qq")},         
+    {CMD_KEY,       XK_t,         exec,                    SH_CMD(TERMINAL)},     
+    {CMD_KEY,       XK_w,         exec,                    SH_CMD(BROWSER)},      
+    {CMD_KEY,       XK_F1,        exec,                    SH_CMD(PLAY_START)},   
+    {CMD_KEY,       XK_F2,        exec,                    SH_CMD(PLAY_TOGGLE)},  
+    {CMD_KEY,       XK_F3,        exec,                    SH_CMD(PLAY_QUIT)},    
+    {SYS_KEY,       XK_F1,        exec,                    SH_CMD(VOLUME_DOWN)},  
+    {SYS_KEY,       XK_F2,        exec,                    SH_CMD(VOLUME_UP)},    
+    {SYS_KEY,       XK_F3,        exec,                    SH_CMD(VOLUME_MAX)},   
+    {SYS_KEY,       XK_F4,        exec,                    SH_CMD(VOLUME_TOGGLE)},
+    {SYS_KEY,       XK_l,         exec,                    SH_CMD(LOGOUT)},       
+    {SYS_KEY,       XK_p,         exec,                    SH_CMD("poweroff")},   
+    {SYS_KEY,       XK_r,         exec,                    SH_CMD("reboot")},     
+    {WM_KEY,        XK_k,         key_move_up,             {0}},                  
+    {WM_KEY,        XK_j,         key_move_down,           {0}},                  
+    {WM_KEY,        XK_h,         key_move_left,           {0}},                  
+    {WM_KEY,        XK_l,         key_move_right,          {0}},                  
+    {WM_KEY,        XK_Up,        key_resize_up2up,        {0}},                  
+    {WM_SKEY,       XK_Up,        key_resize_up2down,      {0}},                  
+    {WM_KEY,        XK_Down,      key_resize_down2down,    {0}},                  
+    {WM_SKEY,       XK_Down,      key_resize_down2up,      {0}},                  
+    {WM_KEY,        XK_Left,      key_resize_left2left,    {0}},                  
+    {WM_SKEY,       XK_Left,      key_resize_left2right,   {0}},                  
+    {WM_KEY,        XK_Right,     key_resize_right2right,  {0}},                  
+    {WM_SKEY,       XK_Right,     key_resize_right2left,   {0}},                  
+    {WM_KEY,        XK_F1,        change_to_main,          {0}},                  
+    {WM_KEY,        XK_F2,        change_to_second,        {0}},                  
+    {WM_KEY,        XK_F3,        change_to_fixed,         {0}},                  
+    {WM_KEY,        XK_F4,        change_to_float,         {0}},                  
+    {WM_KEY,        XK_Return,    choose_client,           {0}},                  
+    {WM_KEY,        XK_Tab,       next_client,             {0}},                  
+    {WM_SKEY,       XK_Tab,       prev_client,             {0}},                  
+    {WM_KEY,        XK_c,         close_client,            {0}},                  
+    {WM_KEY,        XK_s,         change_to_stack,         {0}},                  
+    {WM_KEY,        XK_t,         change_to_tile,          {0}},                  
+    {WM_KEY,        XK_i,         increase_main_n,         {0}},                  
+    {WM_SKEY,       XK_i,         decrease_main_n,         {0}},                  
+    {WM_KEY,        XK_m,         key_increase_main_area,  {0}},                  
+    {WM_SKEY,       XK_m,         key_decrease_main_area,  {0}},                  
+    {WM_KEY,        XK_x,         key_increase_fixed_area, {0}},                  
+    {WM_SKEY,       XK_x,         key_decrease_fixed_area, {0}},                  
+    {WM_KEY,        XK_Page_Down, next_desktop,            {0}},                  
+    {WM_KEY,        XK_Page_Up,   prev_desktop,            {0}},                  
+    {0,             XK_Print,     print_screen,            {0}},                  
+    {WM_KEY,        XK_Print,     print_win,               {0}},                  
+    {WM_KEY,        XK_r,         run_cmd,                 {0}},                  
+    {WM_KEY,        XK_Delete,    quit_wm,                 {0}},                  
+    DESKTOP_KEYBIND(XK_0, ~0),                                                    
+    DESKTOP_KEYBIND(XK_1, 0), /* 注：我的鍵盤按super+左shift+1鍵時產生多鍵衝突 */ 
+    DESKTOP_KEYBIND(XK_2, 1),                                                     
+    DESKTOP_KEYBIND(XK_3, 2),                                                     
+    {0}                                                                           
+};
 
 /* 功能：設置與虛擬桌面相關的定位器按鈕功能綁定。
  * 說明：可以用xev(1)命令來檢測定位器按鈕。
@@ -146,75 +146,75 @@
     {DESKTOPN_BUTTON(n),             Mod1Mask,    Button3, all_move_to_desktop,    {0}}
 
 /* 功能：設置定位器按鈕功能綁定。*/
-#define BUTTONBIND (Buttonbind [])  \
-{                                                                                          \
-    /* 構件標識        功能轉換鍵 定位器按鈕 要綁定的函數          函數的參數 */           \
-    {DESKTOP_BUTTON,       WM_KEY, Button2,  close_all_clients,    {0}},                   \
-    {CLIENT_WIN,           WM_KEY, Button1,  pointer_move,         {0}},                   \
-    {CLIENT_WIN,          WM_SKEY, Button1,  pointer_resize,       {0}},                   \
-    {CLIENT_WIN,           WM_KEY, Button2,  pointer_change_place, {0}},                   \
-    {CLIENT_WIN,           WM_KEY, Button3,  pointer_swap_clients, {0}},                   \
-    {CLIENT_WIN,                0, Button3,  choose_client,        {0}},                   \
-    {CLIENT_ICON,               0, Button2,  pointer_change_place, {0}},                   \
-    {CLIENT_ICON,          WM_KEY, Button2,  close_client,         {0}},                   \
-    {CLIENT_ICON,               0, Button3,  pointer_swap_clients, {0}},                   \
-    {STACK_BUTTON,              0, Button1,  change_to_stack,      {0}},                   \
-    {TILE_BUTTON,               0, Button1,  change_to_tile,       {0}},                   \
-    {DESKTOP_BUTTON,            0, Button1,  show_desktop,         {0}},                   \
-    {ACT_CENTER_ITEM,           0, Button1,  open_act_center,      {0}},                   \
-    {HELP_BUTTON,               0, Button1,  exec,                 SH_CMD(HELP)},          \
-    {FILE_BUTTON,               0, Button1,  exec,                 SH_CMD(FILE_MANAGER)},  \
-    {TERM_BUTTON,               0, Button1,  exec,                 SH_CMD(TERMINAL)},      \
-    {BROWSER_BUTTON,            0, Button1,  exec,                 SH_CMD(BROWSER)},       \
-    {GAME_BUTTON,               0, Button1,  exec,                 SH_CMD(GAME)},          \
-    {PLAY_START_BUTTON,         0, Button1,  exec,                 SH_CMD(PLAY_START)},    \
-    {PLAY_TOGGLE_BUTTON,        0, Button1,  exec,                 SH_CMD(PLAY_TOGGLE)},   \
-    {PLAY_QUIT_BUTTON,          0, Button1,  exec,                 SH_CMD(PLAY_QUIT)},     \
-    {VOLUME_DOWN_BUTTON,        0, Button1,  exec,                 SH_CMD(VOLUME_DOWN)},   \
-    {VOLUME_UP_BUTTON,          0, Button1,  exec,                 SH_CMD(VOLUME_UP)},     \
-    {VOLUME_MAX_BUTTON,         0, Button1,  exec,                 SH_CMD(VOLUME_MAX)},    \
-    {VOLUME_TOGGLE_BUTTON,      0, Button1,  exec,                 SH_CMD(VOLUME_TOGGLE)}, \
-    {N_MAIN_UP_BUTTON,          0, Button1,  increase_main_n,      {0}},                   \
-    {N_MAIN_DOWN_BUTTON,        0, Button1,  decrease_main_n,      {0}},                   \
-    {CLOSE_ALL_CLIENTS_BUTTON,  0, Button1,  close_all_clients,    {0}},                   \
-    {PRINT_WIN_BUTTON,          0, Button1,  print_win,            {0}},                   \
-    {PRINT_SCREEN_BUTTON,       0, Button1,  print_screen,         {0}},                   \
-    {FOCUS_MODE_BUTTON,         0, Button1,  toggle_focus_mode,    {0}},                   \
-    {COMPOSITOR_BUTTON,         0, Button1,  toggle_compositor,    {0}},                   \
-    {WALLPAPER_BUTTON,          0, Button1,  switch_wallpaper,     {0}},                   \
-    {COLOR_BUTTON,              0, Button1,  set_color,            {0}},                   \
-    {QUIT_WM_BUTTON,            0, Button1,  quit_wm,              {0}},                   \
-    {LOGOUT_BUTTON,             0, Button1,  exec,                 SH_CMD(LOGOUT)},        \
-    {REBOOT_BUTTON,             0, Button1,  exec,                 SH_CMD("reboot")},      \
-    {POWEROFF_BUTTON,           0, Button1,  exec,                 SH_CMD("poweroff")},    \
-    {RUN_BUTTON,                0, Button1,  run_cmd,              {0}},                   \
-    {TITLE_LOGO,                0, Button1,  open_client_menu,     {0}},                   \
-    {VERT_MAX_BUTTON,           0, Button1,  vert_maximize,        {0}},                   \
-    {HORZ_MAX_BUTTON,           0, Button1,  horz_maximize,        {0}},                   \
-    {TOP_MAX_BUTTON,            0, Button1,  top_maximize,         {0}},                   \
-    {BOTTOM_MAX_BUTTON,         0, Button1,  bottom_maximize,      {0}},                   \
-    {LEFT_MAX_BUTTON,           0, Button1,  left_maximize,        {0}},                   \
-    {RIGHT_MAX_BUTTON,          0, Button1,  right_maximize,       {0}},                   \
-    {FULL_MAX_BUTTON,           0, Button1,  full_maximize,        {0}},                   \
-    {ROOT_WIN,                  0, Button1,  adjust_layout_ratio,  {0}},                   \
-    {MAIN_BUTTON,               0, Button1,  change_to_main,       {0}},                   \
-    {SECOND_BUTTON,             0, Button1,  change_to_second,     {0}},                   \
-    {FIXED_BUTTON,              0, Button1,  change_to_fixed,      {0}},                   \
-    {FLOAT_BUTTON,              0, Button1,  change_to_float,      {0}},                   \
-    {ICON_BUTTON,               0, Button1,  minimize,             {0}},                   \
-    {MAX_BUTTON,                0, Button1,  max_restore,          {0}},                   \
-    {SHADE_BUTTON,              0, Button1,  toggle_shade_client,  {0}},                   \
-    {CLOSE_BUTTON,              0, Button1,  close_client,         {0}},                   \
-    {TITLEBAR,                  0, Button1,  pointer_move,         {0}},                   \
-    {TITLEBAR,                  0, Button2,  pointer_change_place, {0}},                   \
-    {TITLEBAR,                  0, Button3,  pointer_swap_clients, {0}},                   \
-    {CLIENT_WIN,                0, Button1,  choose_client,        {0}},                   \
-    {CLIENT_FRAME,              0, Button1,  pointer_resize,       {0}},                   \
-    {CLIENT_ICON,               0, Button1,  deiconify,            {0}},                   \
-    DESKTOP_BUTTONBIND(0),                                                                 \
-    DESKTOP_BUTTONBIND(1),                                                                 \
-    DESKTOP_BUTTONBIND(2),                                                                 \
-    {0}                                                                                    \
-}
+static const Buttonbind buttonbind[] =
+{                                                                                         
+    /* 構件標識        功能轉換鍵 定位器按鈕 要綁定的函數          函數的參數 */          
+    {DESKTOP_BUTTON,       WM_KEY, Button2,  close_all_clients,    {0}},                  
+    {CLIENT_WIN,           WM_KEY, Button1,  pointer_move,         {0}},                  
+    {CLIENT_WIN,          WM_SKEY, Button1,  pointer_resize,       {0}},                  
+    {CLIENT_WIN,           WM_KEY, Button2,  pointer_change_place, {0}},                  
+    {CLIENT_WIN,           WM_KEY, Button3,  pointer_swap_clients, {0}},                  
+    {CLIENT_WIN,                0, Button3,  choose_client,        {0}},                  
+    {CLIENT_ICON,               0, Button2,  pointer_change_place, {0}},                  
+    {CLIENT_ICON,          WM_KEY, Button2,  close_client,         {0}},                  
+    {CLIENT_ICON,               0, Button3,  pointer_swap_clients, {0}},                  
+    {STACK_BUTTON,              0, Button1,  change_to_stack,      {0}},                  
+    {TILE_BUTTON,               0, Button1,  change_to_tile,       {0}},                  
+    {DESKTOP_BUTTON,            0, Button1,  show_desktop,         {0}},                  
+    {ACT_CENTER_ITEM,           0, Button1,  open_act_center,      {0}},                  
+    {HELP_BUTTON,               0, Button1,  exec,                 SH_CMD(HELP)},         
+    {FILE_BUTTON,               0, Button1,  exec,                 SH_CMD(FILE_MANAGER)}, 
+    {TERM_BUTTON,               0, Button1,  exec,                 SH_CMD(TERMINAL)},     
+    {BROWSER_BUTTON,            0, Button1,  exec,                 SH_CMD(BROWSER)},      
+    {GAME_BUTTON,               0, Button1,  exec,                 SH_CMD(GAME)},         
+    {PLAY_START_BUTTON,         0, Button1,  exec,                 SH_CMD(PLAY_START)},   
+    {PLAY_TOGGLE_BUTTON,        0, Button1,  exec,                 SH_CMD(PLAY_TOGGLE)},  
+    {PLAY_QUIT_BUTTON,          0, Button1,  exec,                 SH_CMD(PLAY_QUIT)},    
+    {VOLUME_DOWN_BUTTON,        0, Button1,  exec,                 SH_CMD(VOLUME_DOWN)},  
+    {VOLUME_UP_BUTTON,          0, Button1,  exec,                 SH_CMD(VOLUME_UP)},    
+    {VOLUME_MAX_BUTTON,         0, Button1,  exec,                 SH_CMD(VOLUME_MAX)},   
+    {VOLUME_TOGGLE_BUTTON,      0, Button1,  exec,                 SH_CMD(VOLUME_TOGGLE)},
+    {N_MAIN_UP_BUTTON,          0, Button1,  increase_main_n,      {0}},                  
+    {N_MAIN_DOWN_BUTTON,        0, Button1,  decrease_main_n,      {0}},                  
+    {CLOSE_ALL_CLIENTS_BUTTON,  0, Button1,  close_all_clients,    {0}},                  
+    {PRINT_WIN_BUTTON,          0, Button1,  print_win,            {0}},                  
+    {PRINT_SCREEN_BUTTON,       0, Button1,  print_screen,         {0}},                  
+    {FOCUS_MODE_BUTTON,         0, Button1,  toggle_focus_mode,    {0}},                  
+    {COMPOSITOR_BUTTON,         0, Button1,  toggle_compositor,    {0}},                  
+    {WALLPAPER_BUTTON,          0, Button1,  switch_wallpaper,     {0}},                  
+    {COLOR_BUTTON,              0, Button1,  set_color,            {0}},                  
+    {QUIT_WM_BUTTON,            0, Button1,  quit_wm,              {0}},                  
+    {LOGOUT_BUTTON,             0, Button1,  exec,                 SH_CMD(LOGOUT)},       
+    {REBOOT_BUTTON,             0, Button1,  exec,                 SH_CMD("reboot")},     
+    {POWEROFF_BUTTON,           0, Button1,  exec,                 SH_CMD("poweroff")},   
+    {RUN_BUTTON,                0, Button1,  run_cmd,              {0}},                  
+    {TITLE_LOGO,                0, Button1,  open_client_menu,     {0}},                  
+    {VERT_MAX_BUTTON,           0, Button1,  vert_maximize,        {0}},                  
+    {HORZ_MAX_BUTTON,           0, Button1,  horz_maximize,        {0}},                  
+    {TOP_MAX_BUTTON,            0, Button1,  top_maximize,         {0}},                  
+    {BOTTOM_MAX_BUTTON,         0, Button1,  bottom_maximize,      {0}},                  
+    {LEFT_MAX_BUTTON,           0, Button1,  left_maximize,        {0}},                  
+    {RIGHT_MAX_BUTTON,          0, Button1,  right_maximize,       {0}},                  
+    {FULL_MAX_BUTTON,           0, Button1,  full_maximize,        {0}},                  
+    {ROOT_WIN,                  0, Button1,  adjust_layout_ratio,  {0}},                  
+    {MAIN_BUTTON,               0, Button1,  change_to_main,       {0}},                  
+    {SECOND_BUTTON,             0, Button1,  change_to_second,     {0}},                  
+    {FIXED_BUTTON,              0, Button1,  change_to_fixed,      {0}},                  
+    {FLOAT_BUTTON,              0, Button1,  change_to_float,      {0}},                  
+    {ICON_BUTTON,               0, Button1,  minimize,             {0}},                  
+    {MAX_BUTTON,                0, Button1,  max_restore,          {0}},                  
+    {SHADE_BUTTON,              0, Button1,  toggle_shade_client,  {0}},                  
+    {CLOSE_BUTTON,              0, Button1,  close_client,         {0}},                  
+    {TITLEBAR,                  0, Button1,  pointer_move,         {0}},                  
+    {TITLEBAR,                  0, Button2,  pointer_change_place, {0}},                  
+    {TITLEBAR,                  0, Button3,  pointer_swap_clients, {0}},                  
+    {CLIENT_WIN,                0, Button1,  choose_client,        {0}},                  
+    {CLIENT_FRAME,              0, Button1,  pointer_resize,       {0}},                  
+    {CLIENT_ICON,               0, Button1,  deiconify,            {0}},                  
+    DESKTOP_BUTTONBIND(0),                                                                
+    DESKTOP_BUTTONBIND(1),                                                                
+    DESKTOP_BUTTONBIND(2),                                                                
+    {0}                                                                                   
+};
 
 #endif

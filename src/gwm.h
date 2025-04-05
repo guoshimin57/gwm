@@ -60,7 +60,6 @@ typedef struct // 與X相關的信息
 	XModifierKeymap *mod_map; // 功能轉換鍵映射
     XIM xim; // 輸入法
     Window root_win; // 根窗口
-    Window hint_win; // 提示窗口
 } Xinfo;
 
 typedef enum // 窗口的位置類型，屏幕分爲多層，普通層還分爲多個區域

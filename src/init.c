@@ -66,14 +66,13 @@ void init_wm(WM *wm)
     set_workarea(wm);
     set_ewmh(wm);
     init_layout();
-    reg_bind(KEYBIND, BUTTONBIND);
+    reg_bind(keybind, buttonbind);
     Rect r=compute_taskbar_rect();
     wm->taskbar=taskbar_new(NULL, r.x, r.y, r.w, r.h);
     if(cfg->show_taskbar)
         widget_show(WIDGET(wm->taskbar));
     cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
     color_entry=color_entry_new(COLOR_ENTRY);
-    create_hint_win();
     init_client_list();
     grab_keys();
     exec_autostart();

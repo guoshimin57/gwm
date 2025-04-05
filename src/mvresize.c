@@ -11,12 +11,13 @@
 
 #include "clientop.h"
 #include "icccm.h"
-#include "mvresize.h"
+#include "sizehintwin.h"
 #include "focus.h"
+#include "mvresize.h"
 
 static void key_move_resize_client(WM *wm, XEvent *e, Direction dir);
 static bool fix_first_move_resize(Client *c, Delta_rect *d);
-static void hide_hint_win_for_key_release(WM *wm, XEvent *e);
+static void wait_key_release(WM *wm, XEvent *e);
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
 static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize);
 static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act);
@@ -26,7 +27,6 @@ static bool is_prefer_move(Client *c, Delta_rect *d);
 static bool fix_delta_rect(Client *c, Delta_rect *d);
 static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
 static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh);
-static void update_hint_win_for_move_resize(Client *c);
 
 void key_move_up(WM *wm, XEvent *e, Arg arg)
 {
@@ -123,8 +123,10 @@ static void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
     if(get_move_resize_delta_rect(c, &d, is_move))
     {
         move_resize_client(c, &d);
-        update_hint_win_for_move_resize(c);
-        hide_hint_win_for_key_release(wm, e);
+        Size_hint_win *shw=size_hint_win_new(WIDGET(c));
+        widget_show(WIDGET(shw));
+        wait_key_release(wm, e);
+        widget_del(WIDGET(shw));
         update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
     }
 }
@@ -139,7 +141,7 @@ static bool fix_first_move_resize(Client *c, Delta_rect *d)
     return d->dw || d->dh;
 }
 
-static void hide_hint_win_for_key_release(WM *wm, XEvent *e)
+static void wait_key_release(WM *wm, XEvent *e)
 {
     while(1)
     {
@@ -147,10 +149,7 @@ static void hide_hint_win_for_key_release(WM *wm, XEvent *e)
         XMaskEvent(xinfo.display, ROOT_EVENT_MASK|KeyReleaseMask, &ev);
         if( ev.type==KeyRelease && ev.xkey.state==e->xkey.state
             && ev.xkey.keycode==e->xkey.keycode)
-        {
-            XUnmapWindow(xinfo.display, xinfo.hint_win);
             break;
-        }
         else
             wm->event_handler(wm, &ev);
     }
@@ -193,6 +192,8 @@ static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
     XEvent ev;
     if(act==MOVE || is_resizable(&hint))
     {
+        Size_hint_win *shw=size_hint_win_new(WIDGET(c));
+        widget_show(WIDGET(shw));
         do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
         {
             XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
@@ -203,13 +204,14 @@ static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
                 /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
                 m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
                 do_valid_pointer_move_resize(c, &m, act);
+                size_hint_win_update(shw);
             }
             else
                 wm->event_handler(wm, &ev);
         }while(!is_match_button_release(e, &ev));
+        widget_del(WIDGET(shw));
     }
     XUngrabPointer(xinfo.display, CurrentTime);
-    XUnmapWindow(xinfo.display, xinfo.hint_win);
     update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
@@ -220,7 +222,6 @@ static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act ac
         return;
 
     move_resize_client(c, &d);
-    update_hint_win_for_move_resize(c);
     if(act != MOVE)
     {
         if(d.dw) // dx爲0表示定位器從窗口右邊調整尺寸，非0則表示左邊調整
@@ -309,17 +310,6 @@ static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh)
     }
     else
         *dh=0;
-}
-
-static void update_hint_win_for_move_resize(Client *c)
-{
-    char str[BUFSIZ];
-    XSizeHints hint=get_size_hint(WIDGET_WIN(c));
-    long col=get_win_col(WIDGET_W(c), &hint),
-         row=get_win_row(WIDGET_H(c), &hint);
-
-    sprintf(str, "(%d, %d) %ldx%ld", WIDGET_X(c), WIDGET_Y(c), col, row);
-    update_hint_win_for_info(str);
 }
 
 Pointer_act get_resize_act(Client *c, const Move_info *m)
