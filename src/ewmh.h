@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <X11/Xlib.h>
 #include <X11/Xproto.h>
+#include "gwm.h"
 
 typedef enum // 與EWMH規範標識符名稱表(ewmh_atom_names)相應的ID
 {
@@ -115,8 +116,8 @@ void set_net_desktop_names(const char **names, int n);
 void set_net_active_window(Window act_win);
 Window get_net_active_window(void);
 void set_net_workarea(int x, int y, int w, int h, int ndesktop);
-void get_net_workarea(int *x, int *y, int *w, int *h);
-void set_net_supporting_wm_check(Window check_win, const char *wm_name);
+Rect get_net_workarea(void);
+void set_net_supporting_wm_check(const char *wm_name);
 void set_net_showing_desktop(bool show);
 void set_net_wm_allowed_actions(Window win);
 Net_wm_win_type get_net_wm_win_type(Window win);

@@ -153,7 +153,7 @@ static Window get_top_win(const Client *c)
     return top_wins[is_normal_layer(c->place) ? NORMAL_LAYER : c->place];
 }
 
-void create_refer_top_wins(void)
+void create_layer_wins(void)
 {
     for(int i=LAYER_N-1; i>=0; i--)
         top_wins[i]=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);

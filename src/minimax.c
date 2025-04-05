@@ -14,30 +14,30 @@
 #include "focus.h"
 #include "clientop.h"
 
-static void maximize(WM *wm, Max_way max_way);
-static void maximize_client(WM *wm, Client *c, Max_way max_way);
-static void set_max_rect(WM *wm, Client *c, Max_way max_way);
-static Rect get_vert_max_rect(const WM *wm, const Client *c);
-static Rect get_horz_max_rect(const WM *wm, const Client *c);
-static Rect get_top_max_rect(const WM *wm);
-static Rect get_bottom_max_rect(const WM *wm);
-static Rect get_left_max_rect(const WM *wm);
-static Rect get_right_max_rect(const WM *wm);
+static void maximize(Max_way max_way);
+static void maximize_client(Client *c, Max_way max_way);
+static void set_max_rect(Client *c, Max_way max_way);
+static Rect get_vert_max_rect(const Rect *workarea, const Client *c);
+static Rect get_horz_max_rect(const Rect *workarea, const Client *c);
+static Rect get_top_max_rect(const Rect *workarea);
+static Rect get_bottom_max_rect(const Rect *workarea);
+static Rect get_left_max_rect(const Rect *workarea);
+static Rect get_right_max_rect(const Rect *workarea);
 static void set_fullscreen(Client *c);
 
-void minimize(WM *wm, XEvent *e, Arg arg)
+void minimize(XEvent *e, Arg arg)
 {
-    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    UNUSED(e), UNUSED(arg);
     iconify_client(get_cur_focus_client()); 
 }
 
-void deiconify(WM *wm, XEvent *e, Arg arg)
+void deiconify(XEvent *e, Arg arg)
 {
-    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    UNUSED(e), UNUSED(arg);
     deiconify_client(get_cur_focus_client()); 
 }
 
-void max_restore(WM *wm, XEvent *e, Arg arg)
+void max_restore(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=get_cur_focus_client();
@@ -45,61 +45,61 @@ void max_restore(WM *wm, XEvent *e, Arg arg)
     if(is_win_state_max(c->win_state))
         restore_client(c);
     else
-        maximize_client(wm, c, FULL_MAX);
+        maximize_client(c, FULL_MAX);
 }
 
-void vert_maximize(WM *wm, XEvent *e, Arg arg)
+void vert_maximize(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize(wm, VERT_MAX);
+    maximize(VERT_MAX);
 }
 
-void horz_maximize(WM *wm, XEvent *e, Arg arg)
+void horz_maximize(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize(wm, HORZ_MAX);
+    maximize(HORZ_MAX);
 }
 
-void top_maximize(WM *wm, XEvent *e, Arg arg)
+void top_maximize(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize(wm, TOP_MAX);
+    maximize(TOP_MAX);
 }
 
-void bottom_maximize(WM *wm, XEvent *e, Arg arg)
+void bottom_maximize(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize(wm, BOTTOM_MAX);
+    maximize(BOTTOM_MAX);
 }
 
-void left_maximize(WM *wm, XEvent *e, Arg arg)
+void left_maximize(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize(wm, LEFT_MAX);
+    maximize(LEFT_MAX);
 }
 
-void right_maximize(WM *wm, XEvent *e, Arg arg)
+void right_maximize(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize(wm, RIGHT_MAX);
+    maximize(RIGHT_MAX);
 }
 
-void full_maximize(WM *wm, XEvent *e, Arg arg)
+void full_maximize(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize(wm, FULL_MAX);
+    maximize(FULL_MAX);
 }
 
-static void maximize(WM *wm, Max_way max_way)
+static void maximize(Max_way max_way)
 {
-    maximize_client(wm, get_cur_focus_client(), max_way);
+    maximize_client(get_cur_focus_client(), max_way);
 }
 
-static void maximize_client(WM *wm, Client *c, Max_way max_way)
+static void maximize_client(Client *c, Max_way max_way)
 {
     if(!is_win_state_max(c->win_state))
         save_place_info_of_client(c);
-    set_max_rect(wm, c, max_way);
+    set_max_rect(c, max_way);
     if(is_tiled_client(c))
         move_client(c, NULL, ABOVE_LAYER);
     move_resize_client(c, NULL);
@@ -116,105 +116,101 @@ static void maximize_client(WM *wm, Client *c, Max_way max_way)
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
-static void set_max_rect(WM *wm, Client *c, Max_way max_way)
+static void set_max_rect(Client *c, Max_way max_way)
 {
     int bw=WIDGET_BORDER_W(c->frame),
         w=WIDGET_W(c->frame)+2*bw, h=WIDGET_H(c->frame)+2*bw;
-    Rect r=wm->workarea;
+    Rect wr=get_net_workarea(), maxr=wr;
     switch(max_way)
     {
-        case VERT_MAX:   if(w != r.h) r=get_vert_max_rect(wm, c); break;
-        case HORZ_MAX:   if(h != r.w) r=get_horz_max_rect(wm, c); break;
-        case TOP_MAX:    r=get_top_max_rect(wm); break;
-        case BOTTOM_MAX: r=get_bottom_max_rect(wm); break;
-        case LEFT_MAX:   r=get_left_max_rect(wm); break;
-        case RIGHT_MAX:  r=get_right_max_rect(wm); break;
+        case VERT_MAX:   if(w != wr.h) maxr=get_vert_max_rect(&wr, c); break;
+        case HORZ_MAX:   if(h != wr.w) maxr=get_horz_max_rect(&wr, c); break;
+        case TOP_MAX:    maxr=get_top_max_rect(&wr); break;
+        case BOTTOM_MAX: maxr=get_bottom_max_rect(&wr); break;
+        case LEFT_MAX:   maxr=get_left_max_rect(&wr); break;
+        case RIGHT_MAX:  maxr=get_right_max_rect(&wr); break;
         case FULL_MAX:   break;
         default:         return;
     }
-    set_client_rect_by_outline(c, r.x, r.y, r.w, r.h);
+    set_client_rect_by_outline(c, maxr.x, maxr.y, maxr.w, maxr.h);
 }
 
-static Rect get_vert_max_rect(const WM *wm, const Client *c)
+static Rect get_vert_max_rect(const Rect *workarea, const Client *c)
 {
-    Rect r=widget_get_outline(WIDGET(c->frame)), w=wm->workarea;
-    return (Rect){r.x, w.y, r.w, w.h};
+    Rect r=widget_get_outline(WIDGET(c->frame));
+    return (Rect){r.x, workarea->y, r.w, workarea->h};
 }
 
-static Rect get_horz_max_rect(const WM *wm, const Client *c)
+static Rect get_horz_max_rect(const Rect *workarea, const Client *c)
 {
-    Rect r=widget_get_outline(WIDGET(c->frame)), w=wm->workarea;
-    return (Rect){w.x, r.y, w.w, r.h};
+    Rect r=widget_get_outline(WIDGET(c->frame));
+    return (Rect){workarea->x, r.y, workarea->w, r.h};
 }
 
-static Rect get_top_max_rect(const WM *wm)
+static Rect get_top_max_rect(const Rect *workarea)
 {
-    Rect w=wm->workarea;
-    return (Rect){w.x, w.y, w.w, w.h/2};
+    return (Rect){workarea->x, workarea->y, workarea->w, workarea->h/2};
 }
 
-static Rect get_bottom_max_rect(const WM *wm)
+static Rect get_bottom_max_rect(const Rect *workarea)
 {
-    Rect w=wm->workarea;
-    return (Rect){w.x, w.y+w.h/2, w.w, w.h/2};
+    return (Rect){workarea->x, workarea->y+workarea->h/2, workarea->w, workarea->h/2};
 }
 
-static Rect get_left_max_rect(const WM *wm)
+static Rect get_left_max_rect(const Rect *workarea)
 {
-    Rect w=wm->workarea;
-    return (Rect){w.x, w.y, w.w/2, w.h};
+    return (Rect){workarea->x, workarea->y, workarea->w/2, workarea->h};
 }
 
-static Rect get_right_max_rect(const WM *wm)
+static Rect get_right_max_rect(const Rect *workarea)
 {
-    Rect w=wm->workarea;
-    return (Rect){w.x+w.w/2, w.y, w.w/2, w.h};
+    return (Rect){workarea->x+workarea->w/2, workarea->y, workarea->w/2, workarea->h};
 }
 
-void change_net_wm_state_for_vmax(WM *wm, Client *c, long act)
+void change_net_wm_state_for_vmax(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, vmax))
-        maximize_client(wm, c, VERT_MAX);
+        maximize_client(c, VERT_MAX);
     else
         restore_client(c);
 }
 
-void change_net_wm_state_for_hmax(WM *wm, Client *c, long act)
+void change_net_wm_state_for_hmax(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, hmax))
-        maximize_client(wm, c, HORZ_MAX);
+        maximize_client(c, HORZ_MAX);
     else
         restore_client(c);
 }
 
-void change_net_wm_state_for_tmax(WM *wm, Client *c, long act)
+void change_net_wm_state_for_tmax(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, tmax))
-        maximize_client(wm, c, TOP_MAX);
+        maximize_client(c, TOP_MAX);
     else
         restore_client(c);
 }
 
-void change_net_wm_state_for_bmax(WM *wm, Client *c, long act)
+void change_net_wm_state_for_bmax(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, bmax))
-        maximize_client(wm, c, BOTTOM_MAX);
+        maximize_client(c, BOTTOM_MAX);
     else
         restore_client(c);
 }
 
-void change_net_wm_state_for_lmax(WM *wm, Client *c, long act)
+void change_net_wm_state_for_lmax(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, lmax))
-        maximize_client(wm, c, LEFT_MAX);
+        maximize_client(c, LEFT_MAX);
     else
         restore_client(c);
 }
 
-void change_net_wm_state_for_rmax(WM *wm, Client *c, long act)
+void change_net_wm_state_for_rmax(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, rmax))
-        maximize_client(wm, c, RIGHT_MAX);
+        maximize_client(c, RIGHT_MAX);
     else
         restore_client(c);
 }
@@ -245,9 +241,9 @@ static void set_fullscreen(Client *c)
     update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
-void show_desktop(WM *wm, XEvent *e, Arg arg)
+void show_desktop(XEvent *e, Arg arg)
 {
-    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    UNUSED(e), UNUSED(arg);
     static bool show=false;
 
     toggle_showing_desktop_mode(show=!show);

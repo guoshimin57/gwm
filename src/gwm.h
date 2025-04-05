@@ -97,18 +97,7 @@ struct rule_tag // 窗口管理器的規則
 };
 typedef struct rule_tag Rule;
 
-typedef struct _taskbar_tag Taskbar;
-typedef struct wm_tag WM;
-typedef void (*Event_handler)(WM*, XEvent *); // 事件處理器類型
-
-typedef struct wm_tag // 窗口管理器相關信息
-{
-    Taskbar *taskbar; // 任務欄
-    Rect workarea; // 工作區坐標和尺寸
-    Window wm_check_win; // WM檢測窗口
-    Strings *wallpapers, *cur_wallpaper; // 壁紙文件列表、当前壁纸文件
-    Event_handler event_handler; // 事件處理器
-} WM;
+typedef void (*Event_handler)(XEvent *); // 事件處理器類型
 
 enum direction_tag // 方向
 {
@@ -131,6 +120,7 @@ struct move_info_tag /* 定位器所點擊的窗口位置每次合理移動或�
 typedef struct move_info_tag Move_info;
 
 extern sig_atomic_t run_flag; // 程序運行標志
+extern Event_handler event_handler; // 事件處理器
 extern Xinfo xinfo;
 
 #endif

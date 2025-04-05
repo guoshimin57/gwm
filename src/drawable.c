@@ -169,40 +169,12 @@ bool get_geometry(Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigne
         bw ? (unsigned int *)bw : &bwt, depth ? depth : &dt);
 }
 
-Pixmap create_pixmap_from_file(Window win, const char *filename)
-{
-    int w, h;
-    unsigned int d;
-    Imlib_Image image=imlib_load_image(filename);
-
-    if(!image || !get_geometry(win, NULL, NULL, &w, &h, NULL, &d))
-        return None;
-
-    Pixmap bg=XCreatePixmap(xinfo.display, win, w, h, d);
-    set_visual_for_imlib(win);
-    imlib_context_set_image(image);
-    imlib_context_set_drawable(bg);   
-    imlib_render_image_on_drawable_at_size(0, 0, w, h);
-    imlib_free_image();
-    return bg;
-}
-
 void set_visual_for_imlib(Drawable d)
 {
     if(d == xinfo.root_win)
         imlib_context_set_visual(DefaultVisual(xinfo.display, xinfo.screen));
     else
         imlib_context_set_visual(xinfo.visual);
-}
-
-void init_root_win_background(void)
-{
-    const char *name=cfg->wallpaper_filename;
-
-    Pixmap pixmap=create_pixmap_from_file(xinfo.root_win, name ? name : "");
-    update_win_bg(xinfo.root_win, get_root_color(), pixmap);
-    if(pixmap && !have_compositor())
-        XFreePixmap(xinfo.display, pixmap);
 }
 
 Window *query_win_list(unsigned int *n)

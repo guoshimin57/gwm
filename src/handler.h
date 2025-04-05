@@ -14,7 +14,7 @@
 
 #include "gwm.h"
 
-void reg_event_handlers(WM *wm);
-void handle_events(WM *wm);
+void reg_event_handlers(void);
+void handle_events(void);
 
 #endif

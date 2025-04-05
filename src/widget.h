@@ -115,8 +115,7 @@ typedef union // 要綁定的函數的參數類型
     unsigned int desktop_n; // 虛擬桌面編號，從0開始編號
 } Arg;
 
-typedef struct wm_tag WM;
-typedef void (*Func)(WM *, XEvent *, Arg); // 要綁定的函數類型
+typedef void (*Func)(XEvent *, Arg); // 要綁定的函數類型
 
 typedef struct // 鍵盤按鍵功能綁定
 {

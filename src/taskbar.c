@@ -31,6 +31,7 @@ struct _taskbar_tag // 任務欄
     Statusbar *statusbar;
 };
 
+static Rect compute_taskbar_rect(void);
 static void taskbar_ctor(Taskbar *taskbar, Widget *parent, int x, int y, int w, int h);
 static Rect taskbar_compute_iconbar_rect(Taskbar *taskbar);
 static Rect taskbar_compute_statusbar_rect(Taskbar *taskbar, const char *label);
@@ -41,6 +42,28 @@ static void taskbar_buttons_del(Taskbar *taskbar);
 static bool taskbar_button_is_chosen(Widget_id id);
 static Menu *act_center_new(const Taskbar *taskbar);
 static void taskbar_set_method(Widget *widget);
+
+static Taskbar *gwm_taskbar=NULL;
+
+void create_gwm_taskbar(void)
+{
+    Rect r=compute_taskbar_rect();
+    gwm_taskbar=taskbar_new(NULL, r.x, r.y, r.w, r.h);
+    if(cfg->show_taskbar)
+        widget_show(WIDGET(gwm_taskbar));
+}
+
+Taskbar *get_gwm_taskbar(void)
+{
+    return gwm_taskbar;
+}
+
+static Rect compute_taskbar_rect(void)
+{
+    int w=xinfo.screen_width, h=get_font_height_by_pad(),
+        x=0, y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-h);
+    return (Rect){x, y, w, h};
+}
 
 Taskbar *taskbar_new(Widget *parent, int x, int y, int w, int h)
 {

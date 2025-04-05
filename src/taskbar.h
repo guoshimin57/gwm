@@ -18,6 +18,8 @@
 
 typedef struct _taskbar_tag Taskbar; // 任務欄
 
+void create_gwm_taskbar(void);
+Taskbar *get_gwm_taskbar(void);
 Taskbar *taskbar_new(Widget *parent, int x, int y, int w, int h);
 void taskbar_del(Taskbar *taskbar);
 void taskbar_iconbar_update(Taskbar *taskbar);

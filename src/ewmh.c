@@ -182,24 +182,29 @@ void set_net_workarea(int x, int y, int w, int h, int ndesktop)
     replace_cardinal_prop(xinfo.root_win, prop, rect[0], ndesktop*4);
 }
 
-void get_net_workarea(int *x, int *y, int *w, int *h)
+Rect get_net_workarea(void)
 {
+    unsigned int n=get_net_current_desktop(), i=n*4;
     long *p=(long *)get_prop(xinfo.root_win, ewmh_atoms[NET_WORKAREA], NULL);
+    Rect r={0, 0, xinfo.screen_width, xinfo.screen_height};
+
     if(p)
-        *x=p[0], *y=p[1], *w=p[2], *h=p[3];
-    else
-        *x=*y=0, *w=xinfo.screen_width, *h=xinfo.screen_height;
+        r.x=p[i], r.y=p[++i], r.w=p[++i], r.h=p[++i];
     XFree(p);
+
+    return r;
 }
 
-void set_net_supporting_wm_check(Window check_win, const char *wm_name)
+void set_net_supporting_wm_check(const char *wm_name)
 {
     Atom prop=ewmh_atoms[NET_SUPPORTING_WM_CHECK];
 
-    replace_window_prop(xinfo.root_win, prop, &check_win, 1);
-    replace_window_prop(check_win, prop, &check_win, 1);
+    Window wm_check_win=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
+    replace_window_prop(xinfo.root_win, prop, &wm_check_win, 1);
+    replace_window_prop(wm_check_win, prop, &wm_check_win, 1);
     prop=ewmh_atoms[NET_WM_NAME];
-    replace_utf8_prop(check_win, prop, wm_name, 1);
+    replace_utf8_prop(wm_check_win, prop, wm_name, 1);
+    printf("%lx\n", wm_check_win);
 }
 
 void set_net_showing_desktop(bool show)

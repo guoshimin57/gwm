@@ -14,6 +14,6 @@
 
 #include "gwm.h"
 
-void init_wm(WM *wm);
+void init_wm(void);
 
 #endif

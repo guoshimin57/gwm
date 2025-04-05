@@ -21,9 +21,7 @@ void print_area(Drawable d, int x, int y, int w, int h);
 void update_win_bg(Window win, unsigned long color, Pixmap pixmap);
 void set_override_redirect(Window win);
 bool get_geometry(Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth);
-Pixmap create_pixmap_from_file(Window win, const char *filename);
 void set_visual_for_imlib(Drawable d);
-void init_root_win_background(void);
 Window *query_win_list(unsigned int *n);
 
 #endif

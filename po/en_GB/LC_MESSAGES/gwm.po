@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.12.19\n"
+"Project-Id-Version: gwm 2.12.20\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-05 10:54+0800\n"
+"POT-Creation-Date: 2025-04-05 17:48+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -268,15 +268,15 @@ msgstr "The following are place info of the %lx window:\n"
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "The following is a list of client windows arranged from bottom to top:\n"
 
-#: file.c:136
+#: file.c:137
 msgid "未能成功地爲命令創建新會話"
 msgstr "Failed to successfully create a new session for the command"
 
-#: file.c:138
+#: file.c:139
 msgid "命令執行錯誤"
 msgstr "Command execution error"
 
-#: file.c:141
+#: file.c:142
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
 
@@ -300,7 +300,7 @@ msgstr "SIGQUIT signal handler cannot be installed"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 
-#: init.c:142
+#: init.c:114
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"

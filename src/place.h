@@ -15,11 +15,11 @@
 #include "gwm.h"
 #include "client.h"
 
-void pointer_change_place(WM *wm, XEvent *e, Arg arg);
-void change_to_main(WM *wm, XEvent *e, Arg arg);
-void change_to_second(WM *wm, XEvent *e, Arg arg);
-void change_to_fixed(WM *wm, XEvent *e, Arg arg);
-void change_to_float(WM *wm, XEvent *e, Arg arg);
-void pointer_swap_clients(WM *wm, XEvent *e, Arg arg);
+void pointer_change_place(XEvent *e, Arg arg);
+void change_to_main(XEvent *e, Arg arg);
+void change_to_second(XEvent *e, Arg arg);
+void change_to_fixed(XEvent *e, Arg arg);
+void change_to_float(XEvent *e, Arg arg);
+void pointer_swap_clients(XEvent *e, Arg arg);
 
 #endif

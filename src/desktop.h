@@ -16,13 +16,13 @@
 #include "client.h"
 
 unsigned int get_desktop_n(XEvent *e, Arg arg);
-void focus_desktop_n(WM *wm, unsigned int n);
-void move_to_desktop_n(WM *wm, unsigned int n);
-void all_move_to_desktop_n(WM *wm, unsigned int n);
-void change_to_desktop_n(WM *wm, unsigned int n);
-void all_change_to_desktop_n(WM *wm, unsigned int n);
-void attach_to_desktop_n(WM *wm, unsigned int n);
-void attach_to_desktop_all(WM *wm);
+void focus_desktop_n(unsigned int n);
+void move_to_desktop_n(unsigned int n);
+void all_move_to_desktop_n(unsigned int n);
+void change_to_desktop_n(unsigned int n);
+void all_change_to_desktop_n(unsigned int n);
+void attach_to_desktop_n(unsigned int n);
+void attach_to_desktop_all(void);
 void all_attach_to_desktop_n(unsigned int n);
 
 #endif

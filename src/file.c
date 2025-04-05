@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "misc.h"
+#include "file.h"
 #include "gwm.h"
 #include "config.h"
 #include "list.h"

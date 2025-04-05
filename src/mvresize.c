@@ -15,11 +15,11 @@
 #include "focus.h"
 #include "mvresize.h"
 
-static void key_move_resize_client(WM *wm, XEvent *e, Direction dir);
+static void key_move_resize_client(XEvent *e, Direction dir);
 static bool fix_first_move_resize(Client *c, Delta_rect *d);
-static void wait_key_release(WM *wm, XEvent *e);
+static void wait_key_release(XEvent *e);
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
-static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize);
+static void pointer_move_resize_client(XEvent *e, bool resize);
 static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act);
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
 static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move);
@@ -28,91 +28,91 @@ static bool fix_delta_rect(Client *c, Delta_rect *d);
 static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
 static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh);
 
-void key_move_up(WM *wm, XEvent *e, Arg arg)
+void key_move_up(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, UP);
+    key_move_resize_client(e, UP);
 }
 
-void key_move_down(WM *wm, XEvent *e, Arg arg)
+void key_move_down(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, DOWN);
+    key_move_resize_client(e, DOWN);
 }
 
-void key_move_left(WM *wm, XEvent *e, Arg arg)
+void key_move_left(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, LEFT);
+    key_move_resize_client(e, LEFT);
 }
 
-void key_move_right(WM *wm, XEvent *e, Arg arg)
+void key_move_right(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, RIGHT);
+    key_move_resize_client(e, RIGHT);
 }
 
-void key_resize_up2up(WM *wm, XEvent *e, Arg arg)
+void key_resize_up2up(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, UP2UP);
+    key_move_resize_client(e, UP2UP);
 }
 
-void key_resize_up2down(WM *wm, XEvent *e, Arg arg)
+void key_resize_up2down(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, UP2DOWN);
+    key_move_resize_client(e, UP2DOWN);
 }
 
-void key_resize_down2up(WM *wm, XEvent *e, Arg arg)
+void key_resize_down2up(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, DOWN2UP);
+    key_move_resize_client(e, DOWN2UP);
 }
 
-void key_resize_down2down(WM *wm, XEvent *e, Arg arg)
+void key_resize_down2down(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, DOWN2DOWN);
+    key_move_resize_client(e, DOWN2DOWN);
 }
 
-void key_resize_left2left(WM *wm, XEvent *e, Arg arg)
+void key_resize_left2left(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, LEFT2LEFT);
+    key_move_resize_client(e, LEFT2LEFT);
 }
 
-void key_resize_left2right(WM *wm, XEvent *e, Arg arg)
+void key_resize_left2right(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, LEFT2RIGHT);
+    key_move_resize_client(e, LEFT2RIGHT);
 }
 
-void key_resize_right2right(WM *wm, XEvent *e, Arg arg)
+void key_resize_right2right(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, RIGHT2RIGHT);
+    key_move_resize_client(e, RIGHT2RIGHT);
 }
 
-void key_resize_right2left(WM *wm, XEvent *e, Arg arg)
+void key_resize_right2left(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    key_move_resize_client(wm, e, RIGHT2LEFT);
+    key_move_resize_client(e, RIGHT2LEFT);
 }
 
-void pointer_move(WM *wm, XEvent *e, Arg arg)
+void pointer_move(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    pointer_move_resize_client(wm, e, false);
+    pointer_move_resize_client(e, false);
 }
 
-void pointer_resize(WM *wm, XEvent *e, Arg arg)
+void pointer_resize(XEvent *e, Arg arg)
 {
     UNUSED(arg);
-    pointer_move_resize_client(wm, e, true);
+    pointer_move_resize_client(e, true);
 }
 
-static void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
+static void key_move_resize_client(XEvent *e, Direction dir)
 {
     Client *c=get_cur_focus_client();
     bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
@@ -125,7 +125,7 @@ static void key_move_resize_client(WM *wm, XEvent *e, Direction dir)
         move_resize_client(c, &d);
         Size_hint_win *shw=size_hint_win_new(WIDGET(c));
         widget_show(WIDGET(shw));
-        wait_key_release(wm, e);
+        wait_key_release(e);
         widget_del(WIDGET(shw));
         update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
     }
@@ -141,7 +141,7 @@ static bool fix_first_move_resize(Client *c, Delta_rect *d)
     return d->dw || d->dh;
 }
 
-static void wait_key_release(WM *wm, XEvent *e)
+static void wait_key_release(XEvent *e)
 {
     while(1)
     {
@@ -151,7 +151,7 @@ static void wait_key_release(WM *wm, XEvent *e)
             && ev.xkey.keycode==e->xkey.keycode)
             break;
         else
-            wm->event_handler(wm, &ev);
+            event_handler(&ev);
     }
 }
 
@@ -178,7 +178,7 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
     return dr[dir];
 }
 
-static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
+static void pointer_move_resize_client(XEvent *e, bool resize)
 {
     Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
     Client *c=get_cur_focus_client();
@@ -207,7 +207,7 @@ static void pointer_move_resize_client(WM *wm, XEvent *e, bool resize)
                 size_hint_win_update(shw);
             }
             else
-                wm->event_handler(wm, &ev);
+                event_handler(&ev);
         }while(!is_match_button_release(e, &ev));
         widget_del(WIDGET(shw));
     }
@@ -340,9 +340,9 @@ Pointer_act get_resize_act(Client *c, const Move_info *m)
         return NO_OP;
 }
 
-void toggle_shade_client(WM *wm, XEvent *e, Arg arg)
+void toggle_shade_client(XEvent *e, Arg arg)
 {
-    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    UNUSED(e), UNUSED(arg);
     static bool shade=false;
 
     toggle_shade_client_mode(get_cur_focus_client(), shade=!shade);

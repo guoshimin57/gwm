@@ -17,13 +17,13 @@
 
 static void key_change_place(Place type);
 
-void pointer_change_place(WM *wm, XEvent *e, Arg arg)
+void pointer_change_place(XEvent *e, Arg arg)
 {
     XEvent ev;
     Client *from=get_cur_focus_client(), *to;
 
     UNUSED(arg);
-    if(get_gwm_layout()!=TILE || !from || !get_valid_click(wm, CHANGE, e, &ev))
+    if(get_gwm_layout()!=TILE || !from || !get_valid_click(CHANGE, e, &ev))
         return;
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時
@@ -41,27 +41,27 @@ void pointer_change_place(WM *wm, XEvent *e, Arg arg)
     update_net_wm_state_for_no_max(WIDGET_WIN(from), from->win_state);
 }
 
-void change_to_main(WM *wm, XEvent *e, Arg arg)
+void change_to_main(XEvent *e, Arg arg)
 {
-    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    UNUSED(e), UNUSED(arg);
     key_change_place(MAIN_AREA);
 }
 
-void change_to_second(WM *wm, XEvent *e, Arg arg)
+void change_to_second(XEvent *e, Arg arg)
 {
-    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    UNUSED(e), UNUSED(arg);
     key_change_place(SECOND_AREA);
 }
 
-void change_to_fixed(WM *wm, XEvent *e, Arg arg)
+void change_to_fixed(XEvent *e, Arg arg)
 {
-    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    UNUSED(e), UNUSED(arg);
     key_change_place(FIXED_AREA);
 }
 
-void change_to_float(WM *wm, XEvent *e, Arg arg)
+void change_to_float(XEvent *e, Arg arg)
 {
-    UNUSED(wm), UNUSED(e), UNUSED(arg);
+    UNUSED(e), UNUSED(arg);
     key_change_place(ABOVE_LAYER);
 }
 
@@ -72,12 +72,12 @@ static void key_change_place(Place type)
     update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
-void pointer_swap_clients(WM *wm, XEvent *e, Arg arg)
+void pointer_swap_clients(XEvent *e, Arg arg)
 {
     UNUSED(arg);
     XEvent ev;
     Client *from=get_cur_focus_client(), *to=NULL;
-    if(get_gwm_layout()!=TILE || !from || !get_valid_click(wm, SWAP, e, &ev))
+    if(get_gwm_layout()!=TILE || !from || !get_valid_click(SWAP, e, &ev))
         return;
 
     /* 因爲窗口不隨定位器動態移動，故釋放按鈕時定位器已經在按下按鈕時

@@ -20,20 +20,20 @@ static void set_signals(void);
 static void ready_to_quit(int signum);
 
 sig_atomic_t run_flag=1;
+Event_handler event_handler=NULL; // 事件處理器
 
 /* 以下全局變量一經顯式初始化，就不再修改 */
 Xinfo xinfo;
 
 int main(void)
 {
-    WM wm;
     clear_zombies(0);
-    init_wm(&wm);
+    init_wm();
     XSetScreenSaver(xinfo.display, cfg->screen_saver_time_out,
         cfg->screen_saver_interval, PreferBlanking, AllowExposures);
     set_signals();
     manage_exsit_clients();
-    handle_events(&wm);
+    handle_events();
     return EXIT_SUCCESS;
 }
 

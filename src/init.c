@@ -19,25 +19,19 @@
 #include "prop.h"
 #include "icccm.h"
 #include "focus.h"
-#include "taskbar.h"
 #include "widget.h"
+#include "wallpaper.h"
 #include "bind_cfg.h"
-#include "layout.h"
 #include "init.h"
 
-static Rect compute_taskbar_rect(void);
 static void set_visual_info(void);
 static void set_locale(void);
-static void create_refer_wins(WM *wm);
-static void set_workarea(WM *wm);
-static void set_ewmh(WM *wm);
+static void set_ewmh(void);
 static void set_atoms(void);
 static void init_imlib(void);
-static void init_wallpaper_files(WM *wm);
 
-void init_wm(WM *wm)
+void init_wm(void)
 {
-    memset(wm, 0, sizeof(WM));
     if(!(xinfo.display=XOpenDisplay(NULL)))
         exit_with_msg("error: cannot open display");
 
@@ -51,45 +45,26 @@ void init_wm(WM *wm)
     set_atoms();
     XSelectInput(xinfo.display, xinfo.root_win, ROOT_EVENT_MASK);
     set_visual_info();
-    create_refer_wins(wm);
+    create_layer_wins();
     config();
     init_imlib();
-    if(cfg->wallpaper_paths)
-        init_wallpaper_files(wm);
     set_net_current_desktop(cfg->default_cur_desktop);
-    reg_event_handlers(wm);
+    reg_event_handlers();
     load_fonts();
     alloc_color(cfg->main_color_name);
-    init_root_win_background();
+    init_wallpaper();
+    set_default_wallpaper();
     create_cursors();
     set_cursor(xinfo.root_win, NO_OP);
-    set_workarea(wm);
-    set_ewmh(wm);
+    set_ewmh();
     init_layout();
     reg_bind(keybind, buttonbind);
-    Rect r=compute_taskbar_rect();
-    wm->taskbar=taskbar_new(NULL, r.x, r.y, r.w, r.h);
-    if(cfg->show_taskbar)
-        widget_show(WIDGET(wm->taskbar));
+    create_gwm_taskbar();
     cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
     color_entry=color_entry_new(COLOR_ENTRY);
     init_client_list();
     grab_keys();
     exec_autostart();
-}
-
-static Rect compute_taskbar_rect(void)
-{
-    int w=xinfo.screen_width, h=get_font_height_by_pad(),
-        x=0, y=(cfg->taskbar_on_top ? 0 : xinfo.screen_height-h);
-    return (Rect){x, y, w, h};
-}
-
-static void create_refer_wins(WM *wm)
-{
-    Window w=xinfo.root_win;
-    wm->wm_check_win=create_widget_win(w, -1, -1, 1, 1, 0, 0, 0);
-    create_refer_top_wins();
 }
 
 static void set_visual_info(void)
@@ -101,29 +76,26 @@ static void set_visual_info(void)
     xinfo.colormap=XCreateColormap(xinfo.display, xinfo.root_win, v.visual, AllocNone);
 }
 
-static void set_workarea(WM *wm)
+static void set_ewmh(void)
 {
-    long sw=xinfo.screen_width, sh=xinfo.screen_height, th=get_font_height_by_pad();
+    long sw=xinfo.screen_width, sh=xinfo.screen_height,
+         th=get_font_height_by_pad(), wx=0, wy=0, ww=sw, wh=sh;
 
-    wm->workarea=(Rect){0, 0, sw, sh};
     if(cfg->show_taskbar)
     {
-        wm->workarea.h-=th;
+        wh-=th;
         if(cfg->taskbar_on_top)
-            wm->workarea.y=th;
+            wy=th;
     }
-}
 
-static void set_ewmh(WM *wm)
-{
     set_net_supported();
     set_net_number_of_desktops(DESKTOP_N);
-    set_net_desktop_geometry(xinfo.screen_width, xinfo.screen_height);
+    set_net_desktop_geometry(sw, sh);
     set_net_desktop_viewport(0, 0);
     set_net_current_desktop(cfg->default_cur_desktop);
     set_net_desktop_names(cfg->taskbar_button_text, DESKTOP_N);
-    set_net_workarea(wm->workarea.x, wm->workarea.y, wm->workarea.w, wm->workarea.h, DESKTOP_N);
-    set_net_supporting_wm_check(wm->wm_check_win, "gwm");
+    set_net_workarea(wx, wy, ww, wh, DESKTOP_N);
+    set_net_supporting_wm_check("gwm");
     set_net_showing_desktop(false);
 }
 
@@ -158,11 +130,4 @@ static void init_imlib(void)
     imlib_context_set_display(xinfo.display);
     imlib_context_set_visual(xinfo.visual);
     imlib_context_set_colormap(xinfo.colormap);
-}
-
-static void init_wallpaper_files(WM *wm)
-{
-    const char *paths=cfg->wallpaper_paths, *reg="*.png|*.jpg|*.svg|*.webp";
-    wm->wallpapers=get_files_in_paths(paths, reg, true);
-    wm->cur_wallpaper=list_first_entry(&wm->wallpapers->list, Strings, list);
 }
