@@ -99,20 +99,6 @@ typedef struct rule_tag Rule;
 
 typedef void (*Event_handler)(XEvent *); // 事件處理器類型
 
-enum direction_tag // 方向
-{
-    UP, DOWN, LEFT, RIGHT, LEFT2LEFT, LEFT2RIGHT, RIGHT2LEFT, RIGHT2RIGHT,
-    UP2UP, UP2DOWN, DOWN2UP, DOWN2DOWN,
-};
-typedef enum direction_tag Direction;
-
-enum max_way_tag // 窗口最大化的方式
-{
-    VERT_MAX, HORZ_MAX,
-    TOP_MAX, BOTTOM_MAX, LEFT_MAX, RIGHT_MAX, FULL_MAX,
-};
-typedef enum max_way_tag Max_way;
-
 struct move_info_tag /* 定位器所點擊的窗口位置每次合理移動或調整尺寸所對應的舊、新坐標信息 */
 {
     int ox, oy, nx, ny; /* 分別爲舊、新坐標 */

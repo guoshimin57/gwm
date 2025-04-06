@@ -59,7 +59,7 @@ void change_to_fixed(XEvent *e, Arg arg)
     key_change_place(FIXED_AREA);
 }
 
-void change_to_float(XEvent *e, Arg arg)
+void change_to_above(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     key_change_place(ABOVE_LAYER);

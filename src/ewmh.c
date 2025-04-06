@@ -204,7 +204,6 @@ void set_net_supporting_wm_check(const char *wm_name)
     replace_window_prop(wm_check_win, prop, &wm_check_win, 1);
     prop=ewmh_atoms[NET_WM_NAME];
     replace_utf8_prop(wm_check_win, prop, wm_name, 1);
-    printf("%lx\n", wm_check_win);
 }
 
 void set_net_showing_desktop(bool show)

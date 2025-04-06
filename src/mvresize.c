@@ -15,14 +15,20 @@
 #include "focus.h"
 #include "mvresize.h"
 
+typedef enum // 方向
+{
+    UP, DOWN, LEFT, RIGHT, RIGHT2LEFT, RIGHT2RIGHT,
+    DOWN2UP, DOWN2DOWN,
+} Direction;
+
 static void key_move_resize_client(XEvent *e, Direction dir);
 static bool fix_first_move_resize(Client *c, Delta_rect *d);
 static void wait_key_release(XEvent *e);
 static Delta_rect get_key_delta_rect(Client *c, Direction dir);
 static void pointer_move_resize_client(XEvent *e, bool resize);
-static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act);
+static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act, bool is_to_above);
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
-static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move);
+static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move, bool is_to_above);
 static bool is_prefer_move(Client *c, Delta_rect *d);
 static bool fix_delta_rect(Client *c, Delta_rect *d);
 static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
@@ -52,52 +58,28 @@ void key_move_right(XEvent *e, Arg arg)
     key_move_resize_client(e, RIGHT);
 }
 
-void key_resize_up2up(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, UP2UP);
-}
-
-void key_resize_up2down(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, UP2DOWN);
-}
-
-void key_resize_down2up(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, DOWN2UP);
-}
-
-void key_resize_down2down(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, DOWN2DOWN);
-}
-
-void key_resize_left2left(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, LEFT2LEFT);
-}
-
-void key_resize_left2right(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, LEFT2RIGHT);
-}
-
-void key_resize_right2right(XEvent *e, Arg arg)
+void key_more_width(XEvent *e, Arg arg)
 {
     UNUSED(arg);
     key_move_resize_client(e, RIGHT2RIGHT);
 }
 
-void key_resize_right2left(XEvent *e, Arg arg)
+void key_less_width(XEvent *e, Arg arg)
 {
     UNUSED(arg);
     key_move_resize_client(e, RIGHT2LEFT);
+}
+
+void key_more_height(XEvent *e, Arg arg)
+{
+    UNUSED(arg);
+    key_move_resize_client(e, DOWN2DOWN);
+}
+
+void key_less_height(XEvent *e, Arg arg)
+{
+    UNUSED(arg);
+    key_move_resize_client(e, DOWN2UP);
 }
 
 void pointer_move(XEvent *e, Arg arg)
@@ -115,12 +97,13 @@ void pointer_resize(XEvent *e, Arg arg)
 static void key_move_resize_client(XEvent *e, Direction dir)
 {
     Client *c=get_cur_focus_client();
-    bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT);
+    bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT),
+         is_to_above;
     Delta_rect d=get_key_delta_rect(c, dir);
 
-    if(is_tiled_client(c))
+    if((is_to_above=is_tiled_client(c)))
         move_client(c, NULL, ABOVE_LAYER);
-    if(get_move_resize_delta_rect(c, &d, is_move))
+    if(get_move_resize_delta_rect(c, &d, is_move, is_to_above))
     {
         move_resize_client(c, &d);
         Size_hint_win *shw=size_hint_win_new(WIDGET(c));
@@ -166,12 +149,8 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
         [DOWN]        = {  0,  hi,   0,   0},
         [LEFT]        = {-wi,   0,   0,   0},
         [RIGHT]       = { wi,   0,   0,   0},
-        [LEFT2LEFT]   = {-wi,   0,  wi,   0},
-        [LEFT2RIGHT]  = { wi,   0, -wi,   0},
         [RIGHT2LEFT]  = {  0,   0, -wi,   0},
         [RIGHT2RIGHT] = {  0,   0,  wi,   0},
-        [UP2UP]       = {  0, -hi,   0,  hi},
-        [UP2DOWN]     = {  0,  hi,   0, -hi},
         [DOWN2UP]     = {  0,   0,   0, -hi},
         [DOWN2DOWN]   = {  0,   0,   0,  hi},
     };
@@ -199,11 +178,12 @@ static void pointer_move_resize_client(XEvent *e, bool resize)
             XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
             if(ev.type == MotionNotify)
             {
-                if(is_tiled_client(c))
+                bool is_to_above;
+                if((is_to_above=is_tiled_client(c)))
                     move_client(c, NULL, ABOVE_LAYER);
                 /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
                 m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
-                do_valid_pointer_move_resize(c, &m, act);
+                do_valid_pointer_move_resize(c, &m, act, is_to_above);
                 size_hint_win_update(shw);
             }
             else
@@ -215,10 +195,10 @@ static void pointer_move_resize_client(XEvent *e, bool resize)
     update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
-static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act)
+static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act, bool is_to_above)
 {
     Delta_rect d=get_pointer_delta_rect(m, act);
-    if(!get_move_resize_delta_rect(c, &d, act==MOVE))
+    if(!get_move_resize_delta_rect(c, &d, act==MOVE, is_to_above))
         return;
 
     move_resize_client(c, &d);
@@ -253,11 +233,9 @@ static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act)
     return dr[act];
 }
 
-static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move)
+static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move, bool is_to_above)
 {
-    static long n=1;
-
-    if(n++ == 1)
+    if(is_to_above)
         return fix_first_move_resize(c, d);
     return (is_move && is_prefer_move(c, d)) || fix_delta_rect(c, d);
 }

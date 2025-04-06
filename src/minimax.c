@@ -14,6 +14,12 @@
 #include "focus.h"
 #include "clientop.h"
 
+typedef enum // 窗口最大化的方式
+{
+    VERT_MAX, HORZ_MAX,
+    TOP_MAX, BOTTOM_MAX, LEFT_MAX, RIGHT_MAX, FULL_MAX,
+} Max_way;
+
 static void maximize(Max_way max_way);
 static void maximize_client(Client *c, Max_way max_way);
 static void set_max_rect(Client *c, Max_way max_way);

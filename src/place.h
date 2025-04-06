@@ -19,7 +19,7 @@ void pointer_change_place(XEvent *e, Arg arg);
 void change_to_main(XEvent *e, Arg arg);
 void change_to_second(XEvent *e, Arg arg);
 void change_to_fixed(XEvent *e, Arg arg);
-void change_to_float(XEvent *e, Arg arg);
+void change_to_above(XEvent *e, Arg arg);
 void pointer_swap_clients(XEvent *e, Arg arg);
 
 #endif
