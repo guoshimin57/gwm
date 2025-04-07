@@ -24,7 +24,6 @@ static void handle_event(XEvent *e);
 static void handle_button_press(XEvent *e);
 static void exec_buttonbind_func(XEvent *e);
 static void handle_button_release(XEvent *e);
-static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e);
 static void handle_client_message(XEvent *e);
 static void change_net_wm_state(Client *c, long *full_act);
 static void change_net_wm_state_for_modal(Client *c, long act);
@@ -134,8 +133,7 @@ static void exec_buttonbind_func(XEvent *e)
     
     for(const Buttonbind *p=buttonbind; p->func; p++)
     {
-        if( is_func_click(id, p, e)
-            && (is_drag_func(p->func) || get_valid_click(CHOOSE, e, NULL)))
+        if(is_valid_click(widget, p, &e->xbutton))
         {
             if(id == CLIENT_WIN)
                 XAllowEvents(xinfo.display, ReplayPointer, CurrentTime);
@@ -145,13 +143,6 @@ static void exec_buttonbind_func(XEvent *e)
                 p->func(e, p->arg);
         }
     }
-}
-
-static bool is_func_click(const Widget_id id, const Buttonbind *b, XEvent *e)
-{
-    return (b->widget_id == id
-        && b->button == e->xbutton.button
-        && is_equal_modifier_mask(b->modifier, e->xbutton.state));
 }
 
 static void handle_button_release(XEvent *e)

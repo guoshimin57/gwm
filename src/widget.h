@@ -97,7 +97,7 @@ struct _widget_tag
     Widget_id id;
     Widget_state state;
     int x, y, w, h, border_w;
-    bool poppable;
+    bool poppable, draggable;
     Window win;
     Widget *parent, *tooltip;
 
@@ -175,6 +175,8 @@ void widget_set_rect(Widget *widget, int x, int y, int w, int h);
 Rect widget_get_outline(const Widget *widget);
 void widget_set_poppable(Widget *widget, bool poppable);
 bool widget_get_poppable(const Widget *widget);
+void widget_set_draggable(Widget *widget, bool draggable);
+bool widget_get_draggable(const Widget *widget);
 bool widget_is_viewable(const Widget *widget);
 Widget *get_popped_widget(void);
 void hide_popped_widget(const Widget *popped, const Widget *clicked);
@@ -192,5 +194,6 @@ bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
 bool grab_pointer(Window win, Pointer_act act);
 unsigned long get_widget_color(const Widget *widget);
 XftColor get_text_color(const Widget *widget);
+bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *be);
 
 #endif

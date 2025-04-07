@@ -37,6 +37,7 @@ static unsigned int get_modifier_mask(KeySym key_sym);
 static Cursor cursors[POINTER_ACT_N]; // 光標
 static Color_id state_to_color_id(Widget_state state);
 static int get_pointer_x(void);
+static bool is_func_click(const Widget_id id, const Buttonbind *bind, XButtonEvent *be);
 
 static Widget_node *widget_list=NULL;
 static const Keybind *keybinds=NULL;
@@ -109,6 +110,7 @@ void widget_ctor(Widget *widget, Widget *parent, Widget_type type, Widget_id id,
         widget->win=create_widget_win(pwin, x, y, w, h, 0, 0, bg);
     widget->x=x, widget->y=y, widget->w=w, widget->h=h, widget->border_w=0;
     widget->poppable=false;
+    widget->draggable=false;
     widget->parent=parent;
     widget->tooltip=NULL;
     widget_set_method(widget);
@@ -208,6 +210,16 @@ void widget_set_poppable(Widget *widget, bool poppable)
 bool widget_get_poppable(const Widget *widget)
 {
     return widget->poppable;
+}
+
+void widget_set_draggable(Widget *widget, bool draggable)
+{
+    widget->draggable=draggable;
+}
+
+bool widget_get_draggable(const Widget *widget)
+{
+    return widget->draggable;
 }
 
 bool widget_is_viewable(const Widget *widget)
@@ -421,4 +433,37 @@ static Color_id state_to_color_id(Widget_state state)
     if(state.chosen)  return COLOR_CHOSEN; 
     if(state.unfocused) return COLOR_UNFOCUSED; 
     return COLOR_NORMAL;
+}
+
+bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *be)
+{
+    Widget_id id = widget ? widget->id :
+        (be->window==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
+
+    if(!is_func_click(id, bind, be))
+        return false;
+
+    if(!widget || widget_get_draggable(widget))
+        return true;
+
+    if(!grab_pointer(be->window, CHOOSE))
+        return false;
+
+    XEvent ev;
+    do
+    {
+        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
+        event_handler(&ev);
+    }while(!is_match_button_release(be, &ev.xbutton));
+    XUngrabPointer(xinfo.display, CurrentTime);
+
+    return is_equal_modifier_mask(be->state, ev.xbutton.state)
+        && is_pointer_on_win(ev.xbutton.window);
+}
+
+static bool is_func_click(const Widget_id id, const Buttonbind *bind, XButtonEvent *be)
+{
+    return (bind->widget_id == id
+        && bind->button == be->button
+        && is_equal_modifier_mask(bind->modifier, be->state));
 }

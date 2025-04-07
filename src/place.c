@@ -10,11 +10,11 @@
  * ************************************************************************/
 
 #include "clientop.h"
-#include "func.h"
 #include "prop.h"
 #include "focus.h"
 #include "place.h"
 
+static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne);
 static void key_change_place(Place type);
 
 void pointer_change_place(XEvent *e, Arg arg)
@@ -39,6 +39,22 @@ void pointer_change_place(XEvent *e, Arg arg)
     else if(to)
         move_client(from, to, ANY_PLACE);
     update_net_wm_state_for_no_max(WIDGET_WIN(from), from->win_state);
+}
+
+static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne)
+{
+    if(!grab_pointer(xinfo.root_win, act))
+        return false;
+
+    do
+    {
+        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, ne);
+        event_handler(ne);
+    }while(!is_match_button_release(&oe->xbutton, &ne->xbutton));
+    XUngrabPointer(xinfo.display, CurrentTime);
+
+    return is_equal_modifier_mask(oe->xbutton.state, ne->xbutton.state)
+        && is_pointer_on_win(ne->xbutton.window);
 }
 
 void change_to_main(XEvent *e, Arg arg)

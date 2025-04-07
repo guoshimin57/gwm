@@ -188,7 +188,7 @@ static void pointer_move_resize_client(XEvent *e, bool resize)
             }
             else
                 event_handler(&ev);
-        }while(!is_match_button_release(e, &ev));
+        }while(!is_match_button_release(&e->xbutton, &ev.xbutton));
         widget_del(WIDGET(shw));
     }
     XUngrabPointer(xinfo.display, CurrentTime);

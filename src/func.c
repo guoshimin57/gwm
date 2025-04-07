@@ -24,48 +24,6 @@
 #include "wallpaper.h"
 #include "func.h"
 
-static bool is_valid_click(XEvent *oe, XEvent *ne);
-
-bool is_drag_func(void (*func)(XEvent *, Arg))
-{
-    return func == pointer_swap_clients
-        || func == pointer_move
-        || func == pointer_resize
-        || func == pointer_change_place
-        || func == adjust_layout_ratio;
-}
-
-static bool is_grab_root_act(Pointer_act act)
-{
-    return act==SWAP || act==CHANGE;
-}
-
-bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne)
-{
-    if(act==CHOOSE && widget_find(oe->xbutton.window)->id==CLIENT_WIN)
-        return true;
-
-    Window win = is_grab_root_act(act) ? xinfo.root_win : oe->xbutton.window;
-    if(act!=NO_OP && !grab_pointer(win, act))
-        return false;
-
-    XEvent e, *p=(ne ? ne : &e);
-    do
-    {
-        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, p);
-        event_handler(p);
-    }while(!is_match_button_release(oe, p));
-    if(act != NO_OP)
-        XUngrabPointer(xinfo.display, CurrentTime);
-    return is_valid_click(oe, p);
-}
-
-static bool is_valid_click(XEvent *oe, XEvent *ne)
-{
-    return is_equal_modifier_mask(oe->xbutton.state, ne->xbutton.state)
-        && is_pointer_on_win(ne->xbutton.window);
-}
-
 void choose_client(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);

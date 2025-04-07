@@ -124,9 +124,9 @@ char *get_icon_title_text(Window win, const char *fallback)
     return get_title_text(win, fallback);
 }
 
-bool is_match_button_release(XEvent *oe, XEvent *ne)
+bool is_match_button_release(XButtonEvent *oe, XButtonEvent *ne)
 {
-    return (ne->type==ButtonRelease && ne->xbutton.button==oe->xbutton.button);
+    return (ne->type==ButtonRelease && ne->button==oe->button);
 }
 
 bool is_on_desktop_n(unsigned int n, unsigned int mask)

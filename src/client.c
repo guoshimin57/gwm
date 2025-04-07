@@ -26,6 +26,7 @@ static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
 static void set_default_place(Client *c);
 static void client_dtor(Client *c);
+static void create_frame(Client *c);
 static void set_default_win_rect(Client *c);
 static void set_client_rect_by_frame(Client *c);
 static Client *get_same_place_owner(const Client *c);
@@ -67,13 +68,11 @@ static void client_ctor(Client *c, Window win)
     c->subgroup_leader = c->owner ? c->owner->subgroup_leader : c;
     c->class_name="?";
     c->image=get_win_icon_image(win);
-    c->frame=frame_new(WIDGET(c), 0, 0, 1, 1,
-        c->decorative ? get_font_height_by_pad() : 0,
-        c->decorative ? cfg->border_width : 0,
-        c->title_text, c->image);
+    set_default_win_rect(c);
+    create_frame(c);
+    widget_set_draggable(WIDGET(c), true);
     XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint);
     set_default_place(c);
-    set_default_win_rect(c);
     set_default_desktop_mask(c);
     apply_rules(c);
     save_place_info_of_client(c);
@@ -85,6 +84,15 @@ static bool has_decoration(const Client *c)
     return has_motif_decoration(WIDGET_WIN(c))
         && (c->win_type.none || c->win_type.normal || c->win_type.dialog)
         && !c->win_state.skip_pager && !c->win_state.skip_taskbar;
+}
+
+static void create_frame(Client *c)
+{
+    int th=c->decorative ? get_font_height_by_pad() : 0,
+        bw=c->decorative ? cfg->border_width : 0;
+
+    c->frame=frame_new(WIDGET(c), WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c),
+        th, bw, c->title_text, c->image);
 }
 
 static void set_default_place(Client *c)

@@ -73,6 +73,7 @@ static void frame_ctor(Frame *frame, Widget *parent, int x, int y, int w, int h,
     widget_ctor(WIDGET(frame), NULL, WIDGET_TYPE_FRAME, CLIENT_FRAME, x, y, w, h);
     widget_set_border_width(WIDGET(frame), border_w);
     widget_set_border_color(WIDGET(frame), get_widget_color(WIDGET(frame)));
+    widget_set_draggable(WIDGET(frame), true);
     frame->cwin=WIDGET_WIN(parent);
     frame->titlebar=NULL;
     if(cfg->set_frame_prop)

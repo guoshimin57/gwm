@@ -14,8 +14,6 @@
 
 #include "gwm.h"
 
-bool is_drag_func(void (*func)(XEvent *, Arg));
-bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne);
 void choose_client(XEvent *e, Arg arg);
 void exec(XEvent *e, Arg arg);
 void quit_wm(XEvent *e, Arg arg);
