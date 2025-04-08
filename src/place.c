@@ -12,6 +12,7 @@
 #include "clientop.h"
 #include "prop.h"
 #include "focus.h"
+#include "grab.h"
 #include "place.h"
 
 static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne);

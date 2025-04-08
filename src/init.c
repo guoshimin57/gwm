@@ -21,6 +21,8 @@
 #include "focus.h"
 #include "widget.h"
 #include "wallpaper.h"
+#include "grab.h"
+#include "layout.h"
 #include "bind_cfg.h"
 #include "init.h"
 
@@ -58,7 +60,7 @@ void init_wm(void)
     set_cursor(xinfo.root_win, NO_OP);
     set_ewmh();
     init_layout();
-    reg_bind(keybind, buttonbind);
+    reg_binds(keybinds, buttonbinds);
     create_gwm_taskbar();
     cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
     color_entry=color_entry_new(COLOR_ENTRY);

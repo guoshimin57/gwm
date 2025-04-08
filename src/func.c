@@ -22,6 +22,7 @@
 #include "focus.h"
 #include "desktop.h"
 #include "wallpaper.h"
+#include "grab.h"
 #include "func.h"
 
 void choose_client(XEvent *e, Arg arg)

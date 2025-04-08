@@ -12,8 +12,6 @@
 #ifndef INIT_H
 #define INIT_H
 
-#include "gwm.h"
-
 void init_wm(void);
 
 #endif

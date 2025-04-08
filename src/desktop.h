@@ -12,8 +12,7 @@
 #ifndef DESKTOP_H
 #define DESKTOP_H
 
-#include "gwm.h"
-#include "client.h"
+#include "widget.h"
 
 unsigned int get_desktop_n(XEvent *e, Arg arg);
 void focus_desktop_n(unsigned int n);

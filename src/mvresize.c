@@ -13,6 +13,7 @@
 #include "icccm.h"
 #include "sizehintwin.h"
 #include "focus.h"
+#include "grab.h"
 #include "mvresize.h"
 
 typedef enum // 方向

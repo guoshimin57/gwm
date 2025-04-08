@@ -12,7 +12,7 @@
 #ifndef FUNC_H
 #define FUNC_H
 
-#include "gwm.h"
+#include "widget.h"
 
 void choose_client(XEvent *e, Arg arg);
 void exec(XEvent *e, Arg arg);

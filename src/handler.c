@@ -10,7 +10,6 @@
  * ************************************************************************/
 
 #include "clientop.h"
-#include "bind_cfg.h"
 #include "config.h"
 #include "entry.h"
 #include "focus.h"
@@ -18,6 +17,11 @@
 #include "icccm.h"
 #include "image.h"
 #include "desktop.h"
+#include "func.h"
+#include "minimax.h"
+#include "mvresize.h"
+#include "layout.h"
+#include "grab.h"
 #include "handler.h"
 
 static void handle_event(XEvent *e);
@@ -131,7 +135,7 @@ static void exec_buttonbind_func(XEvent *e)
         widget->update_bg(widget);
     }
     
-    for(const Buttonbind *p=buttonbind; p->func; p++)
+    for(const Buttonbind *p=get_buttonbinds(); p->func; p++)
     {
         if(is_valid_click(widget, p, &e->xbutton))
         {
@@ -475,7 +479,7 @@ static void handle_key_press(XEvent *e)
         int n;
         KeySym *ks=XGetKeyboardMapping(xinfo.display, e->xkey.keycode, 1, &n);
 
-        for(const Keybind *p=keybind; p->func; p++)
+        for(const Keybind *p=get_keybinds(); p->func; p++)
             if(*ks == p->keysym && is_equal_modifier_mask(p->modifier, e->xkey.state))
                 p->func(e, p->arg);
         XFree(ks);

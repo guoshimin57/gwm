@@ -31,13 +31,10 @@ static void widget_unreg(Widget *widget);
 static void widget_node_del(Widget_node *node);
 static void widget_set_method(Widget *widget);
 static void widget_dtor(Widget *widget);
-static unsigned int get_num_lock_mask(void);
 static unsigned int get_valid_mask(unsigned int mask);
 static unsigned int get_modifier_mask(KeySym key_sym);
-static Cursor cursors[POINTER_ACT_N]; // 光標
 static Color_id state_to_color_id(Widget_state state);
 static int get_pointer_x(void);
-static bool is_func_click(const Widget_id id, const Buttonbind *bind, XButtonEvent *be);
 
 static Widget_node *widget_list=NULL;
 static const Keybind *keybinds=NULL;
@@ -90,7 +87,6 @@ Widget *widget_new(Widget *parent, Widget_type type, Widget_id id, int x, int y,
     Widget *widget=Malloc(sizeof(Widget));
 
     widget_ctor(widget, parent, type, id, x, y, w, h);
-    grab_buttons(widget);
 
     return widget;
 }
@@ -311,71 +307,20 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
     return ks;
 }
 
-void create_cursors(void)
+void reg_binds(const Keybind *kbinds, const Buttonbind *bbinds)
 {
-    for(size_t i=0; i<POINTER_ACT_N; i++)
-        cursors[i]=XCreateFontCursor(xinfo.display, cfg->cursor_shape[i]);
+    keybinds=kbinds;
+    buttonbinds=bbinds;
 }
 
-void set_cursor(Window win, Pointer_act act)
+const Keybind *get_keybinds(void)
 {
-    XDefineCursor(xinfo.display, win, cursors[act]);
+    return keybinds;
 }
 
-void free_cursors(void)
+const Buttonbind *get_buttonbinds(void)
 {
-    for(size_t i=0; i<POINTER_ACT_N; i++)
-        XFreeCursor(xinfo.display, cursors[i]);
-}
-
-void reg_bind(const Keybind *kb, const Buttonbind *bb)
-{
-    keybinds=kb, buttonbinds=bb;
-}
-
-void grab_keys(void)
-{
-    unsigned int num_lock_mask=get_num_lock_mask();
-    unsigned int masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
-    KeyCode code;
-    XUngrabKey(xinfo.display, AnyKey, AnyModifier, xinfo.root_win);
-    for(const Keybind *p=keybinds; p && p->func; p++)
-        if((code=XKeysymToKeycode(xinfo.display, p->keysym)))
-            for(size_t i=0; i<ARRAY_NUM(masks); i++)
-                XGrabKey(xinfo.display, code, p->modifier|masks[i],
-                    xinfo.root_win, True, GrabModeAsync, GrabModeAsync);
-}
-
-static unsigned int get_num_lock_mask(void)
-{
-	XModifierKeymap *m=XGetModifierMapping(xinfo.display);
-    KeyCode code=XKeysymToKeycode(xinfo.display, XK_Num_Lock);
-
-    if(code)
-        for(int i=0; i<8; i++)
-            for(int j=0; j<m->max_keypermod; j++)
-                if(m->modifiermap[i*m->max_keypermod+j] == code)
-                    { XFreeModifiermap(m); return (1<<i); }
-    return 0;
-}
-    
-void grab_buttons(const Widget *widget)
-{
-    unsigned int num_lock_mask=get_num_lock_mask(),
-                 masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
-
-    XUngrabButton(xinfo.display, AnyButton, AnyModifier, WIDGET_WIN(widget));
-    for(const Buttonbind *p=buttonbinds; p && p->func; p++)
-    {
-        if(p->widget_id == widget->id)
-        {
-            int m=is_equal_modifier_mask(0, p->modifier) ?
-                GrabModeSync : GrabModeAsync;
-            for(size_t i=0; i<ARRAY_NUM(masks); i++)
-                XGrabButton(xinfo.display, p->button, p->modifier|masks[i],
-                    WIDGET_WIN(widget), False, BUTTON_MASK, m, m, None, None);
-        }
-    }
+    return buttonbinds;
 }
 
 bool is_equal_modifier_mask(unsigned int m1, unsigned int m2)
@@ -404,13 +349,6 @@ static unsigned int get_modifier_mask(KeySym key_sym)
     return 0;
 }
 
-bool grab_pointer(Window win, Pointer_act act)
-{
-    return XGrabPointer(xinfo.display, win, False, POINTER_MASK,
-        GrabModeAsync, GrabModeAsync, None, cursors[act], CurrentTime)
-        == GrabSuccess;
-}
-
 unsigned long get_widget_color(const Widget *widget)
 {
     Color_id cid = widget ? state_to_color_id(widget->state) : COLOR_NORMAL;
@@ -433,37 +371,4 @@ static Color_id state_to_color_id(Widget_state state)
     if(state.chosen)  return COLOR_CHOSEN; 
     if(state.unfocused) return COLOR_UNFOCUSED; 
     return COLOR_NORMAL;
-}
-
-bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *be)
-{
-    Widget_id id = widget ? widget->id :
-        (be->window==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
-
-    if(!is_func_click(id, bind, be))
-        return false;
-
-    if(!widget || widget_get_draggable(widget))
-        return true;
-
-    if(!grab_pointer(be->window, CHOOSE))
-        return false;
-
-    XEvent ev;
-    do
-    {
-        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
-        event_handler(&ev);
-    }while(!is_match_button_release(be, &ev.xbutton));
-    XUngrabPointer(xinfo.display, CurrentTime);
-
-    return is_equal_modifier_mask(be->state, ev.xbutton.state)
-        && is_pointer_on_win(ev.xbutton.window);
-}
-
-static bool is_func_click(const Widget_id id, const Buttonbind *bind, XButtonEvent *be)
-{
-    return (bind->widget_id == id
-        && bind->button == be->button
-        && is_equal_modifier_mask(bind->modifier, be->state));
 }

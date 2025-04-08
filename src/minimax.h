@@ -12,7 +12,7 @@
 #ifndef MINIMAX_H
 #define MINIMAX_H
 
-#include "gwm.h"
+#include "widget.h"
 #include "client.h"
 
 void minimize(XEvent *e, Arg arg);

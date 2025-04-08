@@ -9,9 +9,10 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "clientop.h"
+#include "grab.h"
 #include "focus.h"
 #include "prop.h"
+#include "clientop.h"
 
 static void set_frame_rect_by_client(Client *c);
 static bool is_valid_move(Client *from, Client *to, Place type);

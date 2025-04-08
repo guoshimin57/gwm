@@ -96,6 +96,7 @@ static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int 
 {
     widget_ctor(WIDGET(titlebar), parent, WIDGET_TYPE_TITLEBAR, TITLEBAR, x, y, w, h);
     titlebar_set_method(WIDGET(titlebar));
+    widget_set_draggable(WIDGET(titlebar), true);
     titlebar->title=copy_string(title);
     WIDGET_TOOLTIP(titlebar)=(Widget *)tooltip_new(WIDGET(titlebar), title);
 

@@ -134,6 +134,9 @@ typedef struct // 定位器按鈕功能綁定
     Arg arg; // 要綁定的函數的參數
 } Buttonbind;
 
+const Keybind *get_keybinds(void);
+const Buttonbind *get_buttonbinds(void);
+
 typedef struct rectangle_tag Rect;
 
 #define WIDGET_EVENT_MASK (ExposureMask)
@@ -184,16 +187,11 @@ Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w
 void set_popup_pos(const Widget *widget, bool near_pointer, int *px, int *py, int pw, int ph);
 void set_xic(Window win, XIC *ic);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
-void create_cursors(void);
-void set_cursor(Window win, Pointer_act act);
-void free_cursors(void);
-void reg_bind(const Keybind *kb, const Buttonbind *bb);
-void grab_keys(void);
-void grab_buttons(const Widget *widget);
+void reg_binds(const Keybind *kbinds, const Buttonbind *bbinds);
+const Keybind *get_keybinds(void);
+const Buttonbind *get_buttonbinds(void);
 bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
-bool grab_pointer(Window win, Pointer_act act);
 unsigned long get_widget_color(const Widget *widget);
 XftColor get_text_color(const Widget *widget);
-bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *be);
 
 #endif

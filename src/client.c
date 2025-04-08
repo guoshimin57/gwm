@@ -17,6 +17,7 @@
 #include "image.h"
 #include "icccm.h"
 #include "prop.h"
+#include "grab.h"
 #include "client.h"
 
 static void client_ctor(Client *c, Window win);

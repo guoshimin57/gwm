@@ -69,7 +69,7 @@
     {ShiftMask|ControlMask, key, attach_to_all_desktops,  {.desktop_n=n}}
 
 /* 功能：設置按鍵功能綁定。 */
-static const Keybind keybind[] =
+static const Keybind keybinds[] =
 {
 /*  功能轉換鍵掩碼  鍵符號        要綁定的函數              函數的參數 */         
     {0,             XK_F1,        exec,                    SH_CMD(HELP)},         
@@ -142,7 +142,7 @@ static const Keybind keybind[] =
     {DESKTOPN_BUTTON(n),             Mod1Mask,    Button3, all_move_to_desktop,    {0}}
 
 /* 功能：設置定位器按鈕功能綁定。*/
-static const Buttonbind buttonbind[] =
+static const Buttonbind buttonbinds[] =
 {                                                                                         
     /* 構件標識        功能轉換鍵 定位器按鈕 要綁定的函數          函數的參數 */          
     {DESKTOP_BUTTON,       WM_KEY, Button2,  close_all_clients,    {0}},                  

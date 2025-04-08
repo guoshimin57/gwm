@@ -15,6 +15,7 @@
 #include "prop.h"
 #include "icccm.h"
 #include "ewmh.h"
+#include "grab.h"
 #include "minimax.h"
 #include "taskbar.h"
 #include "desktop.h"

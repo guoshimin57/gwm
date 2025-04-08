@@ -12,8 +12,7 @@
 #ifndef PLACE_H
 #define PLACE_H
 
-#include "gwm.h"
-#include "client.h"
+#include "widget.h"
 
 void pointer_change_place(XEvent *e, Arg arg);
 void change_to_main(XEvent *e, Arg arg);
