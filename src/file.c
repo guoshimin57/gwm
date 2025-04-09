@@ -126,7 +126,7 @@ static int cmp_basename(const char *s1, const char *s2)
     return strcmp(p1, p2);
 }
 
-void exec_cmd(char *const *cmd)
+void exec_cmd(char *const cmd[])
 {
     pid_t pid=fork();
 	if(pid == 0)
@@ -146,8 +146,7 @@ void exec_autostart(void)
 {
     char cmd[BUFSIZ];
     sprintf(cmd, "[ -x '%s' ] && '%s'", cfg->autostart, cfg->autostart);
-    const char *sh_cmd[]={"/bin/sh", "-c", cfg->autostart, NULL};
-    exec_cmd((char *const *)sh_cmd);
+    exec_cmd(SH_CMD(cfg->autostart));
 }
 
 bool is_accessible(const char *filename)

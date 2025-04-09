@@ -51,13 +51,6 @@ void exit_with_msg(const char *msg)
     exit(EXIT_FAILURE);
 }
 
-void clear_zombies(int signum)
-{
-    UNUSED(signum);
-	while(0 < waitpid(-1, NULL, WNOHANG))
-        ;
-}
-
 char *copy_string(const char *s)
 {
     return s ? strcpy(Malloc(strlen(s)+1), s) : NULL;

@@ -25,7 +25,12 @@
 #include "grab.h"
 #include "func.h"
 
-void choose_client(XEvent *e, Arg arg)
+/* ========================== Func函數命名風格 =============================
+ * 爲了方便配置功能綁定，對於所有用於綁定的函數名均應盡量簡潔。如無特殊說明，
+ * 缺省操作對象的，均指操作Client對象。
+ */
+
+void choose(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=get_cur_focus_client();
@@ -43,47 +48,17 @@ void exec(XEvent *e, Arg arg)
 void quit_wm(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    clear_wm();
-    exit(EXIT_SUCCESS);
+    run_flag=0;
 }
 
-void clear_wm(void)
-{
-    clients_for_each_safe(c)
-    {
-        XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
-        remove_client(c, true);
-    }
-    free_all_images();
-    taskbar_del(get_gwm_taskbar());
-    entry_del(cmd_entry);
-    entry_del(color_entry);
-    menu_del(act_center);
-    del_refer_top_wins();
-    XFreeModifiermap(xinfo.mod_map);
-    free_cursors();
-    XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
-    if(xinfo.xim)
-        XCloseIM(xinfo.xim);
-    close_fonts();
-    XClearWindow(xinfo.display, xinfo.root_win);
-    XFlush(xinfo.display);
-    XCloseDisplay(xinfo.display);
-    clear_zombies(0);
-    free_wallpapers();
-    Free(cfg);
-}
-
-void close_client(XEvent *e, Arg arg)
+void quit(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
-    Client *c=get_cur_focus_client();
-    if(c)
-        close_win(WIDGET_WIN(c));
+    close_win(WIDGET_WIN(get_cur_focus_client()));
 }
 
-void close_all_clients(XEvent *e, Arg arg)
+void quit_all(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     clients_for_each(c)
@@ -91,25 +66,25 @@ void close_all_clients(XEvent *e, Arg arg)
             close_win(WIDGET_WIN(c));
 }
 
-void next_client(XEvent *e, Arg arg)
+void next(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    focus_client(get_next_client(get_cur_focus_client()));
+    focus_client(get_next(get_cur_focus_client()));
 }
 
-void prev_client(XEvent *e, Arg arg)
+void prev(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    focus_client(get_prev_client(get_cur_focus_client()));
+    focus_client(get_prev(get_cur_focus_client()));
 }
 
-void increase_main_n(XEvent *e, Arg arg)
+void rise_main_n(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     adjust_main_area_n(1);
 }
 
-void decrease_main_n(XEvent *e, Arg arg)
+void fall_main_n(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     adjust_main_area_n(-1);
@@ -121,7 +96,7 @@ void toggle_focus_mode(XEvent *e, Arg arg)
     cfg->focus_mode = cfg->focus_mode==ENTER_FOCUS ? CLICK_FOCUS : ENTER_FOCUS;
 }
 
-void open_act_center(XEvent *e, Arg arg)
+void start(XEvent *e, Arg arg) // 開始，即打開操作中心（然後開始執行操作）
 {
     UNUSED(e), UNUSED(arg);
     menu_show(WIDGET(act_center));
@@ -232,5 +207,228 @@ void toggle_compositor(XEvent *e, Arg arg)
     if(win)
         XKillClient(xinfo.display, win);
     else
-        exec(e, (Arg)SH_CMD((char *)cfg->compositor));
+        exec_cmd(SH_CMD(cfg->compositor));
+}
+
+void mini(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    iconify_client(get_cur_focus_client()); 
+}
+
+void deiconify(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    deiconify_client(get_cur_focus_client()); 
+}
+
+void toggle_max_restore(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    Client *c=get_cur_focus_client();
+
+    if(is_win_state_max(c->win_state))
+        restore_client(c);
+    else
+        maximize_client(c, FULL_MAX);
+}
+
+void vmax(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize_client(get_cur_focus_client(), VERT_MAX);
+}
+
+void hmax(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize_client(get_cur_focus_client(), HORZ_MAX);
+}
+
+void tmax(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize_client(get_cur_focus_client(), TOP_MAX);
+}
+
+void bmax(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize_client(get_cur_focus_client(), BOTTOM_MAX);
+}
+
+void lmax(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize_client(get_cur_focus_client(), LEFT_MAX);
+}
+
+void rmax(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize_client(get_cur_focus_client(), RIGHT_MAX);
+}
+
+void max(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    maximize_client(get_cur_focus_client(), FULL_MAX);
+}
+
+void show_desktop(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    static bool show=false;
+
+    toggle_showing_desktop_mode(show=!show);
+}
+
+void move_up(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_move_resize_client(e, UP);
+}
+
+void move_down(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_move_resize_client(e, DOWN);
+}
+
+void move_left(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_move_resize_client(e, LEFT);
+}
+
+void move_right(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_move_resize_client(e, RIGHT);
+}
+
+void fall_width(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_move_resize_client(e, FALL_WIDTH);
+}
+
+void rise_width(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_move_resize_client(e, RISE_WIDTH);
+}
+
+void fall_height(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_move_resize_client(e, FALL_HEIGHT);
+}
+
+void rise_height(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    key_move_resize_client(e, RISE_HEIGHT);
+}
+
+void move(XEvent *e, Arg arg)
+{
+    UNUSED(arg);
+    pointer_move_resize_client(e, false);
+}
+
+void resize(XEvent *e, Arg arg)
+{
+    UNUSED(arg);
+    pointer_move_resize_client(e, true);
+}
+
+void toggle_shade(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    static bool shade=false;
+
+    toggle_shade_mode(get_cur_focus_client(), shade=!shade);
+}
+
+void change_place(XEvent *e, Arg arg)
+{
+    UNUSED(arg);
+    pointer_change_place(e);
+}
+
+void to_main_area(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    client_change_place(MAIN_AREA);
+}
+
+void to_second_area(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    client_change_place(SECOND_AREA);
+}
+
+void to_fixed_area(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    client_change_place(FIXED_AREA);
+}
+
+void to_above_layer(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    client_change_place(ABOVE_LAYER);
+}
+
+void swap(XEvent *e, Arg arg)
+{
+    UNUSED(arg);
+    pointer_swap_clients(e);
+}
+
+void stack(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    change_layout(STACK);
+}
+
+void tile(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    change_layout(TILE);
+}
+
+void adjust_layout_ratio(XEvent *e, Arg arg)
+{
+    UNUSED(arg);
+    pointer_adjust_layout_ratio(e);
+}
+
+void rise_main_area(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    Rect wr=get_net_workarea();
+    adjust_main_area((double)cfg->resize_inc/wr.w);
+}
+
+void fall_main_area(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    Rect wr=get_net_workarea();
+    adjust_main_area(-(double)cfg->resize_inc/wr.w);
+}
+
+void rise_fixed_area(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    Rect wr=get_net_workarea();
+    adjust_fixed_area((double)cfg->resize_inc/wr.w);
+}
+
+void fall_fixed_area(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    Rect wr=get_net_workarea();
+    adjust_fixed_area(-(double)cfg->resize_inc/wr.w);
 }

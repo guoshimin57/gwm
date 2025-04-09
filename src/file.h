@@ -15,7 +15,7 @@
 #include "misc.h"
 
 Strings *get_files_in_paths(const char *paths, const char *regex, bool fullname);
-void exec_cmd(char *const*cmd);
+void exec_cmd(char *const cmd[]);
 void exec_autostart(void);
 bool is_accessible(const char *filename);
 

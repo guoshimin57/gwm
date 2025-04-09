@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     place.c：實現與窗口放置位置相關功能。
+ *     place.c：實現使用輸入設備改變客戶窗口放置位置的功能。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -16,14 +16,12 @@
 #include "place.h"
 
 static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne);
-static void key_change_place(Place type);
 
-void pointer_change_place(XEvent *e, Arg arg)
+void pointer_change_place(XEvent *e)
 {
     XEvent ev;
     Client *from=get_cur_focus_client(), *to;
 
-    UNUSED(arg);
     if(get_gwm_layout()!=TILE || !from || !get_valid_click(CHANGE, e, &ev))
         return;
 
@@ -58,40 +56,15 @@ static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne)
         && is_pointer_on_win(ne->xbutton.window);
 }
 
-void change_to_main(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    key_change_place(MAIN_AREA);
-}
-
-void change_to_second(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    key_change_place(SECOND_AREA);
-}
-
-void change_to_fixed(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    key_change_place(FIXED_AREA);
-}
-
-void change_to_above(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    key_change_place(ABOVE_LAYER);
-}
-
-static void key_change_place(Place type)
+void client_change_place(Place type)
 {
     Client *c=get_cur_focus_client();
     move_client(c, NULL, type);
     update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
-void pointer_swap_clients(XEvent *e, Arg arg)
+void pointer_swap_clients(XEvent *e)
 {
-    UNUSED(arg);
     XEvent ev;
     Client *from=get_cur_focus_client(), *to=NULL;
     if(get_gwm_layout()!=TILE || !from || !get_valid_click(SWAP, e, &ev))

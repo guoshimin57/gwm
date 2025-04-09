@@ -159,7 +159,7 @@ void create_layer_wins(void)
         top_wins[i]=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
 }
 
-void del_refer_top_wins(void)
+void del_layer_wins(void)
 {
     for(size_t i=0; i<LAYER_N; i++)
         XDestroyWindow(xinfo.display, top_wins[i]);

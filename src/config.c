@@ -29,28 +29,6 @@
 
 Config *cfg=NULL;
 
-/* 功能：設置窗口管理器規則。
- * 說明：Rule的定義詳見gwm.h。可通過xprop命令查看客戶程序類型和客戶程序名稱、標題。其結果表示爲：
- *     WM_CLASS(STRING) = "客戶程序名稱", "客戶程序類型"
- *     WM_NAME(STRING) = "標題"
- *     _NET_WM_NAME(UTF8_STRING) = "標題"
- * 當客戶程序類型和客戶程序名稱、標題取NULL或"*"時，表示匹配任何字符串。
- * 一個窗口可以歸屬多個桌面，桌面從0開始編號，桌面n的掩碼計算公式：1<<n。
- * 譬如，桌面0的掩碼是1<<0，即1；桌面1的掩碼是1<<1，即2；1&2即3表示窗口歸屬桌面0和1。
- * 若掩碼爲0，表示窗口歸屬默認桌面。
- */
-static const Rule rule[] =
-{
-    /* 客戶程序類型        客戶程序名稱          標題   客戶程序的類型別名 窗口放置位置  桌面掩碼 */
-    {"QQ",                 "qq",                 "QQ",         "QQ",       FIXED_AREA,      0},
-    {"explorer.exe",       "explorer.exe",       "*",          NULL,       ABOVE_LAYER,     0},
-    {"Thunder.exe",        "Thunder.exe",        "*",          NULL,       ABOVE_LAYER,     0},
-    {"firefox",            "Toolkit",            "*",          NULL,       MAIN_AREA,       0},
-    {"Google-chrome",      "google-chrome",      "*",          "chrome",   ANY_PLACE,       0},
-    {"Org.gnome.Nautilus", "org.gnome.Nautilus", "*",          "Nautilus", ANY_PLACE,       0},
-    {0} // 哨兵值，表示結束，切勿刪改之
-};
-
 /* 本窗口管理器所偏好的字體名稱列表。
  * 每增加一個字體，會增加0.1M內存，但也會提高效率。 */
 static const char *font_names[]=
@@ -254,7 +232,6 @@ static void config_misc(void)
     cfg->cmd_entry_hint=_("請輸入命令，然後按回車執行");
     cfg->color_entry_hint=_("請輸入系統界面主色調的顏色名（支持英文顏色名和十六进制顏色名），然後按回車執行");
     cfg->compositor="picom";
-    cfg->rule=rule;
 }
 
 /* =========================== 用戶配置項結束 =========================== */ 

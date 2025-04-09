@@ -16,6 +16,12 @@
 #include "gwm.h"
 #include "client.h"
 
+typedef enum // 窗口最大化的方式
+{
+    VERT_MAX, HORZ_MAX,
+    TOP_MAX, BOTTOM_MAX, LEFT_MAX, RIGHT_MAX, FULL_MAX,
+} Max_way;
+
 void manage_exsit_clients(void);
 void add_client(Window win);
 void remove_client(Client *c, bool is_for_quit);
@@ -27,5 +33,8 @@ void iconify_client(Client *c);
 void deiconify_client(Client *c);
 void iconify_all_clients(void);
 void deiconify_all_clients(void);
+void maximize_client(Client *c, Max_way max_way);
+void toggle_showing_desktop_mode(bool show);
+void toggle_shade_mode(Client *c, bool shade);
 
 #endif

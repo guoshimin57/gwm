@@ -21,6 +21,6 @@ Client *get_cur_focus_client(void);
 void set_prev_focus_client(Client *c);
 Client *get_prev_focus_client(void);
 void create_layer_wins(void);
-void del_refer_top_wins(void);
+void del_layer_wins(void);
 
 #endif

@@ -16,17 +16,14 @@
 #include "grab.h"
 #include "mvresize.h"
 
-typedef enum // 方向
+typedef struct /* 定位器所點擊的窗口位置每次合理移動或調整尺寸所對應的舊、新坐標信息 */
 {
-    UP, DOWN, LEFT, RIGHT, RIGHT2LEFT, RIGHT2RIGHT,
-    DOWN2UP, DOWN2DOWN,
-} Direction;
+    int ox, oy, nx, ny; /* 分別爲舊、新坐標 */
+} Move_info;
 
-static void key_move_resize_client(XEvent *e, Direction dir);
 static bool fix_first_move_resize(Client *c, Delta_rect *d);
 static void wait_key_release(XEvent *e);
-static Delta_rect get_key_delta_rect(Client *c, Direction dir);
-static void pointer_move_resize_client(XEvent *e, bool resize);
+static Delta_rect get_key_delta_rect(Client *c, Key_act act);
 static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act, bool is_to_above);
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
 static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move, bool is_to_above);
@@ -35,72 +32,12 @@ static bool fix_delta_rect(Client *c, Delta_rect *d);
 static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
 static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh);
 
-void key_move_up(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, UP);
-}
-
-void key_move_down(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, DOWN);
-}
-
-void key_move_left(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, LEFT);
-}
-
-void key_move_right(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, RIGHT);
-}
-
-void key_more_width(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, RIGHT2RIGHT);
-}
-
-void key_less_width(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, RIGHT2LEFT);
-}
-
-void key_more_height(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, DOWN2DOWN);
-}
-
-void key_less_height(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    key_move_resize_client(e, DOWN2UP);
-}
-
-void pointer_move(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    pointer_move_resize_client(e, false);
-}
-
-void pointer_resize(XEvent *e, Arg arg)
-{
-    UNUSED(arg);
-    pointer_move_resize_client(e, true);
-}
-
-static void key_move_resize_client(XEvent *e, Direction dir)
+void key_move_resize_client(XEvent *e, Key_act op)
 {
     Client *c=get_cur_focus_client();
-    bool is_move = (dir==UP || dir==DOWN || dir==LEFT || dir==RIGHT),
+    bool is_move = (op==UP || op==DOWN || op==LEFT || op==RIGHT),
          is_to_above;
-    Delta_rect d=get_key_delta_rect(c, dir);
+    Delta_rect d=get_key_delta_rect(c, op);
 
     if((is_to_above=is_tiled_client(c)))
         move_client(c, NULL, ABOVE_LAYER);
@@ -139,7 +76,7 @@ static void wait_key_release(XEvent *e)
     }
 }
 
-static Delta_rect get_key_delta_rect(Client *c, Direction dir)
+static Delta_rect get_key_delta_rect(Client *c, Key_act act)
 {
     XSizeHints hint=get_size_hint(WIDGET_WIN(c));
     int wi=hint.width_inc, hi=hint.height_inc;
@@ -150,19 +87,19 @@ static Delta_rect get_key_delta_rect(Client *c, Direction dir)
         [DOWN]        = {  0,  hi,   0,   0},
         [LEFT]        = {-wi,   0,   0,   0},
         [RIGHT]       = { wi,   0,   0,   0},
-        [RIGHT2LEFT]  = {  0,   0, -wi,   0},
-        [RIGHT2RIGHT] = {  0,   0,  wi,   0},
-        [DOWN2UP]     = {  0,   0,   0, -hi},
-        [DOWN2DOWN]   = {  0,   0,   0,  hi},
+        [FALL_WIDTH]  = {  0,   0, -wi,   0},
+        [RISE_WIDTH]  = {  0,   0,  wi,   0},
+        [FALL_HEIGHT] = {  0,   0,   0, -hi},
+        [RISE_HEIGHT] = {  0,   0,   0,  hi},
     };
-    return dr[dir];
+    return dr[act];
 }
 
-static void pointer_move_resize_client(XEvent *e, bool resize)
+void pointer_move_resize_client(XEvent *e, bool resize)
 {
     Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
     Client *c=get_cur_focus_client();
-    Pointer_act act=(resize ? get_resize_act(c, &m) : MOVE);
+    Pointer_act act=(resize ? get_resize_act(c, m.ox, m.oy) : MOVE);
 
     if(!grab_pointer(xinfo.root_win, act))
         return;
@@ -291,52 +228,29 @@ static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh)
         *dh=0;
 }
 
-Pointer_act get_resize_act(Client *c, const Move_info *m)
+Pointer_act get_resize_act(Client *c, int x, int y)
 {   // 框架邊框寬度、可調整尺寸區域的寬度、高度
     // 以及框架左、右橫坐標和上、下縱坐標
     int bw=WIDGET_BORDER_W(c->frame), reszw=WIDGET_W(c)/4, reszh=WIDGET_H(c)/4,
         lx=WIDGET_X(c->frame), rx=WIDGET_X(c->frame)+WIDGET_W(c->frame)+2*bw,
         ty=WIDGET_Y(c->frame), by=WIDGET_Y(c->frame)+WIDGET_H(c->frame)+2*bw;
-    int ox=m->ox, oy=m->oy;
 
-    if(ox>=lx && ox<lx+reszw && oy>=ty && oy<ty+reszh)
+    if(x>=lx && x<lx+reszw && y>=ty && y<ty+reszh)
         return TOP_LEFT_RESIZE;
-    else if(ox>=rx-reszw && ox<rx && oy>=ty && oy<ty+reszh)
+    else if(x>=rx-reszw && x<rx && y>=ty && y<ty+reszh)
         return TOP_RIGHT_RESIZE;
-    else if(ox>=lx && ox<lx+reszw && oy>=by-reszh && oy<by)
+    else if(x>=lx && x<lx+reszw && y>=by-reszh && y<by)
         return BOTTOM_LEFT_RESIZE;
-    else if(ox>=rx-reszw && ox<rx && oy>=by-reszh && oy<by)
+    else if(x>=rx-reszw && x<rx && y>=by-reszh && y<by)
         return BOTTOM_RIGHT_RESIZE;
-    else if(oy>=ty && oy<ty+reszh)
+    else if(y>=ty && y<ty+reszh)
         return TOP_RESIZE;
-    else if(oy>=by-reszh && oy<by)
+    else if(y>=by-reszh && y<by)
         return BOTTOM_RESIZE;
-    else if(ox>=lx && ox<lx+reszw)
+    else if(x>=lx && x<lx+reszw)
         return LEFT_RESIZE;
-    else if(ox>=rx-reszw && ox<rx)
+    else if(x>=rx-reszw && x<rx)
         return RIGHT_RESIZE;
     else
         return NO_OP;
-}
-
-void toggle_shade_client(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    static bool shade=false;
-
-    toggle_shade_client_mode(get_cur_focus_client(), shade=!shade);
-}
-
-void toggle_shade_client_mode(Client *c, bool shade)
-{
-    if(!c->decorative)
-        return;
-
-    int x=WIDGET_X(c->frame), y=WIDGET_Y(c->frame),
-        w=WIDGET_W(c->frame), h=WIDGET_H(c->frame), ch=WIDGET_H(c);
-    if(shade)
-        frame_move_resize(c->frame, x, y, w, h-ch);
-    else
-        frame_move_resize(c->frame, x, y, w, h+ch);
-    c->win_state.shaded=shade;
 }

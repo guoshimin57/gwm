@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.12.23\n"
+"Project-Id-Version: gwm 2.12.24\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-08 20:10+0800\n"
+"POT-Creation-Date: 2025-04-09 13:24+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -17,214 +17,214 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: clientop.c:31
+#: clientop.c:38
 msgid "錯誤：查詢窗口清單失敗！"
 msgstr "Error: Failed to query window list!"
 
 #. 操作中心按鈕類型         圖標名 符號     標籤
-#: config.c:153
+#: config.c:131
 msgid "幫助"
 msgstr "Help"
 
-#: config.c:154
+#: config.c:132
 msgid "文件"
 msgstr "Doc"
 
-#: config.c:155
+#: config.c:133
 msgid "終端模擬器"
 msgstr "Terminal"
 
-#: config.c:156
+#: config.c:134
 msgid "網絡瀏覽器"
 msgstr "Web browser"
 
-#: config.c:158
+#: config.c:136
 msgid "遊戲"
 msgstr "Game"
 
-#: config.c:159
+#: config.c:137
 msgid "播放影音"
 msgstr "Player"
 
-#: config.c:160
+#: config.c:138
 msgid "切換播放狀態"
 msgstr "Toggle play status"
 
-#: config.c:161
+#: config.c:139
 msgid "關閉影音"
 msgstr "Quit player"
 
-#: config.c:163
+#: config.c:141
 msgid "减小音量"
 msgstr "Volume down"
 
-#: config.c:164
+#: config.c:142
 msgid "增大音量"
 msgstr "Volume up"
 
-#: config.c:165
+#: config.c:143
 msgid "最大音量"
 msgstr "Volume max"
 
-#: config.c:166
+#: config.c:144
 msgid "靜音切換"
 msgstr "Mute toggle"
 
-#: config.c:168
+#: config.c:146
 msgid "增大主區容量"
 msgstr "Main area n+"
 
-#: config.c:169
+#: config.c:147
 msgid "减小主區容量"
 msgstr "Main area n-"
 
-#: config.c:171
+#: config.c:149
 msgid "關閉桌面所有窗口"
 msgstr "Close all win on desktop"
 
-#: config.c:172
+#: config.c:150
 msgid "當前窗口截圖"
 msgstr "Cur win screenshot"
 
-#: config.c:173
+#: config.c:151
 msgid "全屏截圖"
 msgstr "Full screen screenshot"
 
-#: config.c:174
+#: config.c:152
 msgid "切換聚焦模式"
 msgstr "Toggle focus mode"
 
-#: config.c:176
+#: config.c:154
 msgid "開關合成器"
 msgstr "Toggle compositor"
 
-#: config.c:177
+#: config.c:155
 msgid "切換壁紙"
 msgstr "Switch wallpaper"
 
-#: config.c:178
+#: config.c:156
 msgid "设置顏色"
 msgstr "Set color"
 
-#: config.c:179
+#: config.c:157
 msgid "退出gwm"
 msgstr "Quit gwm"
 
-#: config.c:181
+#: config.c:159
 msgid "注銷"
 msgstr "Log out"
 
-#: config.c:182
+#: config.c:160
 msgid "重啓"
 msgstr "Reboot"
 
-#: config.c:183
+#: config.c:161
 msgid "關機"
 msgstr "Shut down"
 
-#: config.c:184
+#: config.c:162
 msgid "運行"
 msgstr "Run command"
 
 #. 客戶窗口菜單項類型   圖標名 符號     標籤
-#: config.c:193
+#: config.c:171
 msgid "卷起/放下"
 msgstr "Roll up / Put down"
 
-#: config.c:194
+#: config.c:172
 msgid "縱向最大化"
 msgstr "Vertical max"
 
-#: config.c:195
+#: config.c:173
 msgid "橫向最大化"
 msgstr "Horizontal max"
 
-#: config.c:196
+#: config.c:174
 msgid "最大化至上半屏"
 msgstr "Max to top half screen"
 
-#: config.c:197
+#: config.c:175
 msgid "最大化至下半屏"
 msgstr "Max to bottom half screen"
 
-#: config.c:198
+#: config.c:176
 msgid "最大化至左半屏"
 msgstr "Max to left half screen"
 
-#: config.c:199
+#: config.c:177
 msgid "最大化至右半屏"
 msgstr "Max to right half screen"
 
-#: config.c:200
+#: config.c:178
 msgid "完全最大化"
 msgstr "fully max"
 
 #. 構件標識             構件功能提示文字
-#: config.c:212
+#: config.c:190
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: config.c:213
+#: config.c:191
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: config.c:214
+#: config.c:192
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: config.c:215
+#: config.c:193
 msgid "切換到懸浮層"
 msgstr "To float layer"
 
-#: config.c:216
+#: config.c:194
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: config.c:217
+#: config.c:195
 msgid "最大化/還原窗口"
 msgstr "Max/Restore window"
 
-#: config.c:218
+#: config.c:196
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: config.c:219
+#: config.c:197
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: config.c:220
+#: config.c:198
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: config.c:221
+#: config.c:199
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: config.c:222
+#: config.c:200
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: config.c:223
+#: config.c:201
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: config.c:224
+#: config.c:202
 msgid "顯示桌面"
 msgstr "Show desktop"
 
-#: config.c:225
+#: config.c:203
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: config.c:226
+#: config.c:204
 msgid "打開窗口菜單"
 msgstr "Open window menu"
 
-#: config.c:254
+#: config.c:232
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
-#: config.c:255
+#: config.c:233
 msgid "請輸入系統界面主色調的顏色名（支持英文顏色名和十六进制顏色名），然後按回車執行"
 msgstr "Enter main color name of UI(English or hex color name), and then press enter"
 
@@ -280,30 +280,30 @@ msgstr "Command execution error"
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
 
-#: gwm.c:43
-msgid "不能安裝SIGCHLD信號處理函數"
-msgstr "SIGCHLD signal handler function cannot be installed"
-
-#: gwm.c:45
-msgid "不能安裝SIGINT信號處理函數"
-msgstr "SIGINT signal handler cannot be installed"
-
-#: gwm.c:47
-msgid "不能安裝SIGTERM信號處理函數"
-msgstr "SIGTERM signal handler cannot be installed"
-
-#: gwm.c:49
-msgid "不能安裝SIGQUIT信號處理函數"
-msgstr "SIGQUIT signal handler cannot be installed"
-
-#: gwm.c:51
-msgid "不能安裝SIGHUP信號處理函數"
-msgstr "SIGHUP signal handler cannot be installed"
-
-#: init.c:116
+#: init.c:131
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
+
+#: init.c:196
+msgid "不能安裝SIGCHLD信號處理函數"
+msgstr "SIGCHLD signal handler function cannot be installed"
+
+#: init.c:198
+msgid "不能安裝SIGINT信號處理函數"
+msgstr "SIGINT signal handler cannot be installed"
+
+#: init.c:200
+msgid "不能安裝SIGTERM信號處理函數"
+msgstr "SIGTERM signal handler cannot be installed"
+
+#: init.c:202
+msgid "不能安裝SIGQUIT信號處理函數"
+msgstr "SIGQUIT signal handler cannot be installed"
+
+#: init.c:204
+msgid "不能安裝SIGHUP信號處理函數"
+msgstr "SIGHUP signal handler cannot be installed"
 
 #: misc.c:22
 msgid "錯誤：申請內存失敗"

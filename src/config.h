@@ -76,7 +76,6 @@ typedef struct
     const char *cmd_entry_hint; // 運行輸入框的提示文字
     const char *color_entry_hint; // 颜色輸入框的提示文字
     const char *compositor; // 合成管理器命令
-    const Rule *rule; // 窗口管理器對窗口的管理規則
 } Config;
 
 extern Config *cfg; // 窗口管理器配置

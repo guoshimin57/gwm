@@ -22,6 +22,13 @@ static void set_place_for_subgroup(Client *subgroup_leader, Place type);
 static bool move_client_node(Client *from, Client *to, Place type);
 static void add_subgroup(Client *head, Client *subgroup_leader);
 static void del_subgroup(Client *subgroup_leader);
+static void set_max_rect(Client *c, Max_way max_way);
+static Rect get_vert_max_rect(const Rect *workarea, const Client *c);
+static Rect get_horz_max_rect(const Rect *workarea, const Client *c);
+static Rect get_top_max_rect(const Rect *workarea);
+static Rect get_bottom_max_rect(const Rect *workarea);
+static Rect get_left_max_rect(const Rect *workarea);
+static Rect get_right_max_rect(const Rect *workarea);
 
 void manage_exsit_clients(void)
 {
@@ -254,4 +261,99 @@ void deiconify_all_clients(void)
     clients_for_each_reverse(c)
         if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
             deiconify_client(c);
+}
+
+void maximize_client(Client *c, Max_way max_way)
+{
+    if(!is_win_state_max(c->win_state))
+        save_place_info_of_client(c);
+    set_max_rect(c, max_way);
+    if(is_tiled_client(c))
+        move_client(c, NULL, ABOVE_LAYER);
+    move_resize_client(c, NULL);
+    switch(max_way)
+    {
+        case VERT_MAX:   c->win_state.vmax=1; break;
+        case HORZ_MAX:   c->win_state.hmax=1; break;
+        case TOP_MAX:    c->win_state.tmax=1; break;
+        case BOTTOM_MAX: c->win_state.bmax=1; break;
+        case LEFT_MAX:   c->win_state.lmax=1; break;
+        case RIGHT_MAX:  c->win_state.rmax=1; break;
+        case FULL_MAX:   c->win_state.vmax=c->win_state.hmax=1; break;
+    }
+    update_net_wm_state(WIDGET_WIN(c), c->win_state);
+}
+
+static void set_max_rect(Client *c, Max_way max_way)
+{
+    int bw=WIDGET_BORDER_W(c->frame),
+        w=WIDGET_W(c->frame)+2*bw, h=WIDGET_H(c->frame)+2*bw;
+    Rect wr=get_net_workarea(), maxr=wr;
+    switch(max_way)
+    {
+        case VERT_MAX:   if(w != wr.h) maxr=get_vert_max_rect(&wr, c); break;
+        case HORZ_MAX:   if(h != wr.w) maxr=get_horz_max_rect(&wr, c); break;
+        case TOP_MAX:    maxr=get_top_max_rect(&wr); break;
+        case BOTTOM_MAX: maxr=get_bottom_max_rect(&wr); break;
+        case LEFT_MAX:   maxr=get_left_max_rect(&wr); break;
+        case RIGHT_MAX:  maxr=get_right_max_rect(&wr); break;
+        case FULL_MAX:   break;
+        default:         return;
+    }
+    set_client_rect_by_outline(c, maxr.x, maxr.y, maxr.w, maxr.h);
+}
+
+static Rect get_vert_max_rect(const Rect *workarea, const Client *c)
+{
+    Rect r=widget_get_outline(WIDGET(c->frame));
+    return (Rect){r.x, workarea->y, r.w, workarea->h};
+}
+
+static Rect get_horz_max_rect(const Rect *workarea, const Client *c)
+{
+    Rect r=widget_get_outline(WIDGET(c->frame));
+    return (Rect){workarea->x, r.y, workarea->w, r.h};
+}
+
+static Rect get_top_max_rect(const Rect *workarea)
+{
+    return (Rect){workarea->x, workarea->y, workarea->w, workarea->h/2};
+}
+
+static Rect get_bottom_max_rect(const Rect *workarea)
+{
+    return (Rect){workarea->x, workarea->y+workarea->h/2, workarea->w, workarea->h/2};
+}
+
+static Rect get_left_max_rect(const Rect *workarea)
+{
+    return (Rect){workarea->x, workarea->y, workarea->w/2, workarea->h};
+}
+
+static Rect get_right_max_rect(const Rect *workarea)
+{
+    return (Rect){workarea->x+workarea->w/2, workarea->y, workarea->w/2, workarea->h};
+}
+
+void toggle_showing_desktop_mode(bool show)
+{
+    if(show)
+        iconify_all_clients();
+    else
+        deiconify_all_clients();
+    set_net_showing_desktop(show);
+}
+
+void toggle_shade_mode(Client *c, bool shade)
+{
+    if(!c->decorative)
+        return;
+
+    int x=WIDGET_X(c->frame), y=WIDGET_Y(c->frame),
+        w=WIDGET_W(c->frame), h=WIDGET_H(c->frame), ch=WIDGET_H(c);
+    if(shade)
+        frame_move_resize(c->frame, x, y, w, h-ch);
+    else
+        frame_move_resize(c->frame, x, y, w, h+ch);
+    c->win_state.shaded=shade;
 }

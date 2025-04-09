@@ -13,12 +13,12 @@
 #include "config.h"
 #include "entry.h"
 #include "focus.h"
+#include "file.h"
 #include "prop.h"
 #include "icccm.h"
 #include "image.h"
 #include "desktop.h"
 #include "func.h"
-#include "minimax.h"
 #include "mvresize.h"
 #include "layout.h"
 #include "grab.h"
@@ -32,6 +32,14 @@ static void handle_client_message(XEvent *e);
 static void change_net_wm_state(Client *c, long *full_act);
 static void change_net_wm_state_for_modal(Client *c, long act);
 static void change_net_wm_state_for_sticky(Client *c, long act);
+static void change_net_wm_state_for_vmax(Client *c, long act);
+static void change_net_wm_state_for_hmax(Client *c, long act);
+static void change_net_wm_state_for_tmax(Client *c, long act);
+static void change_net_wm_state_for_bmax(Client *c, long act);
+static void change_net_wm_state_for_lmax(Client *c, long act);
+static void change_net_wm_state_for_rmax(Client *c, long act);
+static void change_net_wm_state_for_hidden(Client *c, long act);
+static void change_net_wm_state_for_fullscreen(Client *c, long act);
 static void change_net_wm_state_for_shaded(Client *c, long act);
 static void change_net_wm_state_for_skip_taskbar(Client *c, long act);
 static void change_net_wm_state_for_skip_pager(Client *c, long act);
@@ -39,6 +47,7 @@ static void change_net_wm_state_for_above(Client *c, long act);
 static void change_net_wm_state_for_below(Client *c, long act);
 static void change_net_wm_state_for_attent(Client *c, long act);
 static void change_net_wm_state_for_focused(Client *c, long act);
+static void set_fullscreen(Client *c);
 static void activate_win(Window win, unsigned long src);
 static void change_desktop(Window win, unsigned int desktop);
 static void handle_config_request(XEvent *e);
@@ -71,7 +80,6 @@ void handle_events(void)
     XSync(xinfo.display, False);
     while(run_flag && !XNextEvent(xinfo.display, &e))
         handle_event(&e);
-    clear_wm();
 }
 
 static void handle_event(XEvent *e)
@@ -233,9 +241,83 @@ static void change_net_wm_state_for_sticky(Client *c, long act)
     c->win_state.sticky=add;
 }
 
+static void change_net_wm_state_for_vmax(Client *c, long act)
+{
+    if(SHOULD_ADD_STATE(c, act, vmax))
+        maximize_client(c, VERT_MAX);
+    else
+        restore_client(c);
+}
+
+static void change_net_wm_state_for_hmax(Client *c, long act)
+{
+    if(SHOULD_ADD_STATE(c, act, hmax))
+        maximize_client(c, HORZ_MAX);
+    else
+        restore_client(c);
+}
+
+static void change_net_wm_state_for_tmax(Client *c, long act)
+{
+    if(SHOULD_ADD_STATE(c, act, tmax))
+        maximize_client(c, TOP_MAX);
+    else
+        restore_client(c);
+}
+
+static void change_net_wm_state_for_bmax(Client *c, long act)
+{
+    if(SHOULD_ADD_STATE(c, act, bmax))
+        maximize_client(c, BOTTOM_MAX);
+    else
+        restore_client(c);
+}
+
+static void change_net_wm_state_for_lmax(Client *c, long act)
+{
+    if(SHOULD_ADD_STATE(c, act, lmax))
+        maximize_client(c, LEFT_MAX);
+    else
+        restore_client(c);
+}
+
+static void change_net_wm_state_for_rmax(Client *c, long act)
+{
+    if(SHOULD_ADD_STATE(c, act, rmax))
+        maximize_client(c, RIGHT_MAX);
+    else
+        restore_client(c);
+}
+
+static void change_net_wm_state_for_hidden(Client *c, long act)
+{
+    if(SHOULD_ADD_STATE(c, act, hidden))
+        iconify_client(c);
+    else
+        deiconify_client(is_iconic_client(c) ? c : NULL);
+}
+
+static void change_net_wm_state_for_fullscreen(Client *c, long act)
+{
+    if(SHOULD_ADD_STATE(c, act, fullscreen))
+        set_fullscreen(c);
+    else
+        restore_client(c);
+}
+
+static void set_fullscreen(Client *c)
+{
+    save_place_info_of_client(c);
+    WIDGET_X(c)=WIDGET_Y(c)=0;
+    WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
+    move_client(c, NULL, FULLSCREEN_LAYER);
+    c->win_state.fullscreen=1;
+    update_net_wm_state(WIDGET_WIN(c), c->win_state);
+}
+
 static void change_net_wm_state_for_shaded(Client *c, long act)
 {
-    toggle_shade_client_mode(c, SHOULD_ADD_STATE(c, act, shaded));
+    toggle_shade_mode(c, SHOULD_ADD_STATE(c, act, shaded));
 }
 
 static void change_net_wm_state_for_skip_taskbar(Client *c, long act)
@@ -365,7 +447,6 @@ static void handle_enter_notify(XEvent *e)
     Window win=e->xcrossing.window;
     Client *c=win_to_client(win);
     Pointer_act act=NO_OP;
-    Move_info m={x, y, 0, 0};
     Widget *widget=widget_find(win);
 
     if(cfg->focus_mode==ENTER_FOCUS && c)
@@ -376,7 +457,7 @@ static void handle_enter_notify(XEvent *e)
     if(widget == NULL)
         return;
     if(widget->id == CLIENT_FRAME)
-        act=get_resize_act(c, &m);
+        act=get_resize_act(c, x, y);
     else if(widget->id == TITLEBAR)
         act=MOVE;
     else
@@ -493,7 +574,7 @@ static void key_run_cmd(XKeyEvent *e)
 
     char cmd[BUFSIZ]={0};
     wcstombs(cmd, entry_get_text(cmd_entry), BUFSIZ);
-    exec(NULL, (Arg)SH_CMD(cmd));
+    exec_cmd(SH_CMD(cmd));
     entry_clear(cmd_entry);
 }
 

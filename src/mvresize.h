@@ -15,19 +15,14 @@
 #include "gwm.h"
 #include "client.h"
 
-void key_move_up(XEvent *e, Arg arg);
-void key_move_down(XEvent *e, Arg arg);
-void key_move_left(XEvent *e, Arg arg);
-void key_move_right(XEvent *e, Arg arg);
-void key_more_width(XEvent *e, Arg arg);
-void key_less_width(XEvent *e, Arg arg);
-void key_more_height(XEvent *e, Arg arg);
-void key_less_height(XEvent *e, Arg arg);
-void pointer_move(XEvent *e, Arg arg);
-void pointer_resize(XEvent *e, Arg arg);
-Pointer_act get_resize_act(Client *c, const Move_info *m);
-void toggle_shade_client(XEvent *e, Arg arg);
-void toggle_shade_client_mode(Client *c, bool shade);
+typedef enum // 鍵盤操作方式
+{
+    UP, DOWN, LEFT, RIGHT, FALL_WIDTH, RISE_WIDTH,
+    FALL_HEIGHT, RISE_HEIGHT
+} Key_act;
 
+void key_move_resize_client(XEvent *e, Key_act act);
+void pointer_move_resize_client(XEvent *e, bool resize);
+Pointer_act get_resize_act(Client *c, int x, int y);
 
 #endif

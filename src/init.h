@@ -12,6 +12,7 @@
 #ifndef INIT_H
 #define INIT_H
 
-void init_wm(void);
+void wm_init(void);
+void wm_deinit(void);
 
 #endif

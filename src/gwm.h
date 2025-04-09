@@ -41,7 +41,9 @@
 #define SHOULD_ADD_STATE(c, act, flag) \
     (act==NET_WM_STATE_ADD || (act==NET_WM_STATE_TOGGLE && !c->win_state.flag))
 
-#define SH_CMD(cmd_str) {.cmd=(char *const []){"/bin/sh", "-c", cmd_str, NULL}}
+#define SH_CMD(cmd_str) ((char *const []){"/bin/sh", "-c", (char *const)cmd_str, NULL})
+#define CMD(cmd_str) {.cmd=SH_CMD(cmd_str)}
+
 #define FUNC_ARG(var, data) (Func_arg){.var=data}
 
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
@@ -62,14 +64,6 @@ typedef struct // 與X相關的信息
     Window root_win; // 根窗口
 } Xinfo;
 
-typedef enum // 窗口的位置類型，屏幕分爲多層，普通層還分爲多個區域
-{
-    FULLSCREEN_LAYER, DOCK_LAYER, ABOVE_LAYER, NORMAL_LAYER,
-    MAIN_AREA, SECOND_AREA, FIXED_AREA, // 普通層的各個區域
-    BELOW_LAYER, DESKTOP_LAYER,
-    ANY_PLACE
-} Place;
-
 #define LAYER_N 6
 
 typedef struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
@@ -88,22 +82,23 @@ typedef enum // 窗口管理器的布局模式
     STACK, TILE,
 } Layout;
 
-struct rule_tag // 窗口管理器的規則
+typedef enum // 窗口的位置類型，屏幕分爲多層，普通層還分爲多個區域
+{
+    FULLSCREEN_LAYER, DOCK_LAYER, ABOVE_LAYER, NORMAL_LAYER,
+    MAIN_AREA, SECOND_AREA, FIXED_AREA, // 普通層的各個區域
+    BELOW_LAYER, DESKTOP_LAYER,
+    ANY_PLACE
+} Place;
+
+typedef struct // 窗口管理器的規則
 {// 分別爲客戶窗口的程序類型和程序名稱、標題，NULL或*表示匹配任何字符串
     const char *app_class, *app_name, *title;
     const char *class_alias; // 客戶窗口的類型別名
     Place place; // 客戶窗口的位置類型
     unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼
-};
-typedef struct rule_tag Rule;
+} Rule;
 
 typedef void (*Event_handler)(XEvent *); // 事件處理器類型
-
-struct move_info_tag /* 定位器所點擊的窗口位置每次合理移動或調整尺寸所對應的舊、新坐標信息 */
-{
-    int ox, oy, nx, ny; /* 分別爲舊、新坐標 */
-};
-typedef struct move_info_tag Move_info;
 
 extern sig_atomic_t run_flag; // 程序運行標志
 extern Event_handler event_handler; // 事件處理器

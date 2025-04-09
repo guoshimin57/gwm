@@ -13,6 +13,7 @@
 #include "misc.h"
 #include "config.h"
 #include "entry.h"
+#include "image.h"
 #include "file.h"
 #include "font.h"
 #include "handler.h"
@@ -26,17 +27,21 @@
 #include "bind_cfg.h"
 #include "init.h"
 
+static Display *open_display(void);
+static void clear_zombies(int signum);
 static void set_visual_info(void);
 static void set_locale(void);
 static void set_ewmh(void);
 static void set_atoms(void);
 static void init_imlib(void);
+static void set_screensaver(void);
+static void set_signals(void);
+static void ready_to_quit(int signum);
 
-void init_wm(void)
+void wm_init(void)
 {
-    if(!(xinfo.display=XOpenDisplay(NULL)))
-        exit_with_msg("error: cannot open display");
-
+    xinfo.display=open_display();
+    clear_zombies(0);
     XSetErrorHandler(x_fatal_handler);
     set_locale();
     xinfo.screen=DefaultScreen(xinfo.display);
@@ -67,6 +72,16 @@ void init_wm(void)
     init_client_list();
     grab_keys();
     exec_autostart();
+    set_screensaver();
+    set_signals();
+}
+
+static Display *open_display(void)
+{
+    Display *display=XOpenDisplay(NULL);
+    if(display == NULL)
+        exit_with_msg("error: cannot open display");
+    return display;
 }
 
 static void set_visual_info(void)
@@ -132,4 +147,65 @@ static void init_imlib(void)
     imlib_context_set_display(xinfo.display);
     imlib_context_set_visual(xinfo.visual);
     imlib_context_set_colormap(xinfo.colormap);
+}
+
+void wm_deinit(void)
+{
+    clients_for_each_safe(c)
+    {
+        XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
+        remove_client(c, true);
+    }
+    free_all_images();
+    taskbar_del(get_gwm_taskbar());
+    entry_del(cmd_entry);
+    entry_del(color_entry);
+    menu_del(act_center);
+    del_layer_wins();
+    XFreeModifiermap(xinfo.mod_map);
+    free_cursors();
+    XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
+    if(xinfo.xim)
+        XCloseIM(xinfo.xim);
+    close_fonts();
+    XClearWindow(xinfo.display, xinfo.root_win);
+    XFlush(xinfo.display);
+    XCloseDisplay(xinfo.display);
+    clear_zombies(0);
+    free_wallpapers();
+    Free(cfg);
+}
+
+static void clear_zombies(int signum)
+{
+    UNUSED(signum);
+	while(0 < waitpid(-1, NULL, WNOHANG))
+        ;
+}
+
+static void set_screensaver(void)
+{
+    XSetScreenSaver(xinfo.display, cfg->screen_saver_time_out,
+        cfg->screen_saver_interval, PreferBlanking, AllowExposures);
+}
+
+
+static void set_signals(void)
+{
+	if(signal(SIGCHLD, clear_zombies) == SIG_ERR)
+        perror(_("不能安裝SIGCHLD信號處理函數"));
+	if(signal(SIGINT, ready_to_quit) == SIG_ERR)
+        perror(_("不能安裝SIGINT信號處理函數"));
+	if(signal(SIGTERM, ready_to_quit) == SIG_ERR)
+        perror(_("不能安裝SIGTERM信號處理函數"));
+	if(signal(SIGQUIT, ready_to_quit) == SIG_ERR)
+        perror(_("不能安裝SIGQUIT信號處理函數"));
+	if(signal(SIGHUP, ready_to_quit) == SIG_ERR)
+        perror(_("不能安裝SIGHUP信號處理函數"));
+}
+
+static void ready_to_quit(int signum)
+{
+    UNUSED(signum);
+    run_flag=0;
 }

@@ -50,7 +50,6 @@ void *Malloc(size_t size);
 int x_fatal_handler(Display *display, XErrorEvent *e);
 void exit_with_perror(const char *s);
 void exit_with_msg(const char *msg);
-void clear_zombies(int signum);
 char *copy_string(const char *s);
 char *copy_strings(const char *s, ...);
 void vfree_strings(Strings *head);

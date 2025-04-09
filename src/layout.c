@@ -16,7 +16,6 @@
 #include "icccm.h"
 #include "ewmh.h"
 #include "grab.h"
-#include "minimax.h"
 #include "taskbar.h"
 #include "desktop.h"
 
@@ -43,8 +42,6 @@ static Layout get_layout(void);
 static void set_layout(Layout layout);
 static int get_main_area_n(void);
 static void set_main_area_n(int n);
-static void adjust_main_area(double change_ratio);
-static void adjust_fixed_area(double change_ratio);
 static double get_main_area_ratio(void);
 static void set_main_area_ratio(double ratio);
 static double get_fixed_area_ratio(void);
@@ -296,18 +293,6 @@ bool is_layout_adjust_area(Window win, int x)
         && (is_main_sec_gap(x) || is_main_fix_gap(x)));
 }
 
-void change_to_stack(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    change_layout(STACK);
-}
-
-void change_to_tile(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    change_layout(TILE);
-}
-
 void change_layout(Layout layout)
 {
     Layout cl=get_layout();
@@ -332,9 +317,8 @@ void change_layout(Layout layout)
     taskbar_buttons_update_bg(get_gwm_taskbar());
 }
 
-void adjust_layout_ratio(XEvent *e, Arg arg)
+void pointer_adjust_layout_ratio(XEvent *e)
 {
-    UNUSED(arg);
     if( get_layout()!=TILE
         || !is_layout_adjust_area(e->xbutton.window, e->xbutton.x_root)
         || !grab_pointer(xinfo.root_win, ADJUST_LAYOUT_RATIO))
@@ -371,22 +355,8 @@ static bool change_layout_ratio(int ox, int nx)
     return true;
 }
 
-void key_increase_main_area(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    Rect wr=get_net_workarea();
-    adjust_main_area((double)cfg->resize_inc/wr.w);
-}
-
-void key_decrease_main_area(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    Rect wr=get_net_workarea();
-    adjust_main_area(-(double)cfg->resize_inc/wr.w);
-}
-
 /* 在固定區域比例不變的情況下調整主區域比例，主、次區域比例此消彼長 */
-static void adjust_main_area(double change_ratio)
+void adjust_main_area(double change_ratio)
 {
     if( get_layout()==TILE
         && get_clients_n(SECOND_AREA, false, false, false))
@@ -402,22 +372,8 @@ static void adjust_main_area(double change_ratio)
     }
 }
 
-void key_increase_fixed_area(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    Rect wr=get_net_workarea();
-    adjust_fixed_area((double)cfg->resize_inc/wr.w);
-}
-
-void key_decrease_fixed_area(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    Rect wr=get_net_workarea();
-    adjust_fixed_area(-(double)cfg->resize_inc/wr.w);
-}
-
 /* 在次區域比例不變的情況下調整固定區域比例，固定區域和主區域比例此消彼長 */
-static void adjust_fixed_area(double change_ratio)
+void adjust_fixed_area(double change_ratio)
 {
     if( get_layout()==TILE
         && get_clients_n(FIXED_AREA, false, false, false))

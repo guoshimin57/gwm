@@ -18,6 +18,7 @@
 #include "icccm.h"
 #include "prop.h"
 #include "grab.h"
+#include "rule_cfg.h"
 #include "client.h"
 
 static void client_ctor(Client *c, Window win);
@@ -130,7 +131,7 @@ static void apply_rules(Client *c)
         return;
 
     c->class_name=c->class_hint.res_class;
-    for(const Rule *r=cfg->rule; r->app_class; r++)
+    for(const Rule *r=rules; r->app_class; r++)
     {
         if(have_rule(r, c))
         {
@@ -196,14 +197,14 @@ static void client_dtor(Client *c)
 }
 
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過所有亞組窗口 */
-Client *get_next_client(Client *c)
+Client *get_next(Client *c)
 {
     Client *next=clients_next(c->win_state.modal ? c->subgroup_leader : c);
     return next==clients ? clients_next(clients) : next;
 }
 
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過非模態窗口 */
-Client *get_prev_client(Client *c)
+Client *get_prev(Client *c)
 {
     Client *prev=clients_prev(c->win_state.modal ? c->subgroup_leader : c);
     return prev==clients ? clients_prev(clients) : prev;

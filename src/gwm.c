@@ -9,15 +9,10 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include "misc.h"
 #include "gwm.h"
-#include "config.h"
 #include "clientop.h"
 #include "handler.h"
 #include "init.h"
-
-static void set_signals(void);
-static void ready_to_quit(int signum);
 
 sig_atomic_t run_flag=1;
 Event_handler event_handler=NULL; // 事件處理器
@@ -27,32 +22,10 @@ Xinfo xinfo;
 
 int main(void)
 {
-    clear_zombies(0);
-    init_wm();
-    XSetScreenSaver(xinfo.display, cfg->screen_saver_time_out,
-        cfg->screen_saver_interval, PreferBlanking, AllowExposures);
-    set_signals();
+    wm_init();
     manage_exsit_clients();
     handle_events();
+    wm_deinit();
+
     return EXIT_SUCCESS;
-}
-
-static void set_signals(void)
-{
-	if(signal(SIGCHLD, clear_zombies) == SIG_ERR)
-        perror(_("不能安裝SIGCHLD信號處理函數"));
-	if(signal(SIGINT, ready_to_quit) == SIG_ERR)
-        perror(_("不能安裝SIGINT信號處理函數"));
-	if(signal(SIGTERM, ready_to_quit) == SIG_ERR)
-        perror(_("不能安裝SIGTERM信號處理函數"));
-	if(signal(SIGQUIT, ready_to_quit) == SIG_ERR)
-        perror(_("不能安裝SIGQUIT信號處理函數"));
-	if(signal(SIGHUP, ready_to_quit) == SIG_ERR)
-        perror(_("不能安裝SIGHUP信號處理函數"));
-}
-
-static void ready_to_quit(int signum)
-{
-    UNUSED(signum);
-    run_flag=0;
 }
