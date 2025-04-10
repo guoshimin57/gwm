@@ -19,6 +19,7 @@ static bool is_valid_move(Client *from, Client *to, Place type);
 static bool is_valid_to_normal_layer_sec(Client *c);
 static int cmp_client_store_order(Client *c1, Client *c2);
 static void set_place_for_subgroup(Client *subgroup_leader, Place type);
+static void set_wm_state_for_subgroup(Client *subgroup_leader);
 static bool move_client_node(Client *from, Client *to, Place type);
 static void add_subgroup(Client *head, Client *subgroup_leader);
 static void del_subgroup(Client *subgroup_leader);
@@ -86,12 +87,12 @@ static void set_frame_rect_by_client(Client *c)
 
 void move_client(Client *from, Client *to, Place type)
 {
-    if(move_client_node(from, to, type))
-    {
-        set_place_for_subgroup(from->subgroup_leader,
-            to ? to->place : type);
-        request_layout_update();
-    }
+    if(!move_client_node(from, to, type))
+        return;
+
+    set_place_for_subgroup(from->subgroup_leader, to ? to->place : type);
+    set_wm_state_for_subgroup(from->subgroup_leader);
+    request_layout_update();
 }
 
 static bool move_client_node(Client *from, Client *to, Place type)
@@ -145,6 +146,40 @@ static void set_place_for_subgroup(Client *subgroup_leader, Place type)
         c->place=type;
 }
 
+static void set_wm_state_for_subgroup(Client *subgroup_leader)
+{
+    subgroup_for_each(c, subgroup_leader)
+    {
+        Net_wm_state *s=&c->win_state;
+        switch(c->place)
+        {
+            case FULLSCREEN_LAYER:
+                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
+                s->above=s->below=0;
+                s->fullscreen=1;
+                break;
+            case ABOVE_LAYER:
+                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
+                s->fullscreen=s->below=0;
+                s->above=1;
+                break;
+            case NORMAL_LAYER:
+                s->fullscreen=s->above=s->below=0;
+                break;
+            case BELOW_LAYER:
+                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
+                s->fullscreen=s->above=0;
+                s->below=1;
+                break;
+            default:
+                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
+                s->fullscreen=s->above=s->below=0;
+                break;
+        }
+        update_net_wm_state(WIDGET_WIN(c), *s);
+    }
+}
+
 static void add_subgroup(Client *head, Client *subgroup_leader)
 {
     Client *top=get_top_transient_client(subgroup_leader, false),
@@ -194,22 +229,6 @@ void restore_client(Client *c)
 {
     restore_place_info_of_client(c);
     move_client(c, NULL, c->place);
-    if(c->win_state.vmax)
-        c->win_state.vmax=0;
-    if(c->win_state.hmax)
-        c->win_state.hmax=0;
-    if(c->win_state.tmax)
-        c->win_state.tmax=0;
-    if(c->win_state.bmax)
-        c->win_state.bmax=0;
-    if(c->win_state.lmax)
-        c->win_state.lmax=0;
-    if(c->win_state.rmax)
-        c->win_state.rmax=0;
-    if(c->win_state.fullscreen)
-        c->win_state.fullscreen=0;
-
-    update_net_wm_state(WIDGET_WIN(c), c->win_state);
 }
 
 void iconify_client(Client *c)

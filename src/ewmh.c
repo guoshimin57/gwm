@@ -335,12 +335,6 @@ void update_net_wm_state(Window win, Net_wm_state state)
         replace_atom_prop(win, prop, states, n);
 }
 
-void update_net_wm_state_for_no_max(Window win, Net_wm_state state)
-{
-    state.vmax=state.hmax=state.tmax=state.bmax=state.lmax=state.rmax=0;
-    update_net_wm_state(win, state);
-}
-
 Net_wm_state get_net_wm_state_mask(const long *full_act)
 {
     Net_wm_state m={0};

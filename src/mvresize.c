@@ -48,7 +48,6 @@ void key_move_resize_client(XEvent *e, Key_act op)
         widget_show(WIDGET(shw));
         wait_key_release(e);
         widget_del(WIDGET(shw));
-        update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
     }
 }
 
@@ -130,7 +129,6 @@ void pointer_move_resize_client(XEvent *e, bool resize)
         widget_del(WIDGET(shw));
     }
     XUngrabPointer(xinfo.display, CurrentTime);
-    update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
 }
 
 static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act, bool is_to_above)

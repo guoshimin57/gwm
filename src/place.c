@@ -37,7 +37,6 @@ void pointer_change_place(XEvent *e)
         move_client(from, NULL, MAIN_AREA);
     else if(to)
         move_client(from, to, ANY_PLACE);
-    update_net_wm_state_for_no_max(WIDGET_WIN(from), from->win_state);
 }
 
 static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne)
@@ -58,9 +57,7 @@ static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne)
 
 void client_change_place(Place type)
 {
-    Client *c=get_cur_focus_client();
-    move_client(c, NULL, type);
-    update_net_wm_state_for_no_max(WIDGET_WIN(c), c->win_state);
+    move_client(get_cur_focus_client(), NULL, type);
 }
 
 void pointer_swap_clients(XEvent *e)
