@@ -132,11 +132,11 @@ Imlib_Image get_win_icon_image(Window win)
 
     if( (image=search_icon_image(h.res_class))
         || (image=search_icon_image(h.res_name))
-        || (image=create_icon_image_from_hint(win, name))
-        || (image=create_icon_image_from_prop(win, name)))
-        return image;
+        || (image=create_icon_image_from_hint(win, name)))
+        image=create_icon_image_from_prop(win, name);
+    XFree(h.res_class), XFree(h.res_name);
 
-    return NULL;
+    return image;
 }
 
 Imlib_Image get_name_icon_image(const char *name, int size, const char *theme)

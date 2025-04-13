@@ -99,10 +99,20 @@ char *get_title_text(Window win, const char *fallback)
 {
     char *s=NULL;
 
-    if((s=get_net_wm_name(win)) && strlen(s))
-        return s;
-    if((s=get_wm_name(win)) && strlen(s))
-        return s;
+    if((s=get_net_wm_name(win)))
+    {
+        if(strlen(s))
+            return s;
+        free(s);
+    }
+
+    if((s=get_wm_name(win)))
+    {
+        if(strlen(s))
+            return s;
+        free(s);
+    }
+
     return copy_string(fallback);
 }
 
@@ -110,10 +120,19 @@ char *get_icon_title_text(Window win, const char *fallback)
 {
     char *s=NULL;
 
-    if((s=get_net_wm_icon_name(win)) && strlen(s))
-        return s;
-    if((s=get_wm_icon_name(win)) && strlen(s))
-        return s;
+    if((s=get_net_wm_icon_name(win)))
+    {
+        if(strlen(s))
+            return s;
+        free(s);
+    }
+    if((s=get_wm_icon_name(win)))
+    {
+        if(strlen(s))
+            return s;
+        free(s);
+    }
+
     return get_title_text(win, fallback);
 }
 

@@ -278,13 +278,19 @@ static void handle_pointer_hover(const Widget *widget)
     struct timeval t={cfg->hover_time/1000, cfg->hover_time%1000*1000}, t0=t;
     int fd=ConnectionNumber(xinfo.display);
     fd_set fds;
+    Window win=widget->win;
 
     while(1)
     {
         if(XPending(xinfo.display))
         {
             XNextEvent(xinfo.display, &ev);
-                handle_event(&ev);
+            handle_event(&ev);
+
+            // 注意：每處理一次事件，接收事件的窗口都可能不同於參數widget的窗口
+            if(!(widget=widget_find(win)))
+                return;
+
             if(ev.type == MotionNotify && ev.xmotion.window==widget->win)
                 t=t0, show=false;
             else if( (ev.type==LeaveNotify && ev.xcrossing.window==widget->win)

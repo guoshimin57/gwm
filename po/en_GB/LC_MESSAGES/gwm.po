@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.12.25\n"
+"Project-Id-Version: gwm 2.12.26\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-10 13:41+0800\n"
+"POT-Creation-Date: 2025-04-13 17:09+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -285,23 +285,23 @@ msgstr "Failed to successfully create a new process for the command"
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: init.c:196
+#: init.c:193
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "SIGCHLD signal handler function cannot be installed"
 
-#: init.c:198
+#: init.c:195
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "SIGINT signal handler cannot be installed"
 
-#: init.c:200
+#: init.c:197
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "SIGTERM signal handler cannot be installed"
 
-#: init.c:202
+#: init.c:199
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "SIGQUIT signal handler cannot be installed"
 
-#: init.c:204
+#: init.c:201
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 

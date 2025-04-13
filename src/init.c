@@ -152,10 +152,7 @@ static void init_imlib(void)
 void wm_deinit(void)
 {
     clients_for_each_safe(c)
-    {
-        XReparentWindow(xinfo.display, WIDGET_WIN(c), xinfo.root_win, WIDGET_X(c), WIDGET_Y(c));
         remove_client(c, true);
-    }
     free_all_images();
     taskbar_del(get_gwm_taskbar());
     entry_del(cmd_entry);

@@ -86,7 +86,7 @@ unsigned char *get_prop(Window win, Atom prop, unsigned long *n)
     if( XGetWindowProperty(xinfo.display, win, prop, 0, ~0L, False,
         AnyPropertyType, &type, &fmt, m, &rest, &p) != Success
         || !type || !fmt || !*m || !p) // 可能設置了特性，但設置得不正確
-        return NULL;
+        XFree(p), p=NULL;
 
     return p;
 }

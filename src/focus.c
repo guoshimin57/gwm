@@ -210,6 +210,8 @@ static Window *get_client_win_list(int *n)
                 wlist[j++]=old_list[i];
     }
 
+    XFree(old_list);
+
     return wlist;
 }
 
