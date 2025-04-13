@@ -26,7 +26,6 @@ static bool has_decoration(const Client *c);
 static void set_default_desktop_mask(Client *c);
 static void apply_rules(Client *c);
 static bool have_rule(const Rule *r, Client *c);
-static void set_default_place(Client *c);
 static void client_dtor(Client *c);
 static void create_frame(Client *c);
 static void set_default_win_rect(Client *c);
@@ -97,7 +96,7 @@ static void create_frame(Client *c)
         th, bw, c->title_text, c->image);
 }
 
-static void set_default_place(Client *c)
+void set_default_place(Client *c)
 {
     if(c->owner)                     c->place = c->owner->place;
     else if(c->win_type.desktop)     c->place = DESKTOP_LAYER;
@@ -390,5 +389,5 @@ bool is_exist_client(Client *c)
 
 bool is_new_client(Client *c)
 {
-    return WIDGET_W(c->frame)==1 && WIDGET_H(c->frame)==1;
+    return WIDGET_W(c->frame)<=WIDGET_W(c) && WIDGET_H(c->frame)<=WIDGET_H(c);
 }

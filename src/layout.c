@@ -300,18 +300,12 @@ void change_layout(Layout layout)
     if(layout == cl)
         return;
 
-    if(cl==TILE && layout==STACK)
-        clients_for_each(c)
-            if(is_on_cur_desktop(c->desktop_mask) && is_normal_layer(c->place))
-                c->place=NORMAL_LAYER;
-
-    if(cl==STACK && layout==TILE)
-        clients_for_each(c)
-            if(is_on_cur_desktop(c->desktop_mask) && c->place==NORMAL_LAYER)
-                c->place=MAIN_AREA;
-
     set_layout(layout);
     set_gwm_layout(layout);
+    clients_for_each(c)
+        if(is_on_cur_desktop(c->desktop_mask))
+            set_default_place(c);
+
     request_layout_update();
     update_titlebars_layout();
     taskbar_buttons_update_bg(get_gwm_taskbar());

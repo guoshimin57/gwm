@@ -71,6 +71,7 @@ void init_client_list(void);
 Client *get_clients(void);
 Client *client_new(Window win);
 void client_del(Client *c);
+void set_default_place(Client *c);
 int get_clients_n(Place type, bool count_icon, bool count_trans, bool count_all_desktop);
 bool is_iconic_client(const Client *c);
 Client *win_to_client(Window win);
