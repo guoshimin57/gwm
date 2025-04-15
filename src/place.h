@@ -15,7 +15,7 @@
 #include "gwm.h"
 
 void pointer_change_place(XEvent *e);
-void client_change_place(Place type);
+void client_change_place(Layer layer, Area area);
 void pointer_swap_clients(XEvent *e);
 
 #endif

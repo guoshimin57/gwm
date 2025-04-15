@@ -64,8 +64,6 @@ typedef struct // 與X相關的信息
     Window root_win; // 根窗口
 } Xinfo;
 
-#define LAYER_N 6
-
 typedef struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 {
     int x, y; // 坐標
@@ -82,19 +80,28 @@ typedef enum // 窗口管理器的布局模式
     STACK, TILE,
 } Layout;
 
-typedef enum // 窗口的位置類型，屏幕分爲多層，普通層還分爲多個區域
+typedef enum // 窗口放置的層類型
 {
-    FULLSCREEN_LAYER, DOCK_LAYER, ABOVE_LAYER, NORMAL_LAYER,
-    MAIN_AREA, SECOND_AREA, FIXED_AREA, // 普通層的各個區域
+    FULLSCREEN_LAYER, DOCK_LAYER, ABOVE_LAYER,
+    STACK_LAYER, TILE_LAYER, // 兩者合稱NORMAL_LAYER
     BELOW_LAYER, DESKTOP_LAYER,
-    ANY_PLACE
-} Place;
+    ANY_LAYER
+} Layer;
+
+#define LAYER_N ANY_LAYER
+
+typedef enum // 平鋪層的分區類型
+{
+    MAIN_AREA, SECOND_AREA, FIXED_AREA,
+    ANY_AREA
+} Area;
 
 typedef struct // 窗口管理器的規則
 {// 分別爲客戶窗口的程序類型和程序名稱、標題，NULL或*表示匹配任何字符串
     const char *app_class, *app_name, *title;
     const char *class_alias; // 客戶窗口的類型別名
-    Place place; // 客戶窗口的位置類型
+    Layer layer; // 客戶窗口的層
+    Area area; // 客戶窗口的區
     unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼
 } Rule;
 

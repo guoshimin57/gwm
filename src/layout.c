@@ -21,22 +21,20 @@
 
 static void set_stack_layout(void);
 static void set_tile_layout(void);
-static void fix_place_for_tile(void);
+static void fix_area_for_tile(void);
 static void set_wins_rect_for_tiling(void);
 static void get_area_size(int *mw, int *mh, int *sw, int *sh, int *fw, int *fh);
 static void update_titlebars_layout(void);
 static void fix_wins_rect(void);
 static void fix_win_rect(Client *c);
 static bool should_fix_win_rect(Client *c);
-static void fix_transient_win_size(Client *c);
-static void fix_transient_win_pos(Client *c);
+static void fix_win_rect_by_owner(Client *c);
 static void fix_win_rect_by_hint(Client *c);
-static void fix_win_pos_by_hint(Client *c, const XSizeHints *hint);
 static void fix_win_rect_by_workarea(Client *c);
-static void fix_win_size_by_workarea(Client *c, const Rect *workarea);
-static void fix_win_pos_by_workarea(Client *c, const Rect *workarea);
-static void fix_dialog_win_rect(Client *c, const Rect *workarea);
-static void fix_win_rect_by_frame(Client *c);
+static void fix_frame_size_by_workarea(Client *c, const Rect *workarea);
+static void fix_frame_pos_by_workarea(Client *c, const Rect *workarea);
+static void fix_dialog_frame_rect(Client *c, const Rect *workarea);
+static void set_frame_rect_by_client(Client *c);
 static bool change_layout_ratio(int ox, int nx);
 static Layout get_layout(void);
 static void set_layout(Layout layout);
@@ -73,22 +71,22 @@ static void set_stack_layout(void)
 
 static void set_tile_layout(void)
 {
-    fix_place_for_tile();
+    fix_area_for_tile();
     set_wins_rect_for_tiling();
     fix_wins_rect();
 }
 
-static void fix_place_for_tile(void)
+static void fix_area_for_tile(void)
 {
     int n=0, m=get_main_area_n();
     clients_for_each(c)
     {
         if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c) && !c->owner)
         {
-            if(c->place==MAIN_AREA && ++n>m)
-                c->place=SECOND_AREA;
-            else if(c->place==SECOND_AREA && n<m)
-                c->place=MAIN_AREA, n++;
+            if(c->area==MAIN_AREA && ++n>m)
+                c->area=SECOND_AREA;
+            else if(c->area==SECOND_AREA && n<m)
+                c->area=MAIN_AREA, n++;
         }
     }
 }
@@ -108,17 +106,16 @@ static void set_wins_rect_for_tiling(void)
     get_area_size(&mw, &mh, &sw, &sh, &fw, &fh);
     clients_for_each(c)
     {
-        if(is_tile_client(c))
+        if(is_on_cur_desktop(c->desktop_mask) && is_tiling_client(c))
         {
             int x=0, y=0, w=0, h=0;
-            Place place=c->place;
-            if(place == FIXED_AREA)
+            if(c->area == FIXED_AREA)
                 x=wr.x+mw+sw+g, y=wr.y+i++*fh+y_offset, w=fw-g, h=fh-g;
-            else if(place == MAIN_AREA)
+            else if(c->area == MAIN_AREA)
                 x=wr.x+sw, y=wr.y+j++*mh+y_offset, w=mw, h=mh-g;
-            else if(place == SECOND_AREA)
+            else if(c->area == SECOND_AREA)
                 x=wr.x, y=wr.y+k++*sh+y_offset, w=sw-g, h=sh-g;
-            if(is_spec_place_last_client(c, place)) // 區末窗口取餘量
+            if(is_place_last_client(c)) // 區末窗口取餘量
                 h+=wr.h%(h+g);
             set_client_rect_by_outline(c, x, y, w, h);
         }
@@ -131,9 +128,9 @@ static void get_area_size(int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
     int n1, n2, n3;
     Rect wr=get_net_workarea();
 
-    n1=get_clients_n(MAIN_AREA, false, false, false),
-    n2=get_clients_n(SECOND_AREA, false, false, false),
-    n3=get_clients_n(FIXED_AREA, false, false, false),
+    n1=get_clients_n(TILE_LAYER, MAIN_AREA, false, false, false),
+    n2=get_clients_n(TILE_LAYER, SECOND_AREA, false, false, false),
+    n3=get_clients_n(TILE_LAYER, FIXED_AREA, false, false, false),
     *mw=mr*wr.w, *fw=wr.w*fr, *sw=wr.w-*fw-*mw;
     *mh = n1 ? wr.h/n1 : wr.h;
     *fh = n3 ? wr.h/n3 : wr.h;
@@ -163,56 +160,47 @@ static void fix_win_rect(Client *c)
     if(!should_fix_win_rect(c))
         return;
 
-    fix_transient_win_size(c);
-    fix_win_rect_by_hint(c);
-    fix_transient_win_pos(c);
+    fix_win_rect_by_owner(c);
     fix_win_rect_by_workarea(c);
-    fix_win_rect_by_frame(c);
+    fix_win_rect_by_hint(c);
 }
 
 static bool should_fix_win_rect(Client *c)
 {
-    Place p=c->place;
-    if(p==FULLSCREEN_LAYER || p==DOCK_LAYER || p==DESKTOP_LAYER)
+    Layer layer=c->layer;
+    if(layer==FULLSCREEN_LAYER || layer==DOCK_LAYER || layer==DESKTOP_LAYER)
         return false;
 
     switch(get_layout())
     {
         case STACK: return is_new_client(c);
-        case TILE:  return c->owner || (is_new_client(c) && !is_normal_layer(p));
+        case TILE:  return c->owner || (is_new_client(c) && layer!=TILE_LAYER);
         default:    return false;
     }
 }
 
-static void fix_transient_win_size(Client *c)
+static void fix_win_rect_by_owner(Client *c)
 {
-    if(c->owner)
-    {
-        WIDGET_W(c)=WIDGET_W(c->owner)/2;
-        WIDGET_H(c)=WIDGET_H(c->owner)/2;
-    }
-}
+    if(c->owner == NULL)
+        return;
 
-static void fix_transient_win_pos(Client *c)
-{
-    if(c->owner)
-    {
-        WIDGET_X(c)=WIDGET_X(c->owner)+(WIDGET_W(c->owner)-WIDGET_W(c))/2;
-        WIDGET_Y(c)=WIDGET_Y(c->owner)+(WIDGET_H(c->owner)-WIDGET_H(c))/2;
-    }
+    WIDGET_W(c->frame) = WIDGET_W(c->owner)/2;
+    WIDGET_H(c->frame) = WIDGET_H(c->owner)/2;
+    WIDGET_X(c->frame) = WIDGET_X(c->owner)
+        + (WIDGET_W(c->owner)-WIDGET_W(c->frame))/2;
+    WIDGET_Y(c->frame) = WIDGET_Y(c->owner)
+        + (WIDGET_H(c->owner)-WIDGET_H(c->frame))/2;
+    set_client_rect_by_outline(c, WIDGET_X(c->frame), WIDGET_Y(c->frame),
+        WIDGET_W(c->frame), WIDGET_H(c->frame));
 }
 
 static void fix_win_rect_by_hint(Client *c)
 {
     XSizeHints hint=get_size_hint(WIDGET_WIN(c));
+    if(!c->owner && ((hint.flags & USPosition) || (hint.flags & PPosition)))
+        WIDGET_X(c)=hint.x, WIDGET_Y(c)=hint.y;
     fix_win_size_by_hint(&hint, &WIDGET_W(c), &WIDGET_H(c));
-    fix_win_pos_by_hint(c, &hint);
-}
-
-static void fix_win_pos_by_hint(Client *c, const XSizeHints *hint)
-{
-    if(!c->owner && ((hint->flags & USPosition) || (hint->flags & PPosition)))
-        WIDGET_X(c)=hint->x, WIDGET_Y(c)=hint->y;
+    set_frame_rect_by_client(c);
 }
 
 static void fix_win_rect_by_workarea(Client *c)
@@ -221,61 +209,60 @@ static void fix_win_rect_by_workarea(Client *c)
         return;
 
     Rect r=get_net_workarea();
-    fix_win_size_by_workarea(c, &r);
-    fix_win_pos_by_workarea(c, &r);
-    fix_dialog_win_rect(c, &r);
+    fix_frame_size_by_workarea(c, &r);
+    fix_frame_pos_by_workarea(c, &r);
+    fix_dialog_frame_rect(c, &r);
+    set_client_rect_by_outline(c, WIDGET_X(c->frame), WIDGET_Y(c->frame),
+        WIDGET_W(c->frame), WIDGET_H(c->frame));
 }
 
-static void fix_win_size_by_workarea(Client *c, const Rect *workarea)
+static void fix_frame_size_by_workarea(Client *c, const Rect *workarea)
 {
-    if(WIDGET_W(c) > workarea->w)
-        WIDGET_W(c)=workarea->w;
-    if(WIDGET_H(c) > workarea->h)
-        WIDGET_H(c)=workarea->h;
+    if(WIDGET_W(c->frame) > workarea->w)
+        WIDGET_W(c->frame)=workarea->w;
+    if(WIDGET_H(c->frame) > workarea->h)
+        WIDGET_H(c->frame)=workarea->h;
 }
 
-static void fix_win_pos_by_workarea(Client *c, const Rect *workarea)
+static void fix_frame_pos_by_workarea(Client *c, const Rect *workarea)
 {
-    int w=WIDGET_W(c), h=WIDGET_H(c),
+    int w=WIDGET_W(c->frame), h=WIDGET_H(c->frame),
         wx=workarea->x, wy=workarea->y, ww=workarea->w, wh=workarea->h;
-    if(WIDGET_X(c) >= wx+ww-w) // 窗口在工作區右邊出界
-        WIDGET_X(c)=wx+ww-w;
-    if(WIDGET_X(c) < wx) // 窗口在工作區左邊出界
-        WIDGET_X(c)=wx;
-    if(WIDGET_Y(c) >= wy+wh-h) // 窗口在工作區下邊出界
-        WIDGET_Y(c)=wy+wh-h;
-    if(WIDGET_Y(c) < wy) // 窗口在工作區上邊出界
-        WIDGET_Y(c)=wy;
+    if(WIDGET_X(c->frame) >= wx+ww-w) // 窗口在工作區右邊出界
+        WIDGET_X(c->frame)=wx+ww-w;
+    if(WIDGET_X(c->frame) < wx) // 窗口在工作區左邊出界
+        WIDGET_X(c->frame)=wx;
+    if(WIDGET_Y(c->frame) >= wy+wh-h) // 窗口在工作區下邊出界
+        WIDGET_Y(c->frame)=wy+wh-h;
+    if(WIDGET_Y(c->frame) < wy) // 窗口在工作區上邊出界
+        WIDGET_Y(c->frame)=wy;
 }
 
-static void fix_dialog_win_rect(Client *c, const Rect *workarea)
+static void fix_dialog_frame_rect(Client *c, const Rect *workarea)
 {
     if(!c->owner && c->win_type.dialog)
     {
-        WIDGET_W(c)=workarea->w/2;
-        WIDGET_H(c)=workarea->h/2;
-        WIDGET_X(c)=workarea->x+(workarea->w-WIDGET_W(c))/2;
-        WIDGET_Y(c)=workarea->y+(workarea->h-WIDGET_H(c))/2;
+        WIDGET_W(c->frame)=workarea->w/2;
+        WIDGET_H(c->frame)=workarea->h/2;
+        WIDGET_X(c->frame)=workarea->x+(workarea->w-WIDGET_W(c->frame))/2;
+        WIDGET_Y(c->frame)=workarea->y+(workarea->h-WIDGET_H(c->frame))/2;
     }
 }
 
-static void fix_win_rect_by_frame(Client *c)
+static void set_frame_rect_by_client(Client *c)
 {
-    if(!c->frame)
-        return;
-
     int bw = WIDGET_BORDER_W(c->frame),
         th = frame_get_titlebar_height(c->frame);
-    WIDGET_X(c) += bw;
-    WIDGET_Y(c) += bw+th;
-    WIDGET_H(c) -= th;
+    WIDGET_X(c->frame) = WIDGET_X(c)-bw;
+    WIDGET_Y(c->frame) = WIDGET_Y(c)-bw-th;
+    WIDGET_H(c->frame) = WIDGET_H(c)+th;
 }
 
 bool is_main_sec_gap(int x)
 {
     Rect wr=get_net_workarea();
     long sw=wr.w*(1-get_main_area_ratio()-get_fixed_area_ratio()),
-         n=get_clients_n(SECOND_AREA, false, false, false);
+         n=get_clients_n(TILE_LAYER, SECOND_AREA, false, false, false);
     return (n && x>=wr.x+sw-cfg->win_gap && x<wr.x+sw);
 }
 
@@ -283,7 +270,7 @@ bool is_main_fix_gap(int x)
 {
     Rect wr=get_net_workarea();
     long smw=wr.w*(1-get_fixed_area_ratio()),
-         n=get_clients_n(FIXED_AREA, false, false, false);
+         n=get_clients_n(TILE_LAYER, FIXED_AREA, false, false, false);
     return (n && x>=wr.x+smw && x<wr.x+smw+cfg->win_gap);
 }
 
@@ -304,7 +291,7 @@ void change_layout(Layout layout)
     set_gwm_layout(layout);
     clients_for_each(c)
         if(is_on_cur_desktop(c->desktop_mask))
-            set_default_place(c);
+            set_default_layer(c), update_net_wm_state_by_layer(c);
 
     request_layout_update();
     update_titlebars_layout();
@@ -353,7 +340,7 @@ static bool change_layout_ratio(int ox, int nx)
 void adjust_main_area(double change_ratio)
 {
     if( get_layout()==TILE
-        && get_clients_n(SECOND_AREA, false, false, false))
+        && get_clients_n(TILE_LAYER, SECOND_AREA, false, false, false))
     {
         Rect wr=get_net_workarea();
         double mr=get_main_area_ratio()+change_ratio, fr=get_fixed_area_ratio();
@@ -370,7 +357,7 @@ void adjust_main_area(double change_ratio)
 void adjust_fixed_area(double change_ratio)
 {
     if( get_layout()==TILE
-        && get_clients_n(FIXED_AREA, false, false, false))
+        && get_clients_n(TILE_LAYER, FIXED_AREA, false, false, false))
     {
         Rect wr=get_net_workarea();
         double fr=get_fixed_area_ratio()+change_ratio, mr=get_main_area_ratio();

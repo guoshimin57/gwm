@@ -21,7 +21,7 @@ typedef enum // 鍵盤操作方式
     FALL_HEIGHT, RISE_HEIGHT
 } Key_act;
 
-void key_move_resize_client(XEvent *e, Key_act act);
+void key_move_resize_client(XEvent *e, Key_act op);
 void pointer_move_resize_client(XEvent *e, bool resize);
 Pointer_act get_resize_act(Client *c, int x, int y);
 

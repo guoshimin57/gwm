@@ -17,6 +17,8 @@
 
 static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne);
 
+static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne);
+
 void pointer_change_place(XEvent *e)
 {
     XEvent ev;
@@ -30,13 +32,13 @@ void pointer_change_place(XEvent *e)
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(subw);
     if(ev.xbutton.x == 0)
-        move_client(from, NULL, SECOND_AREA);
+        move_client(from, NULL, TILE_LAYER, SECOND_AREA);
     else if(ev.xbutton.x == (long)xinfo.screen_width-1)
-        move_client(from, NULL, FIXED_AREA);
+        move_client(from, NULL, TILE_LAYER, FIXED_AREA);
     else if(win==xinfo.root_win && subw==None)
-        move_client(from, NULL, MAIN_AREA);
+        move_client(from, NULL, TILE_LAYER, MAIN_AREA);
     else if(to)
-        move_client(from, to, ANY_PLACE);
+        move_client(from, to, ANY_LAYER, ANY_AREA);
 }
 
 static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne)
@@ -55,9 +57,9 @@ static bool get_valid_click(Pointer_act act, XEvent *oe, XEvent *ne)
         && is_pointer_on_win(ne->xbutton.window);
 }
 
-void client_change_place(Place type)
+void client_change_place(Layer layer, Area area)
 {
-    move_client(get_cur_focus_client(), NULL, type);
+    move_client(get_cur_focus_client(), NULL, layer, area);
 }
 
 void pointer_swap_clients(XEvent *e)

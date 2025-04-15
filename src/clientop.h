@@ -24,9 +24,10 @@ typedef enum // 窗口最大化的方式
 
 void manage_exsit_clients(void);
 void add_client(Window win);
-void remove_client(Client *c, bool is_for_quit);
+void remove_client(Client *c);
 void move_resize_client(Client *c, const Delta_rect *d);
-void move_client(Client *from, Client *to, Place type);
+void move_client(Client *from, Client *to, Layer layer, Area area);
+void update_net_wm_state_by_layer(Client *c);
 void swap_clients(Client *a, Client *b);
 void restore_client(Client *c);
 void iconify_client(Client *c);

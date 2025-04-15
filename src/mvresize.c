@@ -24,9 +24,9 @@ typedef struct /* 定位器所點擊的窗口位置每次合理移動或調整�
 static bool fix_first_move_resize(Client *c, Delta_rect *d);
 static void wait_key_release(XEvent *e);
 static Delta_rect get_key_delta_rect(Client *c, Key_act act);
-static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act, bool is_to_above);
+static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act, bool is_to_stack);
 static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act);
-static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move, bool is_to_above);
+static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move, bool is_to_stack);
 static bool is_prefer_move(Client *c, Delta_rect *d);
 static bool fix_delta_rect(Client *c, Delta_rect *d);
 static void fix_dw_by_width_hint(int w, XSizeHints *hint, int *dw);
@@ -36,12 +36,12 @@ void key_move_resize_client(XEvent *e, Key_act op)
 {
     Client *c=get_cur_focus_client();
     bool is_move = (op==UP || op==DOWN || op==LEFT || op==RIGHT),
-         is_to_above;
+         is_to_stack=(c->layer==TILE_LAYER);
     Delta_rect d=get_key_delta_rect(c, op);
 
-    if((is_to_above=is_tiled_client(c)))
-        move_client(c, NULL, ABOVE_LAYER);
-    if(get_move_resize_delta_rect(c, &d, is_move, is_to_above))
+    if(is_to_stack)
+        move_client(c, NULL, STACK_LAYER, ANY_AREA);
+    if(get_move_resize_delta_rect(c, &d, is_move, is_to_stack))
     {
         move_resize_client(c, &d);
         Size_hint_win *shw=size_hint_win_new(WIDGET(c));
@@ -115,12 +115,12 @@ void pointer_move_resize_client(XEvent *e, bool resize)
             XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
             if(ev.type == MotionNotify)
             {
-                bool is_to_above;
-                if((is_to_above=is_tiled_client(c)))
-                    move_client(c, NULL, ABOVE_LAYER);
+                bool is_to_stack=(c->layer==TILE_LAYER);
+                if(is_to_stack)
+                    move_client(c, NULL, STACK_LAYER, ANY_AREA);
                 /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
                 m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
-                do_valid_pointer_move_resize(c, &m, act, is_to_above);
+                do_valid_pointer_move_resize(c, &m, act, is_to_stack);
                 size_hint_win_update(shw);
             }
             else
@@ -131,10 +131,10 @@ void pointer_move_resize_client(XEvent *e, bool resize)
     XUngrabPointer(xinfo.display, CurrentTime);
 }
 
-static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act, bool is_to_above)
+static void do_valid_pointer_move_resize(Client *c, Move_info *m, Pointer_act act, bool is_to_stack)
 {
     Delta_rect d=get_pointer_delta_rect(m, act);
-    if(!get_move_resize_delta_rect(c, &d, act==MOVE, is_to_above))
+    if(!get_move_resize_delta_rect(c, &d, act==MOVE, is_to_stack))
         return;
 
     move_resize_client(c, &d);
@@ -169,9 +169,9 @@ static Delta_rect get_pointer_delta_rect(const Move_info *m, Pointer_act act)
     return dr[act];
 }
 
-static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move, bool is_to_above)
+static bool get_move_resize_delta_rect(Client *c, Delta_rect *d, bool is_move, bool is_to_stack)
 {
-    if(is_to_above)
+    if(is_to_stack)
         return fix_first_move_resize(c, d);
     return (is_move && is_prefer_move(c, d)) || fix_delta_rect(c, d);
 }

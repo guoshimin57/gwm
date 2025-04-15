@@ -73,7 +73,7 @@ void change_place(XEvent *e, Arg arg);
 void to_main_area(XEvent *e, Arg arg);
 void to_second_area(XEvent *e, Arg arg);
 void to_fixed_area(XEvent *e, Arg arg);
-void to_above_layer(XEvent *e, Arg arg);
+void to_stack_layer(XEvent *e, Arg arg);
 void swap(XEvent *e, Arg arg);
 void stack(XEvent *e, Arg arg);
 void tile(XEvent *e, Arg arg);

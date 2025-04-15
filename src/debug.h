@@ -24,5 +24,6 @@ void print_all_client_win(void);
 void print_client_win(Client *c);
 void print_widget_state(Widget_state state);
 void print_net_client_lists(void);
+void print_size_hints(Window win);
 
 #endif

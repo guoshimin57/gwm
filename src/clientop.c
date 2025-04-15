@@ -15,12 +15,12 @@
 #include "clientop.h"
 
 static void set_frame_rect_by_client(Client *c);
-static bool is_valid_move(Client *from, Client *to, Place type);
-static bool is_valid_to_normal_layer_sec(Client *c);
-static int cmp_client_store_order(Client *c1, Client *c2);
-static void set_place_for_subgroup(Client *subgroup_leader, Place type);
-static void set_wm_state_for_subgroup(Client *subgroup_leader);
-static bool move_client_node(Client *from, Client *to, Place type);
+static bool is_valid_move(Client *from, Client *to, Layer layer, Area area);
+static bool is_valid_to_sec_area(Client *c);
+static void move_client_node(Client *from, Client *to, Layer layer, Area area);
+static int cmp_store_order(Client *c1, Client *c2);
+static void set_place_for_subgroup(Client *subgroup_leader, Layer layer, Area area);
+static void set_net_wm_state_for_subgroup(Client *subgroup_leader);
 static void add_subgroup(Client *head, Client *subgroup_leader);
 static void del_subgroup(Client *subgroup_leader);
 static void set_max_rect(Client *c, Max_way max_way);
@@ -55,12 +55,11 @@ void add_client(Window win)
     focus_client(c);
 }
 
-void remove_client(Client *c, bool is_for_quit)
+void remove_client(Client *c)
 {
     focus_client(NULL);
     client_del(c);
-    if(!is_for_quit)
-        request_layout_update();
+    request_layout_update();
 }
 
 void move_resize_client(Client *c, const Delta_rect *d)
@@ -85,52 +84,52 @@ static void set_frame_rect_by_client(Client *c)
     widget_set_rect(WIDGET(c->frame), x, y, w, h);
 }
 
-void move_client(Client *from, Client *to, Place type)
+// 對於後3個參數，當to非空時，只使用to；否則只使用layer和area
+void move_client(Client *from, Client *to, Layer layer, Area area)
 {
-    if(!move_client_node(from, to, type))
+    if(to)
+        layer=to->layer, area=to->area;
+
+    if(!is_valid_move(from, to, layer, area))
         return;
 
-    set_place_for_subgroup(from->subgroup_leader, to ? to->place : type);
-    set_wm_state_for_subgroup(from->subgroup_leader);
+    move_client_node(from, to, layer, area);
+    set_place_for_subgroup(from->subgroup_leader, layer, area);
+    set_net_wm_state_for_subgroup(from->subgroup_leader);
     request_layout_update();
 }
 
-static bool move_client_node(Client *from, Client *to, Place type)
+static bool is_valid_move(Client *from, Client *to, Layer layer, Area area)
 {
-    if(!is_valid_move(from, to, type))
-        return false;
+    return (from && from!=to
+        && (!to || from->subgroup_leader!=to->subgroup_leader)
+        && (layer!=TILE_LAYER || area!=ANY_AREA)
+        && (layer==TILE_LAYER || area==ANY_AREA)
+        && (area!=SECOND_AREA || is_valid_to_sec_area(from)));
+}
 
+static bool is_valid_to_sec_area(Client *c)
+{
+    return c->area!=MAIN_AREA
+        || get_clients_n(TILE_LAYER, SECOND_AREA, false, false, false);
+}
+
+static void move_client_node(Client *from, Client *to, Layer layer, Area area)
+{
     Client *head=NULL;
     del_subgroup(from->subgroup_leader);
     if(to)
-        head = cmp_client_store_order(from, to) < 0 ? to : list_prev_entry(to, Client, list);
+        head = cmp_store_order(from, to) < 0 ? to : list_prev_entry(to, Client, list);
     else
     {
-        head=get_head_client(NULL, type);
-        if(from->place==MAIN_AREA && type==SECOND_AREA)
+        head=get_head_client(NULL, layer, area);
+        if(from->area==MAIN_AREA && area==SECOND_AREA)
             head=list_next_entry(head, Client, list);
     }
     add_subgroup(head, from->subgroup_leader);
-    return true;
 }
 
-static bool is_valid_move(Client *from, Client *to, Place type)
-{
-    Place t = to ? to->place : type;
-
-    return from
-        && (!to || from->subgroup_leader!=to->subgroup_leader)
-        && (t!=SECOND_AREA || is_valid_to_normal_layer_sec(from))
-        && (get_gwm_layout()==TILE || !is_normal_layer(t));
-}
-
-static bool is_valid_to_normal_layer_sec(Client *c)
-{
-    return c->place!=MAIN_AREA
-        || get_clients_n(SECOND_AREA, false, false, false);
-}
-
-static int cmp_client_store_order(Client *c1, Client *c2)
+static int cmp_store_order(Client *c1, Client *c2)
 {
     if(c1 == c2)
         return 0;
@@ -140,44 +139,45 @@ static int cmp_client_store_order(Client *c1, Client *c2)
     return 1;
 }
 
-static void set_place_for_subgroup(Client *subgroup_leader, Place type)
+static void set_place_for_subgroup(Client *subgroup_leader, Layer layer, Area area)
 {
     subgroup_for_each(c, subgroup_leader)
-        c->place=type;
+        c->layer=layer, c->area=area;
 }
 
-static void set_wm_state_for_subgroup(Client *subgroup_leader)
+static void set_net_wm_state_for_subgroup(Client *subgroup_leader)
 {
     subgroup_for_each(c, subgroup_leader)
+        update_net_wm_state_by_layer(c);
+}
+
+void update_net_wm_state_by_layer(Client *c)
+{
+    Net_wm_state *s=&c->win_state;
+    switch(c->layer)
     {
-        Net_wm_state *s=&c->win_state;
-        switch(c->place)
-        {
-            case FULLSCREEN_LAYER:
-                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
-                s->above=s->below=0;
-                s->fullscreen=1;
-                break;
-            case ABOVE_LAYER:
-                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
-                s->fullscreen=s->below=0;
-                s->above=1;
-                break;
-            case NORMAL_LAYER:
-                s->fullscreen=s->above=s->below=0;
-                break;
-            case BELOW_LAYER:
-                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
-                s->fullscreen=s->above=0;
-                s->below=1;
-                break;
-            default:
-                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
-                s->fullscreen=s->above=s->below=0;
-                break;
-        }
-        update_net_wm_state(WIDGET_WIN(c), *s);
+        case FULLSCREEN_LAYER:
+            s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
+            s->above=s->below=0;
+            s->fullscreen=1;
+            break;
+        case ABOVE_LAYER:
+            s->fullscreen=s->below=0;
+            s->above=1;
+            break;
+        case STACK_LAYER:
+            s->fullscreen=s->above=s->below=0;
+            break;
+        case BELOW_LAYER:
+            s->fullscreen=s->above=0;
+            s->below=1;
+            break;
+        default: // DOCK_LAYER、TILE_LAYER、DESKTOP_LAYER
+            s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
+            s->fullscreen=s->above=s->below=0;
+            break;
     }
+    update_net_wm_state(WIDGET_WIN(c), *s);
 }
 
 static void add_subgroup(Client *head, Client *subgroup_leader)
@@ -205,7 +205,7 @@ void swap_clients(Client *a, Client *b)
 
     Client *tmp, *top, *a_begin, *b_begin, *a_prev, *a_leader, *b_leader;
 
-    if(cmp_client_store_order(a, b) > 0)
+    if(cmp_store_order(a, b) > 0)
         tmp=a, a=b, b=tmp;
 
     a_leader=a->subgroup_leader, b_leader=b->subgroup_leader;
@@ -228,7 +228,7 @@ void swap_clients(Client *a, Client *b)
 void restore_client(Client *c)
 {
     restore_place_info_of_client(c);
-    move_client(c, NULL, c->place);
+    move_client(c, NULL, c->layer, c->area);
 }
 
 void iconify_client(Client *c)
@@ -286,9 +286,9 @@ void maximize_client(Client *c, Max_way max_way)
 {
     if(!is_win_state_max(c->win_state))
         save_place_info_of_client(c);
+    if(c->layer == TILE_LAYER)
+        move_client(c, NULL, STACK_LAYER, ANY_AREA);
     set_max_rect(c, max_way);
-    if(is_tiled_client(c))
-        move_client(c, NULL, ABOVE_LAYER);
     move_resize_client(c, NULL);
     switch(max_way)
     {

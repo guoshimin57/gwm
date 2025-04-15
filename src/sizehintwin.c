@@ -72,8 +72,10 @@ void size_hint_win_update(Size_hint_win *size_hint_win)
 static void size_hint_win_set_info(Size_hint_win *size_hint_win)
 {
     XSizeHints hint=get_size_hint(WIDGET_WIN(size_hint_win->hint_for));
-    long col=get_win_col(WIDGET_W(size_hint_win->hint_for), &hint),
-         row=get_win_row(WIDGET_H(size_hint_win->hint_for), &hint);
+    Widget *widget=size_hint_win->hint_for;
+    long col=get_win_col(WIDGET_W(widget), &hint),
+         row=get_win_row(WIDGET_H(widget), &hint);
 
-    sprintf(size_hint_win->info, "(%d, %d) %ldx%ld", WIDGET_X(size_hint_win->hint_for), WIDGET_Y(size_hint_win->hint_for), col, row);
+    sprintf(size_hint_win->info, "(%d, %d) %ldx%ld",
+        WIDGET_X(widget), WIDGET_Y(widget), col, row);
 }

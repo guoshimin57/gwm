@@ -152,7 +152,7 @@ static void init_imlib(void)
 void wm_deinit(void)
 {
     clients_for_each_safe(c)
-        remove_client(c, true);
+        client_del(c);
     free_all_images();
     taskbar_del(get_gwm_taskbar());
     entry_del(cmd_entry);

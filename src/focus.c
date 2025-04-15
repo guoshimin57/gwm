@@ -91,16 +91,14 @@ static void update_focus_client_pointer(Client *c)
     {
         if(!is_viewable_client(cf) && !is_viewable_client(cf = co ? co : pf))
             cf=get_first_map_client();
-        if((!is_viewable_client(pf) || pf==cf) && !is_viewable_client(pf=po))
-            pf=get_first_map_diff_client(pf);
+        if(!is_viewable_client(pf) || pf==cf)
+            pf= (po && po!=cf && is_viewable_client(po)) ? po : get_first_map_diff_client(cf);
     }
     else
     {
         p=get_top_transient_client(c->subgroup_leader, true);
         pf=cf, cf=(p ? p : c);
     }
-    if(pf == cf)
-        pf=get_first_map_diff_client(cf);
 
     set_prev_focus_client(pf);
     set_cur_focus_client(cf);
@@ -117,7 +115,7 @@ static bool is_viewable_client(const Client *c)
 static Client *get_first_map_client(void)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
+        if(is_on_cur_desktop(c->desktop_mask) && is_viewable_client(c))
             return c;
     return NULL;
 }
@@ -125,7 +123,7 @@ static Client *get_first_map_client(void)
 static Client *get_first_map_diff_client(Client *key)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c) && c!=key)
+        if(is_on_cur_desktop(c->desktop_mask) && is_viewable_client(c) && c!=key)
             return c;
     return NULL;
 }
@@ -150,7 +148,7 @@ static void raise_client(Client *c)
 
 static Window get_top_win(const Client *c)
 {
-    return top_wins[is_normal_layer(c->place) ? NORMAL_LAYER : c->place];
+    return top_wins[c->layer];
 }
 
 void create_layer_wins(void)
@@ -181,7 +179,7 @@ static void set_all_net_client_list(void)
 /* 獲取當前桌面按從早到遲的映射順序排列的客戶窗口列表 */
 static Window *get_client_win_list(int *n)
 {
-    *n=get_clients_n(ANY_PLACE, true, true, true);
+    *n=get_clients_n(ANY_LAYER, ANY_AREA, true, true, true);
     if(*n == 0)
         return NULL;
 
@@ -218,7 +216,7 @@ static Window *get_client_win_list(int *n)
 /* 獲取當前桌面按從下到上的疊次序排列的客戶窗口列表 */
 static Window *get_client_win_list_stacking(int *n)
 {
-    *n=get_clients_n(ANY_PLACE, true, true, true);
+    *n=get_clients_n(ANY_LAYER, ANY_AREA, true, true, true);
     if(*n == 0)
         return NULL;
 

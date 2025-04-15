@@ -47,8 +47,9 @@ static void handle_leave_notify(XEvent *e);
 static void handle_map_request(XEvent *e);
 static void handle_unmap_notify(XEvent *e);
 static void handle_property_notify(XEvent *e);
-static void handle_wm_hints_notify(Window win);
-static void handle_wm_icon_name_notify(Window win, Atom atom);
+static void handle_wm_hints_notify(Client *c);
+static void handle_wm_size_hints_notify(Client *c);
+static void handle_wm_icon_name_notify(Client *c, Atom atom);
 static void update_ui(void);
 static void handle_wm_name_notify(Window win, Atom atom);
 static void handle_wm_transient_for_notify(Window win);
@@ -250,7 +251,7 @@ static void handle_enter_notify(XEvent *e)
     if(cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(c);
     if( is_layout_adjust_area(win, x)
-        && get_clients_n(MAIN_AREA, false, false, false))
+        && get_clients_n(TILE_LAYER, MAIN_AREA, false, false, false))
         set_cursor(win, ADJUST_LAYOUT_RATIO);
     if(widget == NULL)
         return;
@@ -336,10 +337,10 @@ static void handle_focus_in(XEvent *e)
     if(!c)
         return;
 
-    if(c->win_state.fullscreen && c->place!=FULLSCREEN_LAYER)
+    if(c->win_state.fullscreen && c->layer!=FULLSCREEN_LAYER)
     {
         WIDGET_X(c)=WIDGET_Y(c)=0, WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
-        move_client(c, NULL, FULLSCREEN_LAYER);
+        move_client(c, NULL, FULLSCREEN_LAYER, ANY_AREA);
     }
     set_urgency_hint(win, c->wm_hint, false);
     set_state_attent(c, false);
@@ -348,8 +349,8 @@ static void handle_focus_in(XEvent *e)
 static void handle_focus_out(XEvent *e)
 {
     Client *c=win_to_client(e->xfocus.window);
-    if(c && c->win_state.fullscreen && c->place==FULLSCREEN_LAYER)
-        move_client(c, NULL, c->old_place);
+    if(c && c->win_state.fullscreen && c->layer==FULLSCREEN_LAYER)
+        move_client(c, NULL, c->olayer, c->oarea);
 }
 
 static void handle_key_press(XEvent *e)
@@ -411,9 +412,9 @@ static void handle_map_request(XEvent *e)
 {
     Window win=e->xmaprequest.window;
 
+    XMapWindow(xinfo.display, win);
     if(is_wm_win(win, false))
         add_client(win);
-    XMapWindow(xinfo.display, win);
 }
 
 /* 對已經映射的窗口重設父窗口會依次執行以下操作：
@@ -438,7 +439,7 @@ static void handle_unmap_notify(XEvent *e)
     {
         if(is_iconic_client(c))
             taskbar_remove_client(get_gwm_taskbar(), WIDGET_WIN(c));
-        remove_client(c, false);
+        remove_client(c);
     }
 }
 
@@ -450,10 +451,12 @@ static void handle_property_notify(XEvent *e)
 
     if(c && cfg->set_frame_prop)
         copy_prop(WIDGET_WIN(c->frame), WIDGET_WIN(c));
-    if(atom == XA_WM_HINTS)
-        handle_wm_hints_notify(win);
-    else if(atom==XA_WM_ICON_NAME || is_spec_ewmh_atom(atom, NET_WM_ICON_NAME))
-        handle_wm_icon_name_notify(win, atom);
+    if(c && atom==XA_WM_HINTS)
+        handle_wm_hints_notify(c);
+    else if(c && atom==XA_WM_NORMAL_HINTS)
+        handle_wm_size_hints_notify(c);
+    else if(c && (atom==XA_WM_ICON_NAME || is_spec_ewmh_atom(atom, NET_WM_ICON_NAME)))
+        handle_wm_icon_name_notify(c, atom);
     else if(atom == XA_WM_NAME || is_spec_ewmh_atom(atom, NET_WM_NAME))
         handle_wm_name_notify(win, atom);
     else if(atom == XA_WM_TRANSIENT_FOR)
@@ -478,13 +481,9 @@ static void handle_property_notify(XEvent *e)
         update_ui();
 }
 
-static void handle_wm_hints_notify(Window win)
+static void handle_wm_hints_notify(Client *c)
 {
-    Client *c=win_to_client(win);
-    if(!c)
-        return;
-
-    XWMHints *oh=c->wm_hint, *nh=XGetWMHints(xinfo.display, win);
+    XWMHints *oh=c->wm_hint, *nh=XGetWMHints(xinfo.display, WIDGET_WIN(c));
     if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
         set_state_attent(c, true);
     if(nh && nh->flags & XUrgencyHint)
@@ -494,12 +493,19 @@ static void handle_wm_hints_notify(Window win)
         XFree(c->wm_hint), c->wm_hint=nh;
 }
 
-static void handle_wm_icon_name_notify(Window win, Atom atom)
+static void handle_wm_size_hints_notify(Client *c)
+{
+    XSizeHints hints=get_size_hint(WIDGET_WIN(c));
+    fix_win_size_by_hint(&hints, &WIDGET_W(c), &WIDGET_H(c));
+    move_resize_client(c, NULL);
+}
+
+static void handle_wm_icon_name_notify(Client *c, Atom atom)
 {
     char *s=NULL;
-    Client *c=win_to_client(win);
+    Window win=WIDGET_WIN(c);
 
-    if(!c || !is_iconic_client(c) || !(s=get_text_prop(win, atom)))
+    if(!is_iconic_client(c) || !(s=get_text_prop(win, atom)))
         return;
 
     iconbar_update_by_icon_name(taskbar_get_iconbar(get_gwm_taskbar()), win, s);

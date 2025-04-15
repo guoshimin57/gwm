@@ -25,7 +25,8 @@ typedef struct client_tag // 客戶窗口相關信息
     bool decorative; // 是否裝飾，即顯示窗口標題欄和邊框
     int ox, oy, ow, oh; // 分别爲win原來的橫、縱坐標和寬、高
     unsigned int desktop_mask; // 所屬虚拟桌面的掩碼
-    Place place, old_place; // 窗口現在的位置及原來的位置
+    Layer layer, olayer; // 客戶窗口當前和原來所在的層
+    Area area, oarea; // 客戶窗口當前和原來所在的區
     Net_wm_win_type win_type; // win的窗口類型
     Net_wm_state win_state; // win的窗口狀態
     char *title_text; // 標題的文字
@@ -70,23 +71,21 @@ typedef struct client_tag // 客戶窗口相關信息
 void init_client_list(void);
 Client *get_clients(void);
 Client *client_new(Window win);
-void client_del(Client *c);
-void set_default_place(Client *c);
-int get_clients_n(Place type, bool count_icon, bool count_trans, bool count_all_desktop);
+void set_default_layer(Client *c);
+int get_clients_n(Layer layer, Area area, bool count_icon, bool count_trans, bool count_all_desktop);
 bool is_iconic_client(const Client *c);
 Client *win_to_client(Window win);
+void client_del(Client *c);
 Client *get_next(Client *c);
 Client *get_prev(Client *c);
-bool is_normal_layer(Place t);
-bool is_spec_place_last_client(Client *c, Place type);
+bool is_place_last_client(Client *c);
+Client *get_head_client(const Client *c, Layer layer, Area area);
 int get_subgroup_n(Client *c);
-Client *get_subgroup_leader(Client *c);
 Client *get_top_transient_client(Client *subgroup_leader, bool only_modal);
 void client_set_state_unfocused(Client *c, int value);
 void save_place_info_of_client(Client *c);
 void restore_place_info_of_client(Client *c);
-bool is_tile_client(Client *c);
-bool is_tiled_client(Client *c);
+bool is_tiling_client(Client *c);
 void set_state_attent(Client *c, bool attent);
 bool is_wm_win(Window win, bool before_wm);
 void update_clients_bg(void);
@@ -94,6 +93,5 @@ void update_client_bg(Client *c);
 void set_client_rect_by_outline(Client *c, int x, int y, int w, int h);
 bool is_exist_client(Client *c);
 bool is_new_client(Client *c);
-Client *get_head_client(const Client *c, Place place);
 
 #endif

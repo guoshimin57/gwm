@@ -13,6 +13,7 @@
 #include "font.h"
 #include "misc.h"
 #include "taskbar.h"
+#include "icccm.h"
 #include "debug.h"
 
 void print_clients(void)
@@ -96,8 +97,10 @@ void print_net_wm_state(Net_wm_state state)
 void print_place_info(Client *c)
 {
     printf(_("以下是%lx窗口的位置信息：\n"), WIDGET_WIN(c));
-    printf("ox=%d, oy=%d, ow=%d, oh=%d, old_place=%d\n", c->ox, c->oy, c->ow, c->oh, c->old_place);
-    printf("x=%d, y=%d, w=%d, h=%d, place=%d\n", WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c), c->place);
+    printf("ox=%d, oy=%d, ow=%d, oh=%d, olayer=%d, oarea=%d\n",
+        c->ox, c->oy, c->ow, c->oh, c->olayer, c->oarea);
+    printf("x=%d, y=%d, w=%d, h=%d, layer=%d, area=%d\n",
+        WIDGET_X(c), WIDGET_Y(c), WIDGET_W(c), WIDGET_H(c), c->layer, c->area);
 }
 
 void print_all_client_win(void)
@@ -140,4 +143,19 @@ void print_net_client_lists(void)
     for(i=0; i<n; i++)
         printf("%lx%s", wlist[i], i<n-1 ? ", " : "\n");
     Free(wlist);
+}
+
+void print_size_hints(Window win)
+{
+    XSizeHints h=get_size_hint(win);
+    printf("以下是%lx窗口的尺寸條件特性：\n", win);
+    printf("flags=%lx, x=%d, y=%d, w=%d, h=%d\n"
+           "wmin=%d, hmin=%d, wmax=%d, hmax=%d, winc=%d, hinc=%d\n"
+           "amin.x=%d, amin.y=%d, amax.x=%d, amax.y=%d\n"
+           "wbase=%d, hbase=%d, gravity=%d\n",
+            h.flags, h.x, h.y, h.width, h.height,
+            h.min_width, h.min_height, h.max_width, h.max_height,
+            h.width_inc, h.height_inc,
+            h.min_aspect.x, h.min_aspect.y, h.max_aspect.x, h.max_aspect.y,
+            h.base_width, h.base_height, h.win_gravity);
 }

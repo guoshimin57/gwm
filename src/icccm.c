@@ -52,23 +52,23 @@ int get_win_row(int height, const XSizeHints *hint)
 /* 通常程序在創建窗口時就設置好窗口尺寸特性，一般情況下不會再修改。但實際上有些
  * 奇葩的程序會在調整窗口尺寸後才更新窗口尺寸特性，而有些程序則明明設置了窗口的
  * 尺寸特性標志位，但相應的XSizeHints結構成員其實沒有設置。因此，不要指望在添加
- * 客戶窗口時一勞永逸地存儲窗口尺寸特性。本函数修改XSizeHints的flags成员，使之
- * 包含ICCCM新增标志以及使inc总是被设置。
+ * 客戶窗口時一勞永逸地存儲和使用窗口尺寸特性。本函數返回按ICCCM建議修正的窗口
+ * XA_WM_NORMAL_HINTS特性。
  */
 XSizeHints get_size_hint(Window win)
 {
-    long f=0, flags=0;
+    long f=0, tmp=0;
     XSizeHints h={0};
 
-    if(XGetWMNormalHints(xinfo.display, win, &h, &flags))
+    if(XGetWMNormalHints(xinfo.display, win, &h, &tmp))
     {
-        /* h.flags只使用最低字節保存了ICCCM之前確立的標志，
-         * flags只使用除最低字節以外的字節保存了ICCCM新增的標志 */
-        f = (h.flags & 0xff) | (flags & ~0xff);
+        f=h.flags;
         if(!(f & PMinSize) && (f & PBaseSize))
             h.min_width=h.base_width, h.min_height=h.base_height, f|=PMinSize;
         if(!(f & PBaseSize) && (f & PMinSize))
             h.base_width=h.min_width, h.base_height=h.min_height, f|=PBaseSize;
+        if(!(f & PResizeInc) && is_resizable(&h))
+            h.width_inc=h.height_inc=1, f|=PResizeInc;
         h.flags=f;
     }
 
@@ -91,18 +91,22 @@ void fix_win_size_by_hint(const XSizeHints *size_hint, int *w, int *h)
         *w=p->width;
     else if((f & PBaseSize) && (f & PResizeInc) && p->base_width)
         *w=p->base_width+col*p->width_inc;
+
     if((f & USSize || f & PSize) && p->height)
         *h=p->height;
     else if((f & PBaseSize) && (f & PResizeInc) && p->base_height)
         *h=p->base_height+row*p->height_inc;
+
     if((f & PMinSize) && p->min_width)
         *w=MAX(*w, p->min_width);
     if((f & PMinSize) && p->min_height)
         *h=MAX(*h, p->min_height);
+
     if((f & PMaxSize) && p->max_width)
         *w=MIN(*w, p->max_width);
     if((f & PMaxSize) && p->max_height)
         *h=MIN(*h, p->max_height);
+
     if( (f & PAspect) && p->min_aspect.x && p->min_aspect.y
         && p->max_aspect.x && p->max_aspect.y)
     {

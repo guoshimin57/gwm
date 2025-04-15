@@ -189,11 +189,17 @@ static bool iconbar_has_similar_cbutton(Iconbar *iconbar, const Cbutton *cbutton
         return false;
 
     list_for_each_entry(Cbutton, p, &iconbar->cbuttons->list, list)
+    {
         if(p!=cbutton && XGetClassHint(xinfo.display, p->cwin, &ph))
-            if(strcmp(ph.res_class, ch.res_class) == 0)
-                { result=true; break; }
+        {
+            result=!strcmp(ph.res_class, ch.res_class);
+            vXFree(ph.res_class, ph.res_name);
+            if(result)
+                break;
+        }
+    }
 
-    vXFree(ch.res_class, ch.res_name, ph.res_class, ph.res_name);
+    vXFree(ch.res_class, ch.res_name);
 
     return result;
 }

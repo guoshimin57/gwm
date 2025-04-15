@@ -11,7 +11,6 @@
 
 #include "prop.h"
 #include "clientop.h"
-#include "mvresize.h"
 #include "focus.h"
 #include "wmstate.h"
 
@@ -149,7 +148,7 @@ static void set_fullscreen(Client *c)
     save_place_info_of_client(c);
     WIDGET_X(c)=WIDGET_Y(c)=0;
     WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
-    move_client(c, NULL, FULLSCREEN_LAYER);
+    move_client(c, NULL, FULLSCREEN_LAYER, ANY_AREA);
 }
 
 static void change_net_wm_state_for_shaded(Client *c, long act)
@@ -176,9 +175,9 @@ static void change_net_wm_state_for_above(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, above))
     {
-        if(c->place != ABOVE_LAYER)
+        if(c->layer != ABOVE_LAYER)
             save_place_info_of_client(c);
-        move_client(c, NULL, ABOVE_LAYER);
+        move_client(c, NULL, ABOVE_LAYER, ANY_AREA);
     }
     else
         restore_client(c);
@@ -188,9 +187,9 @@ static void change_net_wm_state_for_below(Client *c, long act)
 {
     if(SHOULD_ADD_STATE(c, act, below))
     {
-        if(c->place != BELOW_LAYER)
+        if(c->layer != BELOW_LAYER)
             save_place_info_of_client(c);
-        move_client(c, NULL, BELOW_LAYER);
+        move_client(c, NULL, BELOW_LAYER, ANY_AREA);
     }
     else
         restore_client(c);
