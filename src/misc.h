@@ -13,6 +13,7 @@
 #define MISC_H
 
 #include <stdlib.h>
+#include <libintl.h>
 #include <X11/Xlib.h>
 #include "list.h"
 

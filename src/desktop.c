@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "misc.h"
 #include "config.h"
 #include "prop.h"
 #include "focus.h"

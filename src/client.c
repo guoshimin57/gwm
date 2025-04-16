@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <X11/Xft/Xft.h>
 #include "config.h"
 #include "gwm.h"
 #include "font.h"

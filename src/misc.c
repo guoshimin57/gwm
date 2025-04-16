@@ -9,6 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 #include "gwm.h"
 #include "prop.h"
 #include "icccm.h"

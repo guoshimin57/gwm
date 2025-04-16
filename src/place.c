@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "clientop.h"
+#include "misc.h"
 #include "prop.h"
 #include "focus.h"
 #include "grab.h"

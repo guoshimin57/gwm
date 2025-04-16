@@ -9,7 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <X11/Xatom.h>
 #include "button.h"
+#include "misc.h"
 #include "menu.h"
 #include "config.h"
 #include "gwm.h"

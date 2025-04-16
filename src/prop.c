@@ -9,7 +9,11 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <string.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
 #include "gwm.h"
+#include "misc.h"
 #include "prop.h"
 
 typedef struct {

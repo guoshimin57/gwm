@@ -12,6 +12,7 @@
 #ifndef ICONBAR_H
 #define ICONBAR_H
 
+#include <Imlib2.h>
 #include "widget.h"
 
 typedef struct iconbar_tag Iconbar;

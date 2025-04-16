@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "misc.h"
 #include "icccm.h"
 #include "focus.h"
 

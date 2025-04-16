@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "misc.h"
 #include "button.h"
 #include "config.h"
 #include "prop.h"

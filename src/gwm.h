@@ -13,38 +13,7 @@
 #define GWM_H
 
 #include <signal.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <sys/select.h>
-#include <sys/wait.h>
-#include <time.h>
-#include <unistd.h>
-#include <wchar.h>
-#include <dirent.h>
-#include <Imlib2.h>
-#include <locale.h>
-#include <libintl.h>
-#include <math.h>
-#include <X11/cursorfont.h>
-#include <X11/Xatom.h>
-#include <X11/Xft/Xft.h>
-#include <X11/Xproto.h>
-#include "gwm.h"
-#include "misc.h"
-#include "taskbar.h"
-
-#define NET_WM_STATE_REMOVE 0
-#define NET_WM_STATE_ADD    1
-#define NET_WM_STATE_TOGGLE 2
-
-#define SHOULD_ADD_STATE(c, act, flag) \
-    (act==NET_WM_STATE_ADD || (act==NET_WM_STATE_TOGGLE && !c->win_state.flag))
-
-#define SH_CMD(cmd_str) ((char *const []){"/bin/sh", "-c", (char *const)cmd_str, NULL})
-#define CMD(cmd_str) {.cmd=SH_CMD(cmd_str)}
-
-#define FUNC_ARG(var, data) (Func_arg){.var=data}
+#include <X11/Xlib.h>
 
 #define BUTTON_MASK (ButtonPressMask|ButtonReleaseMask)
 #define POINTER_MASK (BUTTON_MASK|ButtonMotionMask)

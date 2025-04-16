@@ -11,6 +11,7 @@
 
 #include <X11/Xatom.h>
 #include "gwm.h"
+#include "misc.h"
 #include "prop.h"
 #include "icccm.h"
 

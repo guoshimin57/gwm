@@ -9,8 +9,10 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#include <fontconfig/fontconfig.h>
+#include <math.h>
 #include <stdint.h>
+#include <wchar.h>
+#include <fontconfig/fontconfig.h>
 #include "config.h"
 #include "misc.h"
 #include "list.h"

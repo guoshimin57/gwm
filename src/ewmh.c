@@ -12,6 +12,8 @@
 #include "gwm.h"
 #include "prop.h"
 #include "icccm.h"
+#include "widget.h"
+#include "misc.h"
 #include "ewmh.h"
 
 static const char *ewmh_atom_names[EWMH_ATOM_N]= // EWMH規範標識符名稱

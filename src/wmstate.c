@@ -9,10 +9,19 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "misc.h"
 #include "prop.h"
 #include "clientop.h"
 #include "focus.h"
+#include "taskbar.h"
 #include "wmstate.h"
+
+#define NET_WM_STATE_REMOVE 0
+#define NET_WM_STATE_ADD    1
+#define NET_WM_STATE_TOGGLE 2
+
+#define SHOULD_ADD_STATE(c, act, flag) \
+    (act==NET_WM_STATE_ADD || (act==NET_WM_STATE_TOGGLE && !c->win_state.flag))
 
 static void change_net_wm_state_for_modal(Client *c, long act);
 static void change_net_wm_state_for_sticky(Client *c, long act);

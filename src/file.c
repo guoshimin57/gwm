@@ -14,6 +14,8 @@
 #include "gwm.h"
 #include "config.h"
 #include "list.h"
+#include <unistd.h>
+#include <dirent.h>
 
 static void add_files_in_path(Strings *head, const char *path, const char *regex, bool fullname);
 static bool is_dir(const char *filename);

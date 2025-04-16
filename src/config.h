@@ -12,8 +12,9 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "gwm.h"
 #include <stdbool.h>
+#include "gwm.h"
+#include "widget.h"
 
 typedef enum // 窗口聚焦模式
 {

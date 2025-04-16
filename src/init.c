@@ -24,8 +24,11 @@
 #include "wallpaper.h"
 #include "grab.h"
 #include "layout.h"
+#include "taskbar.h"
 #include "bind_cfg.h"
 #include "init.h"
+#include <locale.h>
+#include <sys/wait.h>
 
 static Display *open_display(void);
 static void clear_zombies(int signum);

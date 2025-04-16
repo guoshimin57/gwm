@@ -10,6 +10,7 @@
  * ************************************************************************/
 
 #include "config.h"
+#include "misc.h"
 #include "font.h"
 #include "widget.h"
 #include "statusbar.h"

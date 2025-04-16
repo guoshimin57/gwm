@@ -9,6 +9,8 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <time.h>
+#include <Imlib2.h>
 #include "config.h"
 #include "drawable.h"
 #include "ewmh.h"

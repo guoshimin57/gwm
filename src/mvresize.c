@@ -9,6 +9,7 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include "misc.h"
 #include "clientop.h"
 #include "icccm.h"
 #include "sizehintwin.h"

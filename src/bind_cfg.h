@@ -47,6 +47,7 @@
     "ps -o stat= $pid | head -n1 | grep T > /dev/null ; } " \
     "&& kill -CONT $pid || kill -STOP $pid > /dev/null 2>&1"
 #define DESKTOPN_BUTTON(n) DESKTOP ## n ##_BUTTON // 獲取虛擬桌面按鈕類型
+#define CMD(cmd_str) {.cmd=SH_CMD(cmd_str)}
 
 /* 功能：設置與虛擬桌面相關的按鍵功能綁定。
  * 說明：邏輯功能轉換鍵掩碼的定義詳見<X11/X.h>，用xmodmap(1)命令可查看與功能

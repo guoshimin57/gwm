@@ -9,6 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <time.h>
+#include <sys/select.h>
+#include <X11/Xatom.h>
 #include "clientop.h"
 #include "config.h"
 #include "entry.h"
@@ -23,6 +26,7 @@
 #include "layout.h"
 #include "grab.h"
 #include "wmstate.h"
+#include "taskbar.h"
 #include "handler.h"
 
 static void handle_event(XEvent *e);
@@ -495,6 +499,9 @@ static void handle_wm_hints_notify(Client *c)
 
 static void handle_wm_size_hints_notify(Client *c)
 {
+    if(!c->owner && c->layer==TILE_LAYER)
+        return;
+
     XSizeHints hints=get_size_hint(WIDGET_WIN(c));
     fix_win_size_by_hint(&hints, &WIDGET_W(c), &WIDGET_H(c));
     move_resize_client(c, NULL);

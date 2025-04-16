@@ -9,6 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <time.h>
+#include <Imlib2.h>
+#include <X11/Xatom.h>
 #include "gwm.h"
 #include "config.h"
 #include "prop.h"

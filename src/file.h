@@ -14,6 +14,8 @@
 
 #include "misc.h"
 
+#define SH_CMD(cmd_str) ((char *const []){"/bin/sh", "-c", (char *const)cmd_str, NULL})
+
 Strings *get_files_in_paths(const char *paths, const char *regex, bool fullname);
 void exec_cmd(char *const cmd[]);
 void exec_autostart(void);

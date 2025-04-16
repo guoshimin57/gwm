@@ -9,7 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <X11/cursorfont.h>
 #include "font.h"
+#include "misc.h"
 #include "config.h"
 
 #define SET_TITLE_BUTTON_TEXT(type, text) /* 設置標題按鈕文字 */ \
