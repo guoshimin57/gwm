@@ -23,6 +23,8 @@
 #include "desktop.h"
 #include "wallpaper.h"
 #include "grab.h"
+#include "taskbar.h"
+#include "gui.h"
 #include "func.h"
 
 /* ========================== Func函數命名風格 =============================
@@ -99,7 +101,7 @@ void toggle_focus_mode(XEvent *e, Arg arg)
 void start(XEvent *e, Arg arg) // 開始，即打開操作中心（然後開始執行操作）
 {
     UNUSED(e), UNUSED(arg);
-    menu_show(WIDGET(act_center));
+    taskbar_show_act_center();
 }
 
 void open_client_menu(XEvent *e, Arg arg)
@@ -168,15 +170,13 @@ void all_attach_to_desktop(XEvent *e, Arg arg)
 void run_cmd(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    entry_clear(cmd_entry);
-    entry_show(WIDGET(cmd_entry));
+    open_run_cmd();
 }
 
 void set_color(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    entry_clear(color_entry);
-    entry_show(WIDGET(color_entry));
+    open_color_settings();
 }
 
 void switch_wallpaper(XEvent *e, Arg arg)

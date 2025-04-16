@@ -61,7 +61,7 @@ static void hide_cur_desktop_clients(void)
 static void hide_client(const Client *c)
 {
     if(is_iconic_client(c))
-        taskbar_remove_client(get_gwm_taskbar(), WIDGET_WIN(c));
+        taskbar_remove_client(WIDGET_WIN(c));
     else
         widget_hide(WIDGET(c->frame));
 }
@@ -76,7 +76,7 @@ static void show_cur_desktop_clients(void)
 static void show_client(const Client *c)
 {
     if(is_iconic_client(c))
-        taskbar_add_client(get_gwm_taskbar(), WIDGET_WIN(c));
+        taskbar_add_client(WIDGET_WIN(c));
     else
         widget_show(WIDGET(c->frame));
 }

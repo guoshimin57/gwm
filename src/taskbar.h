@@ -12,26 +12,24 @@
 #ifndef TASKBAR_H
 #define TASKBAR_H
 
+#include <Imlib2.h>
 #include "widget.h"
-#include "iconbar.h"
-#include "statusbar.h"
 
 typedef struct _taskbar_tag Taskbar; // 任務欄
 
-void create_gwm_taskbar(void);
-Taskbar *get_gwm_taskbar(void);
-Taskbar *taskbar_new(Widget *parent, int x, int y, int w, int h);
-void taskbar_del(Taskbar *taskbar);
-void taskbar_iconbar_update(Taskbar *taskbar);
-void taskbar_iconbar_update_by_state(Taskbar *taskbar, Window cwin);
-void taskbar_buttons_update_bg(Taskbar *taskbar);
-void taskbar_update_bg(const Widget *widget);
-void taskbar_set_urgency(Taskbar *taskbar, unsigned int desktop_mask);
-void taskbar_set_attention(Taskbar *taskbar, unsigned int desktop_mask);
-void taskbar_buttons_update_bg_by_chosen(Taskbar *taskbar);
-Iconbar *taskbar_get_iconbar(const Taskbar *taskbar);
-Statusbar *taskbar_get_statusbar(const Taskbar *taskbar);
-void taskbar_add_client(Taskbar *taskbar, Window cwin);
-void taskbar_remove_client(Taskbar *taskbar, Window cwin);
+Taskbar *get_taskbar(void);
+void taskbar_new(Widget *parent, int x, int y, int w, int h);
+void taskbar_del(void);
+void taskbar_update_bg(void);
+void taskbar_set_urgency(unsigned int desktop_mask);
+void taskbar_set_attention(unsigned int desktop_mask);
+void taskbar_add_client(Window cwin);
+void taskbar_remove_client(Window cwin);
+Window taskbar_get_client_win(const Window button_win);
+void taskbar_update_by_client_state(Window cwin);
+void taskbar_update_by_icon_name(const Window cwin, const char *icon_name);
+void taskbar_update_by_icon_image(const Window cwin, Imlib_Image image);
+void taskbar_change_statusbar_label(const char *label);
+void taskbar_show_act_center(void);
 
 #endif

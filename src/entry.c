@@ -39,12 +39,7 @@ static void entry_dtor(Entry *entry);
 static int entry_get_cursor_x(Entry *entry);
 static void entry_input_ctrl_seq(Entry *entry, XKeyEvent *ke, KeySym ks);
 static void insert_wcs(wchar_t *src, size_t size, size_t *offset, const wchar_t *ins);
-static char *entry_get_part_match_regex(Entry *entry);
 static void entry_complete(Entry *entry, bool show);
-static Strings *entry_get_cmd_completion(Entry *entry);
-
-Entry *cmd_entry=NULL; // 輸入命令並執行的構件
-Entry *color_entry=NULL; // 输入颜色名并设置颜色的構件
 
 Entry *entry_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *))
 {
@@ -216,13 +211,6 @@ static void insert_wcs(wchar_t *src, size_t size, size_t *offset, const wchar_t 
     *offset = i + (ni < size-i ? ni : size-i);
 }
 
-static char *entry_get_part_match_regex(Entry *entry)
-{
-    char text[FILENAME_MAX]={0};
-    wcstombs(text, entry->text, FILENAME_MAX);
-    return copy_strings(text, ".*", NULL);
-}
-
 static void entry_complete(Entry *entry, bool show)
 {
     Strings *strs=NULL;
@@ -260,48 +248,7 @@ void entry_paste(Entry *entry)
     entry_update_fg(WIDGET(entry));
 }
 
-Listview *entry_get_listview(Entry *entry)
+Listview *entry_get_listview(const Entry *entry)
 {
     return entry->listview;
-}
-
-Entry *cmd_entry_new(Widget_id id)
-{
-    int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
-        x, y, w, h=get_font_height_by_pad(), pad=get_font_pad();
-
-    get_string_size(cfg->cmd_entry_hint, &w, NULL);
-    w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
-    x=(sw-w)/2-bw, y=(sh-h)/2-bw;
-
-    Entry *entry=entry_new(NULL, id, x, y, w, h, cfg->cmd_entry_hint,
-        entry_get_cmd_completion);
-    listview_set_nmax(entry->listview, (sh-y-h-h)/h);
-    widget_set_poppable(WIDGET(entry), true);
-
-    return entry;
-}
-
-static Strings *entry_get_cmd_completion(Entry *entry)
-{
-    char *regex=entry_get_part_match_regex(entry);
-    char *paths=getenv("PATH");
-    Strings *cmds=get_files_in_paths(paths, regex, false);
-    Free(regex);
-    return cmds;
-}
-
-Entry *color_entry_new(Widget_id id)
-{
-    int sw=xinfo.screen_width, sh=xinfo.screen_height, bw=cfg->border_width,
-        x, y, w, h=get_font_height_by_pad(), pad=get_font_pad();
-
-    get_string_size(cfg->color_entry_hint, &w, NULL);
-    w += 2*pad, w = (w>=sw/4 && w<=sw-2*bw) ? w : sw/4;
-    x=(sw-w)/2-bw, y=(sh-h)/2-bw;
-
-    Entry *entry=entry_new(NULL, id, x, y, w, h, cfg->color_entry_hint, NULL);
-    widget_set_poppable(WIDGET(entry), true);
-
-    return entry;
 }

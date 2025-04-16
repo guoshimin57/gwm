@@ -296,7 +296,7 @@ void change_layout(Layout layout)
 
     request_layout_update();
     update_titlebars_layout();
-    taskbar_buttons_update_bg(get_gwm_taskbar());
+    taskbar_update_bg();
 }
 
 void pointer_adjust_layout_ratio(XEvent *e)

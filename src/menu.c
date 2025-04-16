@@ -30,8 +30,6 @@ static bool is_null_strings(const char *strings[], int n);
 static void menu_set_method(Widget *widget);
 static void menu_dtor(Menu *menu);
 
-Menu *act_center=NULL; // 操作中心
-
 Menu *menu_new(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col)
 {
     Menu *menu=Malloc(sizeof(Menu));

@@ -27,6 +27,7 @@
 #include "grab.h"
 #include "wmstate.h"
 #include "taskbar.h"
+#include "gui.h"
 #include "handler.h"
 
 static void handle_event(XEvent *e);
@@ -45,8 +46,6 @@ static void handle_expose(XEvent *e);
 static void handle_focus_in(XEvent *e);
 static void handle_focus_out(XEvent *e);
 static void handle_key_press(XEvent *e);
-static void key_run_cmd(XKeyEvent *e);
-static void key_set_color(XKeyEvent *e);
 static void handle_leave_notify(XEvent *e);
 static void handle_map_request(XEvent *e);
 static void handle_unmap_notify(XEvent *e);
@@ -54,7 +53,6 @@ static void handle_property_notify(XEvent *e);
 static void handle_wm_hints_notify(Client *c);
 static void handle_wm_size_hints_notify(Client *c);
 static void handle_wm_icon_name_notify(Client *c, Atom atom);
-static void update_ui(void);
 static void handle_wm_name_notify(Window win, Atom atom);
 static void handle_wm_transient_for_notify(Window win);
 static void handle_selection_notify(XEvent *e);
@@ -121,7 +119,7 @@ static void exec_buttonbind_func(XEvent *e)
     Window win=e->xbutton.window;
     Widget *widget=widget_find(win);
     Widget_id id = widget ? widget->id : (win==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
-    Client *c=win_to_client(id==CLIENT_ICON ? iconbar_get_client_win(taskbar_get_iconbar(get_gwm_taskbar()), win) : win);
+    Client *c=win_to_client(id==CLIENT_ICON ? taskbar_get_client_win(win) : win);
     Client *tmc = c ? get_top_transient_client(c->subgroup_leader, true) : NULL;
 
     if(widget && widget->id!=TITLEBAR && widget->id!=CLIENT_FRAME)
@@ -376,29 +374,6 @@ static void handle_key_press(XEvent *e)
     }
 }
 
-static void key_run_cmd(XKeyEvent *e)
-{
-    if(!entry_input(cmd_entry, e))
-        return;
-
-    char cmd[BUFSIZ]={0};
-    wcstombs(cmd, entry_get_text(cmd_entry), BUFSIZ);
-    exec_cmd(SH_CMD(cmd));
-    entry_clear(cmd_entry);
-}
-
-static void key_set_color(XKeyEvent *e)
-{
-    if(!entry_input(color_entry, e))
-        return;
-
-    char color[BUFSIZ]={0};
-    wcstombs(color, entry_get_text(color_entry), BUFSIZ);
-    set_main_color_name(color);
-    update_ui();
-    entry_clear(color_entry);
-}
-
 static void handle_leave_notify(XEvent *e)
 {
     Window win=e->xcrossing.window;
@@ -442,7 +417,7 @@ static void handle_unmap_notify(XEvent *e)
         && (ue->send_event|| ue->event==WIDGET_WIN(c->frame) || ue->event==WIDGET_WIN(c)))
     {
         if(is_iconic_client(c))
-            taskbar_remove_client(get_gwm_taskbar(), WIDGET_WIN(c));
+            taskbar_remove_client(WIDGET_WIN(c));
         remove_client(c);
     }
 }
@@ -472,17 +447,17 @@ static void handle_property_notify(XEvent *e)
         if(c->decorative)
             frame_change_logo(c->frame, c->image);
         if(is_iconic_client(c))
-            iconbar_update_by_icon(taskbar_get_iconbar(get_gwm_taskbar()), win, c->image);
+            taskbar_update_by_icon_image(win, c->image);
     }
     else if(c && is_spec_ewmh_atom(atom, NET_WM_STATE))
-        iconbar_update_by_state(taskbar_get_iconbar(get_gwm_taskbar()), win);
+        taskbar_update_by_client_state(win);
     else if(is_spec_ewmh_atom(atom, NET_CURRENT_DESKTOP)
         || is_spec_gwm_atom(atom, GWM_LAYOUT))
-        taskbar_buttons_update_bg_by_chosen(get_gwm_taskbar());
+        taskbar_update_bg();
     else if(is_spec_gwm_atom(atom, GWM_UPDATE_LAYOUT))
         update_layout();
     else if(is_spec_gwm_atom(atom, GWM_MAIN_COLOR_NAME))
-        update_ui();
+        update_gui();
 }
 
 static void handle_wm_hints_notify(Client *c)
@@ -491,8 +466,7 @@ static void handle_wm_hints_notify(Client *c)
     if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
         set_state_attent(c, true);
     if(nh && nh->flags & XUrgencyHint)
-        taskbar_set_urgency(get_gwm_taskbar(), c->desktop_mask);
-    taskbar_buttons_update_bg(get_gwm_taskbar());
+        taskbar_set_urgency(c->desktop_mask);
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
 }
@@ -515,26 +489,8 @@ static void handle_wm_icon_name_notify(Client *c, Atom atom)
     if(!is_iconic_client(c) || !(s=get_text_prop(win, atom)))
         return;
 
-    iconbar_update_by_icon_name(taskbar_get_iconbar(get_gwm_taskbar()), win, s);
+    taskbar_update_by_icon_name(win, s);
     Free(s);
-}
-
-static void update_ui(void)
-{
-    // 以下函數會產生Expose事件，而處理Expose事件時會更新窗口的文字
-    // 內容及其顏色，故此處不必更新構件文字顏色。
-    char *name=get_main_color_name();
-    alloc_color(name);
-    Free(name);
-    taskbar_update_bg(WIDGET(get_gwm_taskbar()));
-    menu_update_bg(WIDGET(act_center));
-    clients_for_each(c)
-        if(c->decorative)
-            menu_update_bg(WIDGET(frame_get_menu(c->frame)));
-    entry_update_bg(WIDGET(cmd_entry));
-    entry_update_bg(WIDGET(color_entry));
-    update_win_bg(xinfo.root_win, get_root_color(), None);
-    update_clients_bg();
 }
 
 static void handle_wm_name_notify(Window win, Atom atom)
@@ -546,7 +502,7 @@ static void handle_wm_name_notify(Window win, Atom atom)
         return;
 
     if(win == xinfo.root_win)
-        statusbar_change_label(taskbar_get_statusbar(get_gwm_taskbar()), s);
+        taskbar_change_statusbar_label(s);
     else
     {
         Free(c->title_text);

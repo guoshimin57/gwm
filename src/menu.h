@@ -18,8 +18,6 @@ typedef struct _menu_tag Menu;
 
 #define MENU(widget) ((Menu *)(widget))
 
-extern Menu *act_center;
-
 Menu *menu_new(Widget *owner, Widget_id id, const char *icon_names[], const char *symbols[], const char *labels[], int n, int col);
 void menu_del(Menu *menu);
 void menu_show(Widget *widget);

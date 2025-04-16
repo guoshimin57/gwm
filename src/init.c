@@ -26,6 +26,7 @@
 #include "layout.h"
 #include "taskbar.h"
 #include "bind_cfg.h"
+#include "gui.h"
 #include "init.h"
 #include <locale.h>
 #include <sys/wait.h>
@@ -69,9 +70,7 @@ void wm_init(void)
     set_ewmh();
     init_layout();
     reg_binds(keybinds, buttonbinds);
-    create_gwm_taskbar();
-    cmd_entry=cmd_entry_new(RUN_CMD_ENTRY);
-    color_entry=color_entry_new(COLOR_ENTRY);
+    gui_init();
     init_client_list();
     grab_keys();
     exec_autostart();
@@ -157,10 +156,7 @@ void wm_deinit(void)
     clients_for_each_safe(c)
         client_del(c);
     free_all_images();
-    taskbar_del(get_gwm_taskbar());
-    entry_del(cmd_entry);
-    entry_del(color_entry);
-    menu_del(act_center);
+    gui_deinit();
     del_layer_wins();
     XFreeModifiermap(xinfo.mod_map);
     free_cursors();

@@ -207,7 +207,7 @@ static void change_net_wm_state_for_below(Client *c, long act)
 static void change_net_wm_state_for_attent(Client *c, long act)
 {
     c->win_state.attent=SHOULD_ADD_STATE(c, act, attent);
-    taskbar_set_attention(get_gwm_taskbar(), c->desktop_mask);
+    taskbar_set_attention(c->desktop_mask);
 }
 
 static void change_net_wm_state_for_focused(Client *c, long act)

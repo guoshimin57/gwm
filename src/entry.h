@@ -21,8 +21,6 @@
 
 typedef struct _entry_tag Entry;
 
-extern Entry *cmd_entry, *color_entry;
-
 Entry *entry_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *));
 void entry_clear(Entry *entry);
 void entry_del(Entry *entry);
@@ -33,8 +31,6 @@ void entry_update_fg(const Widget *widget);
 wchar_t *entry_get_text(Entry *entry);
 bool entry_input(Entry *entry, XKeyEvent *ke);
 void entry_paste(Entry *entry);
-Listview *entry_get_listview(Entry *entry);
-Entry *cmd_entry_new(Widget_id id);
-Entry *color_entry_new(Widget_id id);
+Listview *entry_get_listview(const Entry *entry);
 
 #endif
