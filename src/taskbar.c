@@ -189,10 +189,6 @@ void taskbar_update_bg(void)
 {
     taskbar_buttons_update_bg();
     iconbar_update_bg(WIDGET(taskbar->iconbar));
-    /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
-     * 雖然給iconbar->win發送了Expose事件，但實際上沒更新背景。也許當窗口沒有內容
-     * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
-    XClearWindow(xinfo.display, WIDGET_WIN(taskbar->iconbar));
     widget_update_bg(WIDGET(taskbar->statusbar));
     menu_update_bg(WIDGET(taskbar->act_center));
 }
@@ -366,7 +362,7 @@ static void iconbar_update(Iconbar *iconbar)
         if(iconbar_has_similar_cbutton(iconbar, c))
         {
             get_string_size(button_get_label(b), &wl, NULL);
-            w=MIN(wi+wl+2*pad, cfg->icon_win_width_max);
+            w=MIN(wi+wl+2*pad, cfg->iconbar_width_max);
         }
         else
             w=wi;
@@ -435,7 +431,13 @@ void taskbar_update_by_icon_image(const Window cwin, Imlib_Image image)
 static void iconbar_update_bg(const Widget *widget)
 {
     const Iconbar *iconbar=(const Iconbar *)widget;
+
     widget_update_bg(WIDGET(iconbar));
+    /* Xlib手冊說窗口收到Expose事件時會更新背景，但事實上不知道爲何，上邊的語句
+     * 雖然給iconbar->win發送了Expose事件，但實際上沒更新背景。也許當窗口沒有內容
+     * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
+    XClearWindow(xinfo.display, WIDGET_WIN(taskbar->iconbar));
+
     list_for_each_entry(Cbutton, cb, &iconbar->cbuttons->list, list)
         widget_update_bg(WIDGET(cb->button));
 }

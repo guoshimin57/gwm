@@ -254,7 +254,7 @@ static void handle_enter_notify(XEvent *e)
         focus_client(c);
     if( is_layout_adjust_area(win, x)
         && get_clients_n(TILE_LAYER, MAIN_AREA, false, false, false))
-        set_cursor(win, ADJUST_LAYOUT_RATIO);
+        set_cursor(win, LAYOUT_RESIZE);
     if(widget == NULL)
         return;
     if(widget->id == CLIENT_FRAME)

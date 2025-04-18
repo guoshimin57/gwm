@@ -21,7 +21,6 @@
 #include "icccm.h"
 #include "focus.h"
 #include "widget.h"
-#include "wallpaper.h"
 #include "grab.h"
 #include "layout.h"
 #include "taskbar.h"
@@ -31,10 +30,12 @@
 #include <locale.h>
 #include <sys/wait.h>
 
-static Display *open_display(void);
 static void clear_zombies(int signum);
+static void open_display(void);
+static void init_X(void);
 static void set_visual_info(void);
 static void set_locale(void);
+static void correct_config(void);
 static void set_ewmh(void);
 static void set_atoms(void);
 static void init_imlib(void);
@@ -42,35 +43,23 @@ static void set_screensaver(void);
 static void set_signals(void);
 static void ready_to_quit(int signum);
 
-void wm_init(void)
+void init_gwm(void)
 {
-    xinfo.display=open_display();
     clear_zombies(0);
-    XSetErrorHandler(x_fatal_handler);
+    open_display();
     set_locale();
-    xinfo.screen=DefaultScreen(xinfo.display);
-    xinfo.screen_width=DisplayWidth(xinfo.display, xinfo.screen);
-    xinfo.screen_height=DisplayHeight(xinfo.display, xinfo.screen);
-    xinfo.mod_map=XGetModifierMapping(xinfo.display);
-    xinfo.root_win=RootWindow(xinfo.display, xinfo.screen);
+    init_X();
     set_atoms();
-    XSelectInput(xinfo.display, xinfo.root_win, ROOT_EVENT_MASK);
-    set_visual_info();
     create_layer_wins();
     config();
+    correct_config();
     init_imlib();
     set_net_current_desktop(cfg->default_cur_desktop);
     reg_event_handlers();
-    load_fonts();
-    alloc_color(cfg->main_color_name);
-    init_wallpaper();
-    set_default_wallpaper();
-    create_cursors();
-    set_cursor(xinfo.root_win, NO_OP);
     set_ewmh();
     init_layout();
     reg_binds(keybinds, buttonbinds);
-    gui_init();
+    init_gui();
     init_client_list();
     grab_keys();
     exec_autostart();
@@ -78,12 +67,30 @@ void wm_init(void)
     set_signals();
 }
 
-static Display *open_display(void)
+static void clear_zombies(int signum)
 {
-    Display *display=XOpenDisplay(NULL);
-    if(display == NULL)
+    UNUSED(signum);
+	while(0 < waitpid(-1, NULL, WNOHANG))
+        ;
+}
+
+static void open_display(void)
+{
+    xinfo.display=XOpenDisplay(NULL);
+    if(xinfo.display == NULL)
         exit_with_msg("error: cannot open display");
-    return display;
+}
+
+static void init_X(void)
+{
+    XSetErrorHandler(x_fatal_handler);
+    xinfo.screen=DefaultScreen(xinfo.display);
+    xinfo.screen_width=DisplayWidth(xinfo.display, xinfo.screen);
+    xinfo.screen_height=DisplayHeight(xinfo.display, xinfo.screen);
+    xinfo.mod_map=XGetModifierMapping(xinfo.display);
+    xinfo.root_win=RootWindow(xinfo.display, xinfo.screen);
+    XSelectInput(xinfo.display, xinfo.root_win, ROOT_EVENT_MASK);
+    set_visual_info();
 }
 
 static void set_visual_info(void)
@@ -93,6 +100,32 @@ static void set_visual_info(void)
     xinfo.depth=v.depth;
     xinfo.visual=v.visual;
     xinfo.colormap=XCreateColormap(xinfo.display, xinfo.root_win, v.visual, AllocNone);
+}
+
+static void correct_config(void)
+{
+    if(cfg->font_size <= 0)
+        cfg->font_size=get_scale_font_size(2.0);
+    if(cfg->border_width <= 0)
+        cfg->border_width=cfg->font_size/8.0+0.5;
+    if(cfg->border_width <= 0)
+        cfg->border_width=cfg->font_size/8.0+0.5;
+    if(cfg->title_button_width <= 0)
+        cfg->title_button_width=get_font_height_by_pad();
+    if(cfg->win_gap <= 0)
+        cfg->win_gap=cfg->border_width*2;
+    if(cfg->statusbar_width_max <= 0)
+        cfg->statusbar_width_max=cfg->font_size*30;
+    if(cfg->taskbar_button_width <= 0)
+        cfg->taskbar_button_width=get_font_height_by_pad()/0.618+0.5;
+    if(cfg->iconbar_width_max <= 0)
+        cfg->iconbar_width_max=cfg->font_size*15;
+    if(cfg->icon_image_size <= 0)
+        cfg->icon_image_size=cfg->font_size*15;
+    if(cfg->icon_gap <= 0)
+        cfg->icon_gap=cfg->font_size/2.0+0.5;
+    if(cfg->resize_inc <= 0)
+        cfg->resize_inc=cfg->font_size;
 }
 
 static void set_ewmh(void)
@@ -151,32 +184,21 @@ static void init_imlib(void)
     imlib_context_set_colormap(xinfo.colormap);
 }
 
-void wm_deinit(void)
+void deinit_gwm(void)
 {
     clients_for_each_safe(c)
         client_del(c);
     free_all_images();
-    gui_deinit();
+    deinit_gui();
     del_layer_wins();
     XFreeModifiermap(xinfo.mod_map);
-    free_cursors();
     XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
     if(xinfo.xim)
         XCloseIM(xinfo.xim);
-    close_fonts();
-    XClearWindow(xinfo.display, xinfo.root_win);
     XFlush(xinfo.display);
     XCloseDisplay(xinfo.display);
     clear_zombies(0);
-    free_wallpapers();
     Free(cfg);
-}
-
-static void clear_zombies(int signum)
-{
-    UNUSED(signum);
-	while(0 < waitpid(-1, NULL, WNOHANG))
-        ;
 }
 
 static void set_screensaver(void)

@@ -303,7 +303,7 @@ void pointer_adjust_layout_ratio(XEvent *e)
 {
     if( get_layout()!=TILE
         || !is_layout_adjust_area(e->xbutton.window, e->xbutton.x_root)
-        || !grab_pointer(xinfo.root_win, ADJUST_LAYOUT_RATIO))
+        || !grab_pointer(xinfo.root_win, LAYOUT_RESIZE))
         return;
 
     int ox=e->xbutton.x_root, nx, dx;

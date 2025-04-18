@@ -44,7 +44,7 @@ typedef struct
     int win_gap; // 窗口間隔
     int statusbar_width_max; // 任務欄狀態區域的最大寬度
     int taskbar_button_width; // 任務欄按鈕的寬度
-    int icon_win_width_max; // 縮微窗口的最大寬度
+    int iconbar_width_max; // 縮微窗口的最大寬度
     int icon_image_size; // 圖標映像的邊長
     int icon_gap; // 縮微化窗口的間隔
     int resize_inc; // 調整尺寸的步進值。當應用於窗口時，僅當窗口未有效設置尺寸特性時才使用它。
@@ -66,7 +66,7 @@ typedef struct
     const char *wallpaper_filename; // 壁紙文件名。若刪除本行或文件不能訪問，則使用純色背景
     const char *main_color_name; // 界面主色調
     const char *tooltip[WIDGET_N]; // 构件提示
-    const char *title_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
+    const char *titlebar_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
     const char *taskbar_button_text[TASKBAR_BUTTON_N]; // 任務欄按鈕的標籤
     const char *act_center_item_icon[ACT_CENTER_ITEM_N]; // 操作中心菜單項的圖標名
     const char *act_center_item_symbol[ACT_CENTER_ITEM_N]; // 操作中心菜單項的符號

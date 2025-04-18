@@ -10,12 +10,11 @@
  * ************************************************************************/
 
 #include <X11/cursorfont.h>
-#include "font.h"
 #include "misc.h"
 #include "config.h"
 
-#define SET_TITLE_BUTTON_TEXT(type, text) /* 設置標題按鈕文字 */ \
-    cfg->title_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
+#define SET_TITLEBAR_BUTTON_TEXT(type, text) /* 設置標題按鈕文字 */ \
+    cfg->titlebar_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
 #define SET_TASKBAR_BUTTON_TEXT(type, text) /* 設置任務欄按鈕文字 */ \
     cfg->taskbar_button_text[WIDGET_INDEX(type, TASKBAR_BUTTON)]=text
 
@@ -32,7 +31,7 @@
 Config *cfg=NULL;
 
 /* 本窗口管理器所偏好的字體名稱列表。
- * 每增加一個字體，會增加0.1M內存，但也會提高效率。 */
+ * 每增加一個字體，會增加0.1M內存，但也會提高效果。 */
 static const char *font_names[]=
 {
     "monospace",
@@ -43,30 +42,31 @@ static const char *font_names[]=
 };
 
 /* 功能：設置字體。
- * 說明：縮放因子爲1.0時，表示正常視力之人所能看清的最小字號（單位爲像素）。
- * 近視之人應按近視程度設置大於1.0的合適值。可通過fc-list命令查看可用字體，如：
+ * 說明：當字體大小設置爲0或負數時，表示由程序自行選擇合適的尺寸。
+ * 可通過fc-list命令查看可用字體，如：
  *     fc-list :lang=zh family
  */
 static void config_font(void)
 {
-    cfg->font_size=get_scale_font_size(2.0);
+    cfg->font_size=0;
     cfg->font_names=font_names;
 }
 
 /* 功能：設置構件尺寸。
- * 說明：建議以字號爲基準來設置構件大小。標識符定義詳見gwm.h。
+ * 說明：當以下尺寸爲0或負數時，表示程序自行選擇合適的尺寸。
+ * 建議以字號爲基準來設置構件大小。標識符定義詳見gwm.h。
  */
 static void config_widget_size(void)
 {
-    cfg->border_width=cfg->font_size/8.0+0.5;
-    cfg->title_button_width=get_font_height_by_pad();
-    cfg->win_gap=cfg->border_width*2;
-    cfg->statusbar_width_max=cfg->font_size*30;
-    cfg->taskbar_button_width=get_font_height_by_pad()/0.618+0.5;
-    cfg->icon_win_width_max=cfg->font_size*15;
-    cfg->icon_image_size=cfg->font_size*15;
-    cfg->icon_gap=cfg->font_size/2.0+0.5;
-    cfg->resize_inc=cfg->font_size;
+    cfg->border_width=0;
+    cfg->title_button_width=0;
+    cfg->win_gap=0;
+    cfg->statusbar_width_max=0;
+    cfg->taskbar_button_width=0;
+    cfg->iconbar_width_max=0;
+    cfg->icon_image_size=0;
+    cfg->icon_gap=0;
+    cfg->resize_inc=0;
 }
 
 /* 功能：設置與定位器操作類型相對應的光標符號。
@@ -91,22 +91,22 @@ static void config_cursor_shape(void)
     cursor_shape[TOP_RIGHT_RESIZE]    = XC_top_right_corner;
     cursor_shape[BOTTOM_LEFT_RESIZE]  = XC_bottom_left_corner;
     cursor_shape[BOTTOM_RIGHT_RESIZE] = XC_bottom_right_corner;
-    cursor_shape[ADJUST_LAYOUT_RATIO] = XC_sb_h_double_arrow;
+    cursor_shape[LAYOUT_RESIZE]       = XC_sb_h_double_arrow;
 }
 
 /* 功能：設置標題按鈕的文字。
- * 說明：標題欄按鈕類型的定義詳見widget.h:Widget_id。
+ * 說明：標題欄按鈕類型的定義詳見gwm.h:Widget_id。
  */
 static void config_title_button_text(void)
 {
-    /*                    標題欄按鈕類型 按鈕文字 */
-    SET_TITLE_BUTTON_TEXT(SECOND_BUTTON, "◁");
-    SET_TITLE_BUTTON_TEXT(MAIN_BUTTON,   "▼");
-    SET_TITLE_BUTTON_TEXT(FIXED_BUTTON,  "▷");
-    SET_TITLE_BUTTON_TEXT(FLOAT_BUTTON,  "△");
-    SET_TITLE_BUTTON_TEXT(ICON_BUTTON,   "—");
-    SET_TITLE_BUTTON_TEXT(MAX_BUTTON,    "◲");
-    SET_TITLE_BUTTON_TEXT(CLOSE_BUTTON,  "🗙");
+    /*                       標題欄按鈕類型 按鈕文字 */
+    SET_TITLEBAR_BUTTON_TEXT(SECOND_BUTTON, "◁");
+    SET_TITLEBAR_BUTTON_TEXT(MAIN_BUTTON,   "▼");
+    SET_TITLEBAR_BUTTON_TEXT(FIXED_BUTTON,  "▷");
+    SET_TITLEBAR_BUTTON_TEXT(FLOAT_BUTTON,  "△");
+    SET_TITLEBAR_BUTTON_TEXT(ICON_BUTTON,   "—");
+    SET_TITLEBAR_BUTTON_TEXT(MAX_BUTTON,    "◲");
+    SET_TITLEBAR_BUTTON_TEXT(CLOSE_BUTTON,  "🗙");
 }
 
 /* 功能：設置任務欄按鈕的文字。

@@ -82,6 +82,12 @@ Widget *widget_find(Window win)
     return NULL;
 }
 
+void update_all_widget_bg(void)
+{
+    list_for_each_entry(Widget_node, p, &widget_list->list, list)
+        p->widget->update_bg(p->widget);
+}
+
 Widget *widget_new(Widget *parent, Widget_type type, Widget_id id, int x, int y, int w, int h)
 {
     Widget *widget=Malloc(sizeof(Widget));

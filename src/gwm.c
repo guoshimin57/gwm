@@ -22,10 +22,10 @@ Xinfo xinfo;
 
 int main(void)
 {
-    wm_init();
+    init_gwm();
     manage_exsit_clients();
     handle_events();
-    wm_deinit();
+    deinit_gwm();
 
     return EXIT_SUCCESS;
 }

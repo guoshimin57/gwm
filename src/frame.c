@@ -110,8 +110,9 @@ static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int 
         Rect br=titlebar_get_button_rect(titlebar, i);
         Widget_id id=TITLE_BUTTON_BEGIN+i;
         titlebar->buttons[i]=button_new(WIDGET(titlebar), id,
-            br.x, br.y, br.w, br.h, cfg->title_button_text[i]);
-        WIDGET_TOOLTIP(titlebar->buttons[i])=(Widget *)tooltip_new(WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
+            br.x, br.y, br.w, br.h, cfg->titlebar_button_text[i]);
+        WIDGET_TOOLTIP(titlebar->buttons[i])=(Widget *)tooltip_new(
+            WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
     }
 
     titlebar->menu=menu_new(WIDGET(titlebar->logo), CLIENT_MENU,
