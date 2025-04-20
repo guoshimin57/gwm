@@ -166,9 +166,11 @@ static void taskbar_buttons_new(void)
         Widget_id id=TASKBAR_BUTTON_BEGIN+i;
         Widget_state state={.chosen=taskbar_button_is_chosen(id), .unfocused=0};
         taskbar->buttons[i]=button_new(WIDGET(taskbar), id,
-            w*i, 0, w, h, cfg->taskbar_button_text[i]);
+            w*i, 0, w, h, cfg->widget_labels[id]);
+        button_set_icon(taskbar->buttons[i], NULL,
+            cfg->widget_icon_names[id], cfg->widget_symbols[id]);
         widget_set_state(WIDGET(taskbar->buttons[i]), state);
-        WIDGET_TOOLTIP(taskbar->buttons[i])=(Widget *)tooltip_new(WIDGET(taskbar->buttons[i]), cfg->tooltip[id]);
+        set_tooltip(WIDGET(taskbar->buttons[i]), cfg->tooltip[id]);
     }
 }
 
@@ -503,11 +505,12 @@ void taskbar_change_statusbar_label(const char *label)
 
 static Menu *act_center_new(void)
 {
-    Taskbar *taskbar=get_taskbar();
     int i=WIDGET_INDEX(ACT_CENTER_ITEM, TASKBAR_BUTTON);
-    Menu *menu=menu_new(WIDGET(taskbar->buttons[i]),
-        ACT_CENTER, cfg->act_center_item_icon, cfg->act_center_item_symbol,
-        cfg->act_center_item_label, ACT_CENTER_ITEM_N, cfg->act_center_col);
+    Menu *menu=menu_new(WIDGET(taskbar->buttons[i]), ACT_CENTER,
+        cfg->widget_icon_names+ACT_CENTER_ITEM_BEGIN,
+        cfg->widget_symbols+ACT_CENTER_ITEM_BEGIN,
+        cfg->widget_labels+ACT_CENTER_ITEM_BEGIN,
+        ACT_CENTER_ITEM_N, cfg->act_center_col);
     widget_set_poppable(WIDGET(menu), true);
 
     return menu;

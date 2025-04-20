@@ -40,6 +40,8 @@ struct _frame_tag // 客戶窗口裝飾
 static void frame_ctor(Frame *frame, Widget *parent, int x, int y, int w, int h, int titlebar_h, int border_w, const char *title, Imlib_Image image);
 static Titlebar *titlebar_new(Widget *parent, int x, int y, int w, int h, const char *title, Imlib_Image image);
 static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int w, int h, const char *title, Imlib_Image image);
+static void titlebar_create_buttons(Titlebar *titlebar);
+static void titlebar_create_menu(Titlebar *titlebar);
 static void titlebar_set_method(Widget *widget);
 static void frame_dtor(Frame *frame);
 static void titlebar_del(Titlebar *titlebar);
@@ -99,28 +101,37 @@ static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int 
     titlebar_set_method(WIDGET(titlebar));
     widget_set_draggable(WIDGET(titlebar), true);
     titlebar->title=copy_string(title);
-    WIDGET_TOOLTIP(titlebar)=(Widget *)tooltip_new(WIDGET(titlebar), title);
-
+    set_tooltip(WIDGET(titlebar), title);
     titlebar->logo=button_new(WIDGET(titlebar), TITLE_LOGO, 0, 0, h, h, NULL);
-    WIDGET_TOOLTIP(titlebar->logo)=(Widget *)tooltip_new(WIDGET(titlebar->logo), cfg->tooltip[TITLE_LOGO]);
+    set_tooltip(WIDGET(titlebar->logo), cfg->tooltip[TITLE_LOGO]);
     button_set_icon(BUTTON(titlebar->logo), image, NULL, "∨");
+    titlebar_create_buttons(titlebar);
+    titlebar_create_menu(titlebar);
+    widget_set_poppable(WIDGET(titlebar->menu), true);
+    XSelectInput(xinfo.display, WIDGET_WIN(titlebar), TITLEBAR_EVENT_MASK);
+}
 
+static void titlebar_create_buttons(Titlebar *titlebar)
+{
     for(size_t i=0; i<TITLE_BUTTON_N; i++)
     {
         Rect br=titlebar_get_button_rect(titlebar, i);
         Widget_id id=TITLE_BUTTON_BEGIN+i;
         titlebar->buttons[i]=button_new(WIDGET(titlebar), id,
-            br.x, br.y, br.w, br.h, cfg->titlebar_button_text[i]);
-        WIDGET_TOOLTIP(titlebar->buttons[i])=(Widget *)tooltip_new(
-            WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
+            br.x, br.y, br.w, br.h, cfg->widget_labels[id]);
+        button_set_icon(titlebar->buttons[i], NULL,
+            cfg->widget_icon_names[id], cfg->widget_symbols[id]);
+        set_tooltip(WIDGET(titlebar->buttons[i]), cfg->tooltip[id]);
     }
+}
 
+static void titlebar_create_menu(Titlebar *titlebar)
+{
     titlebar->menu=menu_new(WIDGET(titlebar->logo), CLIENT_MENU,
-        cfg->client_menu_item_icon, cfg->client_menu_item_symbol,
-        cfg->client_menu_item_label, CLIENT_MENU_ITEM_N, 1);
-    widget_set_poppable(WIDGET(titlebar->menu), true);
-
-    XSelectInput(xinfo.display, WIDGET_WIN(titlebar), TITLEBAR_EVENT_MASK);
+        cfg->widget_icon_names+CLIENT_MENU_ITEM_BEGIN,
+        cfg->widget_symbols+CLIENT_MENU_ITEM_BEGIN,
+        cfg->widget_labels+CLIENT_MENU_ITEM_BEGIN,
+        CLIENT_MENU_ITEM_N, 1);
 }
 
 static void titlebar_set_method(Widget *widget)

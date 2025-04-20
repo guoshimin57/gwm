@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     tooltip.h：與tooltip.c相應的頭文件。
+ *     gui.h：與gui.c相應的頭文件。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,20 +9,18 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef TOOLTIP_H
-#define MTOOLTIP_H
+#ifndef GUI_H
+#define GUI_H
 
+#include <X11/Xlib.h>
 #include "widget.h"
 
-typedef struct _tooltip_tag Tooltip;
-
-#define TOOLTIP(widget) ((Tooltip *)(widget))
-
-void set_tooltip(Widget *widget, const char *tip);
-Tooltip *tooltip_new(const Widget *owner, const char *tip);
-void tooltip_change_tip(Tooltip *tooltip, const char *tip);
-void tooltip_del(Widget *widget);
-void tooltip_show(Widget *widget);
-void tooltip_update_fg(const Widget *widget);
+void init_gui(void);
+void deinit_gui(void);
+void update_gui(void);
+void open_color_settings(void);
+void open_run_cmd(void);
+void key_set_color(XKeyEvent *e);
+void key_run_cmd(XKeyEvent *e);
 
 #endif

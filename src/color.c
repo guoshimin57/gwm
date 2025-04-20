@@ -55,7 +55,6 @@
 #include <math.h>
 #include <X11/Xft/Xft.h>
 #include "config.h"
-#include "gwm.h"
 #include "color.h"
 
 #define COLOR_N (COLOR_LAST+1)

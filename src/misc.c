@@ -12,8 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include "gwm.h"
-#include "prop.h"
 #include "icccm.h"
 #include "ewmh.h"
 #include "misc.h"

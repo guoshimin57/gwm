@@ -13,20 +13,10 @@
 #include "misc.h"
 #include "config.h"
 
-#define SET_TITLEBAR_BUTTON_TEXT(type, text) /* 設置標題按鈕文字 */ \
-    cfg->titlebar_button_text[WIDGET_INDEX(type, TITLE_BUTTON)]=text
-#define SET_TASKBAR_BUTTON_TEXT(type, text) /* 設置任務欄按鈕文字 */ \
-    cfg->taskbar_button_text[WIDGET_INDEX(type, TASKBAR_BUTTON)]=text
-
-#define SET_ACT_CENTER_MENU_ITEM(id, icon, symbol, label) /* 設置操作中心菜單項圖標和標籤 */ \
-    cfg->act_center_item_icon[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=icon, \
-    cfg->act_center_item_symbol[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=symbol, \
-    cfg->act_center_item_label[WIDGET_INDEX(id, ACT_CENTER_ITEM)]=label
-
-#define SET_CLIENT_MENU_ITEM(id, icon, symbol, label) /* 設置客戶窗口菜單項圖標和標籤 */ \
-    cfg->client_menu_item_icon[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=icon, \
-    cfg->client_menu_item_symbol[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=symbol, \
-    cfg->client_menu_item_label[WIDGET_INDEX(id, CLIENT_MENU_ITEM)]=label
+#define SET_WIDGET_MARKERS(id, icon_name, symbol, label) \
+    cfg->widget_icon_names[id]=icon_name, \
+    cfg->widget_symbols[id]=symbol, \
+    cfg->widget_labels[id]=label
 
 Config *cfg=NULL;
 
@@ -99,89 +89,90 @@ static void config_cursor_shape(void)
  */
 static void config_title_button_text(void)
 {
-    /*                       標題欄按鈕類型 按鈕文字 */
-    SET_TITLEBAR_BUTTON_TEXT(SECOND_BUTTON, "◁");
-    SET_TITLEBAR_BUTTON_TEXT(MAIN_BUTTON,   "▼");
-    SET_TITLEBAR_BUTTON_TEXT(FIXED_BUTTON,  "▷");
-    SET_TITLEBAR_BUTTON_TEXT(FLOAT_BUTTON,  "△");
-    SET_TITLEBAR_BUTTON_TEXT(ICON_BUTTON,   "—");
-    SET_TITLEBAR_BUTTON_TEXT(MAX_BUTTON,    "◲");
-    SET_TITLEBAR_BUTTON_TEXT(CLOSE_BUTTON,  "🗙");
+
+    //                 標題欄按鈕類型 圖標名 符號 標籤
+    SET_WIDGET_MARKERS(SECOND_BUTTON, NULL, NULL, "◁");
+    SET_WIDGET_MARKERS(MAIN_BUTTON,   NULL, NULL, "▼");
+    SET_WIDGET_MARKERS(FIXED_BUTTON,  NULL, NULL, "▷");
+    SET_WIDGET_MARKERS(FLOAT_BUTTON,  NULL, NULL, "△");
+    SET_WIDGET_MARKERS(ICON_BUTTON,   NULL, NULL, "—");
+    SET_WIDGET_MARKERS(MAX_BUTTON,    NULL, NULL, "◲" );
+    SET_WIDGET_MARKERS(CLOSE_BUTTON,  NULL, NULL, "🗙" );
 }
 
 /* 功能：設置任務欄按鈕的文字。
- * 說明：任務欄按鈕類型的定義詳見widget.h:Widget_id。
+ * 說明：任務欄按鈕類型的定義詳見gwm.h:Widget_id。
  */
 static void config_taskbar_button_text(void)
 {
-    /*                      任務欄按鈕類型   按鈕文字 */
-    SET_TASKBAR_BUTTON_TEXT(DESKTOP0_BUTTON, "1");
-    SET_TASKBAR_BUTTON_TEXT(DESKTOP1_BUTTON, "2");
-    SET_TASKBAR_BUTTON_TEXT(DESKTOP2_BUTTON, "3");
-    SET_TASKBAR_BUTTON_TEXT(STACK_BUTTON,    "▣");
-    SET_TASKBAR_BUTTON_TEXT(TILE_BUTTON,     "▥");
-    SET_TASKBAR_BUTTON_TEXT(DESKTOP_BUTTON,  "■");
-    SET_TASKBAR_BUTTON_TEXT(ACT_CENTER_ITEM, "^");
+    //                 任務欄按鈕類型   圖標名 符號 標籤
+    SET_WIDGET_MARKERS(DESKTOP0_BUTTON, NULL, NULL, "1" );
+    SET_WIDGET_MARKERS(DESKTOP1_BUTTON, NULL, NULL, "2" );
+    SET_WIDGET_MARKERS(DESKTOP2_BUTTON, NULL, NULL, "3" );
+    SET_WIDGET_MARKERS(STACK_BUTTON,    NULL, NULL, "▣");
+    SET_WIDGET_MARKERS(TILE_BUTTON,     NULL, NULL, "▥");
+    SET_WIDGET_MARKERS(DESKTOP_BUTTON,  NULL, NULL, "■");
+    SET_WIDGET_MARKERS(ACT_CENTER_ITEM, NULL, NULL, "^" );
 }
 
 /* 功能：設置操作中心菜單項。
- * 說明：操作中心按鈕類型的定義詳見widget.h:Widget_id。
+ * 說明：操作中心按鈕類型的定義詳見gwm.h:Widget_id。
  */
 static void config_act_center_item(void)
 {
-    /*                       操作中心按鈕類型         圖標名 符號     標籤 */
-    SET_ACT_CENTER_MENU_ITEM(HELP_BUTTON,              NULL, "🛟", _("幫助"));
-    SET_ACT_CENTER_MENU_ITEM(FILE_BUTTON,              NULL, "📁", _("文件"));
-    SET_ACT_CENTER_MENU_ITEM(TERM_BUTTON,              NULL, "🖥️", _("終端模擬器"));
-    SET_ACT_CENTER_MENU_ITEM(BROWSER_BUTTON,           NULL, "🌐", _("網絡瀏覽器"));
+    //                 操作中心按鈕類型         圖標名 符號     標籤
+    SET_WIDGET_MARKERS(HELP_BUTTON,              NULL, "🛟", _("幫助"));
+    SET_WIDGET_MARKERS(FILE_BUTTON,              NULL, "📁", _("文件"));
+    SET_WIDGET_MARKERS(TERM_BUTTON,              NULL, "🖥️", _("終端模擬器"));
+    SET_WIDGET_MARKERS(BROWSER_BUTTON,           NULL, "🌐", _("網絡瀏覽器"));
 
-    SET_ACT_CENTER_MENU_ITEM(GAME_BUTTON,              NULL, "🎮️", _("遊戲"));
-    SET_ACT_CENTER_MENU_ITEM(PLAY_START_BUTTON,        NULL, "🎬", _("播放影音"));
-    SET_ACT_CENTER_MENU_ITEM(PLAY_TOGGLE_BUTTON,       NULL, "⏯️", _("切換播放狀態"));
-    SET_ACT_CENTER_MENU_ITEM(PLAY_QUIT_BUTTON,         NULL, "⏹️", _("關閉影音"));
+    SET_WIDGET_MARKERS(GAME_BUTTON,              NULL, "🎮️", _("遊戲"));
+    SET_WIDGET_MARKERS(PLAY_START_BUTTON,        NULL, "🎬", _("播放影音"));
+    SET_WIDGET_MARKERS(PLAY_TOGGLE_BUTTON,       NULL, "⏯️", _("切換播放狀態"));
+    SET_WIDGET_MARKERS(PLAY_QUIT_BUTTON,         NULL, "⏹️", _("關閉影音"));
 
-    SET_ACT_CENTER_MENU_ITEM(VOLUME_DOWN_BUTTON,       NULL, "🔈️", _("减小音量"));
-    SET_ACT_CENTER_MENU_ITEM(VOLUME_UP_BUTTON,         NULL, "🔉", _("增大音量"));
-    SET_ACT_CENTER_MENU_ITEM(VOLUME_MAX_BUTTON,        NULL, "🔊", _("最大音量"));
-    SET_ACT_CENTER_MENU_ITEM(VOLUME_TOGGLE_BUTTON,     NULL, "🔇", _("靜音切換"));
+    SET_WIDGET_MARKERS(VOLUME_DOWN_BUTTON,       NULL, "🔈️", _("减小音量"));
+    SET_WIDGET_MARKERS(VOLUME_UP_BUTTON,         NULL, "🔉", _("增大音量"));
+    SET_WIDGET_MARKERS(VOLUME_MAX_BUTTON,        NULL, "🔊", _("最大音量"));
+    SET_WIDGET_MARKERS(VOLUME_TOGGLE_BUTTON,     NULL, "🔇", _("靜音切換"));
 
-    SET_ACT_CENTER_MENU_ITEM(N_MAIN_UP_BUTTON,         NULL, "⬆️", _("增大主區容量"));
-    SET_ACT_CENTER_MENU_ITEM(N_MAIN_DOWN_BUTTON,       NULL, "⬇️", _("减小主區容量"));
+    SET_WIDGET_MARKERS(N_MAIN_UP_BUTTON,         NULL, "⬆️", _("增大主區容量"));
+    SET_WIDGET_MARKERS(N_MAIN_DOWN_BUTTON,       NULL, "⬇️", _("减小主區容量"));
     
-    SET_ACT_CENTER_MENU_ITEM(CLOSE_ALL_CLIENTS_BUTTON, NULL, "❎", _("關閉桌面所有窗口"));
-    SET_ACT_CENTER_MENU_ITEM(PRINT_WIN_BUTTON,         NULL, "✀",  _("當前窗口截圖"));
-    SET_ACT_CENTER_MENU_ITEM(PRINT_SCREEN_BUTTON,      NULL, "🖵",  _("全屏截圖"));
-    SET_ACT_CENTER_MENU_ITEM(FOCUS_MODE_BUTTON,        NULL, "👁️", _("切換聚焦模式"));
+    SET_WIDGET_MARKERS(CLOSE_ALL_CLIENTS_BUTTON, NULL, "❎", _("關閉桌面所有窗口"));
+    SET_WIDGET_MARKERS(PRINT_WIN_BUTTON,         NULL, "✀",  _("當前窗口截圖"));
+    SET_WIDGET_MARKERS(PRINT_SCREEN_BUTTON,      NULL, "🖵",  _("全屏截圖"));
+    SET_WIDGET_MARKERS(FOCUS_MODE_BUTTON,        NULL, "👁️", _("切換聚焦模式"));
 
-    SET_ACT_CENTER_MENU_ITEM(COMPOSITOR_BUTTON,        NULL, "🪡", _("開關合成器"));
-    SET_ACT_CENTER_MENU_ITEM(WALLPAPER_BUTTON,         NULL, "🌌", _("切換壁紙"));
-    SET_ACT_CENTER_MENU_ITEM(COLOR_BUTTON,             NULL, "🎨", _("设置顏色"));
-    SET_ACT_CENTER_MENU_ITEM(QUIT_WM_BUTTON,           NULL, "❌", _("退出gwm"));
+    SET_WIDGET_MARKERS(COMPOSITOR_BUTTON,        NULL, "🪡", _("開關合成器"));
+    SET_WIDGET_MARKERS(WALLPAPER_BUTTON,         NULL, "🌌", _("切換壁紙"));
+    SET_WIDGET_MARKERS(COLOR_BUTTON,             NULL, "🎨", _("设置顏色"));
+    SET_WIDGET_MARKERS(QUIT_WM_BUTTON,           NULL, "❌", _("退出gwm"));
 
-    SET_ACT_CENTER_MENU_ITEM(LOGOUT_BUTTON,            NULL, "🚶", _("注銷"));
-    SET_ACT_CENTER_MENU_ITEM(REBOOT_BUTTON,            NULL, "↻",  _("重啓"));
-    SET_ACT_CENTER_MENU_ITEM(POWEROFF_BUTTON,          NULL, "⏻",  _("關機"));
-    SET_ACT_CENTER_MENU_ITEM(RUN_BUTTON,               NULL, "🔍️", _("運行"));
+    SET_WIDGET_MARKERS(LOGOUT_BUTTON,            NULL, "🚶", _("注銷"));
+    SET_WIDGET_MARKERS(REBOOT_BUTTON,            NULL, "↻",  _("重啓"));
+    SET_WIDGET_MARKERS(POWEROFF_BUTTON,          NULL, "⏻",  _("關機"));
+    SET_WIDGET_MARKERS(RUN_BUTTON,               NULL, "🔍️", _("運行"));
 }
 
 /* 功能：設置客戶窗口菜單項。
- * 說明：客戶窗口菜單項類型的定義詳見widget.h:Widget_id。
+ * 說明：客戶窗口菜單項類型的定義詳見gwm.h:Widget_id。
  */
 static void config_client_menu_item(void)
 {
-    /*                   客戶窗口菜單項類型   圖標名 符號     標籤 */
-    SET_CLIENT_MENU_ITEM(SHADE_BUTTON,         NULL, NULL, _("卷起/放下"));
-    SET_CLIENT_MENU_ITEM(VERT_MAX_BUTTON,      NULL, NULL, _("縱向最大化"));
-    SET_CLIENT_MENU_ITEM(HORZ_MAX_BUTTON,      NULL, NULL, _("橫向最大化"));
-    SET_CLIENT_MENU_ITEM(TOP_MAX_BUTTON,       NULL, NULL, _("最大化至上半屏"));
-    SET_CLIENT_MENU_ITEM(BOTTOM_MAX_BUTTON,    NULL, NULL, _("最大化至下半屏"));
-    SET_CLIENT_MENU_ITEM(LEFT_MAX_BUTTON,      NULL, NULL, _("最大化至左半屏"));
-    SET_CLIENT_MENU_ITEM(RIGHT_MAX_BUTTON,     NULL, NULL, _("最大化至右半屏"));
-    SET_CLIENT_MENU_ITEM(FULL_MAX_BUTTON,      NULL, NULL, _("完全最大化"));
+    //                 客戶窗口菜單項類型   圖標名 符號    標籤
+    SET_WIDGET_MARKERS(SHADE_BUTTON,         NULL, "⊽", _("卷起/放下"));
+    SET_WIDGET_MARKERS(VERT_MAX_BUTTON,      NULL, "⇅", _("縱向最大化"));
+    SET_WIDGET_MARKERS(HORZ_MAX_BUTTON,      NULL, "⇆", _("橫向最大化"));
+    SET_WIDGET_MARKERS(TOP_MAX_BUTTON,       NULL, "⍓", _("最大化至上半屏"));
+    SET_WIDGET_MARKERS(BOTTOM_MAX_BUTTON,    NULL, "⍌", _("最大化至下半屏"));
+    SET_WIDGET_MARKERS(LEFT_MAX_BUTTON,      NULL, "⍃", _("最大化至左半屏"));
+    SET_WIDGET_MARKERS(RIGHT_MAX_BUTTON,     NULL, "⍄", _("最大化至右半屏"));
+    SET_WIDGET_MARKERS(FULL_MAX_BUTTON,      NULL, "🗖", _("完全最大化"));
 }
 
 /* 功能：設置構件功能提示。
- * 說明：構件標識的定義詳見widget.h:Widget_id。以下未列出的構件要麼不必顯示提示，
+ * 說明：構件標識的定義詳見gwm.h:Widget_id。以下未列出的構件要麼不必顯示提示，
  * 要麼動態變化而不可在此設置。
  */
 static void config_tooltip(void)

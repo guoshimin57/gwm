@@ -26,6 +26,11 @@ static void tooltip_ctor(Tooltip *tooltip, const Widget *owner, const char *tip)
 static void tooltip_set_method(Widget *widget);
 static void tooltip_dtor(Tooltip *tooltip);
 
+void set_tooltip(Widget *widget, const char *tip)
+{
+    widget->tooltip=WIDGET(tooltip_new(widget, tip));
+}
+
 Tooltip *tooltip_new(const Widget *owner, const char *tip)
 {
     if(tip == NULL)

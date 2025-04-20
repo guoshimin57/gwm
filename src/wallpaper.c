@@ -12,6 +12,7 @@
 #include <time.h>
 #include <Imlib2.h>
 #include "config.h"
+#include "color.h"
 #include "drawable.h"
 #include "ewmh.h"
 #include "file.h"

@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.12.31\n"
+"Project-Id-Version: gwm 2.12.32\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-18 13:52+0800\n"
+"POT-Creation-Date: 2025-04-21 00:09+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -22,209 +22,209 @@ msgid "錯誤：查詢窗口清單失敗！"
 msgstr "错误：查询窗口列表失败！"
 
 #. 操作中心按鈕類型         圖標名 符號     標籤
-#: config.c:133
+#: config.c:124
 msgid "幫助"
 msgstr "帮助"
 
-#: config.c:134
+#: config.c:125
 msgid "文件"
 msgstr "文件"
 
-#: config.c:135
+#: config.c:126
 msgid "終端模擬器"
 msgstr "终端模拟器"
 
-#: config.c:136
+#: config.c:127
 msgid "網絡瀏覽器"
 msgstr "网络浏览器"
 
-#: config.c:138
+#: config.c:129
 msgid "遊戲"
 msgstr "游戏"
 
-#: config.c:139
+#: config.c:130
 msgid "播放影音"
 msgstr "播放影音"
 
-#: config.c:140
+#: config.c:131
 msgid "切換播放狀態"
 msgstr "切换播放状态"
 
-#: config.c:141
+#: config.c:132
 msgid "關閉影音"
 msgstr "关闭影音"
 
-#: config.c:143
+#: config.c:134
 msgid "减小音量"
 msgstr "减小音量"
 
-#: config.c:144
+#: config.c:135
 msgid "增大音量"
 msgstr "增大音量"
 
-#: config.c:145
+#: config.c:136
 msgid "最大音量"
 msgstr "最大音量"
 
-#: config.c:146
+#: config.c:137
 msgid "靜音切換"
 msgstr "静音切换"
 
-#: config.c:148
+#: config.c:139
 msgid "增大主區容量"
 msgstr "增大主区容量"
 
-#: config.c:149
+#: config.c:140
 msgid "减小主區容量"
 msgstr "减小主区容量"
 
-#: config.c:151
+#: config.c:142
 msgid "關閉桌面所有窗口"
 msgstr "关闭桌面所有窗口"
 
-#: config.c:152
+#: config.c:143
 msgid "當前窗口截圖"
 msgstr "当前窗口截图"
 
-#: config.c:153
+#: config.c:144
 msgid "全屏截圖"
 msgstr "全屏截图"
 
-#: config.c:154
+#: config.c:145
 msgid "切換聚焦模式"
 msgstr "切换聚焦模式"
 
-#: config.c:156
+#: config.c:147
 msgid "開關合成器"
 msgstr "开关合成器"
 
-#: config.c:157
+#: config.c:148
 msgid "切換壁紙"
 msgstr "切换壁纸"
 
-#: config.c:158
+#: config.c:149
 msgid "设置顏色"
 msgstr "设置颜色"
 
-#: config.c:159
+#: config.c:150
 msgid "退出gwm"
 msgstr "退出gwm"
 
-#: config.c:161
+#: config.c:152
 msgid "注銷"
 msgstr "注销"
 
-#: config.c:162
+#: config.c:153
 msgid "重啓"
 msgstr "重启"
 
-#: config.c:163
+#: config.c:154
 msgid "關機"
 msgstr "关机"
 
-#: config.c:164
+#: config.c:155
 msgid "運行"
 msgstr "运行"
 
-#. 客戶窗口菜單項類型   圖標名 符號     標籤
-#: config.c:173
+#. 客戶窗口菜單項類型   圖標名 符號    標籤
+#: config.c:164
 msgid "卷起/放下"
 msgstr "卷起/放下"
 
-#: config.c:174
+#: config.c:165
 msgid "縱向最大化"
 msgstr "纵向最大化"
 
-#: config.c:175
+#: config.c:166
 msgid "橫向最大化"
 msgstr "横向最大化"
 
-#: config.c:176
+#: config.c:167
 msgid "最大化至上半屏"
 msgstr "最大化至上半屏"
 
-#: config.c:177
+#: config.c:168
 msgid "最大化至下半屏"
 msgstr "最大化至下半屏"
 
-#: config.c:178
+#: config.c:169
 msgid "最大化至左半屏"
 msgstr "最大化至左半屏"
 
-#: config.c:179
+#: config.c:170
 msgid "最大化至右半屏"
 msgstr "最大化至右半屏"
 
-#: config.c:180
+#: config.c:171
 msgid "完全最大化"
 msgstr "完全最大化"
 
 #. 構件標識             構件功能提示文字
-#: config.c:192
+#: config.c:183
 msgid "切換到次要區域"
 msgstr "切换到次要区域"
 
-#: config.c:193
+#: config.c:184
 msgid "切換到主要區域"
 msgstr "切换到主要区域"
 
-#: config.c:194
+#: config.c:185
 msgid "切換到固定區域"
 msgstr "切换到固定区域"
 
-#: config.c:195
+#: config.c:186
 msgid "切換到懸浮層"
 msgstr "切换到悬浮层"
 
-#: config.c:196
+#: config.c:187
 msgid "切換到圖符區域"
 msgstr "切换到图符区域"
 
-#: config.c:197
+#: config.c:188
 msgid "最大化/還原窗口"
 msgstr "最大化/还原窗口"
 
-#: config.c:198
+#: config.c:189
 msgid "關閉窗口"
 msgstr "关闭窗口"
 
-#: config.c:199
+#: config.c:190
 msgid "切換到虛擬桌面1"
 msgstr "切换到虚拟桌面1"
 
-#: config.c:200
+#: config.c:191
 msgid "切換到虛擬桌面2"
 msgstr "切换到虚拟桌面2"
 
-#: config.c:201
+#: config.c:192
 msgid "切換到虛擬桌面3"
 msgstr "切换到虚拟桌面3"
 
-#: config.c:202
+#: config.c:193
 msgid "切換到堆疊模式"
 msgstr "切换到堆叠模式"
 
-#: config.c:203
+#: config.c:194
 msgid "切換到平鋪模式"
 msgstr "切换到平铺模式"
 
-#: config.c:204
+#: config.c:195
 msgid "顯示桌面"
 msgstr "显示桌面"
 
-#: config.c:205
+#: config.c:196
 msgid "打開操作中心"
 msgstr "打开操作中心"
 
-#: config.c:206
+#: config.c:197
 msgid "打開窗口菜單"
 msgstr "打开窗口菜单"
 
-#: config.c:234
+#: config.c:225
 msgid "請輸入命令，然後按回車執行"
 msgstr "请输入命令，然后按回车执行"
 
-#: config.c:235
+#: config.c:226
 msgid "請輸入系統界面主色調的顏色名（支持英文顏色名和十六进制顏色名），然後按回車執行"
 msgstr "请输入系统界面主色调的颜色名（支持英文颜色名和十六进制颜色名），然后按回车执行"
 
@@ -267,15 +267,15 @@ msgstr "以下是%lx窗口的位置窗口：\n"
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "以下是自底向顶排列的客户窗口列表：\n"
 
-#: file.c:139
+#: file.c:142
 msgid "未能成功地爲命令創建新會話"
 msgstr "未能成功地为命令创建新会话"
 
-#: file.c:141
+#: file.c:144
 msgid "命令執行錯誤"
 msgstr "命令执行错误"
 
-#: file.c:144
+#: file.c:147
 msgid "未能成功地爲命令創建新進程"
 msgstr "未能成功地为命令创建新进程"
 
@@ -304,15 +304,15 @@ msgstr "不能安装SIGQUIT信号处理函数"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 
-#: misc.c:25
+#: misc.c:23
 msgid "錯誤：申請內存失敗"
 msgstr "错误：申请内存失败"
 
-#: misc.c:35
+#: misc.c:33
 msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "错误：已经有其他窗口管理器在运行！"
 
-#: misc.c:40
+#: misc.c:38
 #, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X错误：资源号=%#lx，请求量=%lu，错误码=%d，主请求码=%d，次请求码=%d\n"

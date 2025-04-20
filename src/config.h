@@ -14,7 +14,6 @@
 
 #include <stdbool.h>
 #include "gwm.h"
-#include "widget.h"
 
 typedef enum // 窗口聚焦模式
 {
@@ -66,14 +65,9 @@ typedef struct
     const char *wallpaper_filename; // 壁紙文件名。若刪除本行或文件不能訪問，則使用純色背景
     const char *main_color_name; // 界面主色調
     const char *tooltip[WIDGET_N]; // 构件提示
-    const char *titlebar_button_text[TITLE_BUTTON_N]; // 窗口標題欄按鈕的標籤
-    const char *taskbar_button_text[TASKBAR_BUTTON_N]; // 任務欄按鈕的標籤
-    const char *act_center_item_icon[ACT_CENTER_ITEM_N]; // 操作中心菜單項的圖標名
-    const char *act_center_item_symbol[ACT_CENTER_ITEM_N]; // 操作中心菜單項的符號
-    const char *act_center_item_label[ACT_CENTER_ITEM_N]; // 操作中心菜單項的標籤
-    const char *client_menu_item_icon[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的圖標名
-    const char *client_menu_item_symbol[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的符號
-    const char *client_menu_item_label[CLIENT_MENU_ITEM_N]; // 客戶窗口菜單項的標籤
+    const char *widget_icon_names[WIDGET_N]; // 構件圖標名
+    const char *widget_symbols[WIDGET_N]; // 構件符號
+    const char *widget_labels[WIDGET_N]; // 構件標籤
     const char *cmd_entry_hint; // 運行輸入框的提示文字
     const char *color_entry_hint; // 颜色輸入框的提示文字
     const char *compositor; // 合成管理器命令

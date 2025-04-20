@@ -9,10 +9,10 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <stdio.h>
 #include "gwm.h"
 #include "prop.h"
 #include "icccm.h"
-#include "widget.h"
 #include "misc.h"
 #include "ewmh.h"
 
@@ -201,7 +201,8 @@ void set_net_supporting_wm_check(const char *wm_name)
 {
     Atom prop=ewmh_atoms[NET_SUPPORTING_WM_CHECK];
 
-    Window wm_check_win=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
+    Window wm_check_win=XCreateSimpleWindow(xinfo.display, xinfo.root_win,
+        -1, -1, 1, 1, 0, 0, 0);
     replace_window_prop(xinfo.root_win, prop, &wm_check_win, 1);
     replace_window_prop(wm_check_win, prop, &wm_check_win, 1);
     prop=ewmh_atoms[NET_WM_NAME];

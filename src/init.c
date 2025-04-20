@@ -145,7 +145,7 @@ static void set_ewmh(void)
     set_net_desktop_geometry(sw, sh);
     set_net_desktop_viewport(0, 0);
     set_net_current_desktop(cfg->default_cur_desktop);
-    set_net_desktop_names(cfg->taskbar_button_text, DESKTOP_N);
+    set_net_desktop_names(cfg->widget_labels+DESKTOP_BUTTON_BEGIN, DESKTOP_N);
     set_net_workarea(wx, wy, ww, wh, DESKTOP_N);
     set_net_supporting_wm_check("gwm");
     set_net_showing_desktop(false);
