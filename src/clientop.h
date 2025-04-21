@@ -37,5 +37,6 @@ void deiconify_all_clients(void);
 void maximize_client(Client *c, Max_way max_way);
 void toggle_showing_desktop_mode(bool show);
 void toggle_shade_mode(Client *c, bool shade);
+void set_fullscreen(Client *c);
 
 #endif

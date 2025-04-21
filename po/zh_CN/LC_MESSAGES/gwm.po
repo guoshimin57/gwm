@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.12.32\n"
+"Project-Id-Version: gwm 2.13.0\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-21 00:09+0800\n"
+"POT-Creation-Date: 2025-04-21 12:07+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -159,72 +159,84 @@ msgstr "最大化至右半屏"
 msgid "完全最大化"
 msgstr "完全最大化"
 
+#: config.c:172
+msgid "全屏"
+msgstr "全屏"
+
+#: config.c:173
+msgid "置頂"
+msgstr "置顶"
+
+#: config.c:174
+msgid "置底"
+msgstr "置底"
+
 #. 構件標識             構件功能提示文字
-#: config.c:183
+#: config.c:186
 msgid "切換到次要區域"
 msgstr "切换到次要区域"
 
-#: config.c:184
+#: config.c:187
 msgid "切換到主要區域"
 msgstr "切换到主要区域"
 
-#: config.c:185
+#: config.c:188
 msgid "切換到固定區域"
 msgstr "切换到固定区域"
 
-#: config.c:186
+#: config.c:189
 msgid "切換到懸浮層"
 msgstr "切换到悬浮层"
 
-#: config.c:187
+#: config.c:190
 msgid "切換到圖符區域"
 msgstr "切换到图符区域"
 
-#: config.c:188
+#: config.c:191
 msgid "最大化/還原窗口"
 msgstr "最大化/还原窗口"
 
-#: config.c:189
+#: config.c:192
 msgid "關閉窗口"
 msgstr "关闭窗口"
 
-#: config.c:190
+#: config.c:193
 msgid "切換到虛擬桌面1"
 msgstr "切换到虚拟桌面1"
 
-#: config.c:191
+#: config.c:194
 msgid "切換到虛擬桌面2"
 msgstr "切换到虚拟桌面2"
 
-#: config.c:192
+#: config.c:195
 msgid "切換到虛擬桌面3"
 msgstr "切换到虚拟桌面3"
 
-#: config.c:193
+#: config.c:196
 msgid "切換到堆疊模式"
 msgstr "切换到堆叠模式"
 
-#: config.c:194
+#: config.c:197
 msgid "切換到平鋪模式"
 msgstr "切换到平铺模式"
 
-#: config.c:195
+#: config.c:198
 msgid "顯示桌面"
 msgstr "显示桌面"
 
-#: config.c:196
+#: config.c:199
 msgid "打開操作中心"
 msgstr "打开操作中心"
 
-#: config.c:197
+#: config.c:200
 msgid "打開窗口菜單"
 msgstr "打开窗口菜单"
 
-#: config.c:225
+#: config.c:228
 msgid "請輸入命令，然後按回車執行"
 msgstr "请输入命令，然后按回车执行"
 
-#: config.c:226
+#: config.c:229
 msgid "請輸入系統界面主色調的顏色名（支持英文顏色名和十六进制顏色名），然後按回車執行"
 msgstr "请输入系统界面主色调的颜色名（支持英文颜色名和十六进制颜色名），然后按回车执行"
 

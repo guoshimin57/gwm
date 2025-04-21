@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.12.32\n"
+"Project-Id-Version: gwm 2.13.0\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-21 00:09+0800\n"
+"POT-Creation-Date: 2025-04-21 12:26+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -159,72 +159,84 @@ msgstr "Max to right half screen"
 msgid "完全最大化"
 msgstr "fully max"
 
+#: config.c:172
+msgid "全屏"
+msgstr "Full screen"
+
+#: config.c:173
+msgid "置頂"
+msgstr "To top"
+
+#: config.c:174
+msgid "置底"
+msgstr "To bottom"
+
 #. 構件標識             構件功能提示文字
-#: config.c:183
+#: config.c:186
 msgid "切換到次要區域"
 msgstr "To sec area"
 
-#: config.c:184
+#: config.c:187
 msgid "切換到主要區域"
 msgstr "To main area"
 
-#: config.c:185
+#: config.c:188
 msgid "切換到固定區域"
 msgstr "To fixed area"
 
-#: config.c:186
+#: config.c:189
 msgid "切換到懸浮層"
 msgstr "To float layer"
 
-#: config.c:187
+#: config.c:190
 msgid "切換到圖符區域"
 msgstr "To icon area"
 
-#: config.c:188
+#: config.c:191
 msgid "最大化/還原窗口"
 msgstr "Max/Restore window"
 
-#: config.c:189
+#: config.c:192
 msgid "關閉窗口"
 msgstr "Close window"
 
-#: config.c:190
+#: config.c:193
 msgid "切換到虛擬桌面1"
 msgstr "To virtual desktop 1"
 
-#: config.c:191
+#: config.c:194
 msgid "切換到虛擬桌面2"
 msgstr "To virtual desktop 2"
 
-#: config.c:192
+#: config.c:195
 msgid "切換到虛擬桌面3"
 msgstr "To virtual desktop 3"
 
-#: config.c:193
+#: config.c:196
 msgid "切換到堆疊模式"
 msgstr "To stacking mode"
 
-#: config.c:194
+#: config.c:197
 msgid "切換到平鋪模式"
 msgstr "To tiling mode"
 
-#: config.c:195
+#: config.c:198
 msgid "顯示桌面"
 msgstr "Show desktop"
 
-#: config.c:196
+#: config.c:199
 msgid "打開操作中心"
 msgstr "Open action center"
 
-#: config.c:197
+#: config.c:200
 msgid "打開窗口菜單"
 msgstr "Open window menu"
 
-#: config.c:225
+#: config.c:228
 msgid "請輸入命令，然後按回車執行"
 msgstr "Enter the command and press Enter to execute"
 
-#: config.c:226
+#: config.c:229
 msgid "請輸入系統界面主色調的顏色名（支持英文顏色名和十六进制顏色名），然後按回車執行"
 msgstr "Enter main color name of UI(English or hex color name), and then press enter"
 

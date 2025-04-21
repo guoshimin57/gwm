@@ -381,6 +381,24 @@ void to_stack_layer(XEvent *e, Arg arg)
     client_change_place(STACK_LAYER, ANY_AREA);
 }
 
+void fullscreen(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    client_change_place(FULLSCREEN_LAYER, ANY_AREA);
+}
+
+void to_above_layer(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    client_change_place(ABOVE_LAYER, ANY_AREA);
+}
+
+void to_below_layer(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    client_change_place(BELOW_LAYER, ANY_AREA);
+}
+
 void swap(XEvent *e, Arg arg)
 {
     UNUSED(arg);

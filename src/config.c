@@ -147,7 +147,7 @@ static void config_act_center_item(void)
     SET_WIDGET_MARKERS(COMPOSITOR_BUTTON,        NULL, "🪡", _("開關合成器"));
     SET_WIDGET_MARKERS(WALLPAPER_BUTTON,         NULL, "🌌", _("切換壁紙"));
     SET_WIDGET_MARKERS(COLOR_BUTTON,             NULL, "🎨", _("设置顏色"));
-    SET_WIDGET_MARKERS(QUIT_WM_BUTTON,           NULL, "❌", _("退出gwm"));
+    SET_WIDGET_MARKERS(QUIT_WM_BUTTON,           NULL, "🗘", _("退出gwm"));
 
     SET_WIDGET_MARKERS(LOGOUT_BUTTON,            NULL, "🚶", _("注銷"));
     SET_WIDGET_MARKERS(REBOOT_BUTTON,            NULL, "↻",  _("重啓"));
@@ -169,6 +169,9 @@ static void config_client_menu_item(void)
     SET_WIDGET_MARKERS(LEFT_MAX_BUTTON,      NULL, "⍃", _("最大化至左半屏"));
     SET_WIDGET_MARKERS(RIGHT_MAX_BUTTON,     NULL, "⍄", _("最大化至右半屏"));
     SET_WIDGET_MARKERS(FULL_MAX_BUTTON,      NULL, "🗖", _("完全最大化"));
+    SET_WIDGET_MARKERS(FULLSCREEN_BUTTON,    NULL, "□",_("全屏"));
+    SET_WIDGET_MARKERS(ABOVE_BUTTON,         NULL, "❏", _("置頂"));
+    SET_WIDGET_MARKERS(BELOW_BUTTON,         NULL, "_", _("置底"));
 }
 
 /* 功能：設置構件功能提示。

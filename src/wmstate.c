@@ -40,7 +40,6 @@ static void change_net_wm_state_for_above(Client *c, long act);
 static void change_net_wm_state_for_below(Client *c, long act);
 static void change_net_wm_state_for_attent(Client *c, long act);
 static void change_net_wm_state_for_focused(Client *c, long act);
-static void set_fullscreen(Client *c);
 
 void change_net_wm_state(Client *c, long *full_act)
 {
@@ -150,14 +149,6 @@ static void change_net_wm_state_for_fullscreen(Client *c, long act)
         set_fullscreen(c);
     else
         restore_client(c);
-}
-
-static void set_fullscreen(Client *c)
-{
-    save_place_info_of_client(c);
-    WIDGET_X(c)=WIDGET_Y(c)=0;
-    WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
-    move_client(c, NULL, FULLSCREEN_LAYER, ANY_AREA);
 }
 
 static void change_net_wm_state_for_shaded(Client *c, long act)

@@ -450,7 +450,11 @@ static void handle_property_notify(XEvent *e)
             taskbar_update_by_icon_image(win, c->image);
     }
     else if(c && is_spec_ewmh_atom(atom, NET_WM_STATE))
+    {
+        if(c->win_state.fullscreen)
+            set_fullscreen(c);
         taskbar_update_by_client_state(win);
+    }
     else if(is_spec_ewmh_atom(atom, NET_CURRENT_DESKTOP)
         || is_spec_gwm_atom(atom, GWM_LAYOUT))
         taskbar_update_bg();

@@ -377,3 +377,12 @@ void toggle_shade_mode(Client *c, bool shade)
         frame_move_resize(c->frame, x, y, w, h+ch);
     c->win_state.shaded=shade;
 }
+
+void set_fullscreen(Client *c)
+{
+    save_place_info_of_client(c);
+    WIDGET_X(c)=WIDGET_Y(c)=0;
+    WIDGET_W(c)=xinfo.screen_width, WIDGET_H(c)=xinfo.screen_height;
+    move_client(c, NULL, FULLSCREEN_LAYER, ANY_AREA);
+}
+
