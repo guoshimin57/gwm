@@ -272,14 +272,14 @@ void deiconify_client(Client *c)
 void iconify_all_clients(void)
 {
     clients_for_each_reverse(c)
-        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c))
+        if(is_on_cur_desktop(c) && !is_iconic_client(c))
             iconify_client(c);
 }
 
 void deiconify_all_clients(void)
 {
     clients_for_each_reverse(c)
-        if(is_on_cur_desktop(c->desktop_mask) && is_iconic_client(c))
+        if(is_on_cur_desktop(c) && is_iconic_client(c))
             deiconify_client(c);
 }
 

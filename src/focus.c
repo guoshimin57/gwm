@@ -116,7 +116,7 @@ static bool is_viewable_client(const Client *c)
 static Client *get_first_map_client(void)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && is_viewable_client(c))
+        if(is_on_cur_desktop(c) && is_viewable_client(c))
             return c;
     return NULL;
 }
@@ -124,7 +124,7 @@ static Client *get_first_map_client(void)
 static Client *get_first_map_diff_client(Client *key)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && is_viewable_client(c) && c!=key)
+        if(is_on_cur_desktop(c) && is_viewable_client(c) && c!=key)
             return c;
     return NULL;
 }

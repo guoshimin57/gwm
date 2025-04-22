@@ -64,7 +64,7 @@ void quit_all(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(c))
             close_win(WIDGET_WIN(c));
 }
 

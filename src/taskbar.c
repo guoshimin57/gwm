@@ -19,6 +19,7 @@
 #include "list.h"
 #include "prop.h"
 #include "ewmh.h"
+#include "drawable.h"
 #include "tooltip.h"
 #include "taskbar.h"
 
@@ -204,23 +205,23 @@ static void taskbar_buttons_update_bg(void)
         widget_update_bg(WIDGET(taskbar->buttons[i]));
 }
 
-void taskbar_set_urgency(unsigned int desktop_mask)
+void taskbar_set_urgency(const Client *c)
 {
     unsigned int cur_desktop=get_net_current_desktop();
-    int incr = is_on_cur_desktop(desktop_mask) ? -1 : 1;
+    int incr = is_on_cur_desktop(c) ? -1 : 1;
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        if( i!=cur_desktop && is_on_desktop_n(i, desktop_mask)
+        if( i!=cur_desktop && is_on_desktop_n(c, i)
             && taskbar->urgency_n[i]+incr >= 0)
             taskbar->urgency_n[i] += incr;
     taskbar_buttons_update_bg();
 }
 
-void taskbar_set_attention(unsigned int desktop_mask)
+void taskbar_set_attention(const Client *c)
 {
     unsigned int cur_desktop=get_net_current_desktop();
-    int incr = is_on_cur_desktop(desktop_mask) ? -1 : 1;
+    int incr = is_on_cur_desktop(c) ? -1 : 1;
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        if( i!=cur_desktop && is_on_desktop_n(i, desktop_mask)
+        if( i!=cur_desktop && is_on_desktop_n(c, i)
             && taskbar->attent_n[i]+incr >= 0)
             taskbar->attent_n[i] += incr;
     taskbar_buttons_update_bg();

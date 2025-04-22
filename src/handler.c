@@ -188,7 +188,7 @@ static void activate_win(Window win, unsigned long src)
 
     if(src == 2) // 源自分頁器
     {
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(c))
             focus_client(c);
         else
             set_urgency_hint(win, c->wm_hint, true);
@@ -470,7 +470,7 @@ static void handle_wm_hints_notify(Client *c)
     if(nh && has_focus_hint(nh) && (!oh || !has_focus_hint(oh)))
         set_state_attent(c, true);
     if(nh && nh->flags & XUrgencyHint)
-        taskbar_set_urgency(c->desktop_mask);
+        taskbar_set_urgency(c);
     if(nh)
         XFree(c->wm_hint), c->wm_hint=nh;
 }

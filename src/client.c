@@ -175,7 +175,7 @@ int get_clients_n(Layer layer, Area area, bool count_icon, bool count_trans, boo
             && (area==ANY_AREA || c->area==area)
             && (count_icon || !is_iconic_client(c))
             && (count_trans || !c->owner)
-            && (count_all_desktop || is_on_cur_desktop(c->desktop_mask)))
+            && (count_all_desktop || is_on_cur_desktop(c)))
             n++;
     return n;
 }
@@ -225,7 +225,7 @@ Client *get_prev(Client *c)
 bool is_place_last_client(Client *c)
 {
     clients_for_each_reverse(p)
-        if(is_on_cur_desktop(WIDGET_WIN(p)) && p->layer==c->layer && p->area==c->area)
+        if(is_on_cur_desktop(p) && p->layer==c->layer && p->area==c->area)
             return p==c;
 
     return false;
@@ -251,7 +251,7 @@ static Client *get_first_same_subgroup(const Client *c)
 {
     if(c)
         clients_for_each(p)
-            if( is_on_cur_desktop(p->desktop_mask)
+            if( is_on_cur_desktop(p)
                 && p->subgroup_leader==c->subgroup_leader)
                 return p;
     return NULL;
@@ -260,7 +260,7 @@ static Client *get_first_same_subgroup(const Client *c)
 static Client *get_first_same_place_client(Layer layer, Area area)
 {
     clients_for_each(c)
-        if( is_on_cur_desktop(c->desktop_mask)
+        if( is_on_cur_desktop(c)
             && c->layer==layer && c->area==area)
             return c;
     return NULL;
@@ -269,7 +269,7 @@ static Client *get_first_same_place_client(Layer layer, Area area)
 static Client *get_next_area_client(Layer layer, Area area)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && c->layer==layer && c->area<area)
+        if(is_on_cur_desktop(c) && c->layer==layer && c->area<area)
             return c;
     return NULL;
 }
@@ -277,7 +277,7 @@ static Client *get_next_area_client(Layer layer, Area area)
 static Client *get_next_layer_client(Layer layer, Area area)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask) && c->layer<layer && c->area==area)
+        if(is_on_cur_desktop(c) && c->layer<layer && c->area==area)
             return c;
     return NULL;
 }
@@ -408,4 +408,14 @@ bool is_exist_client(Client *c)
 bool is_new_client(Client *c)
 {
     return WIDGET_W(c->frame)<=WIDGET_W(c) && WIDGET_H(c->frame)<=WIDGET_H(c);
+}
+
+bool is_on_desktop_n(const Client *c, unsigned int n)
+{
+    return (c->desktop_mask & get_desktop_mask(n));
+}
+
+bool is_on_cur_desktop(const Client *c)
+{
+    return is_on_desktop_n(c, get_net_current_desktop());
 }

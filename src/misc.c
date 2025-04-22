@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include "icccm.h"
-#include "ewmh.h"
+#include <X11/Xproto.h>
 #include "misc.h"
 
 void *Malloc(size_t size)
@@ -96,60 +95,9 @@ int base_n_ceil(int x, int n)
     return base_n_floor(x, n)+(x%n ? n : 0);
 }
 
-char *get_title_text(Window win, const char *fallback)
-{
-    char *s=NULL;
-
-    if((s=get_net_wm_name(win)))
-    {
-        if(strlen(s))
-            return s;
-        free(s);
-    }
-
-    if((s=get_wm_name(win)))
-    {
-        if(strlen(s))
-            return s;
-        free(s);
-    }
-
-    return copy_string(fallback);
-}
-
-char *get_icon_title_text(Window win, const char *fallback)
-{
-    char *s=NULL;
-
-    if((s=get_net_wm_icon_name(win)))
-    {
-        if(strlen(s))
-            return s;
-        free(s);
-    }
-    if((s=get_wm_icon_name(win)))
-    {
-        if(strlen(s))
-            return s;
-        free(s);
-    }
-
-    return get_title_text(win, fallback);
-}
-
 bool is_match_button_release(XButtonEvent *oe, XButtonEvent *ne)
 {
     return (ne->type==ButtonRelease && ne->button==oe->button);
-}
-
-bool is_on_desktop_n(unsigned int n, unsigned int mask)
-{
-    return (mask & get_desktop_mask(n));
-}
-
-bool is_on_cur_desktop(unsigned int mask)
-{
-    return is_on_desktop_n(get_net_current_desktop(), mask);
 }
 
 unsigned int get_desktop_mask(unsigned int desktop_n)

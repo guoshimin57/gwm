@@ -54,7 +54,7 @@ void focus_desktop_n(unsigned int n)
 static void hide_cur_desktop_clients(void)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(c))
             hide_client(c);
 }
 
@@ -69,7 +69,7 @@ static void hide_client(const Client *c)
 static void show_cur_desktop_clients(void)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(c))
             show_client(c);
 }
 
@@ -84,7 +84,7 @@ static void show_client(const Client *c)
 static void fix_cur_desktop_clients_bg(void)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(c))
             fix_client_bg(c);
 }
 
@@ -144,7 +144,7 @@ void all_move_to_desktop_n(unsigned int n)
         return;
 
     clients_for_each(c)
-        if(!is_on_desktop_n(n, c->desktop_mask))
+        if(!is_on_desktop_n(c, n))
             ready_to_desktop_n(c, n, MOVE_TO_N);
 
     for(unsigned int i=0; i<DESKTOP_N; i++)

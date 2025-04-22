@@ -14,6 +14,7 @@
 
 #include <Imlib2.h>
 #include "widget.h"
+#include "client.h"
 
 typedef struct _taskbar_tag Taskbar; // 任務欄
 
@@ -21,8 +22,8 @@ Taskbar *get_taskbar(void);
 void taskbar_new(Widget *parent, int x, int y, int w, int h);
 void taskbar_del(void);
 void taskbar_update_bg(void);
-void taskbar_set_urgency(unsigned int desktop_mask);
-void taskbar_set_attention(unsigned int desktop_mask);
+void taskbar_set_urgency(const Client *c);
+void taskbar_set_attention(const Client *c);
 void taskbar_add_client(Window cwin);
 void taskbar_remove_client(Window cwin);
 Window taskbar_get_client_win(const Window button_win);

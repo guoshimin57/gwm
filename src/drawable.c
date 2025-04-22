@@ -19,6 +19,8 @@
 #include "config.h"
 #include "prop.h"
 #include "ewmh.h"
+#include "icccm.h"
+#include "misc.h"
 #include "drawable.h"
 
 static Pixmap create_pixmap_with_color(Drawable d, unsigned long color);
@@ -195,4 +197,45 @@ Window *query_win_list(unsigned int *n)
         *n=m;
 
     return child;
+}
+
+char *get_title_text(Window win, const char *fallback)
+{
+    char *s=NULL;
+
+    if((s=get_net_wm_name(win)))
+    {
+        if(strlen(s))
+            return s;
+        free(s);
+    }
+
+    if((s=get_wm_name(win)))
+    {
+        if(strlen(s))
+            return s;
+        free(s);
+    }
+
+    return copy_string(fallback);
+}
+
+char *get_icon_title_text(Window win, const char *fallback)
+{
+    char *s=NULL;
+
+    if((s=get_net_wm_icon_name(win)))
+    {
+        if(strlen(s))
+            return s;
+        free(s);
+    }
+    if((s=get_wm_icon_name(win)))
+    {
+        if(strlen(s))
+            return s;
+        free(s);
+    }
+
+    return get_title_text(win, fallback);
 }

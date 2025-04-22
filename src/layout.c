@@ -61,7 +61,7 @@ void update_layout(void)
         case TILE: set_tile_layout(); break;
     }
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(c))
             move_resize_client(c, NULL);
 }
 
@@ -82,7 +82,7 @@ static void fix_area_for_tile(void)
     int n=0, m=get_main_area_n();
     clients_for_each(c)
     {
-        if(is_on_cur_desktop(c->desktop_mask) && !is_iconic_client(c) && !c->owner)
+        if(is_on_cur_desktop(c) && !is_iconic_client(c) && !c->owner)
         {
             if(c->area==MAIN_AREA && ++n>m)
                 c->area=SECOND_AREA;
@@ -107,7 +107,7 @@ static void set_wins_rect_for_tiling(void)
     get_area_size(&mw, &mh, &sw, &sh, &fw, &fh);
     clients_for_each(c)
     {
-        if(is_on_cur_desktop(c->desktop_mask) && is_tiling_client(c))
+        if(is_on_cur_desktop(c) && is_tiling_client(c))
         {
             int x=0, y=0, w=0, h=0;
             if(c->area == FIXED_AREA)
@@ -145,14 +145,14 @@ static void get_area_size(int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
 static void update_titlebars_layout(void)
 {
     clients_for_each(c)
-        if(c->decorative && is_on_cur_desktop(c->desktop_mask))
+        if(c->decorative && is_on_cur_desktop(c))
             titlebar_update_layout(c->frame);
 }
 
 static void fix_wins_rect(void)
 {
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(c))
             fix_win_rect(c);
 }
 
@@ -291,7 +291,7 @@ void change_layout(Layout layout)
     set_layout(layout);
     set_gwm_layout(layout);
     clients_for_each(c)
-        if(is_on_cur_desktop(c->desktop_mask))
+        if(is_on_cur_desktop(c))
             set_default_layer(c), update_net_wm_state_by_layer(c);
 
     request_layout_update();

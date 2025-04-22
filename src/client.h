@@ -93,5 +93,7 @@ void update_client_bg(Client *c);
 void set_client_rect_by_outline(Client *c, int x, int y, int w, int h);
 bool is_exist_client(Client *c);
 bool is_new_client(Client *c);
+bool is_on_desktop_n(const Client *c, unsigned int n);
+bool is_on_cur_desktop(const Client *c);
 
 #endif

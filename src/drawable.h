@@ -23,5 +23,7 @@ void set_override_redirect(Window win);
 bool get_geometry(Drawable drw, int *x, int *y, int *w, int *h, int *bw, unsigned int *depth);
 void set_visual_for_imlib(Drawable d);
 Window *query_win_list(unsigned int *n);
+char *get_title_text(Window win, const char *fallback);
+char *get_icon_title_text(Window win, const char *fallback);
 
 #endif

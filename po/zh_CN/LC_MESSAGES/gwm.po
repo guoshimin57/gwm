@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.13.0\n"
+"Project-Id-Version: gwm 2.13.1\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-21 12:07+0800\n"
+"POT-Creation-Date: 2025-04-22 11:00+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -316,15 +316,15 @@ msgstr "不能安装SIGQUIT信号处理函数"
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 
-#: misc.c:23
+#: misc.c:22
 msgid "錯誤：申請內存失敗"
 msgstr "错误：申请内存失败"
 
-#: misc.c:33
+#: misc.c:32
 msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "错误：已经有其他窗口管理器在运行！"
 
-#: misc.c:38
+#: misc.c:37
 #, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X错误：资源号=%#lx，请求量=%lu，错误码=%d，主请求码=%d，次请求码=%d\n"
