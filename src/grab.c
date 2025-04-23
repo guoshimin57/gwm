@@ -37,7 +37,7 @@ bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *
     do
     {
         XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
-        event_handler(&ev);
+        handle_event(&ev);
     }while(!is_match_button_release(be, &ev.xbutton));
     XUngrabPointer(xinfo.display, CurrentTime);
 

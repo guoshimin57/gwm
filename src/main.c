@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     gwm.c：實現窗口管理器的主要部分。
+ *     main.c：實現窗口管理器的主體。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -11,20 +11,14 @@
 
 #include "gwm.h"
 #include "clientop.h"
-#include "handler.h"
+#include "event.h"
 #include "init.h"
-
-sig_atomic_t run_flag=1;
-Event_handler event_handler=NULL; // 事件處理器
-
-/* 以下全局變量一經顯式初始化，就不再修改 */
-Xinfo xinfo;
 
 int main(void)
 {
     init_gwm();
     manage_exsit_clients();
-    handle_events();
+    handle_x_events();
     deinit_gwm();
 
     return EXIT_SUCCESS;

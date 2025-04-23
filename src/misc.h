@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <libintl.h>
 #include <X11/Xlib.h>
+#include "gwm.h"
 #include "list.h"
 
 #define _(s) gettext(s)
@@ -47,6 +48,10 @@ typedef struct // 字符串鏈表
     List list;
 } Strings;
 
+typedef void (*Event_handler)(XEvent *); // 事件處理器類型
+
+extern Xinfo xinfo;
+
 void *Malloc(size_t size);
 int x_fatal_handler(Display *display, XErrorEvent *e);
 void exit_with_perror(const char *s);
@@ -58,5 +63,9 @@ int base_n_floor(int x, int n);
 int base_n_ceil(int x, int n);
 bool is_match_button_release(XButtonEvent *oe, XButtonEvent *ne);
 unsigned int get_desktop_mask(unsigned int desktop_n);
+bool should_quit(void);
+void request_quit(void);
+void init_event_handler(Event_handler handler);
+void handle_event(XEvent *ev);
 
 #endif

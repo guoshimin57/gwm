@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     gwm.h：與gwm.c相應的頭文件。
+ *     gwm.h：定義全局性的類型、宏。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -12,7 +12,6 @@
 #ifndef GWM_H
 #define GWM_H
 
-#include <signal.h>
 #include <X11/Xlib.h>
 
 #define TITLE_BUTTON_N (TITLE_BUTTON_END-TITLE_BUTTON_BEGIN+1)
@@ -25,18 +24,6 @@
 #define CROSSING_MASK (EnterWindowMask|LeaveWindowMask)
 #define ROOT_EVENT_MASK (SubstructureRedirectMask|SubstructureNotifyMask| \
     PropertyChangeMask|ButtonPressMask|CROSSING_MASK|ExposureMask|KeyPressMask)
-
-typedef struct // 與X相關的信息
-{
-    Display *display; // 顯示器
-    int screen, screen_width, screen_height; // 屏幕號、屏幕寬度和高度
-    unsigned int depth; // 色深
-    Visual *visual; // 着色類型
-    Colormap colormap; // 着色圖
-	XModifierKeymap *mod_map; // 功能轉換鍵映射
-    XIM xim; // 輸入法
-    Window root_win; // 根窗口
-} Xinfo;
 
 typedef struct rectangle_tag // 矩形窗口或區域的坐標和尺寸
 {
@@ -125,10 +112,16 @@ typedef struct // 窗口管理器的規則
     unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼
 } Rule;
 
-typedef void (*Event_handler)(XEvent *); // 事件處理器類型
-
-extern sig_atomic_t run_flag; // 程序運行標志
-extern Event_handler event_handler; // 事件處理器
-extern Xinfo xinfo;
+typedef struct // 與X相關的信息
+{
+    Display *display; // 顯示器
+    int screen, screen_width, screen_height; // 屏幕號、屏幕寬度和高度
+    unsigned int depth; // 色深
+    Visual *visual; // 着色類型
+    Colormap colormap; // 着色圖
+	XModifierKeymap *mod_map; // 功能轉換鍵映射
+    XIM xim; // 輸入法
+    Window root_win; // 根窗口
+} Xinfo;
 
 #endif

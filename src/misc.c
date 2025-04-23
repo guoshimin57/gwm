@@ -12,8 +12,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <signal.h>
 #include <X11/Xproto.h>
 #include "misc.h"
+
+Xinfo xinfo; // 該全局變量一經顯式初始化，就不再修改
+
+static volatile sig_atomic_t quit_flag=false; // 退出gwm的標志
+static Event_handler event_handler=NULL; // 事件處理器
 
 void *Malloc(size_t size)
 {
@@ -103,4 +109,24 @@ bool is_match_button_release(XButtonEvent *oe, XButtonEvent *ne)
 unsigned int get_desktop_mask(unsigned int desktop_n)
 {
     return desktop_n==~0U ? desktop_n : 1U<<desktop_n;
+}
+
+bool should_quit(void)
+{
+    return quit_flag==true;
+}
+
+void request_quit(void)
+{
+    quit_flag=true;
+}
+
+void init_event_handler(Event_handler handler)
+{
+    event_handler=handler;
+}
+
+void handle_event(XEvent *ev)
+{
+    event_handler(ev);
 }

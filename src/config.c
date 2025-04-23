@@ -164,10 +164,10 @@ static void config_client_menu_item(void)
     SET_WIDGET_MARKERS(SHADE_BUTTON,         NULL, "⊽", _("卷起/放下"));
     SET_WIDGET_MARKERS(VERT_MAX_BUTTON,      NULL, "⇅", _("縱向最大化"));
     SET_WIDGET_MARKERS(HORZ_MAX_BUTTON,      NULL, "⇆", _("橫向最大化"));
-    SET_WIDGET_MARKERS(TOP_MAX_BUTTON,       NULL, "⍓", _("最大化至上半屏"));
-    SET_WIDGET_MARKERS(BOTTOM_MAX_BUTTON,    NULL, "⍌", _("最大化至下半屏"));
-    SET_WIDGET_MARKERS(LEFT_MAX_BUTTON,      NULL, "⍃", _("最大化至左半屏"));
-    SET_WIDGET_MARKERS(RIGHT_MAX_BUTTON,     NULL, "⍄", _("最大化至右半屏"));
+    SET_WIDGET_MARKERS(TOP_MAX_BUTTON,       NULL, "⬓", _("最大化至上半屏"));
+    SET_WIDGET_MARKERS(BOTTOM_MAX_BUTTON,    NULL, "⬒", _("最大化至下半屏"));
+    SET_WIDGET_MARKERS(LEFT_MAX_BUTTON,      NULL, "◨", _("最大化至左半屏"));
+    SET_WIDGET_MARKERS(RIGHT_MAX_BUTTON,     NULL, "◧", _("最大化至右半屏"));
     SET_WIDGET_MARKERS(FULL_MAX_BUTTON,      NULL, "🗖", _("完全最大化"));
     SET_WIDGET_MARKERS(FULLSCREEN_BUTTON,    NULL, "□",_("全屏"));
     SET_WIDGET_MARKERS(ABOVE_BUTTON,         NULL, "❏", _("置頂"));

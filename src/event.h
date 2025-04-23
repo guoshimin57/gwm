@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     handler.h：與handler.c相應的頭文件。
+ *     event.h：與event.c相應的頭文件。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -9,12 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
-#ifndef HANDLER_H
-#define HANDLER_H
+#ifndef EVENT_H
+#define EVENT_H
 
 #include "gwm.h"
 
-void reg_event_handlers(void);
-void handle_events(void);
+void handle_x_events(void);
+void handle_x_event(XEvent *e);
 
 #endif

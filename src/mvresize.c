@@ -72,7 +72,7 @@ static void wait_key_release(XEvent *e)
             && ev.xkey.keycode==e->xkey.keycode)
             break;
         else
-            event_handler(&ev);
+            handle_event(&ev);
     }
 }
 
@@ -125,7 +125,7 @@ void pointer_move_resize_client(XEvent *e, bool resize)
                 size_hint_win_update(shw);
             }
             else
-                event_handler(&ev);
+                handle_event(&ev);
         }while(!is_match_button_release(&e->xbutton, &ev.xbutton));
         widget_del(WIDGET(shw));
     }

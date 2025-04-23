@@ -15,10 +15,10 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include "misc.h"
-#include "file.h"
 #include "gwm.h"
 #include "config.h"
 #include "list.h"
+#include "file.h"
 
 static void add_files_in_path(Strings *head, const char *path, const char *regex, bool fullname);
 static bool is_dir(const char *filename);

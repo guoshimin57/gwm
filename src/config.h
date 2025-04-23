@@ -13,6 +13,7 @@
 #define CONFIG_H
 
 #include <stdbool.h>
+#include <time.h>
 #include "gwm.h"
 
 typedef enum // 窗口聚焦模式

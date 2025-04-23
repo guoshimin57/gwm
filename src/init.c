@@ -9,6 +9,9 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <locale.h>
+#include <signal.h>
+#include <sys/wait.h>
 #include "clientop.h"
 #include "misc.h"
 #include "config.h"
@@ -16,7 +19,7 @@
 #include "image.h"
 #include "file.h"
 #include "font.h"
-#include "handler.h"
+#include "event.h"
 #include "prop.h"
 #include "icccm.h"
 #include "focus.h"
@@ -27,8 +30,6 @@
 #include "bind_cfg.h"
 #include "gui.h"
 #include "init.h"
-#include <locale.h>
-#include <sys/wait.h>
 
 static void clear_zombies(int signum);
 static void open_display(void);
@@ -55,7 +56,7 @@ void init_gwm(void)
     correct_config();
     init_imlib();
     set_net_current_desktop(cfg->default_cur_desktop);
-    reg_event_handlers();
+    init_event_handler(handle_x_event);
     set_ewmh();
     init_layout();
     reg_binds(keybinds, buttonbinds);
@@ -186,13 +187,13 @@ static void init_imlib(void)
 
 void deinit_gwm(void)
 {
+    XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
     clients_for_each_safe(c)
         client_del(c);
     free_all_images();
     deinit_gui();
     del_layer_wins();
     XFreeModifiermap(xinfo.mod_map);
-    XSetInputFocus(xinfo.display, xinfo.root_win, RevertToPointerRoot, CurrentTime);
     if(xinfo.xim)
         XCloseIM(xinfo.xim);
     XFlush(xinfo.display);
@@ -206,7 +207,6 @@ static void set_screensaver(void)
     XSetScreenSaver(xinfo.display, cfg->screen_saver_time_out,
         cfg->screen_saver_interval, PreferBlanking, AllowExposures);
 }
-
 
 static void set_signals(void)
 {
@@ -224,6 +224,6 @@ static void set_signals(void)
 
 static void ready_to_quit(int signum)
 {
-    UNUSED(signum);
-    run_flag=0;
+    signal(signum, SIG_IGN);
+    request_quit();
 }

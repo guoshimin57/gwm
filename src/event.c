@@ -1,5 +1,5 @@
 /* *************************************************************************
- *     handler.c：實現X事件處理功能。
+ *     event.c：實現X事件處理功能。
  *     版權 (C) 2020-2025 gsm <406643764@qq.com>
  *     本程序為自由軟件：你可以依據自由軟件基金會所發布的第三版或更高版本的
  * GNU通用公共許可證重新發布、修改本程序。
@@ -28,9 +28,8 @@
 #include "wmstate.h"
 #include "taskbar.h"
 #include "gui.h"
-#include "handler.h"
+#include "event.h"
 
-static void handle_event(XEvent *e);
 static void handle_button_press(XEvent *e);
 static void exec_buttonbind_func(XEvent *e);
 static void handle_button_release(XEvent *e);
@@ -57,42 +56,37 @@ static void handle_wm_name_notify(Window win, Atom atom);
 static void handle_wm_transient_for_notify(Window win);
 static void handle_selection_notify(XEvent *e);
 
-static Event_handler event_handlers[LASTEvent]; // 事件處理器數組
-
-void handle_events(void)
+void handle_x_events(void)
 {
 	XEvent e;
     XSync(xinfo.display, False);
-    while(run_flag && !XNextEvent(xinfo.display, &e))
-        handle_event(&e);
+    while(!should_quit() && !XNextEvent(xinfo.display, &e))
+        handle_x_event(&e);
 }
 
-static void handle_event(XEvent *e)
+void handle_x_event(XEvent *e)
 {
-    if(!XFilterEvent(e, None) && event_handlers[e->type])
-        event_handlers[e->type](e);
-}
+    if(XFilterEvent(e, None))
+        return;
 
-void reg_event_handlers(void)
-{
-    for(int i=0; i<LASTEvent; i++)
-        event_handlers[i]=NULL;
-    event_handler=handle_event;
-
-    event_handlers[ButtonPress]      = handle_button_press;
-    event_handlers[ButtonRelease]    = handle_button_release;
-    event_handlers[ClientMessage]    = handle_client_message;
-    event_handlers[ConfigureRequest] = handle_config_request;
-    event_handlers[EnterNotify]      = handle_enter_notify;
-    event_handlers[Expose]           = handle_expose;
-    event_handlers[FocusIn]          = handle_focus_in;
-    event_handlers[FocusOut]         = handle_focus_out;
-    event_handlers[KeyPress]         = handle_key_press;
-    event_handlers[LeaveNotify]      = handle_leave_notify;
-    event_handlers[MapRequest]       = handle_map_request;
-    event_handlers[UnmapNotify]      = handle_unmap_notify;
-    event_handlers[PropertyNotify]   = handle_property_notify;
-    event_handlers[SelectionNotify]  = handle_selection_notify;
+    switch(e->type)
+    {
+        case ButtonPress:       handle_button_press(e); break;
+        case ButtonRelease:     handle_button_release(e); break;
+        case ClientMessage:     handle_client_message(e); break;
+        case ConfigureRequest:  handle_config_request(e); break;
+        case EnterNotify:       handle_enter_notify(e); break;
+        case Expose:            handle_expose(e); break;
+        case FocusIn:           handle_focus_in(e); break;
+        case FocusOut:          handle_focus_out(e); break;
+        case KeyPress:          handle_key_press(e); break;
+        case LeaveNotify:       handle_leave_notify(e); break;
+        case MapRequest:        handle_map_request(e); break;
+        case UnmapNotify:       handle_unmap_notify(e); break;
+        case PropertyNotify:    handle_property_notify(e); break;
+        case SelectionNotify:   handle_selection_notify(e); break;
+        default: break;
+    }
 }
 
 static void handle_button_press(XEvent *e)
@@ -288,7 +282,7 @@ static void handle_pointer_hover(const Widget *widget)
         if(XPending(xinfo.display))
         {
             XNextEvent(xinfo.display, &ev);
-            handle_event(&ev);
+            handle_x_event(&ev);
 
             // 注意：每處理一次事件，接收事件的窗口都可能不同於參數widget的窗口
             if(!(widget=widget_find(win)))

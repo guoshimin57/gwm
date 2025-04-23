@@ -318,7 +318,7 @@ void pointer_adjust_layout_ratio(XEvent *e)
                 request_layout_update(), ox=nx;
         }
         else
-            event_handler(&ev);
+            handle_event(&ev);
     }while(!is_match_button_release(&e->xbutton, &ev.xbutton));
     XUngrabPointer(xinfo.display, CurrentTime);
 }

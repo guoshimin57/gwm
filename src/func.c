@@ -50,7 +50,7 @@ void exec(XEvent *e, Arg arg)
 void quit_wm(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    run_flag=0;
+    request_quit();
 }
 
 void quit(XEvent *e, Arg arg)
