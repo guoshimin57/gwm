@@ -9,47 +9,31 @@
  * <http://www.gnu.org/licenses/>。
  * ************************************************************************/
 
+#include <X11/Xutil.h>
 #include "misc.h"
 #include "config.h"
-#include "drawable.h"
 #include "grab.h"
 
-static bool is_func_click(const Widget_id id, const Buttonbind *bind, XButtonEvent *be);
 static unsigned int get_num_lock_mask(void);
 
 static Cursor cursors[POINTER_ACT_N]; // 光標
+static const Keybind *keybinds=NULL;
+static const Buttonbind *buttonbinds=NULL;
 
-bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *be)
+void reg_binds(const Keybind *kbinds, const Buttonbind *bbinds)
 {
-    Widget_id id = widget ? widget->id :
-        (be->window==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
-
-    if(!is_func_click(id, bind, be))
-        return false;
-
-    if(!widget || widget_get_draggable(widget))
-        return true;
-
-    if(!grab_pointer(be->window, CHOOSE))
-        return false;
-
-    XEvent ev;
-    do
-    {
-        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
-        handle_event(&ev);
-    }while(!is_match_button_release(be, &ev.xbutton));
-    XUngrabPointer(xinfo.display, CurrentTime);
-
-    return is_equal_modifier_mask(be->state, ev.xbutton.state)
-        && is_pointer_on_win(ev.xbutton.window);
+    keybinds=kbinds;
+    buttonbinds=bbinds;
 }
 
-static bool is_func_click(const Widget_id id, const Buttonbind *bind, XButtonEvent *be)
+const Keybind *get_keybinds(void)
 {
-    return (bind->widget_id == id
-        && bind->button == be->button
-        && is_equal_modifier_mask(bind->modifier, be->state));
+    return keybinds;
+}
+
+const Buttonbind *get_buttonbinds(void)
+{
+    return buttonbinds;
 }
 
 // 當需要拖拽操作時可考慮使用此函數獨享定位器
@@ -90,22 +74,19 @@ static unsigned int get_num_lock_mask(void)
 /* 當主動獨享無法獲得按鈕輸入時可考慮使用此函數獨享按鈕。譬如客戶窗口已經選擇了
  * 點擊事件，WM無法再選擇點擊事件，此時可以用此獨享按鈕。非必要則不應使用它。在
  * buttonbinds設置的綁定默認會使用主動獨享，並不會使用此函數來設置被動獨享。*/
-void grab_buttons(const Widget *widget)
+void grab_buttons(Window win)
 {
     unsigned int num_lock_mask=get_num_lock_mask(),
                  masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
 
-    XUngrabButton(xinfo.display, AnyButton, AnyModifier, WIDGET_WIN(widget));
+    XUngrabButton(xinfo.display, AnyButton, AnyModifier, win);
     for(const Buttonbind *p=get_buttonbinds(); p && p->func; p++)
     {
-        if(p->widget_id == widget->id)
-        {
-            int m=is_equal_modifier_mask(0, p->modifier) ?
-                GrabModeSync : GrabModeAsync;
-            for(size_t i=0; i<ARRAY_NUM(masks); i++)
-                XGrabButton(xinfo.display, p->button, p->modifier|masks[i],
-                    WIDGET_WIN(widget), False, BUTTON_MASK, m, m, None, None);
-        }
+        int m=is_equal_modifier_mask(0, p->modifier) ?
+            GrabModeSync : GrabModeAsync;
+        for(size_t i=0; i<ARRAY_NUM(masks); i++)
+            XGrabButton(xinfo.display, p->button, p->modifier|masks[i],
+                win, False, BUTTON_MASK, m, m, None, None);
     }
 }
 

@@ -14,7 +14,11 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <X11/Xproto.h>
+#include <X11/Xutil.h>
 #include "misc.h"
+
+static unsigned int get_valid_mask(unsigned int mask);
+static unsigned int get_modifier_mask(KeySym key_sym);
 
 Xinfo xinfo; // 該全局變量一經顯式初始化，就不再修改
 
@@ -129,4 +133,30 @@ void init_event_handler(Event_handler handler)
 void handle_event(XEvent *ev)
 {
     event_handler(ev);
+}
+
+bool is_equal_modifier_mask(unsigned int m1, unsigned int m2)
+{
+    return (get_valid_mask(m1) == get_valid_mask(m2));
+}
+
+static unsigned int get_valid_mask(unsigned int mask)
+{
+    return (mask & ~(LockMask|get_modifier_mask(XK_Num_Lock))
+        & (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask));
+}
+
+static unsigned int get_modifier_mask(KeySym key_sym)
+{
+    KeyCode kc;
+    if((kc=XKeysymToKeycode(xinfo.display, key_sym)) != 0)
+    {
+        for(int i=0; i<8*xinfo.mod_map->max_keypermod; i++)
+            if(xinfo.mod_map->modifiermap[i] == kc)
+                return 1 << (i/xinfo.mod_map->max_keypermod);
+        fprintf(stderr, _("錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"));
+    }
+    else
+        fprintf(stderr, _("錯誤：指定的鍵符號不存在對應的鍵代碼！\n"));
+    return 0;
 }

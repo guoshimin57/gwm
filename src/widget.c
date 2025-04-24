@@ -15,6 +15,7 @@
 #include "misc.h"
 #include "list.h"
 #include "drawable.h"
+#include "grab.h"
 #include "widget.h"
 
 #define WIDGET_STATE_NORMAL ((Widget_state){0})
@@ -31,14 +32,11 @@ static void widget_unreg(Widget *widget);
 static void widget_node_del(Widget_node *node);
 static void widget_set_method(Widget *widget);
 static void widget_dtor(Widget *widget);
-static unsigned int get_valid_mask(unsigned int mask);
-static unsigned int get_modifier_mask(KeySym key_sym);
+static bool is_func_click(const Widget_id id, const Buttonbind *bind, XButtonEvent *be);
 static Color_id state_to_color_id(Widget_state state);
 static int get_pointer_x(void);
 
 static Widget_node *widget_list=NULL;
-static const Keybind *keybinds=NULL;
-static const Buttonbind *buttonbinds=NULL;
 
 static void widget_reg(Widget *widget)
 {
@@ -313,46 +311,37 @@ KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n)
     return ks;
 }
 
-void reg_binds(const Keybind *kbinds, const Buttonbind *bbinds)
+bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *be)
 {
-    keybinds=kbinds;
-    buttonbinds=bbinds;
-}
+    Widget_id id = widget ? widget->id :
+        (be->window==xinfo.root_win ? ROOT_WIN : UNUSED_WIDGET_ID);
 
-const Keybind *get_keybinds(void)
-{
-    return keybinds;
-}
+    if(!is_func_click(id, bind, be))
+        return false;
 
-const Buttonbind *get_buttonbinds(void)
-{
-    return buttonbinds;
-}
+    if(!widget || widget_get_draggable(widget))
+        return true;
 
-bool is_equal_modifier_mask(unsigned int m1, unsigned int m2)
-{
-    return (get_valid_mask(m1) == get_valid_mask(m2));
-}
+    if(!grab_pointer(be->window, CHOOSE))
+        return false;
 
-static unsigned int get_valid_mask(unsigned int mask)
-{
-    return (mask & ~(LockMask|get_modifier_mask(XK_Num_Lock))
-        & (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask));
-}
-
-static unsigned int get_modifier_mask(KeySym key_sym)
-{
-    KeyCode kc;
-    if((kc=XKeysymToKeycode(xinfo.display, key_sym)) != 0)
+    XEvent ev;
+    do
     {
-        for(int i=0; i<8*xinfo.mod_map->max_keypermod; i++)
-            if(xinfo.mod_map->modifiermap[i] == kc)
-                return 1 << (i/xinfo.mod_map->max_keypermod);
-        fprintf(stderr, _("錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"));
-    }
-    else
-        fprintf(stderr, _("錯誤：指定的鍵符號不存在對應的鍵代碼！\n"));
-    return 0;
+        XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
+        handle_event(&ev);
+    }while(!is_match_button_release(be, &ev.xbutton));
+    XUngrabPointer(xinfo.display, CurrentTime);
+
+    return is_equal_modifier_mask(be->state, ev.xbutton.state)
+        && is_pointer_on_win(ev.xbutton.window);
+}
+
+static bool is_func_click(const Widget_id id, const Buttonbind *bind, XButtonEvent *be)
+{
+    return (bind->widget_id == id
+        && bind->button == be->button
+        && is_equal_modifier_mask(bind->modifier, be->state));
 }
 
 unsigned long get_widget_color(const Widget *widget)

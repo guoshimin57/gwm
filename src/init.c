@@ -23,7 +23,6 @@
 #include "prop.h"
 #include "icccm.h"
 #include "focus.h"
-#include "widget.h"
 #include "grab.h"
 #include "layout.h"
 #include "taskbar.h"

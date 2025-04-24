@@ -67,5 +67,6 @@ bool should_quit(void);
 void request_quit(void);
 void init_event_handler(Event_handler handler);
 void handle_event(XEvent *ev);
+bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
 
 #endif

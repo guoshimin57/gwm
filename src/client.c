@@ -55,7 +55,7 @@ Client *client_new(Window win)
     Client *c=Malloc(sizeof(Client));
     client_ctor(c, win);
     list_add(&c->list, &get_head_client(c, ANY_LAYER, ANY_AREA)->list);
-    grab_buttons(WIDGET(c));
+    grab_buttons(WIDGET_WIN(c));
     return c;
 }
 

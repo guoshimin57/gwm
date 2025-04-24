@@ -12,12 +12,39 @@
 #ifndef GRAB_H
 #define GRAB_H
 
-#include "widget.h"
+#include "gwm.h"
 
+typedef union // 要綁定的函數的參數類型
+{
+    char *const *cmd; // 命令字符串
+    unsigned int desktop_n; // 虛擬桌面編號，從0開始編號
+} Arg;
+
+typedef void (*Func)(XEvent *, Arg); // 要綁定的函數類型
+
+typedef struct // 鍵盤按鍵功能綁定
+{
+	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵
+	KeySym keysym; // 要綁定的鍵盤功能轉換鍵
+	Func func; // 要綁定的函數
+    Arg arg; // 要綁定的函數的參數
+} Keybind;
+
+typedef struct // 定位器按鈕功能綁定
+{
+    Widget_id widget_id; // 要綁定的構件標識
+	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵 
+    unsigned int button; // 要綁定的定位器按鈕
+	Func func; // 要綁定的函數
+    Arg arg; // 要綁定的函數的參數
+} Buttonbind;
+
+void reg_binds(const Keybind *kbinds, const Buttonbind *bbinds);
+const Keybind *get_keybinds(void);
+const Buttonbind *get_buttonbinds(void);
 void grab_keys(void);
-void grab_buttons(const Widget *widget);
+void grab_buttons(Window);
 bool grab_pointer(Window win, Pointer_act act);
-bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *be);
 void create_cursors(void);
 void set_cursor(Window win, Pointer_act act);
 void free_cursors(void);

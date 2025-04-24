@@ -5,9 +5,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.13.2\n"
+"Project-Id-Version: gwm 2.13.3\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-24 00:41+0800\n"
+"POT-Creation-Date: 2025-04-25 00:49+0800\n"
 "PO-Revision-Date: 2023-05-05 11:26+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: English (British) <(nothing)>\n"
@@ -292,58 +292,58 @@ msgstr "Command execution error"
 msgid "未能成功地爲命令創建新進程"
 msgstr "Failed to successfully create a new process for the command"
 
-#: init.c:167
+#: init.c:166
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "Error: Unable to set input method"
 
-#: init.c:214
+#: init.c:213
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "SIGCHLD signal handler function cannot be installed"
 
-#: init.c:216
+#: init.c:215
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "SIGINT signal handler cannot be installed"
 
-#: init.c:218
+#: init.c:217
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "SIGTERM signal handler cannot be installed"
 
-#: init.c:220
+#: init.c:219
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "SIGQUIT signal handler cannot be installed"
 
-#: init.c:222
+#: init.c:221
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "SIGHUP signal handler cannot be installed"
 
-#: misc.c:28
+#: misc.c:32
 msgid "錯誤：申請內存失敗"
 msgstr "Error: Failed to allocate memory"
 
-#: misc.c:38
+#: misc.c:42
 msgid "錯誤：已經有其他窗口管理器在運行！"
 msgstr "Error: There is already another window manager running!"
 
-#: misc.c:43
+#: misc.c:47
 #, c-format
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X error: Resource number=%#lx, Request number=%lu, Error code=%d, Major request code=%d, Minor request code=%d\n"
 
-#: widget.c:297
-#, c-format
-msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
-msgstr "Error: Window (0x%lx) input method setup failed!"
-
-#: widget.c:351
+#: misc.c:157
 #, c-format
 msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
 msgstr "Error: The corresponding modifier key for the specified key symbol could not be found!\n"
 
-#: widget.c:354
+#: misc.c:160
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "Error: The key symbol specified does not have a corresponding key code!\n"
+
+#: widget.c:295
+#, c-format
+msgid "錯誤：窗口（0x%lx）輸入法設置失敗！"
+msgstr "Error: Window (0x%lx) input method setup failed!"
 
 #~ msgid "切換到預覽模式"
 #~ msgstr "To preview mode"

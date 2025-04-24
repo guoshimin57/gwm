@@ -14,6 +14,7 @@
 
 #include <stdbool.h>
 #include "color.h"
+#include "grab.h"
 #include "gwm.h"
 
 typedef enum // 構件類型
@@ -65,34 +66,6 @@ struct _widget_tag
     void (*update_fg)(const Widget *widget);
 };
 
-typedef union // 要綁定的函數的參數類型
-{
-    char *const *cmd; // 命令字符串
-    unsigned int desktop_n; // 虛擬桌面編號，從0開始編號
-} Arg;
-
-typedef void (*Func)(XEvent *, Arg); // 要綁定的函數類型
-
-typedef struct // 鍵盤按鍵功能綁定
-{
-	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵
-	KeySym keysym; // 要綁定的鍵盤功能轉換鍵
-	Func func; // 要綁定的函數
-    Arg arg; // 要綁定的函數的參數
-} Keybind;
-
-typedef struct // 定位器按鈕功能綁定
-{
-    Widget_id widget_id; // 要綁定的構件標識
-	unsigned int modifier; // 要綁定的鍵盤功能轉換鍵 
-    unsigned int button; // 要綁定的定位器按鈕
-	Func func; // 要綁定的函數
-    Arg arg; // 要綁定的函數的參數
-} Buttonbind;
-
-const Keybind *get_keybinds(void);
-const Buttonbind *get_buttonbinds(void);
-
 typedef struct rectangle_tag Rect;
 
 #define WIDGET_EVENT_MASK (ExposureMask)
@@ -139,10 +112,7 @@ Window create_widget_win(Window parent, int x, int y, int w, int h, int border_w
 void set_popup_pos(const Widget *widget, bool near_pointer, int *px, int *py, int pw, int ph);
 void set_xic(Window win, XIC *ic);
 KeySym look_up_key(XIC xic, XKeyEvent *e, wchar_t *keyname, size_t n);
-void reg_binds(const Keybind *kbinds, const Buttonbind *bbinds);
-const Keybind *get_keybinds(void);
-const Buttonbind *get_buttonbinds(void);
-bool is_equal_modifier_mask(unsigned int m1, unsigned int m2);
+bool is_valid_click(const Widget *widget, const Buttonbind *bind, XButtonEvent *be);
 unsigned long get_widget_color(const Widget *widget);
 XftColor get_text_color(const Widget *widget);
 

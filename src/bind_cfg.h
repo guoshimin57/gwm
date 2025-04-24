@@ -14,6 +14,7 @@
 
 #include <X11/keysymdef.h>
 #include <X11/XF86keysym.h>
+#include "grab.h"
 #include "func.h"
 #include "layout.h"
 #include "mvresize.h"
