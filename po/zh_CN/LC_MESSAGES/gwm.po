@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.13.3\n"
+"Project-Id-Version: gwm 2.13.4\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-04-25 00:49+0800\n"
+"POT-Creation-Date: 2025-05-14 00:47+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -329,12 +329,12 @@ msgstr "错误：已经有其他窗口管理器在运行！"
 msgid "X錯誤：資源號=%#lx, 請求量=%lu, 錯誤碼=%d, 主請求碼=%d, 次請求碼=%d\n"
 msgstr "X错误：资源号=%#lx，请求量=%lu，错误码=%d，主请求码=%d，次请求码=%d\n"
 
-#: misc.c:157
+#: misc.c:158
 #, c-format
 msgid "錯誤：找不到指定的鍵符號相應的功能轉換鍵！\n"
 msgstr "错误：找不到指定的键符号相应的功能转换键！\n"
 
-#: misc.c:160
+#: misc.c:161
 #, c-format
 msgid "錯誤：指定的鍵符號不存在對應的鍵代碼！\n"
 msgstr "错误：指定的键符号不存在对应的键代码！\n"

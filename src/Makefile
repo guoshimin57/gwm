@@ -21,20 +21,27 @@ deps := $(srcs:.c=.d)
 exec := gwm
 
 .PHONY : all install debug install-strip uninstall clean
+
 all : $(exec)
+	@$(CTAGS) *.[ch] 2> /dev/null
+
 $(exec) : $(objs)
-	@$(CTAGS) *.[ch] 2> /dev/null ; \
 	$(CC) $(objs) -o $@ $(CFLAGS)
+
 install :
 	install -d $(prefix)/bin ;
 	install -m 755 $(exec) $(prefix)/bin
+
 install-strip :
 	install -d $(prefix)/bin ;
 	install -m 755 -s $(exec) $(prefix)/bin
+
 uninstall :
 	rm -f $(prefix)/bin/$(exec)
+
 clean :
 	rm -f $(exec) $(objs) $(deps) $(backup)
+
 %.d : %.c
 	$(CC) -M $(CFLAGS) $< | sed 's/\($*\)\.o[ :]*/\1.o $@ :/g' > $@
 

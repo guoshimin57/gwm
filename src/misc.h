@@ -24,6 +24,9 @@
 #define MAX(a, b) ((a)>(b) ? (a) : (b))
 #define ARRAY_NUM(a) (sizeof(a)/sizeof(a[0]))
 
+// 數學公式法整數相除並向上取整
+#define CEIL_DIV(a, b) (((a)+(b)-1)/(b))
+
 /* 向量化執行指定函數。注意：此宏不能用作表达式 */
 #define vfunc(type, func, ...)                          \
     do                                                  \

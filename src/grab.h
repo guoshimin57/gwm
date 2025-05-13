@@ -43,7 +43,7 @@ void reg_binds(const Keybind *kbinds, const Buttonbind *bbinds);
 const Keybind *get_keybinds(void);
 const Buttonbind *get_buttonbinds(void);
 void grab_keys(void);
-void grab_buttons(Window);
+void grab_buttons(Window win, Widget_id id);
 bool grab_pointer(Window win, Pointer_act act);
 void create_cursors(void);
 void set_cursor(Window win, Pointer_act act);

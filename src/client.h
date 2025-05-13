@@ -42,31 +42,31 @@ typedef struct client_tag // 客戶窗口相關信息
 #define subgroup_for_each(c, leader) \
     for(Client *c=leader;\
         c->subgroup_leader==leader;\
-        c=list_prev_entry(c, Client, list))
+        c=LIST_PREV(Client, c))
 
 #define clients_is_empty() \
-    list_is_empty(&get_clients()->list)
+    LIST_IS_EMPTY(get_clients())
 
 #define clients_last() \
-    list_last_entry(&get_clients()->list, Client, list)
+    LIST_LAST(Client, get_clients())
 
 #define clients_next(c) \
-    list_next_entry(c, Client, list)
+    LIST_NEXT(Client, c)
 
 #define clients_prev(c) \
-    list_prev_entry(c, Client, list)
+    LIST_PREV(Client, c)
 
 #define clients_for_each(c) \
-    list_for_each_entry(Client, c, &get_clients()->list, list)
+    LIST_FOR_EACH(Client, c, get_clients())
 
 #define clients_for_each_safe(c) \
-    list_for_each_entry_safe(Client, c, &get_clients()->list, list)
+    LIST_FOR_EACH_SAFE(Client, c, get_clients())
 
 #define clients_for_each_from(c) \
-    list_for_each_entry_from(Client, c, &get_clients()->list, list)
+    LIST_FOR_EACH_FROM(Client, c, get_clients())
 
 #define clients_for_each_reverse(c) \
-    list_for_each_entry_reverse(Client, c, &get_clients()->list, list)
+    LIST_FOR_EACH_REVERSE(Client, c, get_clients())
 
 void init_client_list(void);
 Client *get_clients(void);

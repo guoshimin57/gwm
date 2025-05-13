@@ -73,7 +73,7 @@ void set_ewmh_atoms(void)
 void set_net_supported(void)
 {
     Atom prop=ewmh_atoms[NET_SUPPORTED];
-    replace_atom_prop(xinfo.root_win, prop, ewmh_atoms, EWMH_ATOM_N);
+    replace_atoms_prop(xinfo.root_win, prop, ewmh_atoms, EWMH_ATOM_N);
 }
 
 void set_net_client_list(const Window *wins, int n)
@@ -93,25 +93,24 @@ static void set_net_client_list_by_order(const Window *wins, int n, bool stack)
     if(!wins || !n)
         XDeleteProperty(xinfo.display, xinfo.root_win, prop);
     else
-        replace_window_prop(xinfo.root_win, prop, wins, n);
+        replace_windows_prop(xinfo.root_win, prop, wins, n);
 }
 
 Window *get_net_client_list(unsigned long *n)
 {
-    return (Window *)get_prop(xinfo.root_win, ewmh_atoms[NET_CLIENT_LIST], n);
+    return get_windows_prop(xinfo.root_win, ewmh_atoms[NET_CLIENT_LIST], n);
 }
 
 Window *get_net_client_list_stacking(unsigned long *n)
 {
-    return (Window *)get_prop(xinfo.root_win, ewmh_atoms[NET_CLIENT_LIST_STACKING], n);
+    return get_windows_prop(xinfo.root_win, ewmh_atoms[NET_CLIENT_LIST_STACKING], n);
 }
 
 void set_net_number_of_desktops(int n)
 {
     Atom prop=ewmh_atoms[NET_NUMBER_OF_DESKTOPS];
-    long num=n;
 
-    replace_cardinal_prop(xinfo.root_win, prop, &num, 1);
+    replace_cardinal_prop(xinfo.root_win, prop, n);
 }
 
 int get_net_number_of_desktops(void)
@@ -124,7 +123,7 @@ void set_net_desktop_geometry(int w, int h)
     Atom prop=ewmh_atoms[NET_DESKTOP_GEOMETRY];
     long size[2]={w, h};
     
-    replace_cardinal_prop(xinfo.root_win, prop, size, 2);
+    replace_cardinals_prop(xinfo.root_win, prop, size, 2);
 }
 
 void set_net_desktop_viewport(int x, int y)
@@ -132,15 +131,14 @@ void set_net_desktop_viewport(int x, int y)
     Atom prop=ewmh_atoms[NET_DESKTOP_GEOMETRY];
     long pos[2]={x, y};
 
-    replace_cardinal_prop(xinfo.root_win, prop, pos, 2);
+    replace_cardinals_prop(xinfo.root_win, prop, pos, 2);
 }
 
 void set_net_current_desktop(unsigned int cur_desktop)
 {
-    long cur=cur_desktop;
     Atom prop=ewmh_atoms[NET_CURRENT_DESKTOP];
 
-    replace_cardinal_prop(xinfo.root_win, prop, &cur, 1);
+    replace_cardinal_prop(xinfo.root_win, prop, cur_desktop);
 }
 
 unsigned int get_net_current_desktop(void)
@@ -159,14 +157,14 @@ unsigned int get_net_wm_desktop(Window win)
 void set_net_desktop_names(const char **names, int n)
 {
     Atom prop=ewmh_atoms[NET_DESKTOP_NAMES];
-    replace_utf8_prop(xinfo.root_win, prop, names, n);
+    replace_utf8s_prop(xinfo.root_win, prop, names, n);
 }
 
 void set_net_active_window(Window act_win)
 {
     Atom prop=ewmh_atoms[NET_ACTIVE_WINDOW];
 
-    replace_window_prop(xinfo.root_win, prop, &act_win, 1);
+    replace_window_prop(xinfo.root_win, prop, act_win);
 }
 
 Window get_net_active_window(void)
@@ -181,13 +179,13 @@ void set_net_workarea(int x, int y, int w, int h, int ndesktop)
 
     for(int i=0; i<ndesktop; i++)
         rect[i][0]=x, rect[i][1]=y, rect[i][2]=w, rect[i][3]=h;
-    replace_cardinal_prop(xinfo.root_win, prop, rect[0], ndesktop*4);
+    replace_cardinals_prop(xinfo.root_win, prop, rect[0], ndesktop*4);
 }
 
 Rect get_net_workarea(void)
 {
     unsigned int n=get_net_current_desktop(), i=n*4;
-    long *p=(long *)get_prop(xinfo.root_win, ewmh_atoms[NET_WORKAREA], NULL);
+    long *p=get_cardinals_prop(xinfo.root_win, ewmh_atoms[NET_WORKAREA], NULL);
     Rect r={0, 0, xinfo.screen_width, xinfo.screen_height};
 
     if(p)
@@ -203,18 +201,17 @@ void set_net_supporting_wm_check(const char *wm_name)
 
     Window wm_check_win=XCreateSimpleWindow(xinfo.display, xinfo.root_win,
         -1, -1, 1, 1, 0, 0, 0);
-    replace_window_prop(xinfo.root_win, prop, &wm_check_win, 1);
-    replace_window_prop(wm_check_win, prop, &wm_check_win, 1);
+    replace_window_prop(xinfo.root_win, prop, wm_check_win);
+    replace_window_prop(wm_check_win, prop, wm_check_win);
     prop=ewmh_atoms[NET_WM_NAME];
-    replace_utf8_prop(wm_check_win, prop, wm_name, 1);
+    replace_utf8_prop(wm_check_win, prop, wm_name);
 }
 
 void set_net_showing_desktop(bool show)
 {
-    long showing=show;
     Atom prop=ewmh_atoms[NET_SHOWING_DESKTOP];
 
-    replace_cardinal_prop(xinfo.root_win, prop, &showing, 1);
+    replace_cardinal_prop(xinfo.root_win, prop, show);
 }
 
 void set_net_wm_allowed_actions(Window win)
@@ -236,7 +233,7 @@ void set_net_wm_allowed_actions(Window win)
         ewmh_atoms[NET_WM_ACTION_BELOW],
     };
 
-    replace_atom_prop(win, prop, acts, ARRAY_NUM(acts));
+    replace_atoms_prop(win, prop, acts, ARRAY_NUM(acts));
 }
 
 /* 根據EWMH，窗口可能有多種類型，但實際上絕大部分窗口只設置一種類型 */
@@ -244,8 +241,7 @@ Net_wm_win_type get_net_wm_win_type(Window win)
 {
     Net_wm_win_type r={0}, unknown={.none=1};
     unsigned long n=0;
-    Atom *a=ewmh_atoms,
-         *t=(Atom *)get_prop(win, a[NET_WM_WINDOW_TYPE], &n);
+    Atom *a=ewmh_atoms, *t=get_atoms_prop(win, a[NET_WM_WINDOW_TYPE], &n);
 
     if(!t)
         return unknown;
@@ -278,7 +274,7 @@ Net_wm_state get_net_wm_state(Window win)
 {
     Net_wm_state r={0};
     unsigned long n=0;
-    Atom *a=ewmh_atoms, *s=(Atom *)get_prop(win, a[NET_WM_STATE], &n);
+    Atom *a=ewmh_atoms, *s=get_atoms_prop(win, a[NET_WM_STATE], &n);
 
     if(!s)
         return r;
@@ -335,7 +331,7 @@ void update_net_wm_state(Window win, Net_wm_state state)
     if(n == 0)
         XDeleteProperty(xinfo.display, win, a[NET_WM_STATE]);
     else
-        replace_atom_prop(win, prop, states, n);
+        replace_atoms_prop(win, prop, states, n);
 }
 
 Net_wm_state get_net_wm_state_mask(const long *full_act)
@@ -402,5 +398,5 @@ char *get_net_wm_icon_name(Window win)
 
 long *get_net_wm_icon(Window win)
 {
-    return (long *)get_prop(win, ewmh_atoms[NET_WM_ICON], NULL);
+    return get_cardinals_prop(win, ewmh_atoms[NET_WM_ICON], NULL);
 }

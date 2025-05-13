@@ -34,7 +34,7 @@ Strings *get_files_in_paths(const char *paths, const char *regex, bool fullname)
     char *p=NULL, *ps=copy_string(paths);
     Strings *files=Malloc(sizeof(Strings));
 
-    list_init(&files->list);
+    LIST_INIT(files);
     for(p=strtok(ps, ":"); p; p=strtok(NULL, ":"))
         add_files_in_path(files, p, regex, fullname);
     Free(ps);
@@ -102,7 +102,7 @@ static void add_file(Strings *head, const char *path, const char *filename, bool
 {
     Strings *file=create_file_node(path, filename, fullname);
     Strings *ip=get_file_insert_point(head, file, !fullname);
-    list_add(&file->list, &ip->list);
+    LIST_ADD(file, ip);
 }
 
 static Strings *create_file_node(const char *path, const char *filename, bool fullname)
@@ -117,11 +117,11 @@ static Strings *get_file_insert_point(Strings *head, Strings *file, bool order)
     if(!order)
         return head;
 
-    list_for_each_entry(Strings, p, &head->list, list)
+    LIST_FOR_EACH(Strings, p, head)
         if(cmp_basename(file->str, p->str) <= 0)
-            return list_prev_entry(p, Strings, list);
+            return LIST_PREV(Strings, p);
 
-    return list_prev_entry(head, Strings, list);
+    return LIST_PREV(Strings, head);
 }
 
 static int cmp_basename(const char *s1, const char *s2)

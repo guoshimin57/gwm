@@ -143,11 +143,9 @@ static void change_prop_for_root_bg(Pixmap pixmap)
 
     if(prop_root && prop_esetroot)
     {
-        Pixmap *rdata=(Pixmap *)get_prop(win, prop_root, NULL),
-               *edata=(Pixmap *)get_prop(win, prop_esetroot, NULL);
-        Pixmap rid=(rdata ? *rdata : None), eid=(edata ? *edata : None);
+        Pixmap rid=get_pixmap_prop(win, prop_root),
+               eid=get_pixmap_prop(win, prop_esetroot);
 
-        XFree(rdata), XFree(edata);
         if(rid && eid && eid!=rid)
             XKillClient(xinfo.display, rid);
     }

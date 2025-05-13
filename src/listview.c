@@ -27,7 +27,7 @@ static void listview_set_method(Widget *widget);
 
 Listview *listview_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const Strings *texts)
 {
-    if((!texts || list_is_empty(&texts->list)) && (w<=0 || h<=0))
+    if((!texts || LIST_IS_EMPTY(texts)) && (w<=0 || h<=0))
         return NULL;
 
     Listview *listview=Malloc(sizeof(Listview));
@@ -51,7 +51,7 @@ static int get_strings_width(const Strings *texts)
 {
     int wmax=0, w=0;
 
-    list_for_each_entry(Strings, s, &texts->list, list)
+    LIST_FOR_EACH(Strings, s, texts)
     {
         get_string_size(s->str, &w, NULL);
         if(w > wmax)
@@ -64,7 +64,7 @@ static int get_strings_width(const Strings *texts)
 static int get_strings_height(const Strings *texts)
 {
     int n=0, h=get_font_height_by_pad();
-    list_for_each_entry(Strings, s, &texts->list, list)
+    LIST_FOR_EACH(Strings, s, texts)
         n++;
     return h*n;
 }
@@ -93,7 +93,7 @@ void listview_update_fg(const Widget *widget)
     Str_fmt fmt={0, 0, w, h, CENTER_LEFT, true, false, 0,
         get_text_color(widget)};
 
-    list_for_each_entry(Strings, s, &listview->texts->list, list)
+    LIST_FOR_EACH(Strings, s, listview->texts)
     {
         if(i < nmax)
             draw_string(win, i<nmax-1 ? s->str : "...", &fmt), fmt.y+=h;
@@ -106,7 +106,7 @@ void listview_update_fg(const Widget *widget)
 void listview_update(Listview *listview, const Strings *texts)
 {
     int w=WIDGET_W(listview), hl=get_font_height_by_pad(),
-        n=list_count_nodes(&texts->list), h=MIN(n, listview->nmax)*hl;
+        n=LIST_COUNT(texts), h=MIN(n, listview->nmax)*hl;
 
     listview->texts=texts;
     widget_resize(WIDGET(listview), w, h);

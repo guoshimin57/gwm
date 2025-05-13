@@ -40,7 +40,7 @@ void load_fonts(void)
 {
     fonts=Malloc(sizeof(WMFont));
     fonts->xfont=NULL;
-    list_init(&fonts->list);
+    LIST_INIT(fonts);
 
     for(int i=0; cfg->font_names[i]; i++)
         load_font(cfg->font_names[i]);
@@ -49,7 +49,7 @@ void load_fonts(void)
 
 void close_fonts(void)
 {
-    list_for_each_entry_safe(WMFont, p, &fonts->list, list)
+    LIST_FOR_EACH_SAFE(WMFont, p, fonts)
         close_font(p);
     FcFontSetDestroy(font_set);
     FcFini();
@@ -72,19 +72,19 @@ static WMFont *load_font(const char *fontname)
 
     WMFont *font=Malloc(sizeof(WMFont));
     font->xfont=fp;
-    list_add_tail(&font->list, &fonts->list);
+    LIST_ADD_TAIL(font, fonts);
 
     return font;
 }
 
 static void close_font(WMFont *font)
 {
-    list_for_each_entry_safe(WMFont, p, &fonts->list, list)
+    LIST_FOR_EACH_SAFE(WMFont, p, fonts)
     {
         if(p == font)
         {
             XftFontClose(xinfo.display, p->xfont);
-            list_del(&font->list);
+            LIST_DEL(font);
             Free(font);
         }
     }
@@ -92,7 +92,7 @@ static void close_font(WMFont *font)
 
 static bool has_exist_font(const XftFont *xfont)
 {
-    list_for_each_entry(WMFont, p, &fonts->list, list)
+    LIST_FOR_EACH(WMFont, p, fonts)
         if(xfont == p->xfont)
             return true;
     return false;
@@ -162,7 +162,7 @@ static WMFont *get_suitable_font(uint32_t codepoint)
 {
     const FcChar8 *fmt=(const FcChar8 *)"%{=fclist}";
 
-    list_for_each_entry(WMFont, font, &fonts->list, list)
+    LIST_FOR_EACH(WMFont, font, fonts)
         if(XftCharExists(xinfo.display, font->xfont, codepoint))
             return font;
 
@@ -190,7 +190,7 @@ static WMFont *get_suitable_font(uint32_t codepoint)
 static void get_str_rect_by_fmt(const Str_fmt *f, const char *str, int *x, int *y, int *w, int *h)
 {
     int cx, cy, pad, left, right, top, bottom;
-    WMFont *font=list_first_entry(&fonts->list, WMFont, list);
+    WMFont *font=LIST_FIRST(WMFont, fonts);
 
     pad = f->pad ? get_font_pad() : 0;
     get_string_size(str, w, h);

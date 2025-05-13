@@ -91,23 +91,24 @@ char *copy_strings(const char *s, ...) // 調用時須以NULL結尾
 
 void vfree_strings(Strings *head)
 {
-    list_for_each_entry_safe(Strings, s, &head->list, list)
+    LIST_FOR_EACH_SAFE(Strings, s, head)
         vfree(s->str, s);
 }
 
-int base_n_floor(int x, int n)
+int base_n_floor(int x, int n) // 以n爲基對X下向取整
 {
     return x/n*n;
 }
 
-int base_n_ceil(int x, int n)
+int base_n_ceil(int x, int n) // 以n爲基對X上向取整
 {
     return base_n_floor(x, n)+(x%n ? n : 0);
 }
 
 bool is_match_button_release(XButtonEvent *oe, XButtonEvent *ne)
 {
-    return (ne->type==ButtonRelease && ne->button==oe->button);
+    return(oe->type==ButtonPressMask && ne->type==ButtonRelease
+        && ne->button==oe->button);
 }
 
 unsigned int get_desktop_mask(unsigned int desktop_n)

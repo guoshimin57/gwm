@@ -215,7 +215,7 @@ static void entry_complete(Entry *entry, bool show)
 {
     Strings *strs=NULL;
     if( !entry->text[0] || !entry->complete
-        || !(strs=entry->complete(entry)) || list_is_empty(&strs->list))
+        || !(strs=entry->complete(entry)) || LIST_IS_EMPTY(strs))
     {
         widget_hide(WIDGET(entry->listview));
         return;
@@ -225,7 +225,7 @@ static void entry_complete(Entry *entry, bool show)
         listview_update(entry->listview, strs);
     else
     {
-        Strings *first=list_first_entry(&strs->list, Strings, list);
+        Strings *first=LIST_FIRST(Strings, strs);
         mbstowcs(entry->text, first->str, FILENAME_MAX);
         entry->cursor_offset=wcslen(entry->text);
     }
@@ -234,7 +234,7 @@ static void entry_complete(Entry *entry, bool show)
 
 void entry_paste(Entry *entry)
 {
-    char *p=(char *)get_prop(WIDGET_WIN(entry), get_utf8_string_atom(), NULL);
+    char *p=get_utf8_string_prop(WIDGET_WIN(entry), get_utf8_string_atom());
     wchar_t text[ENTRY_TEXT_SIZE];
     int n=mbstowcs(text, p, ENTRY_TEXT_SIZE);
     XFree(p);

@@ -74,7 +74,7 @@ static unsigned int get_num_lock_mask(void)
 /* 當主動獨享無法獲得按鈕輸入時可考慮使用此函數獨享按鈕。譬如客戶窗口已經選擇了
  * 點擊事件，WM無法再選擇點擊事件，此時可以用此獨享按鈕。非必要則不應使用它。在
  * buttonbinds設置的綁定默認會使用主動獨享，並不會使用此函數來設置被動獨享。*/
-void grab_buttons(Window win)
+void grab_buttons(Window win, Widget_id id)
 {
     unsigned int num_lock_mask=get_num_lock_mask(),
                  masks[]={0, LockMask, num_lock_mask, num_lock_mask|LockMask};
@@ -82,11 +82,14 @@ void grab_buttons(Window win)
     XUngrabButton(xinfo.display, AnyButton, AnyModifier, win);
     for(const Buttonbind *p=get_buttonbinds(); p && p->func; p++)
     {
-        int m=is_equal_modifier_mask(0, p->modifier) ?
-            GrabModeSync : GrabModeAsync;
-        for(size_t i=0; i<ARRAY_NUM(masks); i++)
-            XGrabButton(xinfo.display, p->button, p->modifier|masks[i],
-                win, False, BUTTON_MASK, m, m, None, None);
+        if(p->widget_id == id)
+        {
+            int m=is_equal_modifier_mask(0, p->modifier) ?
+                GrabModeSync : GrabModeAsync;
+            for(size_t i=0; i<ARRAY_NUM(masks); i++)
+                XGrabButton(xinfo.display, p->button, p->modifier|masks[i],
+                    win, False, BUTTON_MASK, m, m, None, None);
+        }
     }
 }
 

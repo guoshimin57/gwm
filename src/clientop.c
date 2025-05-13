@@ -120,12 +120,12 @@ static void move_client_node(Client *from, Client *to, Layer layer, Area area)
     Client *head=NULL;
     del_subgroup(from->subgroup_leader);
     if(to)
-        head = cmp_store_order(from, to) < 0 ? to : list_prev_entry(to, Client, list);
+        head = cmp_store_order(from, to) < 0 ? to : LIST_PREV(Client, to);
     else
     {
         head=get_head_client(NULL, layer, area);
         if(from->area==MAIN_AREA && area==SECOND_AREA)
-            head=list_next_entry(head, Client, list);
+            head=LIST_NEXT(Client, head);
     }
     add_subgroup(head, from->subgroup_leader);
 }
@@ -187,7 +187,7 @@ static void add_subgroup(Client *head, Client *subgroup_leader)
            *first=(top ? top : subgroup_leader),
            *last=subgroup_leader;
 
-    list_bulk_add(&head->list, &first->list, &last->list);
+    LIST_BULK_ADD(head, first, last);
 }
 
 static void del_subgroup(Client *subgroup_leader)
@@ -196,7 +196,7 @@ static void del_subgroup(Client *subgroup_leader)
            *first=(top ? top : subgroup_leader),
            *last=subgroup_leader;
 
-    list_bulk_del(&first->list, &last->list);
+    LIST_BULK_DEL(first, last);
 }
 
 void swap_clients(Client *a, Client *b)

@@ -208,7 +208,7 @@ void set_urgency_hint(Window win, XWMHints *h, bool urg)
 
 bool is_iconic_state(Window win)
 {
-    int *p=(int *)get_prop(win, icccm_atoms[WM_STATE], NULL);
+    long *p=get_cardinals_prop(win, icccm_atoms[WM_STATE], NULL);
     bool result = (p && *p==IconicState);
 
     XFree(p);
@@ -234,5 +234,5 @@ char *get_wm_icon_name(Window win)
 
 void set_client_leader(Window leader, Window cwin)
 {
-    replace_window_prop(leader, WM_CLIENT_LEADER, &cwin, 1);
+    replace_window_prop(leader, WM_CLIENT_LEADER, cwin);
 }

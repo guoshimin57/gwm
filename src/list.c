@@ -124,5 +124,5 @@ bool list_is_head(const List *node, const List *list)
 /* 測試是否爲空表 */
 bool list_is_empty(const List *list)
 {
-    return list==NULL || list->next==list;
+    return list->next==list;
 }

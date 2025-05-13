@@ -43,10 +43,10 @@ static void widget_reg(Widget *widget)
     if(!widget_list)
     {
         widget_list=widget_node_new(NULL);
-        list_init(&widget_list->list);
+        LIST_INIT(widget_list);
     }
     Widget_node *p=widget_node_new(widget);
-    list_add(&p->list, &widget_list->list);
+    LIST_ADD(p, widget_list);
 }
 
 static Widget_node *widget_node_new(Widget *widget)
@@ -61,20 +61,20 @@ static void widget_unreg(Widget *widget)
     if(!widget_list)
         return;
 
-    list_for_each_entry_safe(Widget_node, p, &widget_list->list, list)
+    LIST_FOR_EACH_SAFE(Widget_node, p, widget_list)
         if(p->widget == widget)
             { widget_node_del(p); break; }
 }
 
 static void widget_node_del(Widget_node *node)
 {
-    list_del(&node->list);
+    LIST_DEL(node);
     free(node);
 }
 
 Widget *widget_find(Window win)
 {
-    list_for_each_entry(Widget_node, p, &widget_list->list, list)
+    LIST_FOR_EACH(Widget_node, p, widget_list)
         if(p->widget->win == win)
             return p->widget;
     return NULL;
@@ -82,7 +82,7 @@ Widget *widget_find(Window win)
 
 void update_all_widget_bg(void)
 {
-    list_for_each_entry(Widget_node, p, &widget_list->list, list)
+    LIST_FOR_EACH(Widget_node, p, widget_list)
         p->widget->update_bg(p->widget);
 }
 
@@ -230,7 +230,7 @@ bool widget_is_viewable(const Widget *widget)
 
 Widget *get_popped_widget(void)
 {
-    list_for_each_entry(Widget_node, p, &widget_list->list, list)
+    LIST_FOR_EACH(Widget_node, p, widget_list)
         if(widget_get_poppable(p->widget) && widget_is_viewable(p->widget))
             return p->widget;
     return NULL;

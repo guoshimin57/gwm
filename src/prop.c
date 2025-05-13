@@ -10,13 +10,16 @@
  * ************************************************************************/
 
 #include <string.h>
+#include <stdint.h>
+#include <assert.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include "gwm.h"
 #include "misc.h"
 #include "prop.h"
 
-typedef struct {
+typedef struct
+{
     unsigned long flags;
     unsigned long functions;
     unsigned long decorations;
@@ -31,6 +34,14 @@ static const char *gwm_atom_names[GWM_ATOM_N]= // gwm自定義的標識符名稱
     "GWM_LAYOUT", "GWM_UPDATE_LAYOUT", "GWM_WIDGET_TYPE",
     "GWM_MAIN_COLOR_NAME"
 };
+
+static long get_long_prop(Window win, Atom prop, long fallback);
+static unsigned char *get_prop(Window win, Atom prop, size_t size, unsigned long *n);
+static size_t get_fmt_size(int fmt);
+static void convert_type(unsigned char *dst, size_t dsize, const unsigned char *src, size_t ssize);
+static bool is_little_endian_order(void);
+static void change_prop(Window win, Atom prop, Atom type, int fmt, int mode, const unsigned char *data, size_t size, int n);
+static unsigned long get_strings_size(const char **strs, int n);
 
 static Atom gwm_atoms[GWM_ATOM_N];
 static Atom utf8_string_atom;
@@ -62,13 +73,27 @@ void set_motif_wm_hints_atom(void)
     motif_wm_hints_atom=XInternAtom(xinfo.display, "_MOTIF_WM_HINTS", False);
 }
 
+void set_motif_wm_hints(Window win, const MotifWmHints *hints)
+{
+    change_prop(win, motif_wm_hints_atom, motif_wm_hints_atom, 32,
+        PropModeReplace, (const unsigned char *)hints, sizeof(long),
+        CEIL_DIV(sizeof(MotifWmHints), sizeof(long)));
+}
+
+MotifWmHints *get_motif_wm_hints(Window win)
+{
+    return (MotifWmHints *)get_prop(win, motif_wm_hints_atom, sizeof(long), NULL);
+}
+
 bool has_motif_decoration(Window win)
 {
-    MotifWmHints *hints=(MotifWmHints *)get_prop(win, motif_wm_hints_atom, NULL);
-
-    return (!hints
+    MotifWmHints *hints=get_motif_wm_hints(win);
+    bool result=(!hints
         || !(hints->flags & MWM_HINTS_DECORATIONS)
         || hints->decorations);
+    XFree(hints);
+
+    return result;
 }
 
 Window get_transient_for(Window win)
@@ -77,22 +102,84 @@ Window get_transient_for(Window win)
     return XGetTransientForHint(xinfo.display, win, &owner) ? owner : None;
 }
 
-unsigned char *get_prop(Window win, Atom prop, unsigned long *n)
+// 返回prop特性的值，它是一個數組，其中每個元素的大小爲size，數量爲n個 
+static unsigned char *get_prop(Window win, Atom prop, size_t size, unsigned long *n)
 {
+    assert(size==1 || size==2 || size==4 || size==8);
+
     int fmt;
-    unsigned long nitems=0, *m=(n ? n : &nitems), rest;
+    unsigned long rest=0, nitems=0;
     unsigned char *p=NULL;
     Atom type;
 
     /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
      * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
-
     if( XGetWindowProperty(xinfo.display, win, prop, 0, ~0L, False,
-        AnyPropertyType, &type, &fmt, m, &rest, &p) != Success
-        || !type || !fmt || !*m || !p) // 可能設置了特性，但設置得不正確
-        XFree(p), p=NULL;
+        AnyPropertyType, &type, &fmt, &nitems, &rest, &p) != Success
+        || !type || !fmt || !nitems || !p) // 可能設置了特性，但設置得不正確
+        return NULL;
 
-    return p;
+    if(n)
+        *n=nitems;
+
+    size_t ssize=get_fmt_size(fmt);
+    if(ssize == 0)
+        return NULL;
+
+    unsigned char *values=Malloc(nitems*size+1);
+    memset(values, 0, nitems*size+1);
+    for(unsigned long i=0; i<nitems; i++)
+        convert_type(values+size*i, size, p+ssize*i, ssize);
+
+    return values;
+}
+
+static size_t get_fmt_size(int fmt)
+{
+    switch(fmt)
+    {
+        case 8:  return sizeof(char);
+        case 16: return sizeof(short int);
+        case 32: return sizeof(long);
+        default: return 0;
+    }
+}
+
+// 把實際類型大小爲ssize的src轉換爲類型大小爲dsize的類型並保存在dst
+static void convert_type(unsigned char *dst, size_t dsize, const unsigned char *src, size_t ssize)
+{
+    size_t min=MIN(dsize, ssize);
+
+    if(is_little_endian_order())
+        for(size_t i=0; i<min; i++)
+            dst[i]=src[i];
+    else
+        for(size_t i=0; i<min; i++)
+            dst[dsize-i-1]=src[i];
+}
+
+static bool is_little_endian_order(void)
+{
+    union { uint16_t s; uint8_t c[2]; } u = { .s=0x0102 };
+    return u.c[0]==2 && u.c[1]==1;
+}
+
+// 修改prop特性的值，data是一個元素類型大小爲size的數組，n個元素
+static void change_prop(Window win, Atom prop, Atom type, int fmt, int mode, const unsigned char *data, size_t size, int n)
+{
+    if(data==NULL || n<=0 || size==0)
+        return;
+
+    size_t dsize=get_fmt_size(fmt);
+    if(dsize == 0)
+        return;
+
+    unsigned char *values=Malloc(n*dsize);
+    memset(values, 0, n*dsize);
+    for(int i=0; i<n; i++)
+        convert_type(values+dsize*i, dsize, data+size*i, size);
+    XChangeProperty(xinfo.display, win, prop, type, fmt, mode, values, n);
+    XFree(values);
 }
 
 char *get_text_prop(Window win, Atom atom)
@@ -113,85 +200,130 @@ char *get_text_prop(Window win, Atom atom)
     return result;
 }
 
-long get_cardinal_prop(Window win, Atom prop, long fallback)
+static long get_long_prop(Window win, Atom prop, long fallback)
 {
-    long result, *p=(long *)get_prop(win, prop, NULL);
+    long result, *p=NULL;
 
+    p=(long *)get_prop(win, prop, sizeof(long), NULL);
     result = p ? *p : fallback;
     XFree(p);
 
     return result;
 }
 
+long get_cardinal_prop(Window win, Atom prop, long fallback)
+{
+    return get_long_prop(win, prop, fallback);
+}
+
+long *get_cardinals_prop(Window win, Atom prop, unsigned long *n)
+{
+    return (long *)get_prop(win, prop, sizeof(long), n);
+}
+
 Atom get_atom_prop(Window win, Atom prop)
 {
-    Atom *p=(Atom *)get_prop(win, prop, NULL);
-    return p ? *p : 0;
+    return get_long_prop(win, prop, None);
+}
+
+Atom *get_atoms_prop(Window win, Atom prop, unsigned long *n)
+{
+    return (Atom *)get_prop(win, prop, sizeof(Atom), n);
 }
 
 Window get_window_prop(Window win, Atom prop)
 {
-    Window result, *p=(Window *)get_prop(win, prop, NULL);
-
-    result = p ? *p : 0;
-    XFree(p);
-
-    return result;
+    return get_long_prop(win, prop, None);
 }
 
-/* 根據XChangeProperty手冊顯示，當format爲32時，data必須是long類型的數組。
- * 另外，手冊沒有解析當n爲0時會發生什麼，實測此時並非什麼也不幹，而是會有
- * 些不可預知的行爲。後同。 */
-void replace_atom_prop(Window win, Atom prop, const Atom values[], int n)
+Window *get_windows_prop(Window win, Atom prop, unsigned long *n)
 {
-    if(n <= 0)
-        return;
-
-    long v[n];
-    for(int i=0; i<n; i++)
-        v[i]=values[i];
-
-    XChangeProperty(xinfo.display, win, prop, XA_ATOM, 32, PropModeReplace,
-        (unsigned char *)v, n);
+    return (Window *)get_prop(win, prop, sizeof(Window), n);
 }
 
-void replace_window_prop(Window win, Atom prop, const Window wins[], int n)
+Pixmap get_pixmap_prop(Window win, Atom prop)
 {
-    if(n <= 0)
-        return;
-
-    long v[n];
-    for(int i=0; i<n; i++)
-        v[i]=wins[i];
-
-    XChangeProperty(xinfo.display, win, prop, XA_WINDOW, 32, PropModeReplace,
-        (unsigned char *)v, n);
+    return get_long_prop(win, prop, None);
 }
 
-void replace_cardinal_prop(Window win, Atom prop, const long values[], int n)
+char *get_utf8_string_prop(Window win, Atom prop)
 {
-    if(n <= 0)
-        return;
+    return (char *)get_prop(win, prop, 1, NULL);
+}
 
-    XChangeProperty(xinfo.display, win, prop, XA_CARDINAL, 32, PropModeReplace,
-        (unsigned char *)values, n);
+char *get_utf8_strings_prop(Window win, Atom prop, unsigned long *n)
+{
+    return (char *)get_prop(win, prop, 1, n);
+}
+
+void replace_atom_prop(Window win, Atom prop, Atom value)
+{
+    change_prop(win, prop, XA_ATOM, 32, PropModeReplace,
+        (const unsigned char *)&value, sizeof(Atom), 1);
+}
+
+void replace_atoms_prop(Window win, Atom prop, const Atom values[], int n)
+{
+    change_prop(win, prop, XA_ATOM, 32, PropModeReplace,
+        (const unsigned char *)values, sizeof(Atom), n);
+}
+
+void replace_window_prop(Window win, Atom prop, Window value)
+{
+    change_prop(win, prop, XA_WINDOW, 32, PropModeReplace,
+        (const unsigned char *)&value, sizeof(Window), 1);
+}
+
+void replace_windows_prop(Window win, Atom prop, const Window wins[], int n)
+{
+    change_prop(win, prop, XA_WINDOW, 32, PropModeReplace,
+        (const unsigned char *)wins, sizeof(Window), n);
+}
+
+void replace_cardinal_prop(Window win, Atom prop, long value)
+{
+    change_prop(win, prop, XA_CARDINAL, 32, PropModeReplace,
+        (const unsigned char *)&value, sizeof(long), 1);
+}
+
+void replace_cardinals_prop(Window win, Atom prop, const long values[], int n)
+{
+    change_prop(win, prop, XA_CARDINAL, 32, PropModeReplace,
+        (const unsigned char *)values, sizeof(long), n);
 }
 
 /* UTF8_STRING需要特殊處理，因其是否屬於ICCCM尚存疑，詳見：
  *     https://gitlab.freedesktop.org/xorg/doc/xorg-docs/-/issues/5 */
-void replace_utf8_prop(Window win, Atom prop, const void *strs, int n)
+void replace_utf8_prop(Window win, Atom prop, const void *str)
 {
-    int size=0; // 字符數組strs的總尺寸，包含每個字符串的終止符
-    const char *s=strs;
+    change_prop(win, prop, utf8_string_atom, 8, PropModeReplace,
+        (const unsigned char *)str, 1, strlen(str)+1);
+}
 
+void replace_utf8s_prop(Window win, Atom prop, const void *strs, int n)
+{
+    unsigned long size=get_strings_size((const char **)strs, n);
+    unsigned char *p=Malloc(size);
+    size_t len=0, sum=0;
     for(int i=0; i<n; i++)
     {
-        size += strlen(s)+1;
-        s += size;
+        char *s=((char **)strs)[i];
+        len=strlen(s);
+        memcpy(p+sum, s, len+1);
+        sum+=len+1;
     }
+    change_prop(win, prop, utf8_string_atom, 8, PropModeReplace,
+        (const unsigned char *)p, 1, size);
+    free(p);
+}
 
-    XChangeProperty(xinfo.display, win, prop, utf8_string_atom, 8,
-        PropModeReplace, (unsigned char *)strs, size);
+// 計算字符數組strs的總尺寸，包含每個字符串的終止符
+static unsigned long get_strings_size(const char **strs, int n)
+{
+    int size=0;
+    for(int i=0; i<n; i++)
+        size += strlen(strs[i])+1;
+    return size;
 }
 
 void copy_prop(Window dest, Window src)
@@ -209,17 +341,17 @@ void copy_prop(Window dest, Window src)
             AnyPropertyType, &type, &fmt, &nitems, &rest, &data)==Success
             && data && nitems)
         {
-            XChangeProperty(xinfo.display, dest, props[i], type, fmt, PropModeReplace,
-                data, nitems);
+            XChangeProperty(xinfo.display, dest, props[i], type, fmt,
+                PropModeReplace, data, nitems);
             XFree(data);
         }
     }
     XFree(props);
 }
 
-void set_gwm_layout(long layout)
+void set_gwm_layout(int layout)
 {
-    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_LAYOUT], &layout, 1);
+    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_LAYOUT], layout);
 }
 
 int get_gwm_layout(void)
@@ -229,13 +361,12 @@ int get_gwm_layout(void)
 
 void request_layout_update(void)
 {
-    long f=true;
-    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_UPDATE_LAYOUT], &f, 1);
+    replace_cardinal_prop(xinfo.root_win, gwm_atoms[GWM_UPDATE_LAYOUT], 1);
 }
 
 void set_main_color_name(const char *name)
 {
-    replace_utf8_prop(xinfo.root_win, gwm_atoms[GWM_MAIN_COLOR_NAME], name, 1);
+    replace_utf8_prop(xinfo.root_win, gwm_atoms[GWM_MAIN_COLOR_NAME], name);
 }
 
 char *get_main_color_name(void)

@@ -285,7 +285,7 @@ static void cbutton_set_icon(Cbutton *cbutton)
 Window taskbar_get_client_win(const Window button_win)
 {
     for(unsigned int i=0; i<DESKTOP_N; i++)
-        list_for_each_entry(Cbutton, cb, &taskbar->iconbar->cbuttons->list, list)
+        LIST_FOR_EACH(Cbutton, cb, taskbar->iconbar->cbuttons)
             if(WIDGET_WIN(cb->button) == button_win)
                 return cb->cwin;
     return None;
@@ -293,7 +293,7 @@ Window taskbar_get_client_win(const Window button_win)
 
 static Cbutton *iconbar_find_cbutton(const Iconbar *iconbar, Window cwin)
 {
-    list_for_each_entry(Cbutton, p, &iconbar->cbuttons->list, list)
+    LIST_FOR_EACH(Cbutton, p, iconbar->cbuttons)
         if(p->cwin == cwin)
             return p;
     return NULL;
@@ -311,7 +311,7 @@ static void iconbar_ctor(Iconbar *iconbar, Widget *parent, int x, int y, int w, 
 {
     widget_ctor(WIDGET(iconbar), parent, WIDGET_TYPE_ICONBAR, ICONBAR, x, y, w, h);
     iconbar->cbuttons=Malloc(sizeof(Cbutton));
-    list_init(&iconbar->cbuttons->list);
+    LIST_INIT(iconbar->cbuttons);
 }
 
 static void iconbar_set_method(Widget *widget)
@@ -327,7 +327,7 @@ static void iconbar_del(Iconbar *iconbar)
 
 static void iconbar_dtor(Iconbar *iconbar)
 {
-    list_for_each_entry_safe(Cbutton, c, &iconbar->cbuttons->list, list)
+    LIST_FOR_EACH_SAFE(Cbutton, c, iconbar->cbuttons)
         cbutton_del(c);
     Free(iconbar->cbuttons);
 }
@@ -336,18 +336,18 @@ static void iconbar_add_cbutton(Iconbar *iconbar, Window cwin)
 {
     int h=WIDGET_H(iconbar), w=h;
     Cbutton *c=cbutton_new(WIDGET(iconbar), 0, 0, w, h, cwin);
-    list_add(&c->list, &iconbar->cbuttons->list);
+    LIST_ADD(c, iconbar->cbuttons);
     iconbar_update(iconbar);
     WIDGET(c->button)->show(WIDGET(c->button));
 }
 
 static void iconbar_del_cbutton(Iconbar *iconbar, Window cwin)
 {
-    list_for_each_entry_safe(Cbutton, c, &iconbar->cbuttons->list, list)
+    LIST_FOR_EACH_SAFE(Cbutton, c, iconbar->cbuttons)
     {
         if(c->cwin == cwin)
         {
-            list_del(&c->list);
+            LIST_DEL(c);
             cbutton_del(c);
             iconbar_update(iconbar);
             break;
@@ -359,7 +359,7 @@ static void iconbar_update(Iconbar *iconbar)
 {
     int x=0, w=0, h=WIDGET_H(iconbar), wi=h, wl=0, pad=get_font_pad();
 
-    list_for_each_entry(Cbutton, c, &iconbar->cbuttons->list, list)
+    LIST_FOR_EACH(Cbutton, c, iconbar->cbuttons)
     {
         Button *b=c->button;
         if(iconbar_has_similar_cbutton(iconbar, c))
@@ -382,7 +382,7 @@ static bool iconbar_has_similar_cbutton(Iconbar *iconbar, const Cbutton *cbutton
     if(!XGetClassHint(xinfo.display, cbutton->cwin, &ch))
         return false;
 
-    list_for_each_entry(Cbutton, p, &iconbar->cbuttons->list, list)
+    LIST_FOR_EACH(Cbutton, p, iconbar->cbuttons)
     {
         if(p!=cbutton && XGetClassHint(xinfo.display, p->cwin, &ph))
         {
@@ -408,7 +408,9 @@ void taskbar_update_by_client_state(Window cwin)
             iconbar_del_cbutton(taskbar->iconbar, cwin);
     }
     else if(state.hidden)
+    {
         iconbar_add_cbutton(taskbar->iconbar, cwin);
+    }
 }
 
 void taskbar_update_by_icon_name(const Window cwin, const char *icon_name)
@@ -441,7 +443,7 @@ static void iconbar_update_bg(const Widget *widget)
      * 時，收到Expose事件並不會更新背景。故只好調用本函數強制更新背景。 */
     XClearWindow(xinfo.display, WIDGET_WIN(taskbar->iconbar));
 
-    list_for_each_entry(Cbutton, cb, &iconbar->cbuttons->list, list)
+    LIST_FOR_EACH(Cbutton, cb, iconbar->cbuttons)
         widget_update_bg(WIDGET(cb->button));
 }
 

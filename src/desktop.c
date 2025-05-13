@@ -108,7 +108,7 @@ static void ready_to_desktop_n(Client *c, unsigned int n, Op_type op)
     Client *ld=c->subgroup_leader;
     unsigned int mask=get_desktop_mask(n);
 
-    for(Client *p=ld; ld && p->subgroup_leader==ld; p=list_prev_entry(p, Client, list))
+    for(Client *p=ld; ld && p->subgroup_leader==ld; p=LIST_PREV(Client, p))
     {
         switch(op)
         {

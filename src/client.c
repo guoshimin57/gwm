@@ -42,7 +42,7 @@ static Client *clients=NULL;
 void init_client_list(void)
 {
     clients=Malloc(sizeof(Client));
-    list_init(&clients->list);
+    LIST_INIT(clients);
 }
 
 Client *get_clients(void)
@@ -54,8 +54,8 @@ Client *client_new(Window win)
 {
     Client *c=Malloc(sizeof(Client));
     client_ctor(c, win);
-    list_add(&c->list, &get_head_client(c, ANY_LAYER, ANY_AREA)->list);
-    grab_buttons(WIDGET_WIN(c));
+    LIST_ADD(c, get_head_client(c, ANY_LAYER, ANY_AREA));
+    grab_buttons(WIDGET_WIN(c), WIDGET_ID(c));
     return c;
 }
 
@@ -87,8 +87,8 @@ static void client_ctor(Client *c, Window win)
 static bool has_decoration(const Client *c)
 {
     return has_motif_decoration(WIDGET_WIN(c))
-        && (c->win_type.none || c->win_type.normal || c->win_type.dialog)
-        && !c->win_state.skip_pager && !c->win_state.skip_taskbar;
+        && (   (c->win_type.none || c->win_type.normal || c->win_type.dialog)
+            && !c->win_state.skip_pager && !c->win_state.skip_taskbar);
 }
 
 static void create_frame(Client *c)
@@ -196,7 +196,7 @@ Client *win_to_client(Window win)
 
 void client_del(Client *c)
 {
-    list_del(&c->list);
+    LIST_DEL(c);
     client_dtor(c);
     widget_del(WIDGET(c));
 }
@@ -244,7 +244,7 @@ Client *get_head_client(const Client *c, Layer layer, Area area)
         || (p=get_next_area_client(layer, area)))
         p=get_next_layer_client(layer, area);
 
-    return p ? list_prev_entry(p, Client, list) : clients;
+    return p ? LIST_PREV(Client, p) : clients;
 }
 
 static Client *get_first_same_subgroup(const Client *c)

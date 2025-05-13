@@ -67,7 +67,7 @@ void free_all_images(void)
     if(!image_list)
         return;
 
-    list_for_each_entry_safe(Image_node, p, &image_list->list, list)
+    LIST_FOR_EACH_SAFE(Image_node, p, image_list)
         free_image_node(p);
     Free(image_list);
 }
@@ -77,7 +77,7 @@ void free_image(Imlib_Image image)
     if(!image_list)
         return;
 
-    list_for_each_entry_safe(Image_node, p, &image_list->list, list)
+    LIST_FOR_EACH_SAFE(Image_node, p, image_list)
         if(p->image == image)
             free_image_node(p);
 }
@@ -87,7 +87,7 @@ static void free_image_node(Image_node *node)
     Free(node->name);
     imlib_context_set_image(node->image);
     imlib_free_image();
-    list_del(&node->list);
+    LIST_DEL(node);
     Free(node);
 }
 
@@ -99,10 +99,10 @@ static void reg_image(const char *name, Imlib_Image image)
     if(!image_list)
     {
         image_list=create_image_node(NULL, NULL);
-        list_init(&image_list->list);
+        LIST_INIT(image_list);
     }
     Image_node *p=create_image_node(name, image);
-    list_add(&p->list, &image_list->list);
+    LIST_ADD(p, image_list);
 }
 
 static Image_node *create_image_node(const char *name, Imlib_Image image)
@@ -150,7 +150,7 @@ static Imlib_Image search_icon_image(const char *name)
     if(!image_list || !name)
         return NULL;
 
-    list_for_each_entry(Image_node, p, &image_list->list, list)
+    LIST_FOR_EACH(Image_node, p, image_list)
         if(strcmp(p->name, name) == 0)
             return p->image;
 

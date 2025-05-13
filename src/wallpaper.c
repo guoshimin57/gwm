@@ -30,7 +30,7 @@ void init_wallpaper(void)
 
     const char *paths=cfg->wallpaper_paths, *reg="*.png|*.jpg|*.svg|*.webp";
     wallpapers=get_files_in_paths(paths, reg, true);
-    cur_wallpaper=list_first_entry(&wallpapers->list, Strings, list);
+    cur_wallpaper=LIST_FIRST(Strings, wallpapers);
 }
 
 void set_default_wallpaper(void)
@@ -70,9 +70,9 @@ void switch_to_next_wallpaper(void)
     if(cfg->wallpaper_paths)
     {
         pixmap=create_pixmap_from_file(xinfo.root_win, cur_wallpaper->str);
-        cur_wallpaper=list_next_entry(cur_wallpaper, Strings, list);
-        if(list_entry_is_head(cur_wallpaper, &wallpapers->list, list))
-            cur_wallpaper=list_next_entry(cur_wallpaper, Strings, list);
+        cur_wallpaper=LIST_NEXT(Strings, cur_wallpaper);
+        if(LIST_IS_HEAD(cur_wallpaper, wallpapers))
+            cur_wallpaper=LIST_NEXT(Strings, cur_wallpaper);
     }
 
     update_win_bg(xinfo.root_win, color, pixmap);
