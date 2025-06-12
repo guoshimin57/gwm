@@ -28,7 +28,7 @@ test_deps = $(test_srcs:.c=.d)
 deps = $(src_deps) $(test_deps)
 exes = $(test_srcs:.c=)
 
-.PHONY : all clean test
+.PHONY : all test install install-strip uninstall clean
 
 all : $(exes)
 	@$(CTAGS) $(src_dir)/*.[ch] $(test_dir)/*.[ch] 2> /dev/null

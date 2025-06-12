@@ -277,7 +277,7 @@ static void titlebar_buttons_show(Titlebar *titlebar)
 
 static int titlebar_get_button_n(void)
 {
-    int buttons_n[]={[STACK]=3, [TILE]=7};
+    int buttons_n[]={[STACK]=3, [TILE]=6};
     return buttons_n[get_gwm_layout()];
 }
 

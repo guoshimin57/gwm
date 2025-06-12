@@ -360,37 +360,31 @@ void change_place(XEvent *e, Arg arg)
 void to_main_area(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    client_change_place(TILE_LAYER, MAIN_AREA);
+    client_change_place(NORMAL_LAYER, MAIN_AREA);
 }
 
 void to_second_area(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    client_change_place(TILE_LAYER, SECOND_AREA);
+    client_change_place(NORMAL_LAYER, SECOND_AREA);
 }
 
 void to_fixed_area(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    client_change_place(TILE_LAYER, FIXED_AREA);
-}
-
-void to_stack_layer(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    client_change_place(STACK_LAYER, ANY_AREA);
-}
-
-void fullscreen(XEvent *e, Arg arg)
-{
-    UNUSED(e), UNUSED(arg);
-    client_change_place(FULLSCREEN_LAYER, ANY_AREA);
+    client_change_place(NORMAL_LAYER, FIXED_AREA);
 }
 
 void to_above_layer(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     client_change_place(ABOVE_LAYER, ANY_AREA);
+}
+
+void fullscreen(XEvent *e, Arg arg)
+{
+    UNUSED(e), UNUSED(arg);
+    client_change_place(FULLSCREEN_LAYER, ANY_AREA);
 }
 
 void to_below_layer(XEvent *e, Arg arg)

@@ -33,11 +33,11 @@ void pointer_change_place(XEvent *e)
     Window win=ev.xbutton.window, subw=ev.xbutton.subwindow;
     to=win_to_client(subw);
     if(ev.xbutton.x == 0)
-        move_client(from, NULL, TILE_LAYER, SECOND_AREA);
+        move_client(from, NULL, NORMAL_LAYER, SECOND_AREA);
     else if(ev.xbutton.x == (long)xinfo.screen_width-1)
-        move_client(from, NULL, TILE_LAYER, FIXED_AREA);
+        move_client(from, NULL, NORMAL_LAYER, FIXED_AREA);
     else if(win==xinfo.root_win && subw==None)
-        move_client(from, NULL, TILE_LAYER, MAIN_AREA);
+        move_client(from, NULL, NORMAL_LAYER, MAIN_AREA);
     else if(to)
         move_client(from, to, ANY_LAYER, ANY_AREA);
 }

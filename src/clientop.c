@@ -104,15 +104,15 @@ static bool is_valid_move(Client *from, Client *to, Layer layer, Area area)
 {
     return (from && from!=to
         && (!to || from->subgroup_leader!=to->subgroup_leader)
-        && (layer!=TILE_LAYER || area!=ANY_AREA)
-        && (layer==TILE_LAYER || area==ANY_AREA)
+        && (layer!=NORMAL_LAYER || area!=ANY_AREA)
+        && (layer==NORMAL_LAYER || area==ANY_AREA)
         && (area!=SECOND_AREA || is_valid_to_sec_area(from)));
 }
 
 static bool is_valid_to_sec_area(Client *c)
 {
     return c->area!=MAIN_AREA
-        || get_clients_n(TILE_LAYER, SECOND_AREA, false, false, false);
+        || get_clients_n(NORMAL_LAYER, SECOND_AREA, false, false, false);
 }
 
 static void move_client_node(Client *from, Client *to, Layer layer, Area area)
@@ -166,14 +166,16 @@ void update_net_wm_state_by_layer(Client *c)
             s->fullscreen=s->below=0;
             s->above=1;
             break;
-        case STACK_LAYER:
+        case NORMAL_LAYER:
             s->fullscreen=s->above=s->below=0;
+            if(get_gwm_layout() == TILE)
+                s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
             break;
         case BELOW_LAYER:
             s->fullscreen=s->above=0;
             s->below=1;
             break;
-        default: // DOCK_LAYER、TILE_LAYER、DESKTOP_LAYER
+        default: // DOCK_LAYER、DESKTOP_LAYER
             s->vmax=s->hmax=s->tmax=s->bmax=s->lmax=s->rmax=0;
             s->fullscreen=s->above=s->below=0;
             break;
@@ -287,8 +289,8 @@ void maximize_client(Client *c, Max_way max_way)
 {
     if(!is_win_state_max(c->win_state))
         save_place_info_of_client(c);
-    if(c->layer == TILE_LAYER)
-        move_client(c, NULL, STACK_LAYER, ANY_AREA);
+    if(get_gwm_layout()==TILE && c->layer==NORMAL_LAYER)
+        move_client(c, NULL, ABOVE_LAYER, ANY_AREA);
     set_max_rect(c, max_way);
     move_resize_client(c, NULL);
     switch(max_way)

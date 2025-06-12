@@ -20,7 +20,7 @@ objs := $(srcs:.c=.o)
 deps := $(srcs:.c=.d)
 exec := gwm
 
-.PHONY : all install debug install-strip uninstall clean
+.PHONY : all install install-strip uninstall clean
 
 all : $(exec)
 	@$(CTAGS) *.[ch] 2> /dev/null

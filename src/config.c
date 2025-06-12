@@ -94,7 +94,6 @@ static void config_title_button_text(void)
     SET_WIDGET_MARKERS(SECOND_BUTTON, NULL, NULL, "◁");
     SET_WIDGET_MARKERS(MAIN_BUTTON,   NULL, NULL, "▼");
     SET_WIDGET_MARKERS(FIXED_BUTTON,  NULL, NULL, "▷");
-    SET_WIDGET_MARKERS(FLOAT_BUTTON,  NULL, NULL, "△");
     SET_WIDGET_MARKERS(ICON_BUTTON,   NULL, NULL, "—");
     SET_WIDGET_MARKERS(MAX_BUTTON,    NULL, NULL, "◲" );
     SET_WIDGET_MARKERS(CLOSE_BUTTON,  NULL, NULL, "🗙" );
@@ -186,7 +185,6 @@ static void config_tooltip(void)
     tooltip[SECOND_BUTTON]   = _("切換到次要區域");
     tooltip[MAIN_BUTTON]     = _("切換到主要區域");
     tooltip[FIXED_BUTTON]    = _("切換到固定區域");
-    tooltip[FLOAT_BUTTON]    = _("切換到懸浮層");
     tooltip[ICON_BUTTON]     = _("切換到圖符區域");
     tooltip[MAX_BUTTON]      = _("最大化/還原窗口");
     tooltip[CLOSE_BUTTON]    = _("關閉窗口");

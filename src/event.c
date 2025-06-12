@@ -247,7 +247,7 @@ static void handle_enter_notify(XEvent *e)
     if(cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(c);
     if( is_layout_adjust_area(win, x)
-        && get_clients_n(TILE_LAYER, MAIN_AREA, false, false, false))
+        && get_clients_n(NORMAL_LAYER, MAIN_AREA, false, false, false))
         set_cursor(win, LAYOUT_RESIZE);
     if(widget == NULL)
         return;
@@ -471,7 +471,7 @@ static void handle_wm_hints_notify(Client *c)
 
 static void handle_wm_size_hints_notify(Client *c)
 {
-    if(!c->owner && c->layer==TILE_LAYER)
+    if(!c->owner && (c->area==MAIN_AREA || c->area==SECOND_AREA || c->area==FIXED_AREA))
         return;
 
     XSizeHints hints=get_size_hint(WIDGET_WIN(c));

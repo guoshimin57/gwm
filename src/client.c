@@ -105,13 +105,12 @@ void set_default_layer(Client *c)
     if(c->owner)                     c->layer = c->owner->layer;
     else if(c->win_type.desktop)     c->layer = DESKTOP_LAYER;
     else if(c->win_state.below)      c->layer = BELOW_LAYER;
-    else if(c->win_state.above)      c->layer = ABOVE_LAYER;
+    else if(c->win_state.above
+        || (get_gwm_layout()==TILE && is_win_state_max(c->win_state)))
+                                     c->layer = ABOVE_LAYER;
     else if(c->win_type.dock)        c->layer = DOCK_LAYER;
     else if(c->win_state.fullscreen) c->layer = FULLSCREEN_LAYER;
-    else if(get_gwm_layout()==TILE
-        && !is_win_state_max(c->win_state))
-                                     c->layer = TILE_LAYER;
-    else                             c->layer = STACK_LAYER;
+    else                             c->layer = NORMAL_LAYER;
 }
 
 static void set_default_area(Client *c)
@@ -335,7 +334,7 @@ void restore_place_info_of_client(Client *c)
 
 bool is_tiling_client(Client *c)
 {
-    return !c->owner && !is_iconic_client(c) && c->layer==TILE_LAYER;
+    return !c->owner && !is_iconic_client(c) && c->layer==NORMAL_LAYER;
 }
 
 void set_state_attent(Client *c, bool attent)

@@ -27,8 +27,8 @@ static void test_gwm_prop(void);
 static void test_copy_prop(void);
 
 static Window win;
-Atom prop=None;
-Atom type=None;
+static Atom prop=None;
+static Atom type=None;
 
 int main(void)
 {
@@ -40,7 +40,6 @@ int main(void)
     prop=XInternAtom(xinfo.display, "test_prop", False);
     type=XInternAtom(xinfo.display, "test_type", False);
 
-    set_gwm_atoms();
     test_get_transient_for();
     test_get_text_prop();
     test_get_fmt_size();
@@ -256,6 +255,8 @@ static void test_window_prop(void)
 
 static void test_gwm_prop(void)
 {
+    set_gwm_atoms();
+
     for(GWM_atom_id id=0; id<GWM_ATOM_N; id++)
         assert(gwm_atoms[id] && is_spec_gwm_atom(gwm_atoms[id], id));
     assert(!is_spec_gwm_atom(None, GWM_LAYOUT));

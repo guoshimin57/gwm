@@ -37,12 +37,12 @@ void key_move_resize_client(XEvent *e, Key_act op)
 {
     Client *c=get_cur_focus_client();
     bool is_move = (op==UP || op==DOWN || op==LEFT || op==RIGHT),
-         is_to_stack=(c->layer==TILE_LAYER);
+         is_to_above=(c->area==MAIN_AREA || c->area==SECOND_AREA || c->area==FIXED_AREA);
     Delta_rect d=get_key_delta_rect(c, op);
 
-    if(is_to_stack)
-        move_client(c, NULL, STACK_LAYER, ANY_AREA);
-    if(get_move_resize_delta_rect(c, &d, is_move, is_to_stack))
+    if(is_to_above)
+        move_client(c, NULL, ABOVE_LAYER, ANY_AREA);
+    if(get_move_resize_delta_rect(c, &d, is_move, is_to_above))
     {
         move_resize_client(c, &d);
         Size_hint_win *shw=size_hint_win_new(WIDGET(c));
@@ -109,6 +109,7 @@ void pointer_move_resize_client(XEvent *e, bool resize)
     XEvent ev;
     if(act==MOVE || is_resizable(&hint))
     {
+        bool is_to_above=(c->area==MAIN_AREA || c->area==SECOND_AREA || c->area==FIXED_AREA);
         Size_hint_win *shw=size_hint_win_new(WIDGET(c));
         widget_show(WIDGET(shw));
         do /* 因設置了獨享定位器且XMaskEvent會阻塞，故應處理按、放按鈕之間的事件 */
@@ -116,12 +117,11 @@ void pointer_move_resize_client(XEvent *e, bool resize)
             XMaskEvent(xinfo.display, ROOT_EVENT_MASK|POINTER_MASK, &ev);
             if(ev.type == MotionNotify)
             {
-                bool is_to_stack=(c->layer==TILE_LAYER);
-                if(is_to_stack)
-                    move_client(c, NULL, STACK_LAYER, ANY_AREA);
+                if(is_to_above)
+                    move_client(c, NULL, ABOVE_LAYER, ANY_AREA);
                 /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
                 m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
-                do_valid_pointer_move_resize(c, &m, act, is_to_stack);
+                do_valid_pointer_move_resize(c, &m, act, is_to_above);
                 size_hint_win_update(shw);
             }
             else

@@ -129,9 +129,9 @@ static void get_area_size(int *mw, int *mh, int *sw, int *sh, int *fw, int *fh)
     int n1, n2, n3;
     Rect wr=get_net_workarea();
 
-    n1=get_clients_n(TILE_LAYER, MAIN_AREA, false, false, false),
-    n2=get_clients_n(TILE_LAYER, SECOND_AREA, false, false, false),
-    n3=get_clients_n(TILE_LAYER, FIXED_AREA, false, false, false),
+    n1=get_clients_n(NORMAL_LAYER, MAIN_AREA, false, false, false),
+    n2=get_clients_n(NORMAL_LAYER, SECOND_AREA, false, false, false),
+    n3=get_clients_n(NORMAL_LAYER, FIXED_AREA, false, false, false),
     *mw=mr*wr.w, *fw=wr.w*fr, *sw=wr.w-*fw-*mw;
     *mh = n1 ? wr.h/n1 : wr.h;
     *fh = n3 ? wr.h/n3 : wr.h;
@@ -175,7 +175,7 @@ static bool should_fix_win_rect(Client *c)
     switch(get_layout())
     {
         case STACK: return is_new_client(c);
-        case TILE:  return c->owner || (is_new_client(c) && layer!=TILE_LAYER);
+        case TILE:  return c->owner || (is_new_client(c) && layer!=NORMAL_LAYER);
         default:    return false;
     }
 }
@@ -263,7 +263,7 @@ bool is_main_sec_gap(int x)
 {
     Rect wr=get_net_workarea();
     long sw=wr.w*(1-get_main_area_ratio()-get_fixed_area_ratio()),
-         n=get_clients_n(TILE_LAYER, SECOND_AREA, false, false, false);
+         n=get_clients_n(NORMAL_LAYER, SECOND_AREA, false, false, false);
     return (n && x>=wr.x+sw-cfg->win_gap && x<wr.x+sw);
 }
 
@@ -271,7 +271,7 @@ bool is_main_fix_gap(int x)
 {
     Rect wr=get_net_workarea();
     long smw=wr.w*(1-get_fixed_area_ratio()),
-         n=get_clients_n(TILE_LAYER, FIXED_AREA, false, false, false);
+         n=get_clients_n(NORMAL_LAYER, FIXED_AREA, false, false, false);
     return (n && x>=wr.x+smw && x<wr.x+smw+cfg->win_gap);
 }
 
@@ -341,7 +341,7 @@ static bool change_layout_ratio(int ox, int nx)
 void adjust_main_area(double change_ratio)
 {
     if( get_layout()==TILE
-        && get_clients_n(TILE_LAYER, SECOND_AREA, false, false, false))
+        && get_clients_n(NORMAL_LAYER, SECOND_AREA, false, false, false))
     {
         Rect wr=get_net_workarea();
         double mr=get_main_area_ratio()+change_ratio, fr=get_fixed_area_ratio();
@@ -358,7 +358,7 @@ void adjust_main_area(double change_ratio)
 void adjust_fixed_area(double change_ratio)
 {
     if( get_layout()==TILE
-        && get_clients_n(TILE_LAYER, FIXED_AREA, false, false, false))
+        && get_clients_n(NORMAL_LAYER, FIXED_AREA, false, false, false))
     {
         Rect wr=get_net_workarea();
         double fr=get_fixed_area_ratio()+change_ratio, mr=get_main_area_ratio();
