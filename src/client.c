@@ -70,12 +70,12 @@ static void client_ctor(Client *c, Window win)
     c->decorative=has_decoration(c);
     c->owner=win_to_client(get_transient_for(WIDGET_WIN(c)));
     c->subgroup_leader = c->owner ? c->owner->subgroup_leader : c;
-    c->class_name="?";
     c->image=get_win_icon_image(win);
     set_default_win_rect(c);
     create_frame(c);
     widget_set_draggable(WIDGET(c), true);
-    XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint);
+    if(!XGetClassHint(xinfo.display, WIDGET_WIN(c), &c->class_hint))
+        c->class_hint.res_name=c->class_hint.res_class=NULL;
     set_default_layer(c);
     set_default_area(c);
     set_default_desktop_mask(c);
@@ -138,7 +138,6 @@ static void apply_rules(Client *c)
     if(!c->class_hint.res_class && !c->class_hint.res_name && !c->title_text)
         return;
 
-    c->class_name=c->class_hint.res_class;
     for(const Rule *r=rules; r->app_class; r++)
     {
         if(have_rule(r, c))
@@ -149,8 +148,6 @@ static void apply_rules(Client *c)
                 c->area=r->area;
             if(r->desktop_mask)
                 c->desktop_mask=r->desktop_mask;
-            if(r->class_alias)
-                c->class_name=r->class_alias;
         }
     }
 }

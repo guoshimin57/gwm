@@ -125,11 +125,11 @@ void draw_image(Imlib_Image image, Drawable d, int x, int y, int w, int h)
 Imlib_Image get_win_icon_image(Window win)
 {
     XClassHint h;
+    if(!XGetClassHint(xinfo.display, win, &h))
+        return NULL;
+
     Imlib_Image image=NULL;
-
-    XGetClassHint(xinfo.display, win, &h);
     char *name = h.res_class ? h.res_class : h.res_name;
-
     if( (image=search_icon_image(h.res_class))
         || (image=search_icon_image(h.res_name))
         || (image=create_icon_image_from_hint(win, name))

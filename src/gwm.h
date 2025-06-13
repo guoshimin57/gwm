@@ -105,7 +105,6 @@ typedef enum // 定位器操作類型
 typedef struct // 窗口管理器的規則
 {// 分別爲客戶窗口的程序類型和程序名稱、標題，NULL或*表示匹配任何字符串
     const char *app_class, *app_name, *title;
-    const char *class_alias; // 客戶窗口的類型別名
     Layer layer; // 客戶窗口的層
     Area area; // 客戶窗口的區
     unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼

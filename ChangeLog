@@ -9,6 +9,12 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2025年 06月 13日 星期五 20:56:26 HKT	gsm <406643764@qq.com>
+	* 發布第2.13.7版；
+	* 刪除Client的class_name和Rule的class_alias成員；
+	* 修復get_win_icon_image函數可能釋放野指針的缺陷；
+	* 修復client_ctor可能未正確設置c->class_hint的缺陷。
+
 2025年 06月 13日 星期五 11:31:55 HKT	gsm <406643764@qq.com>
 	* 發布第2.13.6版；
 	* 修正get_win_icon_image函數的邏輯錯誤。

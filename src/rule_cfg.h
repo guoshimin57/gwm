@@ -26,13 +26,11 @@
  */
 static const Rule rules[] =
 {
-    /* 客戶程序類型        客戶程序名稱          標題   程序別名    窗口所在層    窗口所在層  桌面掩碼 */
-    {"QQ",                 "qq",                 "QQ",  "QQ",       NORMAL_LAYER, FIXED_AREA, 0},
-    {"explorer.exe",       "explorer.exe",       "*",   NULL,       ABOVE_LAYER,  ANY_AREA,   0},
-    {"Thunder.exe",        "Thunder.exe",        "*",   NULL,       ABOVE_LAYER,  ANY_AREA,   0},
-    {"org.mozilla.firefox","Toolkit",            "*",   NULL,       NORMAL_LAYER, ANY_AREA,   0},
-    {"Google-chrome",      "google-chrome",      "*",   "chrome",   ANY_LAYER,    ANY_AREA,   0},
-    {"org.gnome.Nautilus", "org.gnome.Nautilus", "*",   "Nautilus", ANY_LAYER,    ANY_AREA,   0},
+    /* 客戶程序類型        客戶程序名稱    標題   窗口所在層    窗口所在區  桌面掩碼 */
+    {"QQ",                 "qq",           "QQ",  NORMAL_LAYER, FIXED_AREA, 0},
+    {"explorer.exe",       "explorer.exe", "*",   ABOVE_LAYER,  ANY_AREA,   0},
+    {"Thunder.exe",        "Thunder.exe",  "*",   ABOVE_LAYER,  ANY_AREA,   0},
+    {"org.mozilla.firefox","Toolkit",      "*",   NORMAL_LAYER, ANY_AREA,   0},
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 
