@@ -39,6 +39,6 @@ bool is_iconic_state(Window win);
 void close_win(Window win);
 char *get_wm_name(Window win);
 char *get_wm_icon_name(Window win);
-void set_client_leader(Window leader, Window cwin);
+void set_client_leader(Window win, Window leader);
 
 #endif

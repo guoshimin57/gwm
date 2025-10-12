@@ -118,6 +118,13 @@ void fix_win_size_by_hint(const XSizeHints *size_hint, int *w, int *h)
         else if((float)*w / *h > maxa)
             *w=*h*maxa+0.5;
     }
+
+    if((f & PMinSize && PMaxSize) && p->min_width && p->max_width
+        && p->min_width==p->max_width)
+        *w=p->min_width;
+    if((f & PMinSize && PMaxSize) && p->min_height && p->max_height
+        && p->min_height==p->max_height)
+        *w=p->min_width;
 }
 
 bool is_prefer_size(int w, int h, const XSizeHints *hint)
@@ -133,7 +140,7 @@ static bool is_prefer_width(int w, const XSizeHints *hint)
     return !hint || !(f=hint->flags) ||
         (  (!(f & PMinSize) || w>=hint->min_width)
         && (!(f & PMaxSize) || w<=hint->max_width)
-        && (!(f & PBaseSize) || !(f & PResizeInc)
+        && (!(f & PBaseSize) || !(f & PResizeInc) || !hint->width_inc
             || (w-hint->base_width)%hint->width_inc == 0));
 }
 
@@ -143,16 +150,19 @@ static bool is_prefer_height(int h, const XSizeHints *hint)
     return !hint || !(f=hint->flags) ||
         (  (!(f & PMinSize) || h>=hint->min_height)
         && (!(f & PMaxSize) || h<=hint->max_height)
-        && (!(f & PBaseSize) || !(f & PResizeInc)
+        && (!(f & PBaseSize) || !(f & PResizeInc) || !hint->height_inc
             || (h-hint->base_height)%hint->height_inc == 0));
 }
 
 static bool is_prefer_aspect(int w, int h, const XSizeHints *hint)
 {
+    if(hint == NULL)
+        return true;
+
     float minax=hint->min_aspect.x, minay=hint->min_aspect.y, mina=minax/minay,
           maxax=hint->max_aspect.x, maxay=hint->max_aspect.y, maxa=maxax/maxay;
 
-    return !hint || !(hint->flags & PAspect) || !w || !h || !minax || !minay ||
+    return !(hint->flags & PAspect) || !w || !h || !minax || !minay ||
         !maxax || !maxay || ((float)w/h>=mina && (float)w/h<=maxa);
 }
 
@@ -176,6 +186,7 @@ bool send_wm_protocol_msg(Atom protocol, Window win)
     {
         XEvent event;
         event.type=ClientMessage;
+        event.xclient.display=xinfo.display;
         event.xclient.window=win;
         event.xclient.message_type=icccm_atoms[WM_PROTOCOLS];
         event.xclient.format=32;
@@ -199,21 +210,15 @@ bool has_spec_wm_protocol(Window win, Atom protocol)
 
 void set_urgency_hint(Window win, XWMHints *h, bool urg)
 {
-    if(!h || urg==!!(h->flags & XUrgencyHint)) // 避免重復設置
-        return ;
-
-    h->flags = urg ? (h->flags | XUrgencyHint) : (h->flags & ~XUrgencyHint);
-    XSetWMHints(xinfo.display, win, h);
+    long flags = h ? h->flags : 0;
+    XWMHints hints={.flags = urg ? (flags | XUrgencyHint) : (flags & ~XUrgencyHint)};
+    XSetWMHints(xinfo.display, win, &hints);
 }
 
 bool is_iconic_state(Window win)
 {
-    long *p=get_cardinals_prop(win, icccm_atoms[WM_STATE], NULL);
-    bool result = (p && *p==IconicState);
-
-    XFree(p);
-
-    return result;
+    return get_cardinal_prop(win, icccm_atoms[WM_STATE], NormalState)
+        == IconicState;
 }
 
 void close_win(Window win)
@@ -232,7 +237,7 @@ char *get_wm_icon_name(Window win)
     return get_text_prop(win, XA_WM_ICON_NAME);
 }
 
-void set_client_leader(Window leader, Window cwin)
+void set_client_leader(Window win, Window leader)
 {
-    replace_window_prop(leader, WM_CLIENT_LEADER, cwin);
+    replace_window_prop(win, icccm_atoms[WM_CLIENT_LEADER], leader);
 }

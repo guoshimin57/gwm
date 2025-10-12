@@ -9,6 +9,16 @@
  * <http://www.gnu.org/licenses/>。
  **************************************************************************/
 
+2025年 10月 12日 星期日 17:49:04 HKT	gsm <406643764@qq.com>
+	* 發布第2.13.8版；
+	* 修復fix_win_size_by_hint函數未響應固定尺寸窗口提示的缺陷；
+	* 修復is_prefer_width、is_prefer_height和is_prefer_aspect函數的邏輯缺陷；
+	* 修復send_wm_protocol_msg函數的邏輯錯誤；
+	* 修復set_urgency_hint函數的邏輯錯誤；
+	* 優化is_iconic_state函數；
+	* 修復set_client_leader函數的邏輯錯誤；
+	* 編寫了icccm模塊的測試代碼。
+
 2025年 06月 13日 星期五 20:56:26 HKT	gsm <406643764@qq.com>
 	* 發布第2.13.7版；
 	* 刪除Client的class_name和Rule的class_alias成員；

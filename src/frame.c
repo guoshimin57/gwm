@@ -65,7 +65,7 @@ Frame *frame_new(Widget *parent, int x, int y, int w, int h, int titlebar_h, int
 
     XAddToSaveSet(xinfo.display, frame->cwin);
     XReparentWindow(xinfo.display, frame->cwin, WIDGET_WIN(frame), 0, titlebar_h);
-    set_client_leader(WIDGET_WIN(frame), frame->cwin);
+    set_client_leader(frame->cwin, WIDGET_WIN(frame));
     XSelectInput(xinfo.display, WIDGET_WIN(frame), FRAME_EVENT_MASK);
 
     return frame;
