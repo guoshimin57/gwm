@@ -41,7 +41,7 @@ void key_move_resize_client(XEvent *e, Key_act op)
     Delta_rect d=get_key_delta_rect(c, op);
 
     if(is_to_above)
-        move_client(c, NULL, ABOVE_LAYER, ANY_AREA);
+        move_client(c, NULL, FLOAT_LAYER, ANY_AREA);
     if(get_move_resize_delta_rect(c, &d, is_move, is_to_above))
     {
         move_resize_client(c, &d);
@@ -118,7 +118,7 @@ void pointer_move_resize_client(XEvent *e, bool resize)
             if(ev.type == MotionNotify)
             {
                 if(is_to_above)
-                    move_client(c, NULL, ABOVE_LAYER, ANY_AREA);
+                    move_client(c, NULL, FLOAT_LAYER, ANY_AREA);
                 /* 因X事件是異步的，故xmotion.x和ev.xmotion.y可能不是連續變化 */
                 m.nx=ev.xmotion.x, m.ny=ev.xmotion.y;
                 do_valid_pointer_move_resize(c, &m, act, is_to_above);

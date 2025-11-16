@@ -43,7 +43,7 @@ typedef enum // 窗口管理器的布局模式
 
 typedef enum // 窗口放置的層類型
 {
-    FULLSCREEN_LAYER, DOCK_LAYER, ABOVE_LAYER,
+    FULLSCREEN_LAYER, DOCK_LAYER, ABOVE_LAYER, FLOAT_LAYER,
     NORMAL_LAYER, BELOW_LAYER, DESKTOP_LAYER,
     ANY_LAYER
 } Layer;

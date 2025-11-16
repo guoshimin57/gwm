@@ -54,7 +54,7 @@ Client *client_new(Window win)
 {
     Client *c=Malloc(sizeof(Client));
     client_ctor(c, win);
-    LIST_ADD(c, get_head_client(c, ANY_LAYER, ANY_AREA));
+    LIST_ADD(c, get_head_client(c, c->layer, c->area));
     grab_buttons(WIDGET_WIN(c), WIDGET_ID(c));
     return c;
 }
@@ -105,9 +105,9 @@ void set_default_layer(Client *c)
     if(c->owner)                     c->layer = c->owner->layer;
     else if(c->win_type.desktop)     c->layer = DESKTOP_LAYER;
     else if(c->win_state.below)      c->layer = BELOW_LAYER;
-    else if(c->win_state.above
-        || (get_gwm_layout()==TILE && is_win_state_max(c->win_state)))
-                                     c->layer = ABOVE_LAYER;
+    else if(c->win_state.above)      c->layer = ABOVE_LAYER;
+    else if(get_gwm_layout()==TILE && is_win_state_max(c->win_state))
+                                     c->layer = FLOAT_LAYER;
     else if(c->win_type.dock)        c->layer = DOCK_LAYER;
     else if(c->win_state.fullscreen) c->layer = FULLSCREEN_LAYER;
     else                             c->layer = NORMAL_LAYER;

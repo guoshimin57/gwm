@@ -166,6 +166,9 @@ void update_net_wm_state_by_layer(Client *c)
             s->fullscreen=s->below=0;
             s->above=1;
             break;
+        case FLOAT_LAYER:
+            s->fullscreen=s->above=s->below=0;
+            break;
         case NORMAL_LAYER:
             s->fullscreen=s->above=s->below=0;
             if(get_gwm_layout() == TILE)
@@ -290,7 +293,7 @@ void maximize_client(Client *c, Max_way max_way)
     if(!is_win_state_max(c->win_state))
         save_place_info_of_client(c);
     if(get_gwm_layout()==TILE && c->layer==NORMAL_LAYER)
-        move_client(c, NULL, ABOVE_LAYER, ANY_AREA);
+        move_client(c, NULL, FLOAT_LAYER, ANY_AREA);
     set_max_rect(c, max_way);
     move_resize_client(c, NULL);
     switch(max_way)
