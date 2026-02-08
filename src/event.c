@@ -244,13 +244,19 @@ static void handle_enter_notify(XEvent *e)
     Pointer_act act=NO_OP;
     Widget *widget=widget_find(win);
 
+    if(widget == NULL)
+    {
+        if( is_layout_adjust_area(win, x)
+            && get_clients_n(NORMAL_LAYER, MAIN_AREA, false, false, false))
+            set_cursor(win, LAYOUT_RESIZE);
+        else
+            set_cursor(win, NO_OP);
+        return;
+    }
+
     if(cfg->focus_mode==ENTER_FOCUS && c)
         focus_client(c);
-    if( is_layout_adjust_area(win, x)
-        && get_clients_n(NORMAL_LAYER, MAIN_AREA, false, false, false))
-        set_cursor(win, LAYOUT_RESIZE);
-    if(widget == NULL)
-        return;
+
     if(widget->id == CLIENT_FRAME)
         act=get_resize_act(c, x, y);
     else if(widget->id == TITLEBAR)
@@ -262,6 +268,7 @@ static void handle_enter_notify(XEvent *e)
         widget->state.hot=1;
         widget_update_bg(widget);
     }
+
     if(widget->id != UNUSED_WIDGET_ID)
         set_cursor(win, act);
     if(widget->tooltip)

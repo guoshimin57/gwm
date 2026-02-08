@@ -23,7 +23,7 @@ exec := gwm
 .PHONY : all install install-strip uninstall clean
 
 all : $(exec)
-	@$(CTAGS) *.[ch] 2> /dev/null
+	@$(CTAGS) *.[ch] 2> /dev/null || true
 
 $(exec) : $(objs)
 	$(CC) $(objs) -o $@ $(CFLAGS)

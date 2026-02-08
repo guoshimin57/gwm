@@ -173,6 +173,7 @@ static WMFont *get_suitable_font(uint32_t codepoint)
             return NULL;
 
         WMFont *font=load_font(fontname);
+        free(fontname);
         if(font)
         {
             if(XftCharExists(xinfo.display, font->xfont, codepoint))

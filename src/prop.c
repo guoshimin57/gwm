@@ -111,25 +111,28 @@ static unsigned char *get_prop(Window win, Atom prop, size_t size, unsigned long
     unsigned long rest=0, nitems=0;
     unsigned char *p=NULL;
     Atom type;
+    unsigned char *values=NULL;
 
     /* 对于XGetWindowProperty，把要接收的数据长度（第5个参数）设置得比实际长度
      * 長可简化代码，这样就不必考虑要接收的數據是否不足32位。以下同理。 */
     if( XGetWindowProperty(xinfo.display, win, prop, 0, ~0L, False,
-        AnyPropertyType, &type, &fmt, &nitems, &rest, &p) != Success
-        || !type || !fmt || !nitems || !p) // 可能設置了特性，但設置得不正確
-        return NULL;
+        AnyPropertyType, &type, &fmt, &nitems, &rest, &p) == Success
+        && type && fmt && nitems && p) // 可能設置了特性，但設置得不正確
+    {
+        if(n)
+            *n=nitems;
 
-    if(n)
-        *n=nitems;
+        size_t ssize=get_fmt_size(fmt);
+        if(ssize > 0)
+        {
+            values=Malloc(nitems*size+1);
+            memset(values, 0, nitems*size+1);
+            for(unsigned long i=0; i<nitems; i++)
+                convert_type(values+size*i, size, p+ssize*i, ssize);
+        }
 
-    size_t ssize=get_fmt_size(fmt);
-    if(ssize == 0)
-        return NULL;
-
-    unsigned char *values=Malloc(nitems*size+1);
-    memset(values, 0, nitems*size+1);
-    for(unsigned long i=0; i<nitems; i++)
-        convert_type(values+size*i, size, p+ssize*i, ssize);
+        XFree(p);
+    }
 
     return values;
 }

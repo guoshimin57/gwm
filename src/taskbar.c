@@ -348,8 +348,8 @@ static void iconbar_del_cbutton(Iconbar *iconbar, Window cwin)
         if(c->cwin == cwin)
         {
             LIST_DEL(c);
-            cbutton_del(c);
             iconbar_update(iconbar);
+            cbutton_del(c);
             break;
         }
     }

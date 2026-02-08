@@ -22,7 +22,7 @@ exes = $(test_srcs:.c=)
 .PHONY : all test install install-strip uninstall clean
 
 all : $(exes)
-	@$(CTAGS) $(src_dir)/*.[ch] $(test_dir)/*.[ch] 2> /dev/null
+	@$(CTAGS) $(src_dir)/*.[ch] $(test_dir)/*.[ch] 2> /dev/null || true
 
 $(exes) : % : %.o $(src_objs)
 	$(CC) $< $(filter-out $(src_dir)/$(@:t%=%).o, $(src_objs)) -o $@ $(LDFLAGS)

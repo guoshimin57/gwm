@@ -46,10 +46,8 @@ clean :
 	do \
 		$(MAKE) -C $$dir clean ; \
 	done ;
+	$(MAKE) -C test clean;
 	rm -rf $(backup)
 
 test :
-	@for dir in $(subdirs) ; \
-	do \
-		$(MAKE) -C $$dir test ; \
-	done
+	$(MAKE) -C test test

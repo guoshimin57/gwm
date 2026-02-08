@@ -352,7 +352,7 @@ static void test_get_wm_icon_name(void)
 static void test_set_client_leader(void)
 {
     Window win=create_test_win();
-    Window leader=create_test_win(), w;
+    Window leader=create_test_win();
     assert(get_window_prop(win, icccm_atoms[WM_CLIENT_LEADER]) == None);
     set_client_leader(win, leader);
     assert(get_window_prop(win, icccm_atoms[WM_CLIENT_LEADER]) == leader);

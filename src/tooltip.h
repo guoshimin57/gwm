@@ -10,7 +10,7 @@
  * ************************************************************************/
 
 #ifndef TOOLTIP_H
-#define MTOOLTIP_H
+#define TOOLTIP_H
 
 #include "widget.h"
 
