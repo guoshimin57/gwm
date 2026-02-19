@@ -54,6 +54,7 @@ static void menu_ctor(Menu *menu, Widget *owner, Widget_id id, const char *icon_
         w=sw/col;
 
     widget_ctor(WIDGET(menu), NULL, WIDGET_TYPE_MENU, id, 0, 0, w*col, h*row);
+    XSelectInput(xinfo.display, WIDGET_WIN(menu), MENU_EVENT_MASK);
     menu_set_method(WIDGET(menu));
 
     menu->owner=owner;
@@ -66,7 +67,6 @@ static void menu_ctor(Menu *menu, Widget *owner, Widget_id id, const char *icon_
          button_set_align(menu->items[i], CENTER_LEFT);
     }
     menu->n=n, menu->col=col, menu->row=row;
-    XSelectInput(xinfo.display, WIDGET_WIN(menu), MENU_EVENT_MASK);
 }
 
 static bool is_null_strings(const char *strings[], int n)

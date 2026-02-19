@@ -48,7 +48,6 @@ void manage_exsit_clients(void)
 void add_client(Window win)
 {
     Client *c=client_new(win);
-    XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     set_cursor(win, NO_OP);
     request_layout_update();
     widget_show(WIDGET(c->frame));

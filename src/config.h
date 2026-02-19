@@ -51,7 +51,7 @@ typedef struct
 
     unsigned int default_cur_desktop; // 默認的當前桌面
     unsigned int cursor_shape[POINTER_ACT_N]; // 定位器相關的光標字體
-    time_t hover_time; // 定位器懸停的判定時間界限，單位爲毫秒
+    int hover_time; // 定位器懸停的判定時間界限，單位爲毫秒
 
     double font_pad_ratio; // 文字與構件邊緣的間距與字體高度的比值
     double default_main_area_ratio; // 默認的主區域比例

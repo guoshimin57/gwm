@@ -15,6 +15,8 @@
 #include "misc.h"
 #include "tooltip.h"
 
+#define FOR_TOOLTIP_MASK (ButtonPressMask | PointerMotionMask | LeaveWindowMask)
+
 struct _tooltip_tag // 提示工具
 {
     Widget base;
@@ -28,6 +30,10 @@ static void tooltip_dtor(Tooltip *tooltip);
 
 void set_tooltip(Widget *widget, const char *tip)
 {
+    XWindowAttributes a;
+    Window win=WIDGET_WIN(widget);
+    XGetWindowAttributes(xinfo.display, win, &a);
+    XSelectInput(xinfo.display, win, a.your_event_mask | FOR_TOOLTIP_MASK);
     widget->tooltip=WIDGET(tooltip_new(widget, tip));
 }
 

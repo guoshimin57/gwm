@@ -41,6 +41,8 @@ static void config_managed_client(Client *c);
 static void config_unmanaged_win(XConfigureRequestEvent *e);
 static void handle_enter_notify(XEvent *e);
 static void handle_pointer_hover(const Widget *widget);
+static void hide_for_hover(const Widget *widget, bool hover);
+static bool wait_for_hover(int fd, struct timeval *timeout);
 static void handle_expose(XEvent *e);
 static void handle_focus_in(XEvent *e);
 static void handle_focus_out(XEvent *e);
@@ -271,52 +273,58 @@ static void handle_enter_notify(XEvent *e)
 
     if(widget->id != UNUSED_WIDGET_ID)
         set_cursor(win, act);
-    if(widget->tooltip)
+    if(widget && widget->tooltip)
         handle_pointer_hover(widget);
 }
 
 static void handle_pointer_hover(const Widget *widget)
 {
     XEvent ev;
-    bool show=false;
+    enum { enter, leave, move, stop, hover, press } state=enter;
     struct timeval t={cfg->hover_time/1000, cfg->hover_time%1000*1000}, t0=t;
     int fd=ConnectionNumber(xinfo.display);
-    fd_set fds;
-    Window win=widget->win;
 
-    while(1)
+    while(!should_quit() && state!=leave)
     {
         if(XPending(xinfo.display))
         {
             XNextEvent(xinfo.display, &ev);
-            handle_x_event(&ev);
-
-            // 注意：每處理一次事件，接收事件的窗口都可能不同於參數widget的窗口
-            if(!(widget=widget_find(win)))
-                return;
-
-            if(ev.type == MotionNotify && ev.xmotion.window==widget->win)
-                t=t0, show=false;
-            else if( (ev.type==LeaveNotify && ev.xcrossing.window==widget->win)
-                ||   (ev.type==ButtonPress && ev.xbutton.window==widget->win) )
-                break;
-        }
-        else
-        {
-            FD_ZERO(&fds); FD_SET(fd, &fds);
-            // 需要注意的是，只有linux和部分unix會爲select設置最後一個參數爲剩餘時間
-            if(select(fd+1, &fds, 0, 0, &t) == -1)
-                break;
-            if(!t.tv_sec && !t.tv_usec)
+            if(ev.xany.window == widget->win)
             {
-                t=t0;
-                if(!show && widget->tooltip)
-                    show=true, widget->tooltip->show(widget->tooltip);
+                if(ev.type == LeaveNotify)
+                    hide_for_hover(widget, state==hover), state=leave;
+                else if(ev.type == ButtonPress)
+                    hide_for_hover(widget, state==hover), state=press;
+                else if(ev.type == MotionNotify)
+                    hide_for_hover(widget, state==hover), state=move, t=t0;
             }
+            if(ev.type!=EnterNotify || ev.xany.window!=widget->win)
+                handle_x_event(&ev);
+        }
+        else if(state!=press && state!=hover)
+        {
+            if(wait_for_hover(fd, &t))
+                t=t0, state=hover, widget->tooltip->show(widget->tooltip);
+            else
+                state=stop;
         }
     }
-    if(widget->tooltip)
+}
+
+static void hide_for_hover(const Widget *widget, bool hover)
+{
+    if(hover)
         widget->tooltip->hide(widget->tooltip);
+}
+
+static bool wait_for_hover(int fd, struct timeval *timeout)
+{
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(fd, &fds);
+    // 需要注意的是，只有linux和部分unix會爲select設置最後一個參數爲剩餘時間
+    return select(fd+1, &fds, 0, 0, timeout)>=0
+        && timeout->tv_sec==0 && timeout->tv_usec==0;
 }
 
 static void handle_expose(XEvent *e)

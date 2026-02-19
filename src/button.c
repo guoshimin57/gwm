@@ -40,13 +40,13 @@ Button *button_new(Widget *parent, Widget_id id, int x, int y, int w, int h, con
 static void button_ctor(Button *button, Widget *parent, Widget_id id, int x, int y, int w, int h, const char *label)
 {
     widget_ctor(WIDGET(button), parent, WIDGET_TYPE_BUTTON, id, x, y, w, h);
+    XSelectInput(xinfo.display, WIDGET_WIN(button), BUTTON_EVENT_MASK);
     button_set_method(WIDGET(button));
     button->image=NULL;
     button->icon_name=NULL;
     button->symbol=NULL;
     button->label=copy_string(label);
     button->align=CENTER;
-    XSelectInput(xinfo.display, WIDGET_WIN(button), BUTTON_EVENT_MASK);
 }
 
 static void button_set_method(Widget *widget)

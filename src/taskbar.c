@@ -103,6 +103,7 @@ static void taskbar_ctor(Widget *parent, int x, int y, int w, int h)
     Rect r;
 
     widget_ctor(WIDGET(taskbar), parent, WIDGET_TYPE_TASKBAR, TASKBAR, x, y, w, h);
+    XSelectInput(xinfo.display, WIDGET_WIN(taskbar), CROSSING_MASK);
     taskbar_buttons_new();
 
     r=taskbar_compute_iconbar_rect();
@@ -114,8 +115,6 @@ static void taskbar_ctor(Widget *parent, int x, int y, int w, int h)
     free(label);
 
     taskbar->act_center=act_center_new();
-
-    XSelectInput(xinfo.display, WIDGET_WIN(taskbar), CROSSING_MASK);
 }
 
 static Rect taskbar_compute_iconbar_rect(void)
@@ -457,8 +456,8 @@ static Statusbar *statusbar_new(Widget *parent, int x, int y, int w, int h, cons
 static void statusbar_ctor(Statusbar *statusbar, Widget *parent, int x, int y, int w, int h, const char *label)
 {
     widget_ctor(WIDGET(statusbar), parent, WIDGET_TYPE_STATUSBAR, STATUSBAR, x, y, w, h);
-    statusbar_set_method(WIDGET(statusbar));
     XSelectInput(xinfo.display, WIDGET_WIN(statusbar), ExposureMask);
+    statusbar_set_method(WIDGET(statusbar));
     statusbar->label=copy_string(label);
 }
 

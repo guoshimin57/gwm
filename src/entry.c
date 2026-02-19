@@ -51,13 +51,13 @@ Entry *entry_new(Widget *parent, Widget_id id, int x, int y, int w, int h, const
 static void entry_ctor(Entry *entry, Widget *parent, Widget_id id, int x, int y, int w, int h, const char *hint, Strings *(*complete)(Entry *))
 {
     widget_ctor(WIDGET(entry), parent, WIDGET_TYPE_ENTRY, id, x, y, w, h);
+    XSelectInput(xinfo.display, WIDGET_WIN(entry), ENTRY_EVENT_MASK);
     entry_set_method(WIDGET(entry));
     entry->hint=hint;
     entry->complete=complete;
     entry->listview=listview_new(parent, UNUSED_WIDGET_ID, x, y+h, w, h, NULL);
     widget_set_poppable(WIDGET(entry->listview), true);
     entry_clear(entry);
-    XSelectInput(xinfo.display, WIDGET_WIN(entry), ENTRY_EVENT_MASK);
     set_xic(WIDGET_WIN(entry), &entry->xic);
 }
 

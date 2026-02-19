@@ -55,6 +55,7 @@ Frame *frame_new(Widget *parent, int x, int y, int w, int h, int titlebar_h, int
 {
     Frame *frame=Malloc(sizeof(Frame));
     frame_ctor(frame, parent, x, y, w, h, titlebar_h, border_w, title, image);
+    XSelectInput(xinfo.display, WIDGET_WIN(frame), FRAME_EVENT_MASK);
     
     /* 以下是同時設置窗口前景和背景透明度的非EWMH標準方法：
     unsigned long opacity = (unsigned long)(0xfffffffful);
@@ -66,7 +67,6 @@ Frame *frame_new(Widget *parent, int x, int y, int w, int h, int titlebar_h, int
     XAddToSaveSet(xinfo.display, frame->cwin);
     XReparentWindow(xinfo.display, frame->cwin, WIDGET_WIN(frame), 0, titlebar_h);
     set_client_leader(frame->cwin, WIDGET_WIN(frame));
-    XSelectInput(xinfo.display, WIDGET_WIN(frame), FRAME_EVENT_MASK);
 
     return frame;
 }
@@ -98,6 +98,7 @@ static Titlebar *titlebar_new(Widget *parent, int x, int y, int w, int h, const 
 static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int w, int h, const char *title, Imlib_Image image)
 {
     widget_ctor(WIDGET(titlebar), parent, WIDGET_TYPE_TITLEBAR, TITLEBAR, x, y, w, h);
+    XSelectInput(xinfo.display, WIDGET_WIN(titlebar), TITLEBAR_EVENT_MASK);
     titlebar_set_method(WIDGET(titlebar));
     widget_set_draggable(WIDGET(titlebar), true);
     titlebar->title=copy_string(title);
@@ -108,7 +109,6 @@ static void titlebar_ctor(Titlebar *titlebar, Widget *parent, int x, int y, int 
     titlebar_create_buttons(titlebar);
     titlebar_create_menu(titlebar);
     widget_set_poppable(WIDGET(titlebar->menu), true);
-    XSelectInput(xinfo.display, WIDGET_WIN(titlebar), TITLEBAR_EVENT_MASK);
 }
 
 static void titlebar_create_buttons(Titlebar *titlebar)

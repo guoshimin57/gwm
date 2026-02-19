@@ -62,6 +62,7 @@ Client *client_new(Window win)
 static void client_ctor(Client *c, Window win)
 {
     widget_ctor(WIDGET(c), NULL, WIDGET_TYPE_CLIENT, CLIENT_WIN, 0, 0, 1, 1);
+    XSelectInput(xinfo.display, win, EnterWindowMask|PropertyChangeMask);
     WIDGET_WIN(c)=win;
     c->title_text=get_title_text(win, "");
     c->wm_hint=XGetWMHints(xinfo.display, win);
