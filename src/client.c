@@ -69,6 +69,7 @@ static void client_ctor(Client *c, Window win)
     c->win_type=get_net_wm_win_type(win);
     c->win_state=get_net_wm_state(win);
     c->decorative=has_decoration(c);
+    c->follow_maxmin_hint=false;
     c->owner=win_to_client(get_transient_for(WIDGET_WIN(c)));
     c->subgroup_leader = c->owner ? c->owner->subgroup_leader : c;
     c->image=get_win_icon_image(win);
@@ -149,7 +150,7 @@ static void apply_rules(Client *c)
                 c->area=r->area;
             if(r->desktop_mask)
                 c->desktop_mask=r->desktop_mask;
-            c->ignore_maxmin_hint=r->ignore_maxmin_hint;
+            c->follow_maxmin_hint=r->follow_maxmin_hint;
         }
     }
 }

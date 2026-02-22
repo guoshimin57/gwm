@@ -109,7 +109,7 @@ typedef struct // 窗口管理器的規則
     Layer layer; // 客戶窗口的層
     Area area; // 客戶窗口的區
     unsigned int desktop_mask; // 客戶窗口所属虚拟桌面掩碼
-    bool ignore_maxmin_hint; // 忽略最大和最小尺寸提示的標志
+    bool follow_maxmin_hint; // 遵從最大和最小尺寸提示的標志
 } Rule;
 
 typedef struct // 與X相關的信息

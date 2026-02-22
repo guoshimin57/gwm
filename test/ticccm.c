@@ -174,16 +174,16 @@ static void test_is_in_size_limit(void)
         { 1, 1, {.flags=~(PMinSize|PMaxSize)}, true},
         { 1, 1, {.flags=PMinSize, .min_width=1}, true},
         { 1, 1, {.flags=PMinSize, .min_width=2}, false},
-        { 1, 1, {.flags=PMaxSize, .max_width=1}, true},
+        { 1, 1, {.flags=PMaxSize, .max_width=1}, false},
         { 2, 1, {.flags=PMaxSize, .max_width=1}, false},
         { 1, 1, {.flags=PMinSize, .min_height=1}, true},
         { 1, 1, {.flags=PMinSize, .min_height=2}, false},
-        { 1, 1, {.flags=PMaxSize, .max_height=1}, true},
+        { 1, 1, {.flags=PMaxSize, .max_height=1}, false},
         { 1, 2, {.flags=PMaxSize, .max_height=1}, false},
         { 1, 1, {.flags=PMinSize, .min_width=1, .min_height=1}, true},
         { 1, 1, {.flags=PMinSize, .min_width=2, .min_height=2}, false},
         { 1, 1, {.flags=PMaxSize, .max_width=1, .max_height=1}, true},
-        { 2, 2, {.flags=PMinSize, .max_width=1, .max_height=1}, false},
+        { 2, 2, {.flags=PMaxSize, .max_width=1, .max_height=1}, false},
     };
     assert(is_in_size_limit(0, 0, NULL));
     for(size_t i=0; i<ARRAY_NUM(suite); i++)

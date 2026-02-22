@@ -121,8 +121,9 @@ static void set_wins_rect_for_tiling(void)
             bw=WIDGET_BORDER_W(c->frame);
             bh=frame_get_titlebar_height(c->frame);
             hint=get_size_hint(WIDGET_WIN(c));
-            if(!c->ignore_maxmin_hint && !is_in_size_limit(w-2*bw, h-bh-2*bw, &hint))
+            if(c->follow_maxmin_hint && !is_in_size_limit(w-2*bw, h-bh-2*bw, &hint))
             {
+                puts(c->title_text);
                 move_client(c, NULL, FLOAT_LAYER, ANY_AREA);
                 return;
             }
