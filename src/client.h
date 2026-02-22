@@ -23,6 +23,7 @@ typedef struct client_tag // 客戶窗口相關信息
     Widget base;
     Frame *frame; // 客戶窗口裝飾
     bool decorative; // 是否裝飾，即顯示窗口標題欄和邊框
+    bool ignore_maxmin_hint; // 忽略最大和最小尺寸提示的標志
     int ox, oy, ow, oh; // 分别爲win原來的橫、縱坐標和寬、高
     unsigned int desktop_mask; // 所屬虚拟桌面的掩碼
     Layer layer, olayer; // 客戶窗口當前和原來所在的層

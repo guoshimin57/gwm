@@ -149,6 +149,7 @@ static void apply_rules(Client *c)
                 c->area=r->area;
             if(r->desktop_mask)
                 c->desktop_mask=r->desktop_mask;
+            c->ignore_maxmin_hint=r->ignore_maxmin_hint;
         }
     }
 }

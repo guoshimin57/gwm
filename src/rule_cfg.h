@@ -26,11 +26,11 @@
  */
 static const Rule rules[] =
 {
-    /* 客戶程序類型        客戶程序名稱    標題   窗口所在層    窗口所在區  桌面掩碼 */
-    {"QQ",                 "qq",           "QQ",  NORMAL_LAYER, FIXED_AREA, 0},
-    {"explorer.exe",       "explorer.exe", "*",   ABOVE_LAYER,  ANY_AREA,   0},
-    {"Thunder.exe",        "Thunder.exe",  "*",   ABOVE_LAYER,  ANY_AREA,   0},
-    {"org.mozilla.firefox","Toolkit",      "*",   NORMAL_LAYER, ANY_AREA,   0},
+    /* 客戶程序類型        客戶程序名稱    標題   窗口所在層    窗口所在區  桌面掩碼  是否忽略最大最小尺寸 */
+    {"QQ",                 "qq",           "QQ",  NORMAL_LAYER, FIXED_AREA, 0,          true  },
+    {"explorer.exe",       "explorer.exe", "*",   ABOVE_LAYER,  ANY_AREA,   0,          false },
+    {"Thunder.exe",        "Thunder.exe",  "*",   ABOVE_LAYER,  ANY_AREA,   0,          false },
+    {"org.mozilla.firefox","Toolkit",      "*",   NORMAL_LAYER, ANY_AREA,   0,          false },
     {0} // 哨兵值，表示結束，切勿刪改之
 };
 
