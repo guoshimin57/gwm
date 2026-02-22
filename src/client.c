@@ -376,6 +376,14 @@ void update_client_bg(Client *c)
         frame_update_bg(c->frame);
 }
 
+Rect client_get_frame_rect(Client *c)
+{
+    int bw=WIDGET_BORDER_W(c->frame);
+    Rect r={WIDGET_X(c->frame), WIDGET_Y(c->frame),
+        WIDGET_W(c->frame)+2*bw, WIDGET_H(c->frame)};
+    return r;
+}
+
 void set_client_rect_by_outline(Client *c, int x, int y, int w, int h)
 {
     int bw=WIDGET_BORDER_W(c->frame);

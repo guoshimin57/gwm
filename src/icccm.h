@@ -30,6 +30,7 @@ XSizeHints get_size_hint(Window win);
 bool is_resizable(const XSizeHints *h);
 void fix_win_size_by_hint(const XSizeHints *size_hint, int *w, int *h);
 bool is_prefer_size(int w, int h, const XSizeHints *hint);
+bool is_in_size_limit(int w, int h, const XSizeHints *hint);
 void set_input_focus(Window win, const XWMHints *hint);
 bool has_focus_hint(const XWMHints *hint);
 bool send_wm_protocol_msg(Atom protocol, Window win);

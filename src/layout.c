@@ -100,10 +100,10 @@ static void fix_area_for_tile(void)
  *     4、在固定區域內設置其與主區域的窗口間隔。 */
 static void set_wins_rect_for_tiling(void)
 {
-    int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, g=cfg->win_gap, 
+    int i=0, j=0, k=0, mw, sw, fw, mh, sh, fh, bw, bh, g=cfg->win_gap, 
         y_offset = cfg->show_taskbar && cfg->taskbar_on_top ? g : 0;
     Rect wr=get_net_workarea();
-
+    XSizeHints hint;
     get_area_size(&mw, &mh, &sw, &sh, &fw, &fh);
     clients_for_each(c)
     {
@@ -118,6 +118,16 @@ static void set_wins_rect_for_tiling(void)
                 x=wr.x, y=wr.y+k++*sh+y_offset, w=sw-g, h=sh-g;
             if(is_place_last_client(c)) // 區末窗口取餘量
                 h+=wr.h%(h+g);
+            bw=WIDGET_BORDER_W(c->frame);
+            bh=frame_get_titlebar_height(c->frame);
+            hint=get_size_hint(WIDGET_WIN(c));
+            puts(c->title_text);
+            if(!is_in_size_limit(w-2*bw, h-bh-2*bw, &hint))
+            {
+                puts("to float");
+                move_client(c, NULL, FLOAT_LAYER, ANY_AREA);
+                return;
+            }
             set_client_rect_by_outline(c, x, y, w, h);
         }
     }

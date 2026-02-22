@@ -25,7 +25,7 @@ Config *cfg=NULL;
 static const char *font_names[]=
 {
     "monospace",
-//    "Noto Color Emoji",
+    "Noto Color Emoji",
     "Noto Sans Symbols 2",
     "Symbola",
     NULL // 哨兵值，表示結束，切勿刪改之

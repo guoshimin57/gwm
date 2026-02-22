@@ -166,6 +166,29 @@ static void test_is_prefer_height(void)
             == suite[i].exp);
 }
 
+static void test_is_in_size_limit(void)
+{
+    struct { int w, h; XSizeHints hint; bool exp; } suite[]=
+    {
+        { 0, 0, {.flags=0}, true},
+        { 1, 1, {.flags=~(PMinSize|PMaxSize)}, true},
+        { 1, 1, {.flags=PMinSize, .min_width=1}, true},
+        { 1, 1, {.flags=PMinSize, .min_width=2}, false},
+        { 1, 1, {.flags=PMaxSize, .max_width=1}, true},
+        { 2, 1, {.flags=PMaxSize, .max_width=1}, false},
+        { 1, 1, {.flags=PMinSize, .min_height=1}, true},
+        { 1, 1, {.flags=PMinSize, .min_height=2}, false},
+        { 1, 1, {.flags=PMaxSize, .max_height=1}, true},
+        { 1, 2, {.flags=PMaxSize, .max_height=1}, false},
+        { 1, 1, {.flags=PMinSize, .min_width=1, .min_height=1}, true},
+        { 1, 1, {.flags=PMinSize, .min_width=2, .min_height=2}, false},
+        { 1, 1, {.flags=PMaxSize, .max_width=1, .max_height=1}, true},
+        { 2, 2, {.flags=PMinSize, .max_width=1, .max_height=1}, false},
+    };
+    assert(is_in_size_limit(0, 0, NULL));
+    for(size_t i=0; i<ARRAY_NUM(suite); i++)
+        suite_assert(i, is_in_size_limit(suite[i].w, suite[i].h, &suite[i].hint) == suite[i].exp);
+}
 static void test_is_prefer_aspect(void)
 {
     struct { int w, h; XSizeHints hint; bool exp; } suite[]=
@@ -374,6 +397,7 @@ int main(void)
     test_is_prefer_height();
     test_is_prefer_aspect();
     test_is_prefer_size();
+    test_is_in_size_limit();
     test_has_focus_hint();
     test_has_spec_wm_protocol();
     test_send_wm_protocol_msg();

@@ -132,9 +132,11 @@ static Client *get_first_map_diff_client(Client *key)
 /* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
 static void raise_client(Client *c)
 {
+    /*
     if(c == get_cur_focus_client())
         XRaiseWindow(xinfo.display, WIDGET_WIN(c->frame));
     else
+    */
     {
         int n=get_subgroup_n(c), i=n;
         Window wins[n+1];

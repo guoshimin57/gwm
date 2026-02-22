@@ -166,6 +166,16 @@ static bool is_prefer_aspect(int w, int h, const XSizeHints *hint)
         !maxax || !maxay || ((float)w/h>=mina && (float)w/h<=maxa);
 }
 
+bool is_in_size_limit(int w, int h, const XSizeHints *hint)
+{
+    long f;
+    return !hint || !(f=hint->flags) ||
+        (  (!(f & PMinSize) || w>=hint->min_width)
+        && (!(f & PMaxSize) || w<=hint->max_width)
+        && (!(f & PMinSize) || h>=hint->min_height)
+        && (!(f & PMaxSize) || h<=hint->max_height) );
+}
+
 void set_input_focus(Window win, const XWMHints *hint)
 {
     if(has_focus_hint(hint))
