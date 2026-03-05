@@ -16,11 +16,10 @@
 #include "client.h"
 
 void focus_client(Client *c);
+void raise_client(Client *c);
 void set_cur_focus_client(Client *c);
 Client *get_cur_focus_client(void);
 void set_prev_focus_client(Client *c);
 Client *get_prev_focus_client(void);
-void create_layer_wins(void);
-void del_layer_wins(void);
 
 #endif

@@ -123,7 +123,6 @@ static void set_wins_rect_for_tiling(void)
             hint=get_size_hint(WIDGET_WIN(c));
             if(c->follow_maxmin_hint && !is_in_size_limit(w-2*bw, h-bh-2*bw, &hint))
             {
-                puts(c->title_text);
                 move_client(c, NULL, FLOAT_LAYER, ANY_AREA);
                 return;
             }

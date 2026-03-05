@@ -36,7 +36,9 @@ static Client *get_next_area_client(Layer layer, Area area);
 static Client *get_next_layer_client(Layer layer, Area area);
 static void set_default_win_rect(Client *c);
 static void set_client_rect_by_frame(Client *c);
+static Window get_top_win(const Client *c);
 
+Window top_wins[LAYER_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
 static Client *clients=NULL;
 
 void init_client_list(void)
@@ -425,4 +427,34 @@ bool is_on_desktop_n(const Client *c, unsigned int n)
 bool is_on_cur_desktop(const Client *c)
 {
     return is_on_desktop_n(c, get_net_current_desktop());
+}
+
+static Window get_top_win(const Client *c)
+{
+    return top_wins[c->layer];
+}
+
+void create_layer_wins(void)
+{
+    for(int i=LAYER_N-1; i>=0; i--)
+        top_wins[i]=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
+}
+
+void destroy_layer_wins(void)
+{
+    for(size_t i=0; i<LAYER_N; i++)
+        XDestroyWindow(xinfo.display, top_wins[i]);
+}
+
+/* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
+void raise_client(Client *c)
+{
+    int n=get_subgroup_n(c), i=n;
+    Window wins[n+1];
+
+    wins[0]=get_top_win(c);
+    subgroup_for_each(p, c->subgroup_leader)
+        wins[i--]=WIDGET_WIN(p->frame);
+
+    XRestackWindows(xinfo.display, wins, n+1);
 }

@@ -191,7 +191,7 @@ void deinit_gwm(void)
         client_del(c);
     free_all_images();
     deinit_gui();
-    del_layer_wins();
+    destroy_layer_wins();
     XFreeModifiermap(xinfo.mod_map);
     if(xinfo.xim)
         XCloseIM(xinfo.xim);

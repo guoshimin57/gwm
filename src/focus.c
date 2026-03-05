@@ -17,8 +17,6 @@ static void update_focus_client_pointer(Client *c);
 static bool is_viewable_client(const Client *c);
 static Client *get_first_map_client(void);
 static Client *get_first_map_diff_client(Client *key);
-static void raise_client(Client *c);
-static Window get_top_win(const Client *c);
 static void set_all_net_client_list(void);
 static Window *get_client_win_list(int *n);
 static Window *get_client_win_list_stacking(int *n);
@@ -26,8 +24,6 @@ static Window *get_client_win_list_stacking(int *n);
 // 分別爲各桌面的當前聚焦結點、前一個聚焦結點数组
 static Client *cur_focus_client[DESKTOP_N]={NULL};
 static Client *prev_focus_client[DESKTOP_N]={NULL};
-
-Window top_wins[LAYER_N]; // 窗口疊次序分層參照窗口列表，即分層層頂窗口
 
 /* 若在調用本函數之前cur_focus_client或prev_focus_client因某些原因（如移動到
  * 其他虛擬桌面、刪除、縮微）而未更新時，則應使用值爲NULL的c來調用本函數。這
@@ -43,18 +39,17 @@ void focus_client(Client *c)
     else if(!is_iconic_client(pc))
         set_input_focus(WIDGET_WIN(pc), pc->wm_hint);
 
+    if(pp && pp!=pc)
+    {
+        client_set_state_unfocused(pp, 1);
+        update_client_bg(pp);
+    }
+
     if(pc)
     {
         client_set_state_unfocused(pc, 0);
         update_client_bg(pc);
         raise_client(pc);
-    }
-
-    if(pp && pp!=pc)
-    {
-        client_set_state_unfocused(pp, 1);
-        update_client_bg(pp);
-        raise_client(pp);
     }
 
     set_net_active_window(pc ? WIDGET_WIN(pc) : None);
@@ -127,43 +122,6 @@ static Client *get_first_map_diff_client(Client *key)
         if(is_on_cur_desktop(c) && is_viewable_client(c) && c!=key)
             return c;
     return NULL;
-}
-
-/* 僅在移動窗口、聚焦窗口時或窗口類型、狀態發生變化才有可能需要提升 */
-static void raise_client(Client *c)
-{
-    /*
-    if(c == get_cur_focus_client())
-        XRaiseWindow(xinfo.display, WIDGET_WIN(c->frame));
-    else
-    */
-    {
-        int n=get_subgroup_n(c), i=n;
-        Window wins[n+1];
-
-        wins[0]=get_top_win(c);
-        subgroup_for_each(p, c->subgroup_leader)
-            wins[i--]=WIDGET_WIN(p->frame);
-
-        XRestackWindows(xinfo.display, wins, n+1);
-    }
-}
-
-static Window get_top_win(const Client *c)
-{
-    return top_wins[c->layer];
-}
-
-void create_layer_wins(void)
-{
-    for(int i=LAYER_N-1; i>=0; i--)
-        top_wins[i]=create_widget_win(xinfo.root_win, -1, -1, 1, 1, 0, 0, 0);
-}
-
-void del_layer_wins(void)
-{
-    for(size_t i=0; i<LAYER_N; i++)
-        XDestroyWindow(xinfo.display, top_wins[i]);
 }
 
 static void set_all_net_client_list(void)

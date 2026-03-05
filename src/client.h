@@ -96,5 +96,7 @@ bool is_exist_client(Client *c);
 bool is_new_client(Client *c);
 bool is_on_desktop_n(const Client *c, unsigned int n);
 bool is_on_cur_desktop(const Client *c);
+void create_layer_wins(void);
+void destroy_layer_wins(void);
 
 #endif

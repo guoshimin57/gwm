@@ -93,6 +93,8 @@ void move_client(Client *from, Client *to, Layer layer, Area area)
     if(!is_valid_move(from, to, layer, area))
         return;
 
+    if(from->layer != layer)
+        raise_client(from);
     move_client_node(from, to, layer, area);
     set_place_for_subgroup(from->subgroup_leader, layer, area);
     set_net_wm_state_for_subgroup(from->subgroup_leader);
