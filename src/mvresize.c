@@ -36,6 +36,9 @@ static void fix_dh_by_height_hint(int h, XSizeHints *hint, int *dh);
 void key_move_resize_client(XEvent *e, Key_act op)
 {
     Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+
     bool is_move = (op==UP || op==DOWN || op==LEFT || op==RIGHT),
          is_to_float=(c->area==MAIN_AREA || c->area==SECOND_AREA || c->area==FIXED_AREA);
     Delta_rect d=get_key_delta_rect(c, op);
@@ -99,6 +102,9 @@ void pointer_move_resize_client(XEvent *e, bool resize)
 {
     Move_info m={e->xbutton.x_root, e->xbutton.y_root, 0, 0};
     Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+
     Pointer_act act=(resize ? get_resize_act(c, m.ox, m.oy) : MOVE);
 
     if(!grab_pointer(xinfo.root_win, act))

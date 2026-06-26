@@ -52,7 +52,7 @@ void focus_client(Client *c)
         raise_client(pc);
     }
 
-    set_net_active_window(pc ? WIDGET_WIN(pc) : None);
+    set_net_active_window(pc ? WIDGET_WIN(pc) : xinfo.root_win);
     set_all_net_client_list();
 }
 
@@ -88,7 +88,7 @@ static void update_focus_client_pointer(Client *c)
         if(!is_viewable_client(cf) && !is_viewable_client(cf = co ? co : pf))
             cf=get_first_map_client();
         if(!is_viewable_client(pf) || pf==cf)
-            pf= (po && po!=cf && is_viewable_client(po)) ? po : get_first_map_diff_client(cf);
+            pf=(po && po!=cf && is_viewable_client(po)) ? po : get_first_map_diff_client(cf);
     }
     else
     {

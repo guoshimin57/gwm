@@ -37,7 +37,7 @@ void choose(XEvent *e, Arg arg)
     UNUSED(e), UNUSED(arg);
     Client *c=get_cur_focus_client();
 
-    if(is_iconic_client(c))
+    if(c && is_iconic_client(c))
         deiconify_client(c);
 }
 
@@ -56,8 +56,11 @@ void quit_wm(XEvent *e, Arg arg)
 void quit(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
+    Client *c=get_cur_focus_client();
+
     /* 刪除窗口會產生UnmapNotify事件，處理該事件時再刪除框架 */
-    close_win(WIDGET_WIN(get_cur_focus_client()));
+    if(c)
+        close_win(WIDGET_WIN(c));
 }
 
 void quit_all(XEvent *e, Arg arg)
@@ -108,7 +111,7 @@ void open_client_menu(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=get_cur_focus_client();
-    if(c->decorative)
+    if(c && c->decorative)
         menu_show(WIDGET(frame_get_menu(c->frame)));
 }
 
@@ -213,19 +216,27 @@ void toggle_compositor(XEvent *e, Arg arg)
 void mini(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    iconify_client(get_cur_focus_client()); 
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    iconify_client(c); 
 }
 
 void deiconify(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    deiconify_client(get_cur_focus_client()); 
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    deiconify_client(c); 
 }
 
 void toggle_max_restore(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     Client *c=get_cur_focus_client();
+    if(!c)
+        return;
 
     if(is_win_state_max(c->win_state))
         restore_client(c);
@@ -236,43 +247,64 @@ void toggle_max_restore(XEvent *e, Arg arg)
 void vmax(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize_client(get_cur_focus_client(), VERT_MAX);
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    maximize_client(c, VERT_MAX);
 }
 
 void hmax(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize_client(get_cur_focus_client(), HORZ_MAX);
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    maximize_client(c, HORZ_MAX);
 }
 
 void tmax(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize_client(get_cur_focus_client(), TOP_MAX);
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    maximize_client(c, TOP_MAX);
 }
 
 void bmax(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize_client(get_cur_focus_client(), BOTTOM_MAX);
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    maximize_client(c, BOTTOM_MAX);
 }
 
 void lmax(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize_client(get_cur_focus_client(), LEFT_MAX);
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    maximize_client(c, LEFT_MAX);
 }
 
 void rmax(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize_client(get_cur_focus_client(), RIGHT_MAX);
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    maximize_client(c, RIGHT_MAX);
 }
 
 void max(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
-    maximize_client(get_cur_focus_client(), FULL_MAX);
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
+    maximize_client(c, FULL_MAX);
 }
 
 void show_desktop(XEvent *e, Arg arg)
@@ -347,8 +379,11 @@ void toggle_shade(XEvent *e, Arg arg)
 {
     UNUSED(e), UNUSED(arg);
     static bool shade=false;
+    Client *c=get_cur_focus_client();
+    if(!c)
+        return;
 
-    toggle_shade_mode(get_cur_focus_client(), shade=!shade);
+    toggle_shade_mode(c, shade=!shade);
 }
 
 void change_place(XEvent *e, Arg arg)

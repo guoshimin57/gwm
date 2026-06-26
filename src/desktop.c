@@ -39,7 +39,7 @@ unsigned int get_desktop_n(XEvent *e, Arg arg)
 void focus_desktop_n(unsigned int n)
 {
     /* n=~0表示所有虛擬桌面，僅適用於attach_to_all_desktops */
-    if(n==~0U || n==get_net_current_desktop())
+    if(n==~0U || n==get_net_current_desktop() || n>=DESKTOP_N)
         return;
 
     hide_cur_desktop_clients();

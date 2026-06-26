@@ -206,6 +206,9 @@ static void entry_input_ctrl_seq(Entry *entry, XKeyEvent *ke, KeySym ks)
 static void insert_wcs(wchar_t *src, size_t size, size_t *offset, const wchar_t *ins)
 {
     size_t ns=wcslen(src), ni=wcslen(ins), i=*offset;
+    if(ns+ni+1 > size)
+        return;
+
     wmemmove(src+i+ni, src+i, ns-i);
     wcsncpy(src+i, ins, ni < size-i ? ni : size-i);
     *offset = i + (ni < size-i ? ni : size-i);
@@ -235,16 +238,24 @@ static void entry_complete(Entry *entry, bool show)
 void entry_paste(Entry *entry)
 {
     char *p=get_utf8_string_prop(WIDGET_WIN(entry), get_utf8_string_atom());
-    wchar_t text[ENTRY_TEXT_SIZE];
-    int n=mbstowcs(text, p, ENTRY_TEXT_SIZE);
+    if(!p)
+        return;
+
+    wchar_t paste[ENTRY_TEXT_SIZE], text[ENTRY_TEXT_SIZE*2];
+    int n=mbstowcs(paste, p, ENTRY_TEXT_SIZE);
     XFree(p);
     if(n <= 0)
         return;
 
-    wchar_t *src=entry->text+entry->cursor_offset, *dest=src+n;
-    wmemmove(dest, src, wcslen(entry->text)-entry->cursor_offset);
-    wcsncpy(src, text, n);
-    entry->cursor_offset += n;
+    wcsncpy(text, entry->text, entry->cursor_offset);
+    wcsncpy(text+entry->cursor_offset, paste, n);
+    wcscpy(text+entry->cursor_offset+n, entry->text+entry->cursor_offset);
+    text[ENTRY_TEXT_SIZE-1]=L'\0';
+    wcscpy(entry->text, text);
+    if(entry->cursor_offset+n+1 <= ENTRY_TEXT_SIZE)
+        entry->cursor_offset += n;
+    else
+        entry->cursor_offset = ENTRY_TEXT_SIZE;
     entry_update_fg(WIDGET(entry));
 }
 

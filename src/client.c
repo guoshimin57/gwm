@@ -212,6 +212,8 @@ static void client_dtor(Client *c)
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過所有亞組窗口 */
 Client *get_next(Client *c)
 {
+    if(!c)
+        return NULL;
     Client *next=clients_next(c->win_state.modal ? c->subgroup_leader : c);
     return next==clients ? clients_next(clients) : next;
 }
@@ -219,6 +221,8 @@ Client *get_next(Client *c)
 /* 當WIDGET_WIN(c)所在的亞組存在模態窗口時，跳過非模態窗口 */
 Client *get_prev(Client *c)
 {
+    if(!c)
+        return NULL;
     Client *prev=clients_prev(c->win_state.modal ? c->subgroup_leader : c);
     return prev==clients ? clients_prev(clients) : prev;
 }
