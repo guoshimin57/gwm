@@ -51,14 +51,14 @@ get_time()
 
 get_power()
 {
-    if acpi -a 2> /dev/null | grep line
+    if acpi -a | grep line > /dev/null 2>&1
     then
-        if acpi -a 2> /dev/null | grep on-line
+        if acpi | grep on-line > /dev/null 2>&1
         then
-            power="🔌$(acpi -b 2> /dev/null | awk '{ print $4 "+" $5 }' | tr -d ',')"
+            power="🔌$(acpi -b | awk '{ print $5 }' | tr -d ',')"
         else
-            power="🔋$(acpi -b 2> /dev/null | awk '{ print $4 "-" $5 }' | tr -d ',')"
-        fi
+            power="🔋$(acpi -b | awk '{ print $5 }' | tr -d ',')"
+        fi 2> /dev/null 
         echo $power
     fi
 }

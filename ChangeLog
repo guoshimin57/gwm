@@ -1,6 +1,20 @@
 						gwm的變更日志
 ---------------------------------------------------------------------------
 
+2026年 07月 01日 星期三 13:14:05 HKT	gsm <406643764@qq.com>
+	* 發布第2.14.4版；
+	* 修復get_string_size、draw_string函數在調用get_utf8_codepoint函數時未考慮其返回值可能爲0的缺陷；
+	* 修復startgwm的get_power函數未過濾無用信息的缺陷；
+	* 修復create_icon_image_from_prop函數可能數組越界的缺陷；
+	* 修復get_files_in_paths函數未考慮空指針的缺陷；
+	* 修復init_wallpaper和switch_to_next_wallpaper函數未考慮cur_wallpaper可能爲空指針的缺陷；
+	* 修復exec_autostart函數未使用構造出的命令字符串且存在緩衝區溢出風險的缺陷；
+	* 修復print_area函數未考慮空指針且存在緩衝區溢出風險的缺陷；
+	* 修復load_font函數存在緩衝區溢出風險的缺陷；
+	* 修復get_main_hsb未考慮顏色名解析失敗情況的缺陷；
+	* 修復set_visual_info函數未考慮XMatchVisualInfo調用失敗情況的缺陷。
+
+
 2026年 06月 27日 星期六 01:20:22 HKT	gsm <406643764@qq.com>
 	* 發布第2.14.3版；
 	* 修復focus_desktop_n函數未充分檢查參數有效性的缺陷；

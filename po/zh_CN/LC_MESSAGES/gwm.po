@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gwm 2.14.3\n"
+"Project-Id-Version: gwm 2.14.4\n"
 "Report-Msgid-Bugs-To: 406643764@qq.com\n"
-"POT-Creation-Date: 2025-06-12 10:58+0800\n"
+"POT-Creation-Date: 2026-07-01 13:11+0800\n"
 "PO-Revision-Date: 2023-05-05 09:56+0800\n"
 "Last-Translator: gsm <406643764@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -275,40 +275,40 @@ msgstr "以下是%lx窗口的位置窗口：\n"
 msgid "以下是自頂向底排列的客戶窗口列表：\n"
 msgstr "以下是自底向顶排列的客户窗口列表：\n"
 
-#: file.c:142
+#: file.c:145
 msgid "未能成功地爲命令創建新會話"
 msgstr "未能成功地为命令创建新会话"
 
-#: file.c:144
+#: file.c:147
 msgid "命令執行錯誤"
 msgstr "命令执行错误"
 
-#: file.c:147
+#: file.c:150
 msgid "未能成功地爲命令創建新進程"
 msgstr "未能成功地为命令创建新进程"
 
-#: init.c:166
+#: init.c:174
 #, c-format
 msgid "錯誤: 不能設置輸入法"
 msgstr "错误： 不能设置输入法"
 
-#: init.c:213
+#: init.c:221
 msgid "不能安裝SIGCHLD信號處理函數"
 msgstr "不能安装SIGCHLD信号处理函数"
 
-#: init.c:215
+#: init.c:223
 msgid "不能安裝SIGINT信號處理函數"
 msgstr "不能安装SIGINT信号处理函数"
 
-#: init.c:217
+#: init.c:225
 msgid "不能安裝SIGTERM信號處理函數"
 msgstr "不能安装SIGTERM信号处理函数"
 
-#: init.c:219
+#: init.c:227
 msgid "不能安裝SIGQUIT信號處理函數"
 msgstr "不能安装SIGQUIT信号处理函数"
 
-#: init.c:221
+#: init.c:229
 msgid "不能安裝SIGHUP信號處理函數"
 msgstr "不能安装SIGHUP信号处理函数"
 

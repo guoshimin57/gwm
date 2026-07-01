@@ -149,7 +149,9 @@ void alloc_color(const char *main_color_name)
 static HSB get_main_hsb(const char *main_color_name)
 {
     XColor xcolor;
-    XParseColor(xinfo.display, xinfo.colormap, main_color_name, &xcolor); 
+    if(!XParseColor(xinfo.display, xinfo.colormap, main_color_name, &xcolor))
+        XParseColor(xinfo.display, xinfo.colormap, "black", &xcolor);
+
     HSB hsb=rgb_to_hsb(xcolor_to_rgb(xcolor));
 
     switch(get_color_theme(hsb))

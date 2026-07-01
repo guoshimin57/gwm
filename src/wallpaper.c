@@ -30,7 +30,7 @@ void init_wallpaper(void)
 
     const char *paths=cfg->wallpaper_paths, *reg="*.png|*.jpg|*.svg|*.webp";
     wallpapers=get_files_in_paths(paths, reg, true);
-    cur_wallpaper=LIST_FIRST(Strings, wallpapers);
+    cur_wallpaper = wallpapers ? LIST_FIRST(Strings, wallpapers) : NULL;
 }
 
 void set_default_wallpaper(void)
@@ -63,6 +63,9 @@ static Pixmap create_pixmap_from_file(Window win, const char *filename)
 
 void switch_to_next_wallpaper(void)
 {
+    if(!cur_wallpaper)
+        return;
+
     srand((unsigned int)time(NULL));
     unsigned long r1=rand(), r2=rand(), color=(r1<<16)|r2|0xff000000UL;
     Pixmap pixmap=None;

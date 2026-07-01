@@ -57,10 +57,13 @@ void close_fonts(void)
 
 static WMFont *load_font(const char *fontname)
 {
-    char name[BUFSIZ];
+    char name[BUFSIZ]={0};
     XftFont *fp=NULL;
 
-    sprintf(name, "%s:pixelsize=%u", fontname, cfg->font_size);
+    snprintf(name, BUFSIZ, "%s:pixelsize=%u", fontname, cfg->font_size);
+    if(name[BUFSIZ-1]) // 不處理太長的字體名
+        return NULL;
+
     if(!(fp=XftFontOpenName(xinfo.display, xinfo.screen, name)))
         return NULL;
 
@@ -138,7 +141,10 @@ void draw_string(Drawable d, const char *str, const Str_fmt *f)
     while(*str)
     {
         len=get_utf8_codepoint(str, &codepoint);
-        sx+=draw_utf8_char(draw, &f->fg, codepoint, len, (const FcChar8 *)str, sx, sy);
+        if(len > 0)
+            sx+=draw_utf8_char(draw, &f->fg, codepoint, len, (const FcChar8 *)str, sx, sy);
+        else
+            len=1;
         str+=len;
     }
     XftDrawDestroy(draw);
@@ -229,7 +235,12 @@ void get_string_size(const char *str, int *w, int *h)
         for(int len=0; *str; str+=len)
         {
             len=get_utf8_codepoint(str, &codepoint);
-            if(len && (font=get_suitable_font(codepoint)))
+            if(len == 0)
+            {
+                len=1;
+                continue;
+            }
+            if((font=get_suitable_font(codepoint)))
             {
                 XftTextExtentsUtf8(xinfo.display, font->xfont, (const FcChar8 *)str, len, &info);
                 width += info.xOff;

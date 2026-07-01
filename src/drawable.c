@@ -50,6 +50,10 @@ bool is_on_screen(int x, int y, int w, int h)
 
 void print_area(Drawable d, int x, int y, int w, int h)
 {
+    char *home=getenv("HOME");
+    if(!home && cfg->screenshot_path[0] == '~')
+        return;
+
     imlib_context_set_drawable(d);
     Imlib_Image image=imlib_create_image_from_drawable(None, x, y, w, h, 0);
 
@@ -57,10 +61,14 @@ void print_area(Drawable d, int x, int y, int w, int h)
         return;
 
     time_t timer=time(NULL), err=-1;
-    char name[FILENAME_MAX];
+    size_t timelen=19; // %Y_%m_%d_%H_%M_%S的長度爲19字節
+    size_t size = strlen(home)+strlen(cfg->screenshot_path)+timelen
+        +1+strlen(cfg->screenshot_format)+1;
+    char name[size];
+
 
     if(cfg->screenshot_path[0] == '~')
-        sprintf(name, "%s%s/gwm-", getenv("HOME"), cfg->screenshot_path+1);
+        sprintf(name, "%s%s/gwm-", home, cfg->screenshot_path+1);
     else
         sprintf(name, "%s/gwm-", cfg->screenshot_path);
     if(timer != err)

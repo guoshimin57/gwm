@@ -96,10 +96,18 @@ static void init_X(void)
 static void set_visual_info(void)
 {
     XVisualInfo v;
-    XMatchVisualInfo(xinfo.display, xinfo.screen, 32, TrueColor, &v);
-    xinfo.depth=v.depth;
-    xinfo.visual=v.visual;
-    xinfo.colormap=XCreateColormap(xinfo.display, xinfo.root_win, v.visual, AllocNone);
+    if(XMatchVisualInfo(xinfo.display, xinfo.screen, 32, TrueColor, &v))
+    {
+        xinfo.depth=v.depth;
+        xinfo.visual=v.visual;
+        xinfo.colormap=XCreateColormap(xinfo.display, xinfo.root_win, v.visual, AllocNone);
+    }
+    else
+    {
+        xinfo.depth=DefaultDepth(xinfo.display, xinfo.screen);
+        xinfo.visual=DefaultVisual(xinfo.display, xinfo.screen);
+        xinfo.colormap=DefaultColormap(xinfo.display, xinfo.screen);
+    }
 }
 
 static void correct_config(void)

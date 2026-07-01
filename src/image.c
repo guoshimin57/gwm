@@ -195,6 +195,9 @@ static Imlib_Image create_icon_image_from_prop(Window win, const char *name)
         return NULL;
     
     long w=data[0], h=data[1], size=w*h, i;
+    if(w<=0 || h<=0 || w*h<=0 || size+2<=0) // 溢出
+        return NULL;
+
     Imlib_Image image=imlib_create_image(w, h);
     if(image)
     {

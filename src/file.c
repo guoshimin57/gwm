@@ -31,6 +31,9 @@ static int cmp_basename(const char *s1, const char *s2);
 
 Strings *get_files_in_paths(const char *paths, const char *regex, bool fullname)
 {
+    if(!paths || !regex)
+        return NULL;
+
     char *p=NULL, *ps=copy_string(paths);
     Strings *files=Malloc(sizeof(Strings));
 
@@ -149,9 +152,10 @@ void exec_cmd(char *const cmd[])
 
 void exec_autostart(void)
 {
-    char cmd[BUFSIZ];
-    sprintf(cmd, "[ -x '%s' ] && '%s'", cfg->autostart, cfg->autostart);
-    exec_cmd(SH_CMD(cfg->autostart));
+    const char *fmt="[ -x '%s' ] && '%s'";
+    char cmd[strlen(cfg->autostart)+strlen(fmt)+1];
+    sprintf(cmd, fmt, cfg->autostart, cfg->autostart);
+    exec_cmd(SH_CMD(cmd));
 }
 
 bool is_accessible(const char *filename)
