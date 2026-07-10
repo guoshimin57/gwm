@@ -125,6 +125,7 @@ void entry_update_fg(const Widget *widget)
 
     GC gc=XCreateGC(xinfo.display, WIDGET_WIN(entry), 0, NULL);
     XDrawLine(xinfo.display, WIDGET_WIN(entry), gc, x, 0, x, WIDGET_H(entry));
+    XFreeGC(xinfo.display, gc);
 }
 
 wchar_t *entry_get_text(Entry *entry)

@@ -93,6 +93,7 @@ void vfree_strings(Strings *head)
 {
     LIST_FOR_EACH_SAFE(Strings, s, head)
         vfree(s->str, s);
+    free(head);
 }
 
 int base_n_floor(int x, int n) // 以n爲基對X下向取整
@@ -107,7 +108,7 @@ int base_n_ceil(int x, int n) // 以n爲基對X上向取整
 
 bool is_match_button_release(XButtonEvent *oe, XButtonEvent *ne)
 {
-    return(oe->type==ButtonPressMask && ne->type==ButtonRelease
+    return(oe->type==ButtonPress && ne->type==ButtonRelease
         && ne->button==oe->button);
 }
 

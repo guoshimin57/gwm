@@ -133,6 +133,7 @@ void draw_string(Drawable d, const char *str, const Str_fmt *f)
         GC gc=XCreateGC(xinfo.display, d, 0, NULL);
         XSetForeground(xinfo.display, gc, f->bg);
         XFillRectangle(xinfo.display, d, gc, x, y, w, h);
+        XFreeGC(xinfo.display, gc);
     }
 
     int len;

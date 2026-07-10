@@ -164,8 +164,13 @@ static Imlib_Image create_icon_image_from_hint(Window win, const char *name)
         return NULL;
 
     XWMHints *hint=XGetWMHints(xinfo.display, win);
-    if(!hint || !(hint->flags & IconPixmapHint))
+    if(!hint)
+       return NULL;
+    if(!(hint->flags & IconPixmapHint))
+    {
+        XFree(hint);
         return NULL;
+    }
 
     int w, h;
     Pixmap pixmap=hint->icon_pixmap, mask=hint->icon_mask;

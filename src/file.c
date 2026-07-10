@@ -150,11 +150,24 @@ void exec_cmd(char *const cmd[])
         perror(_("未能成功地爲命令創建新進程"));
 }
 
+char *expand_tilde(const char *path)
+{
+    char *home=NULL;
+
+    if(path[0] == '~')
+        home=getenv("HOME");
+
+    return home ? copy_strings(home, path+1, NULL) : copy_string(path);
+}
+
 void exec_autostart(void)
 {
+    char *autostart=expand_tilde(cfg->autostart);
     const char *fmt="[ -x '%s' ] && '%s'";
-    char cmd[strlen(cfg->autostart)+strlen(fmt)+1];
-    sprintf(cmd, fmt, cfg->autostart, cfg->autostart);
+    char cmd[strlen(autostart)*2+strlen(fmt)+1];
+
+    sprintf(cmd, fmt, autostart, autostart);
+    free(autostart);
     exec_cmd(SH_CMD(cmd));
 }
 
